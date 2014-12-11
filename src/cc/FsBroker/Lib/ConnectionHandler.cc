@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,129 +19,50 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/String.h"
-#include "Common/StringExt.h"
-#include "Common/Serialization.h"
+/// @file
+/// Definitions for ConnectionHandler.
+/// This file contains definitions for ConnectionHandler, a class that handles
+/// incoming client requests.
 
-#include "AsyncComm/ApplicationQueue.h"
+#include <Common/Compat.h>
 
-#include "Protocol.h"
 #include "ConnectionHandler.h"
-#include "RequestHandlerClose.h"
-#include "RequestHandlerCreate.h"
-#include "RequestHandlerDebug.h"
-#include "RequestHandlerOpen.h"
-#include "RequestHandlerRead.h"
-#include "RequestHandlerAppend.h"
-#include "RequestHandlerSeek.h"
-#include "RequestHandlerRemove.h"
-#include "RequestHandlerLength.h"
-#include "RequestHandlerPread.h"
-#include "RequestHandlerMkdirs.h"
-#include "RequestHandlerFlush.h"
-#include "RequestHandlerStatus.h"
-#include "RequestHandlerRmdir.h"
-#include "RequestHandlerReaddir.h"
-#include "RequestHandlerPosixReaddir.h"
-#include "RequestHandlerExists.h"
-#include "RequestHandlerRename.h"
+#include "Client.h"
+#include "Request/Handler/Factory.h"
+
+#include <AsyncComm/ApplicationQueue.h>
+
+#include <Common/Error.h>
+#include <Common/String.h>
+#include <Common/StringExt.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
-using namespace FsBroker;
-using namespace Serialization;
+using namespace Hypertable::FsBroker::Lib;
 
-/**
- *
- */
 void ConnectionHandler::handle(EventPtr &event) {
 
   if (event->type == Event::MESSAGE) {
-    ApplicationHandler *handler = 0;
-    const uint8_t *decode_ptr = event->payload;
-    size_t decode_remain = event->payload_len;
 
     //event->display()
 
     try {
-      // sanity check command code
-      if (event->header.command >= Protocol::COMMAND_MAX)
-        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llx)",
-                  (Llu)event->header.command);
-
-      switch (event->header.command) {
-      case Protocol::COMMAND_OPEN:
-        handler = new RequestHandlerOpen(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_CREATE:
-        handler = new RequestHandlerCreate(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_CLOSE:
-        handler = new RequestHandlerClose(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_READ:
-        handler = new RequestHandlerRead(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_APPEND:
-        handler = new RequestHandlerAppend(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_SEEK:
-        handler = new RequestHandlerSeek(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_REMOVE:
-        handler = new RequestHandlerRemove(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_LENGTH:
-        handler = new RequestHandlerLength(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_PREAD:
-        handler = new RequestHandlerPread(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_MKDIRS:
-        handler = new RequestHandlerMkdirs(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_FLUSH:
-        handler = new RequestHandlerFlush(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_RMDIR:
-        handler = new RequestHandlerRmdir(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_READDIR:
-        handler = new RequestHandlerReaddir(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_POSIX_READDIR:
-        handler = new RequestHandlerPosixReaddir(m_comm, m_broker_ptr.get(),
-                event);
-        break;
-      case Protocol::COMMAND_EXISTS:
-        handler = new RequestHandlerExists(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_RENAME:
-        handler = new RequestHandlerRename(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_DEBUG:
-        handler = new RequestHandlerDebug(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, m_broker_ptr.get(), event);
-        break;
-      case Protocol::COMMAND_SHUTDOWN: {
-          uint16_t flags = 0;
-          ResponseCallback cb(m_comm, event);
-          if (event->payload_len >= 2)
-            flags = Serialization::decode_i16(&decode_ptr, &decode_remain);
-          if ((flags & Protocol::SHUTDOWN_FLAG_IMMEDIATE) != 0)
-            m_app_queue_ptr->shutdown();
-          m_broker_ptr->shutdown(&cb);
-          exit(0);
+      if (event->header.command ==
+          Request::Handler::Factory::FUNCTION_SHUTDOWN) {
+        uint16_t flags = 0;
+        ResponseCallback cb(m_comm, event);
+        if (event->payload_len >= 2) {
+          const uint8_t *ptr = event->payload;
+          size_t remain = event->payload_len;
+          flags = Serialization::decode_i16(&ptr, &remain);
         }
-        break;
-      default:
-        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llx)",
-                  (Llu)event->header.command);
+        if ((flags & Client::SHUTDOWN_FLAG_IMMEDIATE) != 0)
+          m_app_queue->shutdown();
+        m_broker->shutdown(&cb);
+        exit(0);
       }
-      m_app_queue_ptr->add(handler);
+      m_app_queue->add(Request::Handler::Factory::create(m_comm, m_broker.get(),
+                                                         event));
     }
     catch (Exception &e) {
       ResponseCallback cb(m_comm, event);
@@ -153,7 +74,7 @@ void ConnectionHandler::handle(EventPtr &event) {
   else if (event->type == Event::DISCONNECT) {
     HT_DEBUGF("%s : Closing all open handles from %s", event->to_str().c_str(),
               event->addr.format().c_str());
-    OpenFileMap &ofmap = m_broker_ptr->get_open_file_map();
+    OpenFileMap &ofmap = m_broker->get_open_file_map();
     ofmap.remove_all(event->addr);
   }
   else {

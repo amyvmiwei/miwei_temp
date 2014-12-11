@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,43 +25,58 @@ import java.net.ProtocolException;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.Serialization;
+import org.hypertable.Common.Serialization;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 
 public class RequestHandlerRename extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-    public RequestHandlerRename(Comm comm, Broker broker, Event event) {
-        super(event);
-        mComm = comm;
-        mBroker = broker;
+  static final byte VERSION = 1;
+
+  public RequestHandlerRename(Comm comm, Broker broker, Event event) {
+    super(event);
+    mComm = comm;
+    mBroker = broker;
+  }
+
+  public void run() {
+    ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+
+    try {
+
+      if (mEvent.payload.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+
+      int version = (int)mEvent.payload.get();
+      if (version != VERSION)
+        throw new ProtocolException("Rename parameters version mismatch, expected " +
+                                    VERSION + ", got " + version);
+
+      int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
+      int start_position = mEvent.payload.position();
+
+      String src, dst;
+      if ((src = Serialization.DecodeVStr(mEvent.payload)) == null ||
+          (dst = Serialization.DecodeVStr(mEvent.payload)) == null)
+        throw new ProtocolException("Error decoding filenames");
+
+      if ((mEvent.payload.position() - start_position) < encoding_length)
+        mEvent.payload.position(start_position + encoding_length);
+
+      mBroker.Rename(cb, src, dst);
     }
-
-    public void run() {
-        String  src, dst;
-        ResponseCallback cb = new ResponseCallback(mComm, mEvent);
-
-        try {
-
-            if ((src = Serialization.DecodeString(mEvent.payload)) == null ||
-                (dst = Serialization.DecodeString(mEvent.payload)) == null)
-                throw new ProtocolException("Error decoding filenames");
-
-            mBroker.Rename(cb, src, dst);
-        }
-        catch (ProtocolException e) {
-            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-            log.severe("Protocol error (Rename) - " + e.getMessage());
-            if (error != Error.OK)
-                log.severe("Problem sending (Rename) error back to client - "
-                           + Error.GetText(error));
-        }
+    catch (Exception e) {
+      int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (Rename) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (Rename) error back to client - "
+                   + Error.GetText(error));
     }
+  }
 
-    private Comm       mComm;
-    private Broker mBroker;
+  private Comm mComm;
+  private Broker mBroker;
 }

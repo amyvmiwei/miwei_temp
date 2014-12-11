@@ -569,7 +569,7 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     ConnectionManagerPtr conn_mgr;
-    FsBroker::ClientPtr client;
+    FsBroker::Lib::ClientPtr client;
     CellStorePtr cs;
     std::ofstream out("CellStoreScanner_test.output");
     size_t wordi=0;
@@ -603,10 +603,10 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
-    Global::dfs = new FsBroker::Client(conn_mgr, addr, 15000);
+    Global::dfs = new FsBroker::Lib::Client(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
-    client = (FsBroker::Client *)Global::dfs.get();
+    client = (FsBroker::Lib::Client *)Global::dfs.get();
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");

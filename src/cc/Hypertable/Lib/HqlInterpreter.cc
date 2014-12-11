@@ -221,7 +221,7 @@ cmd_describe_table(NamespacePtr &ns, ParserState &state,
 
 void
 cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
-           FsBroker::ClientPtr &fs_client, ParserState &state, HqlInterpreter::Callback &cb) {
+           FsBroker::Lib::ClientPtr &fs_client, ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
@@ -246,11 +246,11 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
         boost::algorithm::starts_with(state.scan.outfile, "fs://")) {
       // init Fs client if not done yet
       if (!fs_client)
-        fs_client = new FsBroker::Client(conn_manager, Config::properties);
+        fs_client = new FsBroker::Lib::Client(conn_manager, Config::properties);
       if (boost::algorithm::starts_with(state.scan.outfile, "dfs://"))
-        fout.push(FsBroker::FileSink(fs_client, state.scan.outfile.substr(6)));
+        fout.push(FsBroker::Lib::FileSink(fs_client, state.scan.outfile.substr(6)));
       else
-        fout.push(FsBroker::FileSink(fs_client, state.scan.outfile.substr(5)));
+        fout.push(FsBroker::Lib::FileSink(fs_client, state.scan.outfile.substr(5)));
     }
     else if (boost::algorithm::starts_with(state.scan.outfile, localfs))
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile.substr(localfs.size())));
@@ -384,7 +384,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
 
 void
 cmd_dump_table(NamespacePtr &ns,
-               ConnectionManagerPtr &conn_manager, FsBroker::ClientPtr &fs_client,
+               ConnectionManagerPtr &conn_manager, FsBroker::Lib::ClientPtr &fs_client,
                ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
@@ -410,11 +410,11 @@ cmd_dump_table(NamespacePtr &ns,
         boost::algorithm::starts_with(state.scan.outfile, "fs://")) {
       // init Fs client if not done yet
       if (!fs_client)
-        fs_client = new FsBroker::Client(conn_manager, Config::properties);
+        fs_client = new FsBroker::Lib::Client(conn_manager, Config::properties);
       if (boost::algorithm::starts_with(state.scan.outfile, "dfs://"))
-        fout.push(FsBroker::FileSink(fs_client, state.scan.outfile.substr(6)));
+        fout.push(FsBroker::Lib::FileSink(fs_client, state.scan.outfile.substr(6)));
       else
-        fout.push(FsBroker::FileSink(fs_client, state.scan.outfile.substr(5)));
+        fout.push(FsBroker::Lib::FileSink(fs_client, state.scan.outfile.substr(5)));
     }
     else if (boost::algorithm::starts_with(state.scan.outfile, localfs))
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile.substr(localfs.size())));
@@ -505,7 +505,7 @@ cmd_dump_table(NamespacePtr &ns,
 void
 cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
               ConnectionManagerPtr &conn_manager, 
-              FsBroker::ClientPtr &fs_client,
+              FsBroker::Lib::ClientPtr &fs_client,
               ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
@@ -554,7 +554,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
 
   // init Fs client if not done yet
   if(state.input_file_src == DFS_FILE && !fs_client)
-    fs_client = new FsBroker::Client(conn_manager, Config::properties);
+    fs_client = new FsBroker::Lib::Client(conn_manager, Config::properties);
 
   lds = LoadDataSourceFactory::create(fs_client, state.input_file,
                state.input_file_src, state.header_file, state.header_file_src,

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -21,10 +21,11 @@
 
 package org.hypertable.Common;
 
-import org.hypertable.AsyncComm.Serialization;
-
+import java.io.UnsupportedEncodingException;
+import java.net.ProtocolException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.zip.DataFormatException;
 
 public class Filesystem {
 
@@ -32,22 +33,38 @@ public class Filesystem {
    * A directory entry for readdir.
    */
   public static class Dirent {
-    public int EncodedLength() {
-      return Serialization.EncodedLengthString(name) + 13;
+    static final byte DIRENT_VERSION = 1;
+    public int EncodedLength() throws UnsupportedEncodingException {
+      int length = 13 + Serialization.EncodedLengthVStr(name);
+      return 1 + Serialization.EncodedLengthVInt32(length) + length;
     }
-    public void Encode(ByteBuffer buf) {
+    public void Encode(ByteBuffer buf) throws UnsupportedEncodingException {
       buf.order(ByteOrder.LITTLE_ENDIAN);
-      Serialization.EncodeString(buf, name);
+      buf.put(DIRENT_VERSION);
+      int encoding_length = 13 + Serialization.EncodedLengthVStr(name);
+      Serialization.EncodeVInt32(buf, encoding_length);
+      Serialization.EncodeVStr(buf, name);
       buf.putLong(length);
       buf.putInt(last_modification_time);
       buf.put(is_dir ? (byte)1 : (byte)0);
     }
-    public void Decode(ByteBuffer buf) {
+    public void Decode(ByteBuffer buf)
+      throws ProtocolException, UnsupportedEncodingException, DataFormatException {
       buf.order(ByteOrder.LITTLE_ENDIAN);
-      name = Serialization.DecodeString(buf);
+      if (buf.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+      int version = (int)buf.get();
+      if (version != DIRENT_VERSION)
+        throw new ProtocolException("Dirent parameters version mismatch, expected " +
+                                    DIRENT_VERSION + ", got " + version);
+      int encoding_length = Serialization.DecodeVInt32(buf);
+      int start_position = buf.position();
+      name = Serialization.DecodeVStr(buf);
       length = buf.getLong();
       last_modification_time = buf.getInt();
       is_dir = buf.get() == (byte)0 ? false : true;
+      if ((buf.position() - start_position) < encoding_length)
+        buf.position(start_position + encoding_length);
     }
     public String name;
     public long length = 0;

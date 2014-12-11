@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
-    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Lib::Client(context->conn_manager, context->props);
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     String log_dir = context->toplevel_dir + "/servers/master/log";
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));

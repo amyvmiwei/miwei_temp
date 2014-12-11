@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,13 +19,14 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Usage.h"
-
-#include "FsBroker/Lib/Protocol.h"
+#include <Common/Compat.h>
 
 #include "CommandShutdown.h"
+
+#include <FsBroker/Lib/Client.h>
+
+#include <Common/Error.h>
+#include <Common/Usage.h>
 
 using namespace Hypertable;
 
@@ -50,7 +51,7 @@ void CommandShutdown::run() {
 
   if (m_args.size() > 0) {
     if (m_args[0].first == "now")
-      flags |= FsBroker::Protocol::SHUTDOWN_FLAG_IMMEDIATE;
+      flags |= FsBroker::Lib::Client::SHUTDOWN_FLAG_IMMEDIATE;
     else
       HT_THROWF(Error::COMMAND_PARSE_ERROR, "Invalid argument - %s",
                 m_args[0].first.c_str());

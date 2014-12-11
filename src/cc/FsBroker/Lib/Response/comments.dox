@@ -1,0 +1,5 @@
+/// @defgroup FsBrokerLibResponse Response
+/// @ingroup FsBrokerLib
+/// Response handling code.
+/// This module contains code for handling outgoing responses from the
+/// file system broker.

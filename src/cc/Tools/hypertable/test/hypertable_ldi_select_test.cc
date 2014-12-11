@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2013 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -60,7 +60,7 @@ namespace {
 
   static const size_t amount = 4096;
 
-  bool copyToDfs(FsBroker::Client *client, const char *src, const char *dst) {
+  bool copyToDfs(FsBroker::Lib::Client *client, const char *src, const char *dst) {
     client->mkdirs("/ldi_test");
 
     std::filebuf src_file;
@@ -80,7 +80,7 @@ namespace {
     return true;
   }
 
-  bool copyFromDfs(FsBroker::Client *client, const char *src, const char *dst) {
+  bool copyFromDfs(FsBroker::Lib::Client *client, const char *src, const char *dst) {
     client->mkdirs("/ldi_test");
 
     int fd=client->open(src,0);
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
   }
 
 
-  FsBroker::Client *client = new FsBroker::Client(comm, addr, timeout_ms);
+  FsBroker::Lib::Client *client = new FsBroker::Lib::Client(comm, addr, timeout_ms);
 
   /**
    * LDI and Select using stdin

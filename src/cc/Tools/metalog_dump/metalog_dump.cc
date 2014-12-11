@@ -159,16 +159,16 @@ int main(int argc, char **argv) {
     /**
      * Check for and connect to commit log DFS broker
      */
-    FsBroker::Client *dfs_client;
+    FsBroker::Lib::Client *dfs_client;
 
     if (log_host.length()) {
       int log_port = get_i16("log-port");
       InetAddr addr(log_host, log_port);
 
-      dfs_client = new FsBroker::Client(conn_manager_ptr, addr, timeout);
+      dfs_client = new FsBroker::Lib::Client(conn_manager_ptr, addr, timeout);
     }
     else {
-      dfs_client = new FsBroker::Client(conn_manager_ptr, properties);
+      dfs_client = new FsBroker::Lib::Client(conn_manager_ptr, properties);
     }
 
     if (!dfs_client->wait_for_connection(timeout)) {

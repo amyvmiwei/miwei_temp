@@ -1,5 +1,5 @@
-/** -*- C++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,26 +17,25 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_CEPHBROKER_H
-#define HYPERTABLE_CEPHBROKER_H
+#ifndef FsBroker_ceph_CephBroker_h
+#define FsBroker_ceph_CephBroker_h
 
 extern "C" {
 #include <unistd.h>
 }
 
+#include <FsBroker/Lib/Broker.h>
+
+#include <Common/String.h>
+#include <Common/atomic.h>
+#include <Common/Properties.h>
+
 #include <ceph/libceph.h>
 
-#include "Common/String.h"
-#include "Common/atomic.h"
-#include "Common/Properties.h"
-
-#include "FsBroker/Lib/Broker.h"
-
 namespace Hypertable {
-  using namespace FsBroker;
-  /**
-   *
-   */
+namespace FsBroker {
+  using namespace Lib;
+
   class OpenFileDataCeph : public OpenFileData {
   public:
     OpenFileDataCeph(const String& fname, int _fd, int _flags) :
@@ -47,9 +46,6 @@ namespace Hypertable {
     String filename;
   };
 
-  /**
-   *
-   */
   class OpenFileDataCephPtr : public OpenFileDataPtr {
   public:
     OpenFileDataCephPtr() : OpenFileDataPtr() { }
@@ -57,38 +53,33 @@ namespace Hypertable {
     OpenFileDataCeph *operator->() const { return (OpenFileDataCeph *)get(); }
   };
 
-  /**
-   *
-   */
   class CephBroker : public FsBroker::Broker {
   public:
     CephBroker(PropertiesPtr& cfg);
     virtual ~CephBroker();
 
-    virtual void open(ResponseCallbackOpen *cb, const char *fname,
+    virtual void open(Response::Callback::Open *cb, const char *fname,
                       uint32_t flags, uint32_t bufsz);
     virtual void
-    create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+    create(Response::Callback::Open *cb, const char *fname, uint32_t flags,
            int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
-    virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
-    virtual void append(ResponseCallbackAppend *cb, uint32_t fd,
+    virtual void read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount);
+    virtual void append(Response::Callback::Append *cb, uint32_t fd,
                         uint32_t amount, const void *data, bool sync);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
-    virtual void length(ResponseCallbackLength *cb, const char *fname,
+    virtual void length(Response::Callback::Length *cb, const char *fname,
                         bool accurate = true);
-    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+    virtual void pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
                        uint32_t amount, bool verify_checksum);
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
-    virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);
-    virtual void posix_readdir(ResponseCallbackPosixReaddir *cb,
-            const char *dname);
-    virtual void exists(ResponseCallbackExists *cb, const char *fname);
+    virtual void readdir(Response::Callback::Readdir *cb, const char *dname);
+    virtual void exists(Response::Callback::Exists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
     virtual void debug(ResponseCallback *, int32_t command,
                        StaticBuffer &serialized_parameters);
@@ -110,6 +101,7 @@ namespace Hypertable {
     bool m_verbose;
     String m_root_dir;
   };
-}
 
-#endif //HYPERTABLE_CEPH_BROKER_H
+}}
+
+#endif // FsBroker_ceph_CephBroker_h

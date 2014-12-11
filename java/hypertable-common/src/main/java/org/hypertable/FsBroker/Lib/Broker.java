@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -44,7 +44,7 @@ public interface Broker {
 
   void Read(ResponseCallbackRead cb, int fd, int amount);
 
-  void Write(ResponseCallbackWrite cb, int fd, int amount, byte [] data,
+  void Append(ResponseCallbackAppend cb, int fd, int amount, byte [] data,
              boolean sync);
 
   void PositionRead(ResponseCallbackPositionRead cb, int fd, long offset,

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,21 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-
-#include "Common/Error.h"
+#include <Common/Compat.h>
 
 #include "ClientBufferedReaderHandler.h"
 #include "Client.h"
 
+#include <AsyncComm/Protocol.h>
+
+#include <Common/Error.h>
+
 using namespace Hypertable;
-using namespace FsBroker;
+using namespace Hypertable::FsBroker::Lib;
 
 /**
  *
  */
 ClientBufferedReaderHandler::ClientBufferedReaderHandler(
-    FsBroker::Client *client, uint32_t fd, uint32_t buf_size,
+    Client *client, uint32_t fd, uint32_t buf_size,
     uint32_t outstanding, uint64_t start_offset, uint64_t end_offset) :
     m_client(client), m_fd(fd), m_read_size(buf_size), m_eof(false),
     m_error(Error::OK) {
@@ -97,38 +99,40 @@ ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
 /**
  *
  */
-void ClientBufferedReaderHandler::handle(EventPtr &event_ptr) {
+void ClientBufferedReaderHandler::handle(EventPtr &event) {
   ScopedLock lock(m_mutex);
 
   m_outstanding--;
 
-  if (event_ptr->type == Event::MESSAGE) {
-    if ((m_error = (int)Protocol::response_code(event_ptr)) != Error::OK) {
-      m_error_msg = Protocol::string_format_message(event_ptr);
+  if (event->type == Event::MESSAGE) {
+    if ((m_error = (int)Protocol::response_code(event)) != Error::OK) {
+      m_error_msg = Protocol::string_format_message(event);
       HT_ERRORF("FS read error (amount=%u, fd=%d) : %s",
                 m_read_size, m_fd, m_error_msg.c_str());
       m_eof = true;
       m_cond.notify_all();
       return;
     }
-    m_queue.push(event_ptr);
+    m_queue.push(event);
 
-    uint64_t offset;
-    size_t amount = Client::decode_response_read_header(event_ptr, &offset);
-    m_actual_offset += amount;
-
-    if (amount < m_read_size) {
-      m_eof = true;
+    {
+      uint32_t amount;
+      uint64_t offset;
+      const void *data;
+      m_client->decode_response_read(event, &data, &offset, &amount);
+      m_actual_offset += amount;
+      if (amount < m_read_size)
+        m_eof = true;
     }
   }
-  else if (event_ptr->type == Event::ERROR) {
-    m_error_msg = event_ptr->to_str();
+  else if (event->type == Event::ERROR) {
+    m_error_msg = event->to_str();
     HT_ERRORF("%s", m_error_msg.c_str());
-    m_error = event_ptr->error;
+    m_error = event->error;
     m_eof = true;
   }
   else {
-    m_error_msg = event_ptr->to_str();
+    m_error_msg = event->to_str();
     HT_ERRORF("%s", m_error_msg.c_str());
     m_error = Error::FAILED_EXPECTATION;
     m_eof = true;
@@ -163,8 +167,8 @@ ClientBufferedReaderHandler::read(void *buf, size_t len) {
     if (m_ptr == 0) {
       uint64_t offset;
       uint32_t amount;
-      EventPtr &event_ptr = m_queue.front();
-      amount = Client::decode_response_read_header(event_ptr, &offset, &m_ptr);
+      EventPtr &event = m_queue.front();
+      m_client->decode_response_read(event, (const void **)&m_ptr, &offset, &amount);
       m_end_ptr = m_ptr + amount;
     }
 

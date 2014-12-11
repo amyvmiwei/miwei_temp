@@ -51,7 +51,7 @@ extern "C" {
 #include "AsyncComm/Event.h"
 #include "AsyncComm/ReactorFactory.h"
 
-#include "FsBroker/Lib/Client.h"
+#include <FsBroker/Lib/Client.h>
 
 #include "fsTestThreadFunction.h"
 
@@ -70,7 +70,7 @@ namespace {
     (const char *)0
   };
 
-  void test_copy(FsBroker::Client *client, const String &testdir) {
+  void test_copy(FsBroker::Lib::Client *client, const String &testdir) {
     String outfileA = testdir + "/output.a";
     String outfileB = testdir + "/output.b";
 
@@ -94,7 +94,7 @@ namespace {
       exit(1);
   }
 
-  void test_readdir(FsBroker::Client *client, const String &testdir) {
+  void test_readdir(FsBroker::Lib::Client *client, const String &testdir) {
     ofstream filestr ("fsTest.out");
     vector<Filesystem::Dirent> listing;
 
@@ -117,7 +117,7 @@ namespace {
       exit(1);
   }
 
-  void test_rename(FsBroker::Client *client, const String &testdir) {
+  void test_rename(FsBroker::Lib::Client *client, const String &testdir) {
     const char *magic = "the quick brown fox jumps over a lazy dog";
     char buf[1024];
     String file_a = testdir +"/filename.a";
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     ConnectionManagerPtr conn_mgr;
-    FsBroker::Client *client;
+    FsBroker::Lib::Client *client;
 
     Config::init(argc, argv);
 
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
-    client = new FsBroker::Client(conn_mgr, addr, 15000);
+    client = new FsBroker::Lib::Client(conn_mgr, addr, 15000);
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");

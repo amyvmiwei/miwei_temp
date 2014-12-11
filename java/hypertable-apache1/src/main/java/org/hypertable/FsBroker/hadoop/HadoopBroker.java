@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -53,14 +53,14 @@ import org.hypertable.FsBroker.Lib.ResponseCallbackOpen;
 import org.hypertable.FsBroker.Lib.ResponseCallbackPositionRead;
 import org.hypertable.FsBroker.Lib.ResponseCallbackReaddir;
 import org.hypertable.FsBroker.Lib.ResponseCallbackRead;
-import org.hypertable.FsBroker.Lib.ResponseCallbackWrite;
+import org.hypertable.FsBroker.Lib.ResponseCallbackAppend;
 
 import org.apache.hadoop.fs.FileStatus;
 
 /**
  * This is the actual HadoopBroker object that contains all of the application
  * logic.  It has a method for each of the request types (e.g. Open, Close,
- * Read, Write, etc.)  There is only one of these objects for each server
+ * Read, Append, etc.)  There is only one of these objects for each server
  * instance which carries out all of the requests from all connections.
  */
 public class HadoopBroker implements Broker {
@@ -576,7 +576,7 @@ public class HadoopBroker implements Broker {
                     + ", error=" + error + ", amount=" + amount + ")");
     }
 
-    public void Write(ResponseCallbackWrite cb, int fd, int amount,
+    public void Append(ResponseCallbackAppend cb, int fd, int amount,
                       byte [] data, boolean sync) {
         int error = Error.OK;
         OpenFileData ofd;
@@ -585,7 +585,7 @@ public class HadoopBroker implements Broker {
 
             /**
                if (Global.verbose)
-               log.info("Write request handle=" + fd + " amount=" + mAmount);
+               log.info("Append request handle=" + fd + " amount=" + mAmount);
             */
 
             if ((ofd = mOpenFileMap.Get(fd)) == null) {

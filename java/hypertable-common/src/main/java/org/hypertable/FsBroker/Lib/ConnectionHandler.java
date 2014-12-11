@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -41,108 +41,108 @@ import org.hypertable.Common.Error;
  */
 public class ConnectionHandler implements DispatchHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger(
+                                             "org.hypertable.FsBroker.Lib");
 
-    public ConnectionHandler(Comm comm, ApplicationQueue appQueue,
-                             Broker broker) {
-        mComm = comm;
-        mAppQueue = appQueue;
-        mBroker = broker;
+  public ConnectionHandler(Comm comm, ApplicationQueue appQueue,
+                           Broker broker) {
+    mComm = comm;
+    mAppQueue = appQueue;
+    mBroker = broker;
+  }
+
+  public void handle(Event event) {
+
+    if (event.type == Event.Type.MESSAGE) {
+      //log.info(event.toString());
+
+      ApplicationHandler requestHandler;
+
+      switch ((int)event.header.command) {
+      case Protocol.COMMAND_OPEN:
+        requestHandler = new RequestHandlerOpen(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_CLOSE:
+        requestHandler = new RequestHandlerClose(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_CREATE:
+        requestHandler = new RequestHandlerCreate(mComm, mBroker,
+                                                  event);
+        break;
+      case Protocol.COMMAND_LENGTH:
+        requestHandler = new RequestHandlerLength(mComm, mBroker,
+                                                  event);
+        break;
+      case Protocol.COMMAND_READ:
+        requestHandler = new RequestHandlerRead(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_APPEND:
+        requestHandler = new RequestHandlerAppend(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_SEEK:
+        requestHandler = new RequestHandlerSeek(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_REMOVE:
+        requestHandler = new RequestHandlerRemove(mComm, mBroker,
+                                                  event);
+        break;
+      case Protocol.COMMAND_PREAD:
+        requestHandler = new RequestHandlerPositionRead(mComm, mBroker,
+                                                        event);
+        break;
+      case Protocol.COMMAND_MKDIRS:
+        requestHandler = new RequestHandlerMkdirs(mComm, mBroker,
+                                                  event);
+        break;
+      case Protocol.COMMAND_SHUTDOWN:
+        requestHandler = new RequestHandlerShutdown(mComm, mAppQueue, mBroker, event);
+        break;
+      case Protocol.COMMAND_STATUS:
+        requestHandler = new RequestHandlerStatus(mComm, mAppQueue,
+                                                  event);
+        break;
+      case Protocol.COMMAND_FLUSH:
+        requestHandler = new RequestHandlerFlush(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_RMDIR:
+        requestHandler = new RequestHandlerRmdir(mComm, mBroker, event);
+        break;
+      case Protocol.COMMAND_READDIR:
+        requestHandler = new RequestHandlerReaddir(mComm, mBroker,
+                                                   event);
+        break;
+      case Protocol.COMMAND_EXISTS:
+        requestHandler = new RequestHandlerExists(mComm, mBroker,
+                                                  event);
+        break;
+      case Protocol.COMMAND_RENAME:
+        requestHandler = new RequestHandlerRename(mComm, mBroker,
+                                                  event);
+        break;
+      default:
+        ResponseCallback cb = new ResponseCallback(mComm, event);
+        log.severe("Command code " + event.header.command
+                   + " not implemented");
+        cb.error(Error.PROTOCOL_ERROR, "Command code "
+                 + event.header.command + " not implemented");
+        return;
+      }
+
+      mAppQueue.Add(requestHandler);
+
     }
-
-    public void handle(Event event) {
-
-        if (event.type == Event.Type.MESSAGE) {
-            //log.info(event.toString());
-
-            ApplicationHandler requestHandler;
-
-            switch ((int)event.header.command) {
-            case Protocol.COMMAND_OPEN:
-                requestHandler = new RequestHandlerOpen(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_CLOSE:
-                requestHandler = new RequestHandlerClose(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_CREATE:
-                requestHandler = new RequestHandlerCreate(mComm, mBroker,
-                                                          event);
-                break;
-            case Protocol.COMMAND_LENGTH:
-                requestHandler = new RequestHandlerLength(mComm, mBroker,
-                                                          event);
-                break;
-            case Protocol.COMMAND_READ:
-                requestHandler = new RequestHandlerRead(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_WRITE:
-                requestHandler = new RequestHandlerWrite(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_SEEK:
-                requestHandler = new RequestHandlerSeek(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_REMOVE:
-                requestHandler = new RequestHandlerRemove(mComm, mBroker,
-                                                          event);
-                break;
-            case Protocol.COMMAND_PREAD:
-                requestHandler = new RequestHandlerPositionRead(mComm, mBroker,
-                                                                event);
-                break;
-            case Protocol.COMMAND_MKDIRS:
-                requestHandler = new RequestHandlerMkdirs(mComm, mBroker,
-                                                          event);
-                break;
-            case Protocol.COMMAND_SHUTDOWN:
-              requestHandler = new RequestHandlerShutdown(mComm, mAppQueue, mBroker, event);
-                break;
-            case Protocol.COMMAND_STATUS:
-                requestHandler = new RequestHandlerStatus(mComm, mAppQueue,
-                                                          event);
-                break;
-            case Protocol.COMMAND_FLUSH:
-                requestHandler = new RequestHandlerFlush(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_RMDIR:
-                requestHandler = new RequestHandlerRmdir(mComm, mBroker, event);
-                break;
-            case Protocol.COMMAND_READDIR:
-                requestHandler = new RequestHandlerReaddir(mComm, mBroker,
-                                                           event);
-                break;
-            case Protocol.COMMAND_EXISTS:
-                requestHandler = new RequestHandlerExists(mComm, mBroker,
-                                                          event);
-                break;
-            case Protocol.COMMAND_RENAME:
-                requestHandler = new RequestHandlerRename(mComm, mBroker,
-                                                          event);
-                break;
-            default:
-                ResponseCallback cb = new ResponseCallback(mComm, event);
-                log.severe("Command code " + event.header.command
-                           + " not implemented");
-                cb.error(Error.PROTOCOL_ERROR, "Command code "
-                         + event.header.command + " not implemented");
-                return;
-            }
-
-            mAppQueue.Add(requestHandler);
-
-        }
-        else if (event.type == Event.Type.DISCONNECT) {
-            log.info(event.toString() + " : Closing all open handles from "
-                     + event.addr);
-            OpenFileMap ofMap = mBroker.GetOpenFileMap();
-            ofMap.RemoveAll(event.addr);
-        }
-        else
-            log.info(event.toString());
+    else if (event.type == Event.Type.DISCONNECT) {
+      log.info(event.toString() + " : Closing all open handles from "
+               + event.addr);
+      OpenFileMap ofMap = mBroker.GetOpenFileMap();
+      ofMap.RemoveAll(event.addr);
     }
+    else
+      log.info(event.toString());
+  }
 
-    private Comm mComm;
-    private ApplicationQueue mAppQueue;
-    private Broker mBroker;
+  private Comm mComm;
+  private ApplicationQueue mAppQueue;
+  private Broker mBroker;
 }
 

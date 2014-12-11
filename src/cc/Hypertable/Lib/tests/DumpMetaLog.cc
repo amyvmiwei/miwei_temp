@@ -99,7 +99,7 @@ int main(int ac, char *av[]) {
   try {
     init_with_policies<Policies>(ac, av);
 
-    FsBroker::Client *fs = new FsBroker::Client(get_str("fs-host"),
+    FsBroker::Lib::Client *fs = new FsBroker::Lib::Client(get_str("fs-host"),
         get_i16("fs-port"), get_i32("timeout"));
 
     dump_metalog(*fs, get_str("path"), properties);

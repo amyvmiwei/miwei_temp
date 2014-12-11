@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,26 +19,33 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_FSBROKER_FILE_DEVICE_H
-#define HYPERTABLE_FSBROKER_FILE_DEVICE_H
+#ifndef FsBroker_Lib_FileDevice_h
+#define FsBroker_Lib_FileDevice_h
 
-#include "Common/Compat.h"
-#include "Common/StringExt.h"
-#include "Common/StaticBuffer.h"
-#include "Common/Error.h"
+#include <Common/Compat.h>
+
+#include "Client.h"
+
+#include <Common/StringExt.h>
+#include <Common/StaticBuffer.h>
+#include <Common/Error.h>
 
 #include <boost/cstdint.hpp>               // intmax_t.
 #include <boost/iostreams/categories.hpp>  // tags.
 #include <boost/iostreams/detail/ios.hpp>  // openmode, seekdir, int types.
 #include <boost/shared_ptr.hpp>
 
-#include "Client.h"
-
-namespace Hypertable { namespace FsBroker {
+namespace Hypertable {
+namespace FsBroker {
+namespace Lib {
 
   using namespace boost::iostreams;
   using namespace std;
-  /**
+
+  /// @addtogroup FsBrokerLib
+  /// @{
+
+  /*
    * These classes are intended to be Dfs equivalent of boost::iostreams::basic_file,
    * boost::iostreams::basic_file_source, boost::iostreams::basic_file_sink
    */
@@ -208,7 +215,11 @@ namespace Hypertable { namespace FsBroker {
       FileDevice::open(client, filename, accurate_length, mode);
     }
   };
-}} // namespace Hypertable::FsBroker
-#endif // HYPERTABLE_FSBROKER_FILE_DEVICE_H
+
+  /// @}
+
+}}}
+
+#endif // FsBroker_Lib_FileDevice_h
 
 

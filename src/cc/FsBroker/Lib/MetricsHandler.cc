@@ -37,7 +37,7 @@
 #include <mutex>
 
 using namespace Hypertable;
-using namespace FsBroker;
+using namespace Hypertable::FsBroker::Lib;
 using namespace std;
 
 namespace {

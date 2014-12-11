@@ -34,7 +34,7 @@ extern "C" {
 
 #include "Common/Init.h"
 #include "Common/Error.h"
-#include "Common/InteractiveCommand.h"
+#include <Common/InteractiveCommand.h>
 #include "Common/Properties.h"
 #include "Common/Usage.h"
 #include "AsyncComm/Comm.h"
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
     bool connected = !(event->type == Event::DISCONNECT && event->error == Error::COMM_CONNECT_ERROR);
 
-    FsBroker::Client *client = new FsBroker::Client(comm, addr, timeout_ms);
+    FsBroker::Lib::Client *client = new FsBroker::Lib::Client(comm, addr, timeout_ms);
 
     vector<InteractiveCommand *>  commands;
     commands.push_back(new CommandCopyFromLocal(client));

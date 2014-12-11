@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -36,11 +36,10 @@ extern "C" {
 }
 
 namespace Hypertable {
-  using namespace FsBroker;
+namespace FsBroker {
 
-  /**
-   *
-   */
+  using namespace Lib;
+
   class OpenFileDataLocal : public OpenFileData {
   public:
   OpenFileDataLocal(const String &fname, int _fd, int _flags) : fd(_fd), flags(_flags), filename(fname) { }
@@ -53,9 +52,6 @@ namespace Hypertable {
     String filename;
   };
 
-  /**
-   *
-   */
   class OpenFileDataLocalPtr : public OpenFileDataPtr {
   public:
     OpenFileDataLocalPtr() : OpenFileDataPtr() { }
@@ -66,42 +62,35 @@ namespace Hypertable {
     }
   };
 
-
-  /**
-   *
-   */
-  class LocalBroker : public FsBroker::Broker {
+  class LocalBroker : public Lib::Broker {
   public:
     LocalBroker(PropertiesPtr &props);
     virtual ~LocalBroker();
 
-    virtual void open(ResponseCallbackOpen *cb, const char *fname,
+    virtual void open(Response::Callback::Open *cb, const char *fname,
                       uint32_t flags, uint32_t bufsz);
-    virtual void create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+    virtual void create(Response::Callback::Open *cb, const char *fname, uint32_t flags,
            int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
-    virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
-    virtual void append(ResponseCallbackAppend *cb, uint32_t fd,
+    virtual void read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount);
+    virtual void append(Response::Callback::Append *cb, uint32_t fd,
                         uint32_t amount, const void *data, bool sync);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
-    virtual void length(ResponseCallbackLength *cb, const char *fname,
+    virtual void length(Response::Callback::Length *cb, const char *fname,
                     bool accurate = true);
-    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+    virtual void pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
                        uint32_t amount, bool verify_checksum);
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
-    virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);
-    virtual void posix_readdir(ResponseCallbackPosixReaddir *cb,
-                    const char *dname);
+    virtual void readdir(Response::Callback::Readdir *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
-    virtual void exists(ResponseCallbackExists *cb, const char *fname);
+    virtual void exists(Response::Callback::Exists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
     virtual void debug(ResponseCallback *, int32_t command,
                        StaticBuffer &serialized_parameters);
-
 
   private:
 
@@ -118,6 +107,6 @@ namespace Hypertable {
     bool m_no_removal;
   };
 
-}
+}}
 
 #endif // FsBroker_local_LocalBroker_h

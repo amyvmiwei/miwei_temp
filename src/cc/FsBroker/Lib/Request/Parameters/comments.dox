@@ -1,0 +1,5 @@
+/// @defgroup FsBrokerLibRequestParameters Parameters
+/// @ingroup FsBrokerLibRequest
+/// %Request parameters.
+/// This module contains encode/decode classes for request parameters to file
+/// system broker functions.

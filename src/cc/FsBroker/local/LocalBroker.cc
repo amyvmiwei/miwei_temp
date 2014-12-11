@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -52,6 +52,7 @@ extern "C" {
 }
 
 using namespace Hypertable;
+using namespace Hypertable::FsBroker;
 using namespace std;
 
 atomic_t LocalBroker::ms_next_fd = ATOMIC_INIT(0);
@@ -103,7 +104,7 @@ LocalBroker::~LocalBroker() {
 
 
 void
-LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, 
+LocalBroker::open(Response::Callback::Open *cb, const char *fname, 
                   uint32_t flags, uint32_t bufsz) {
   int fd, local_fd;
   String abspath;
@@ -159,7 +160,7 @@ LocalBroker::open(ResponseCallbackOpen *cb, const char *fname,
 
 
 void
-LocalBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+LocalBroker::create(Response::Callback::Open *cb, const char *fname, uint32_t flags,
                     int32_t bufsz, int16_t replication, int64_t blksz) {
   int fd, local_fd;
   int oflags = O_WRONLY | O_CREAT;
@@ -230,7 +231,7 @@ void LocalBroker::close(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
+void LocalBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
   uint64_t offset;
@@ -273,7 +274,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
 }
 
 
-void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
+void LocalBroker::append(Response::Callback::Append *cb, uint32_t fd,
                          uint32_t amount, const void *data, bool sync) {
   OpenFileDataLocalPtr fdata;
   ssize_t nwritten;
@@ -383,7 +384,7 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
 }
 
 
-void LocalBroker::length(ResponseCallbackLength *cb, const char *fname,
+void LocalBroker::length(Response::Callback::Length *cb, const char *fname,
         bool accurate) {
   String abspath;
   uint64_t length;
@@ -411,7 +412,7 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fname,
 
 
 void
-LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+LocalBroker::pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
                    uint32_t amount, bool) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
@@ -516,7 +517,7 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
 
 }
 
-void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
+void LocalBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {
   std::vector<Filesystem::Dirent> listing;
   Filesystem::Dirent entry;
   String absdir;
@@ -614,78 +615,6 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 }
 
 
-void LocalBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
-            const char *dname) {
-  std::vector<Filesystem::DirectoryEntry> listing;
-  String absdir;
-
-  HT_DEBUGF("PosixReaddir dir='%s'", dname);
-
-  if (dname[0] == '/')
-    absdir = m_rootdir + dname;
-  else
-    absdir = m_rootdir + "/" + dname;
-
-  DIR *dirp = opendir(absdir.c_str());
-  if (dirp == 0) {
-    report_error(cb);
-    HT_ERRORF("opendir('%s') failed - %s", absdir.c_str(), strerror(errno));
-    return;
-  }
-
-  struct dirent *dp = (struct dirent *)new uint8_t [sizeof(struct dirent)+1025];
-  struct dirent *result;
-
-  if (readdir_r(dirp, dp, &result) != 0) {
-    report_error(cb);
-    HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
-    (void)closedir(dirp);
-    delete [] (uint8_t *)dp;
-    return;
-  }
-
-  while (result != 0) {
-    if (result->d_name[0] != '.' && result->d_name[0] != 0) {
-      Filesystem::DirectoryEntry dirent;
-      if (m_no_removal) {
-        size_t len = strlen(result->d_name);
-        if (len <= 8 || strcmp(&result->d_name[len-8], ".deleted"))
-          dirent.name = result->d_name;
-        else
-          continue;
-      }
-      else
-        dirent.name = result->d_name;
-      dirent.flags = 0;
-      if (result->d_type & DT_DIR) {
-        dirent.flags |= Filesystem::DIRENT_DIRECTORY;
-        dirent.length = 0;
-      }
-      else {
-        dirent.length = (uint32_t)FileUtils::size(absdir + "/"
-                + result->d_name);
-      }
-      listing.push_back(dirent);
-      //HT_INFOF("readdir Adding listing '%s'", result->d_name);
-    }
-
-    if (readdir_r(dirp, dp, &result) != 0) {
-      report_error(cb);
-      HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
-      delete [] (uint8_t *)dp;
-      return;
-    }
-  }
-  (void)closedir(dirp);
-
-  delete [] (uint8_t *)dp;
-
-  HT_DEBUGF("Sending back %d listings", (int)listing.size());
-
-  cb->response(listing);
-}
-
-
 void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataLocalPtr fdata;
 
@@ -722,7 +651,7 @@ void LocalBroker::shutdown(ResponseCallback *cb) {
 }
 
 
-void LocalBroker::exists(ResponseCallbackExists *cb, const char *fname) {
+void LocalBroker::exists(Response::Callback::Exists *cb, const char *fname) {
   String abspath;
 
   HT_DEBUGF("exists file='%s'", fname);

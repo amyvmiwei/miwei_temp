@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.util.LinkedList;
 
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 class CommTestThreadFunction implements Runnable {
 

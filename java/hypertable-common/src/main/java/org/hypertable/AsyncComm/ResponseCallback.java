@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,7 +22,9 @@
 package org.hypertable.AsyncComm;
 
 import java.net.InetSocketAddress;
+
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 /**
  *

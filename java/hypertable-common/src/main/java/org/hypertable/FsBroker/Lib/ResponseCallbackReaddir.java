@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -26,31 +26,48 @@ import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
-import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.Common.Error;
 import org.hypertable.Common.Filesystem;
+import org.hypertable.Common.Serialization;
+
+import java.io.UnsupportedEncodingException;
+import java.util.logging.Logger;
 
 public class ResponseCallbackReaddir extends ResponseCallback {
+
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
   ResponseCallbackReaddir(Comm comm, Event event) {
     super(comm, event);
   }
 
+  static final byte VERSION = 1;
+
   public int response(Filesystem.Dirent [] listing) {
-    CommHeader header = new CommHeader();
-    int listing_count = 0;
-    header.initialize_from_request_header(mEvent.header);
-    if (listing != null)
-      listing_count = listing.length;
-    int len = 8;
-    for (int i=0; i<listing_count; i++)
-      len += listing[i].EncodedLength();
-    CommBuf cbuf = new CommBuf(header, len);
-    cbuf.AppendInt(Error.OK);
-    cbuf.AppendInt(listing_count);
-    for (int i=0; i<listing_count; i++)
-      listing[i].Encode(cbuf.data);
-    return mComm.SendResponse(mEvent.addr, cbuf);
+    try {
+      CommHeader header = new CommHeader();
+      int listing_count = (listing != null) ? listing.length : 0;
+      header.initialize_from_request_header(mEvent.header);
+      int internal_length = 4;
+      for (int i=0; i<listing_count; i++)
+        internal_length += listing[i].EncodedLength();
+      CommBuf cbuf = new CommBuf(header, 5 + Serialization.EncodedLengthVInt32(internal_length) + internal_length);
+      cbuf.AppendInt(Error.OK);
+      cbuf.AppendByte(VERSION);
+      Serialization.EncodeVInt32(cbuf.data, internal_length);
+      cbuf.AppendInt(listing_count);
+      for (int i=0; i<listing_count; i++)
+        listing[i].Encode(cbuf.data);
+      return mComm.SendResponse(mEvent.addr, cbuf);
+    }
+    catch (Exception e) {
+      int error = error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (READDIR) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (READDIR) error back to client - "
+                   + Error.GetText(error));
+    }
+    return Error.OK;
   }
 }
 

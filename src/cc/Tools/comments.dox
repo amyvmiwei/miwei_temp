@@ -1,5 +1,5 @@
 /// @defgroup Tools Tools
-/// %Hypertable command line tools.
+/// Command-line tools.
 /// The %Tools module contains command line programs that can be used to
 /// interact with the various %Hypertable system components.
 

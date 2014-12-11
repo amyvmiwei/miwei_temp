@@ -1,0 +1,5 @@
+/// @defgroup FsBrokerLibResponseParameters Parameters
+/// @ingroup FsBrokerLibResponse
+/// %Response parameters.
+/// This module contains encode/decode classes for response parameters to file
+/// system broker functions.

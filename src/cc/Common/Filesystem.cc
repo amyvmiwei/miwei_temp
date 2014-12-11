@@ -29,135 +29,53 @@
  * methods could throw Exception.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "Filesystem.h"
+
+#include <Common/Error.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Serialization;
 
+namespace {
+  uint8_t DIRENT_VERSION {1};
+}
 
 size_t Filesystem::Dirent::encoded_length() const {
-  return encoded_length_str16(name) + 13;
+  size_t length = internal_encoded_length();
+  return 1 + Serialization::encoded_length_vi32(length) + length;
 }
 void Filesystem::Dirent::encode(uint8_t **bufp) const {
-  encode_str16(bufp, name);
+  encode_i8(bufp, DIRENT_VERSION);
+  encode_vi32(bufp, internal_encoded_length());
+  encode_vstr(bufp, name);
   encode_i64(bufp, length);
   encode_i32(bufp, last_modification_time);
   encode_bool(bufp, is_dir);
 }
 
 void Filesystem::Dirent::decode(const uint8_t **bufp, size_t *remainp) {
-  name = decode_str16(bufp, remainp);
+  uint8_t version = Serialization::decode_i8(bufp, remainp);
+  if (version != DIRENT_VERSION)
+    HT_THROWF(Error::PROTOCOL_ERROR,
+	      "Dirent parameters version mismatch, expected %d, got %d",
+	      (int)DIRENT_VERSION, (int)version);
+  uint32_t encoding_length = Serialization::decode_vi32(bufp, remainp);
+  const uint8_t *end = *bufp + encoding_length;
+  name = decode_vstr(bufp, remainp);
   length = decode_i64(bufp, remainp);
   last_modification_time = decode_i32(bufp, remainp);
   is_dir = decode_bool(bufp, remainp);
+  // If encoding is longer than we expect, that means we're decoding a newer
+  // version, so skip the newer portion that we don't know about
+  if (*bufp < end)
+    *bufp = end;
 }
 
-
-int Filesystem::decode_response_open(EventPtr &event_ptr) {
-  const uint8_t *decode_ptr = event_ptr->payload;
-  size_t decode_remain = event_ptr->payload_len;
-  int error = decode_i32(&decode_ptr, &decode_remain);
-
-  if (error != Error::OK)
-    HT_THROW(error, "");
-
-  return decode_i32(&decode_ptr, &decode_remain);
-}
-
-
-int Filesystem::decode_response_create(EventPtr &event_ptr) {
-  return decode_response_open(event_ptr);
-}
-
-
-size_t
-Filesystem::decode_response_read(EventPtr &event_ptr, void *dst, size_t len) {
-  const uint8_t *decode_ptr = event_ptr->payload;
-  size_t decode_remain = event_ptr->payload_len;
-
-  int error = decode_i32(&decode_ptr, &decode_remain);
-
-  if (error != Error::OK)
-    HT_THROW(error, "");
-
-  // uint64_t offset =
-  decode_i64(&decode_ptr, &decode_remain);
-  uint32_t nread = decode_i32(&decode_ptr, &decode_remain);
-
-  if (nread == (uint32_t)-1)
-    return 0;
-
-  if (decode_remain < nread)
-    HT_THROWF(Error::RESPONSE_TRUNCATED, "%lu < %lu",
-              (Lu)decode_remain, (Lu)nread);
-
-  // PERF: We could just send back a pointer to msg here
-  memcpy(dst, decode_ptr, nread);
-
-  return nread;
-}
-
-
-/**
- */
-size_t
-Filesystem::decode_response_read_header(EventPtr &event_ptr, uint64_t *offsetp,
-                                        uint8_t **dstp) {
-  const uint8_t *decode_ptr = event_ptr->payload;
-  size_t decode_remain = event_ptr->payload_len;
-
-  int error = decode_i32(&decode_ptr, &decode_remain);
-
-  if (error != Error::OK)
-    HT_THROW(error, "");
-
-  *offsetp = decode_i64(&decode_ptr, &decode_remain);
-  uint32_t amount = decode_i32(&decode_ptr, &decode_remain);
-
-  if (dstp)
-    *dstp = (uint8_t *)decode_ptr;
-
-  return amount;
-}
-
-
-size_t
-Filesystem::decode_response_pread(EventPtr &event_ptr, void *dst, size_t len) {
-  return decode_response_read(event_ptr, dst, len);
-}
-
-
-size_t
-Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
-  const uint8_t *decode_ptr = event_ptr->payload;
-  size_t decode_remain = event_ptr->payload_len;
-
-  int error = decode_i32(&decode_ptr, &decode_remain);
-
-  if (error != Error::OK)
-    HT_THROW(error, "");
-
-  *offsetp = decode_i64(&decode_ptr, &decode_remain);
-
-  return decode_i32(&decode_ptr, &decode_remain);
-}
-
-
-int64_t
-Filesystem::decode_response_length(EventPtr &event_ptr) {
-  const uint8_t *decode_ptr = event_ptr->payload;
-  size_t decode_remain = event_ptr->payload_len;
-
-  int error = decode_i32(&decode_ptr, &decode_remain);
-
-  if (error != Error::OK)
-    HT_THROW(error, "");
-
-  return decode_i64(&decode_ptr, &decode_remain);
+size_t Filesystem::Dirent::internal_encoded_length() const {
+  return 13 + encoded_length_vstr(name);
 }
 
 
@@ -180,31 +98,6 @@ Filesystem::decode_response_readdir(EventPtr &event_ptr,
   for (uint32_t i = 0; i < len; i++) {
     entry.decode(&decode_ptr, &decode_remain);
     listing.push_back(entry);
-  }
-}
-
-void
-Filesystem::decode_response_posix_readdir(EventPtr &event_ptr,
-        std::vector<DirectoryEntry> &listing) {
-  const uint8_t *decode_ptr = event_ptr->payload;
-  size_t decode_remain = event_ptr->payload_len;
-
-  int error = decode_i32(&decode_ptr, &decode_remain);
-
-  if (error != Error::OK)
-    HT_THROW(error, "");
-
-  listing.clear();
-
-  uint32_t len = decode_i32(&decode_ptr, &decode_remain);
-  uint16_t slen;
-
-  for (uint32_t i = 0; i < len; i++) {
-    DirectoryEntry dirent;
-    dirent.name = decode_str16(&decode_ptr, &decode_remain, &slen);
-    dirent.flags = decode_i32(&decode_ptr, &decode_remain);
-    dirent.length = decode_i32(&decode_ptr, &decode_remain);
-    listing.push_back(dirent);
   }
 }
 

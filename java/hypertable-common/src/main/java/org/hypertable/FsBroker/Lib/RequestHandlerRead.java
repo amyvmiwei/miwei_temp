@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,43 +27,55 @@ import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class RequestHandlerRead extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-    public RequestHandlerRead(Comm comm, Broker broker, Event event) {
-        super(event);
-        mComm = comm;
-        mBroker = broker;
+  static final byte VERSION = 1;
+
+  public RequestHandlerRead(Comm comm, Broker broker, Event event) {
+    super(event);
+    mComm = comm;
+    mBroker = broker;
+  }
+
+  public void run() {
+    ResponseCallbackRead cb = new ResponseCallbackRead(mComm, mEvent);
+
+    try {
+
+      if (mEvent.payload.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+
+      int version = (int)mEvent.payload.get();
+      if (version != VERSION)
+        throw new ProtocolException("Read parameters version mismatch, expected " +
+                                    VERSION + ", got " + version);
+
+      int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
+      int start_position = mEvent.payload.position();
+
+      int fd = mEvent.payload.getInt();
+
+      int amount = mEvent.payload.getInt();
+
+      if ((mEvent.payload.position() - start_position) < encoding_length)
+        mEvent.payload.position(start_position + encoding_length);
+
+      mBroker.Read(cb, fd, amount);
+
     }
-
-    public void run() {
-        int     fd, amount;
-        ResponseCallbackRead cb = new ResponseCallbackRead(mComm, mEvent);
-
-        try {
-
-            if (mEvent.payload.remaining() < 8)
-                throw new ProtocolException("Truncated message");
-
-            fd = mEvent.payload.getInt();
-
-            amount = mEvent.payload.getInt();
-
-            mBroker.Read(cb, fd, amount);
-
-        }
-        catch (ProtocolException e) {
-            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-            log.severe("Protocol error (READ) - " + e.getMessage());
-            if (error != Error.OK)
-                log.severe("Problem sending (READ) error back to client - "
-                           + Error.GetText(error));
-        }
+    catch (Exception e) {
+      int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (READ) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (READ) error back to client - "
+                   + Error.GetText(error));
     }
+  }
 
-    private Comm       mComm;
-    private Broker mBroker;
+  private Comm mComm;
+  private Broker mBroker;
 }

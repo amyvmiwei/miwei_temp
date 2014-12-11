@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,61 +19,68 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_FSBROKER_CONNECTIONHANDLERFACTORY_H
-#define HYPERTABLE_FSBROKER_CONNECTIONHANDLERFACTORY_H
+#ifndef FsBroker_Lib_ConnectionHandlerFactory_h
+#define FsBroker_Lib_ConnectionHandlerFactory_h
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/ConnectionHandlerFactory.h"
-#include "AsyncComm/DispatchHandler.h"
-
-#include "ConnectionHandler.h"
 #include "Broker.h"
+#include "ConnectionHandler.h"
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/ConnectionHandlerFactory.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
 
 namespace Hypertable {
+namespace FsBroker {
+namespace Lib {
 
-  class Comm;
+  /// @addtogroup FsBrokerLib
+  /// @{
 
-  namespace FsBroker {
+  /**
+   * This class serves as the connection handler factory.  An object of this
+   * class is registered with the AsyncComm system by passing it as a
+   * parameter to the Listen method.  When a connection request arrives, the
+   * newInstance method of this class is called which creates an
+   * FsBroker::connection_handler that will be used to service the
+   * connection.
+   */
+  class ConnectionHandlerFactory
+    : public Hypertable::ConnectionHandlerFactory {
+  public:
+    /**
+     * Constructor.  Saves a copy of the pointers to the Comm,
+     * ApplicationQueue, and Broker objects which are required in the
+     * FsBroker::connection_handler constructor.
+     *
+     * @param comm pointer to the AsyncComm object
+     * @param app_queue pointer to the application work queue
+     * @param broker abstract pointer to the broker object
+     */
+    ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
+			     BrokerPtr &broker)
+      : m_comm(comm), m_app_queue(app_queue), m_broker(broker) { }
 
     /**
-     * This class serves as the connection handler factory.  An object of this
-     * class is registered with the AsyncComm system by passing it as a
-     * parameter to the Listen method.  When a connection request arrives, the
-     * newInstance method of this class is called which creates an
-     * FsBroker::connection_handler that will be used to service the
-     * connection.
+     * Returns a newly constructed FsBroker::connection_handler object
      */
-    class ConnectionHandlerFactory
-      : public Hypertable::ConnectionHandlerFactory {
-    public:
-      /**
-       * Constructor.  Saves a copy of the pointers to the Comm,
-       * ApplicationQueue, and Broker objects which are required in the
-       * FsBroker::connection_handler constructor.
-       *
-       * @param comm pointer to the AsyncComm object
-       * @param app_queue pointer to the application work queue
-       * @param broker abstract pointer to the broker object
-       */
-      ConnectionHandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
-                               BrokerPtr &broker)
-        : m_comm(comm), m_app_queue_ptr(app_queue), m_broker_ptr(broker) { }
+    virtual void get_instance(DispatchHandlerPtr &dhp) {
+      dhp = new ConnectionHandler(m_comm, m_app_queue, m_broker);
+    }
 
-      /**
-       * Returns a newly constructed FsBroker::connection_handler object
-       */
-      virtual void get_instance(DispatchHandlerPtr &dhp) {
-        dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_broker_ptr);
-      }
+  private:
+    /// Pointer to comm layer
+    Comm *m_comm;
 
-    private:
-      Comm                *m_comm;
-      ApplicationQueuePtr  m_app_queue_ptr;
-      BrokerPtr            m_broker_ptr;
-    };
+    /// Application queue
+    ApplicationQueuePtr m_app_queue;
 
-  }
+    /// Pointer to file system broker object
+    BrokerPtr m_broker;
+  };
 
-}
+  /// @}
 
-#endif // HYPERTABLE_FSBROKER_CONNECTIONHANDLERFACTORY_H
+}}}
+
+#endif // FsBroker_Lib_ConnectionHandlerFactory_h

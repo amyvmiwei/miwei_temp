@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,42 +25,58 @@ import java.net.ProtocolException;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
-import org.hypertable.AsyncComm.Serialization;
+import org.hypertable.Common.Serialization;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.Common.Error;
 
 public class RequestHandlerLength extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-    public RequestHandlerLength(Comm comm, Broker broker, Event event) {
-        super(event);
-        mComm = comm;
-        mBroker = broker;
+  static final byte VERSION = 1;
+
+  public RequestHandlerLength(Comm comm, Broker broker, Event event) {
+    super(event);
+    mComm = comm;
+    mBroker = broker;
+  }
+
+  public void run() {
+    String  fileName;
+    ResponseCallbackLength cb = new ResponseCallbackLength(mComm, mEvent);
+
+    try {
+
+      if (mEvent.payload.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+
+      int version = (int)mEvent.payload.get();
+      if (version != VERSION)
+        throw new ProtocolException("Length parameters version mismatch, expected " +
+                                    VERSION + ", got " + version);
+
+      int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
+      int start_position = mEvent.payload.position();
+
+      if ((fileName = Serialization.DecodeVStr(mEvent.payload)) == null)
+        throw new ProtocolException("Filename not properly encoded in request packet");
+
+      boolean accurate = mEvent.payload.get() == '\000' ? false : true;
+
+      if ((mEvent.payload.position() - start_position) < encoding_length)
+        mEvent.payload.position(start_position + encoding_length);
+
+      mBroker.Length(cb, fileName, accurate);
     }
-
-    public void run() {
-        String  fileName;
-        ResponseCallbackLength cb = new ResponseCallbackLength(mComm, mEvent);
-
-        try {
-            if ((fileName = Serialization.DecodeString(mEvent.payload)) == null)
-                throw new ProtocolException(
-                    "Filename not properly encoded in request packet");
-            boolean accurate = mEvent.payload.get() == '\000' ? false : true;
-
-            mBroker.Length(cb, fileName, accurate);
-        }
-        catch (ProtocolException e) {
-            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-            log.severe("Protocol error (LENGTH) - " + e.getMessage());
-            if (error != Error.OK)
-                log.severe("Problem sending (LENGTH) error back to client - "
-                           + Error.GetText(error));
-        }
+    catch (Exception e) {
+      int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (LENGTH) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (LENGTH) error back to client - "
+                   + Error.GetText(error));
     }
+  }
 
-    private Comm       mComm;
-    private Broker mBroker;
+  private Comm mComm;
+  private Broker mBroker;
 }

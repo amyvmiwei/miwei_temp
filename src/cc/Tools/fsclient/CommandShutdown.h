@@ -24,15 +24,15 @@
 
 #include <vector>
 
-#include "Common/InteractiveCommand.h"
+#include <Common/InteractiveCommand.h>
 
-#include "FsBroker/Lib/Client.h"
+#include <FsBroker/Lib/Client.h>
 
 namespace Hypertable {
 
   class CommandShutdown : public InteractiveCommand {
   public:
-  CommandShutdown(FsBroker::Client *client, bool nowait, bool connected) 
+  CommandShutdown(FsBroker::Lib::Client *client, bool nowait, bool connected) 
     : m_client(client), m_nowait(nowait), m_connected(connected) { return; }
     virtual const char *command_text() { return "shutdown"; }
     virtual const char **usage() { return ms_usage; }
@@ -41,7 +41,7 @@ namespace Hypertable {
   private:
     static const char *ms_usage[];
 
-    FsBroker::Client *m_client;
+    FsBroker::Lib::Client *m_client;
     bool m_nowait;
     bool m_connected;
   };

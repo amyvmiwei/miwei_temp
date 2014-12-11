@@ -141,7 +141,7 @@ namespace Hypertable {
     NamespacePtr m_namespace;
     uint32_t m_mutator_flags;
     ConnectionManagerPtr m_conn_manager;
-    FsBroker::ClientPtr m_fs_client;
+    FsBroker::Lib::ClientPtr m_fs_client;
     bool m_immutable_namespace;
   };
 

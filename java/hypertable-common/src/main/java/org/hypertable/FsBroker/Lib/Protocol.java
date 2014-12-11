@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,7 +27,7 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     public static final short COMMAND_CREATE        = 1;
     public static final short COMMAND_CLOSE         = 2;
     public static final short COMMAND_READ          = 3;
-    public static final short COMMAND_WRITE         = 4;
+    public static final short COMMAND_APPEND         = 4;
     public static final short COMMAND_SEEK          = 5;
     public static final short COMMAND_REMOVE        = 6;
     public static final short COMMAND_SHUTDOWN      = 7;

@@ -24,15 +24,15 @@
 
 #include <vector>
 
-#include "Common/InteractiveCommand.h"
+#include <Common/InteractiveCommand.h>
 
-#include "FsBroker/Lib/Client.h"
+#include <FsBroker/Lib/Client.h>
 
 namespace Hypertable {
 
   class CommandRmdir : public InteractiveCommand {
   public:
-    CommandRmdir(FsBroker::Client *client) : m_client(client) { return; }
+    CommandRmdir(FsBroker::Lib::Client *client) : m_client(client) { return; }
     virtual const char *command_text() { return "rmdir"; }
     virtual const char **usage() { return ms_usage; }
     virtual void run();
@@ -40,7 +40,7 @@ namespace Hypertable {
   private:
     static const char *ms_usage[];
 
-    FsBroker::Client *m_client;
+    FsBroker::Lib::Client *m_client;
   };
 }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -54,13 +54,13 @@ const char *CommandCopyToLocal::ms_usage[] = {
 void CommandCopyToLocal::run() {
   DispatchHandlerSynchronizer sync_handler;
   int32_t fd = 0;
-  EventPtr event_ptr;
+  EventPtr event;
   FILE *fp = 0;
   uint64_t start_off = 0;
   int src_arg = 0;
   uint64_t offset;
   uint32_t amount;
-  uint8_t *dst;
+  const uint8_t *dst;
 
   if (m_args.size() < 2)
     HT_THROW(Error::COMMAND_PARSE_ERROR, "Insufficient number of arguments");
@@ -85,16 +85,17 @@ void CommandCopyToLocal::run() {
     m_client->read(fd, BUFFER_SIZE, &sync_handler);
     m_client->read(fd, BUFFER_SIZE, &sync_handler);
 
-    while (sync_handler.wait_for_reply(event_ptr)) {
-      amount = Filesystem::decode_response_read_header(event_ptr, &offset,
-                                                       &dst);
+    while (sync_handler.wait_for_reply(event)) {
+
+      m_client->decode_response_pread(event, (const void **)&dst, &offset, &amount);
+
       if (amount > 0) {
         if (fwrite(dst, amount, 1, fp) != 1)
           HT_THROW(Error::EXTERNAL, strerror(errno));
       }
 
       if (amount < (uint32_t)BUFFER_SIZE) {
-        sync_handler.wait_for_reply(event_ptr);
+        sync_handler.wait_for_reply(event);
         break;
       }
 

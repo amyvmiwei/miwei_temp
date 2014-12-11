@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,7 +19,21 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "MaprBroker.h"
+
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/FileUtils.h>
+#include <Common/Filesystem.h>
+#include <Common/Path.h>
+#include <Common/ScopeGuard.h>
+#include <Common/String.h>
+#include <Common/System.h>
+#include <Common/SystemInfo.h>
+
+#include <boost/algorithm/string.hpp>
 
 #include <cerrno>
 #include <cstdio>
@@ -40,21 +54,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "AsyncComm/ReactorFactory.h"
-
-#include "Common/FileUtils.h"
-#include "Common/Filesystem.h"
-#include "Common/Path.h"
-#include "Common/ScopeGuard.h"
-#include "Common/String.h"
-#include "Common/System.h"
-#include "Common/SystemInfo.h"
-
-#include "MaprBroker.h"
-
-#include <boost/algorithm/string.hpp>
-
 using namespace Hypertable;
+using namespace Hypertable::FsBroker;
 using namespace std;
 
 atomic_t MaprBroker::ms_next_fd = ATOMIC_INIT(0);
@@ -80,7 +81,7 @@ MaprBroker::~MaprBroker() {
 
 
 void
-MaprBroker::open(ResponseCallbackOpen *cb, const char *fname, 
+MaprBroker::open(Response::Callback::Open *cb, const char *fname, 
 		 uint32_t flags, uint32_t bufsz) {
   hdfsFile file;
   int fd;
@@ -116,7 +117,7 @@ MaprBroker::open(ResponseCallbackOpen *cb, const char *fname,
 
 
 void
-MaprBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+MaprBroker::create(Response::Callback::Open *cb, const char *fname, uint32_t flags,
                     int32_t bufsz, int16_t replication, int64_t blksz) {
   hdfsFile file;
   int fd;
@@ -169,7 +170,7 @@ void MaprBroker::close(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-void MaprBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
+void MaprBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataMaprPtr fdata;
   tSize nread;
   int64_t offset;
@@ -222,7 +223,7 @@ void MaprBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
 }
 
 
-void MaprBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
+void MaprBroker::append(Response::Callback::Append *cb, uint32_t fd,
                          uint32_t amount, const void *data, bool sync) {
   OpenFileDataMaprPtr fdata;
   tSize nwritten;
@@ -317,7 +318,7 @@ void MaprBroker::remove(ResponseCallback *cb, const char *fname) {
 }
 
 
-void MaprBroker::length(ResponseCallbackLength *cb, const char *fname,
+void MaprBroker::length(Response::Callback::Length *cb, const char *fname,
                         bool accurate) {
   hdfsFileInfo *fileInfo;
   int error;
@@ -342,7 +343,7 @@ void MaprBroker::length(ResponseCallbackLength *cb, const char *fname,
 
 
 void
-MaprBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+MaprBroker::pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
 		  uint32_t amount, bool) {
   OpenFileDataMaprPtr fdata;
   ssize_t nread;
@@ -476,7 +477,7 @@ void MaprBroker::rmdir(ResponseCallback *cb, const char *dname) {
 }
 
 
-void MaprBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
+void MaprBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {
   std::vector<Filesystem::Dirent> listing;
   hdfsFileInfo *fileInfo;
   int numEntries;
@@ -508,13 +509,6 @@ void MaprBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   HT_DEBUGF("Sending back %d listings", (int)listing.size());
 
   cb->response(listing);
-}
-
-
-void MaprBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
-        const char *dname) {
-  HT_ERROR("posix_readdir is not implemented");
-  cb->error(Error::NOT_IMPLEMENTED, "posix_readdir is not implemented");
 }
 
 
@@ -557,7 +551,7 @@ void MaprBroker::shutdown(ResponseCallback *cb) {
 }
 
 
-void MaprBroker::exists(ResponseCallbackExists *cb, const char *fname) {
+void MaprBroker::exists(Response::Callback::Exists *cb, const char *fname) {
   String abspath;
 
   HT_DEBUGF("exists file='%s'", fname);

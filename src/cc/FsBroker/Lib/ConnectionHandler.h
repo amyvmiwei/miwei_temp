@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,36 +19,61 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CONNECTIONHANDLER_H
-#define HYPERTABLE_CONNECTIONHANDLER_H
+/// @file
+/// Declarations for ConnectionHandler.
+/// This file contains declarations for ConnectionHandler, a class that handles
+/// incoming client requests.
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#ifndef FsBroker_Lib_ConnectionHandler_h
+#define FsBroker_Lib_ConnectionHandler_h
 
 #include "Broker.h"
 
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/DispatchHandler.h>
+
 namespace Hypertable {
+namespace FsBroker {
+namespace Lib {
 
-  namespace FsBroker {
+  /// @addtogroup FsBrokerLib
+  /// @{
 
-    /**
-     */
-    class ConnectionHandler : public DispatchHandler {
-    public:
-      ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                        BrokerPtr &broker)
-        : m_comm(comm), m_app_queue_ptr(app_queue), m_broker_ptr(broker) { }
+  /// Connection handler for file system brokers.
+  class ConnectionHandler : public DispatchHandler {
 
-      virtual void handle(EventPtr &event_ptr);
+  public:
+    /// Constructor.
+    /// Initializes #m_comm with <code>comm</code>, #m_app_queue with
+    /// <code>app_queue</code>, and #m_broker with <code>broker</code>.
+    /// @param comm Pointer to comm layer
+    /// @param app_queue Application queue
+    /// @param broker Pointer to file system broker object
+    ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
+		      BrokerPtr &broker)
+      : m_comm(comm), m_app_queue(app_queue), m_broker(broker) { }
 
-    private:
-      Comm               *m_comm;
-      ApplicationQueuePtr m_app_queue_ptr;
-      BrokerPtr           m_broker_ptr;
-    };
-  }
+    /// Handles incoming events from client connections.
+    /// For Event::MESSAGE events, this method inspects the command code and
+    /// creates an appropriate request handler and adds it to the application
+    /// queue.
+    /// @param event Comm layer event
+    virtual void handle(EventPtr &event);
 
-}
+  private:
+    /// Pointer to comm layer
+    Comm *m_comm;
 
-#endif // HYPERTABLE_CONNECTIONHANDLER_H
+    /// Application queue
+    ApplicationQueuePtr m_app_queue;
+
+    /// Pointer to file system broker object
+    BrokerPtr m_broker;
+  };
+
+  /// @}
+
+}}}
+
+#endif // FsBroker_Lib_ConnectionHandler_h
 

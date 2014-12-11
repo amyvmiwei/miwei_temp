@@ -33,7 +33,7 @@ namespace Hypertable {
 
   public:
 
-    static LoadDataSource *create(FsBroker::ClientPtr &dfs_client,
+    static LoadDataSource *create(FsBroker::Lib::ClientPtr &dfs_client,
                                   const String &fname, const int src,
                                   const String &header_fname, const int header_src,
                                   const std::vector<String> &key_columns,

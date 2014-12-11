@@ -49,13 +49,17 @@ FIND_QFS_LIB(qfs_io)
 FIND_QFS_LIB(qfs_common)
 FIND_QFS_LIB(qfs_qcdio)
 FIND_QFS_LIB(qfs_qcrs)
+FIND_QFS_LIB(qfskrb)
+FIND_QFS_LIB(Jerasure)
+FIND_QFS_LIB(gf_complete)
 
 find_library(Crypto_LIB NAMES crypto PATHS /opt/local/lib /usr/local/lib)
 
 if (Qfs_INCLUDE_DIR AND qfs_client_LIB)
   set(Qfs_FOUND TRUE)
   set( Qfs_LIBRARIES ${qfs_client_LIB} ${qfs_io_LIB} ${qfs_common_LIB}
-                     ${qfs_qcdio_LIB} ${qfs_qcrs_LIB} ${Crypto_LIB})
+                     ${qfs_qcdio_LIB} ${qfs_qcrs_LIB} ${qfskrb_LIB}
+                     ${Jerasure_LIB} ${gf_complete_LIB} ${Crypto_LIB})
 else ()
    set(Qfs_FOUND FALSE)
    set( Qfs_LIBRARIES)

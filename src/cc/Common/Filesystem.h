@@ -29,14 +29,17 @@
  * methods could throw Exception.
  */
 
-#ifndef HYPERTABLE_FILESYSTEM_H
-#define HYPERTABLE_FILESYSTEM_H
+#ifndef Common_Filesystem_h
+#define Common_Filesystem_h
+
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/Serializable.h>
+#include <Common/String.h>
+#include <Common/StaticBuffer.h>
+#include <Common/ReferenceCount.h>
 
 #include <vector>
-#include "Common/String.h"
-#include "Common/StaticBuffer.h"
-#include "Common/ReferenceCount.h"
-#include "AsyncComm/DispatchHandler.h"
 
 #define HT_DIRECT_IO_ALIGNMENT      512
 
@@ -72,16 +75,39 @@ namespace Hypertable {
       OPEN_FLAG_VERIFY_CHECKSUM = 0x00000004
     };
 
-    class Dirent {
+    /// Directory entry
+    class Dirent : public Serializable {
+
     public:
-      Dirent() : length(0), last_modification_time(0), is_dir(false) { }
-      size_t encoded_length() const;
-      void encode(uint8_t **bufp) const;
-      void decode(const uint8_t **bufp, size_t *remainp);
+      /// Returns encoded length of parameters
+      /// @return Encoded length of parameters
+      size_t encoded_length() const override;
+
+      /// Encodes parameters to buffer
+      /// @param bufp Address of buffer to encode parameters to
+      /// (advanced by call)
+      void encode(uint8_t **bufp) const override;
+
+      /// Decodes parameters from buffer
+      /// @param bufp Address of buffer from which to decode parameters
+      /// (advanced by call)
+      /// @param remainp Address of remaining encoded data in buffer
+      /// (advanced by call)
+      void decode(const uint8_t **bufp, size_t *remainp) override;
+
+      /// File or directory name
       String name;
-      uint64_t length;
-      time_t last_modification_time;
-      bool is_dir;
+      /// Length of file
+      uint64_t length {};
+      /// Last modification time
+      time_t last_modification_time {};
+      /// Flag indicating if entry id a directory
+      bool is_dir {};
+
+    private:
+      /// Returns encoded length minus leading length field
+      size_t internal_encoded_length() const;
+      
     };
 
     virtual ~Filesystem() { }
@@ -122,12 +148,10 @@ namespace Hypertable {
             uint32_t buf_size, uint32_t outstanding, uint64_t start_offset = 0,
             uint64_t end_offset = 0) = 0;
 
-    /** Decodes the response from an open request
-     *
-     * @param event_ptr reference to response event
-     * @return file descriptor
-     */
-    static int decode_response_open(EventPtr &event_ptr);
+    /// Decodes the response from an open request.
+    /// @param event reference to response event
+    /// @param fd Address of variable to hold file descriptor
+    virtual void decode_response_open(EventPtr &event, int32_t *fd) = 0;
 
     /** Creates a file asynchronously.  Issues a create file request with
      * various create mode parameters. The caller will get notified of
@@ -157,12 +181,10 @@ namespace Hypertable {
     virtual int create(const String &name, uint32_t flags, int32_t bufsz,
             int32_t replication, int64_t blksz) = 0;
 
-    /** Decodes the response from a create request
-     *
-     * @param event_ptr Reference to the response event
-     * @return The new file handle
-     */
-    static int decode_response_create(EventPtr &event_ptr);
+    /// Decodes the response from a create request.
+    /// @param event reference to response event
+    /// @param fd Address of variable to hold file descriptor
+    virtual void decode_response_create(EventPtr &event, int32_t *fd) = 0;
 
     /** Closes a file asynchronously.  Issues a close file request.
      * The caller will get notified of successful completion or error via
@@ -209,25 +231,13 @@ namespace Hypertable {
      */
     virtual size_t read(int fd, void *dst, size_t len) = 0;
 
-    /** Decodes the response from a read request
-     *
-     * @param event_ptr The reference to the response event
-     * @param dst The destination buffer for read data
-     * @param len The destination buffer size
-     * @return The amount read (in bytes)
-     */
-    static size_t decode_response_read(EventPtr &event_ptr,
-            void *dst, size_t len);
-
-    /** Decodes the header from the response from a read request
-     *
-     * @param event_ptr The reference to a response event
-     * @param offsetp The address of variable offset of data read.
-     * @param dstp The address of pointer to hold pointer to data read
-     * @return The amount read (in bytes)
-     */
-    static size_t decode_response_read_header(EventPtr &event_ptr,
-            uint64_t *offsetp, uint8_t **dstp = 0);
+    /// Decodes the response from a read request.
+    /// @param event A reference to the response event
+    /// @param buffer Address of buffer pointer
+    /// @param buffer Address of offset variable
+    /// @param buffer Address of length variable
+    virtual void decode_response_read(EventPtr &event, const void **buffer,
+                                      uint64_t *offset, uint32_t *length) = 0;
 
     /** Appends data to a file asynchronously.  Issues an append request.
      * The caller will get notified of successful completion or error via the
@@ -256,12 +266,12 @@ namespace Hypertable {
 
     /** Decodes the response from an append request
      *
-     * @param event_ptr A reference to the response event
-     * @param offsetp The address of variable to hold offset
-     * @return The amount appended (in bytes)
+     * @param event A reference to the response event
+     * @param offset Address of offset variable
+     * @param length Address of length variable
      */
-    static size_t decode_response_append(EventPtr &event_ptr,
-            uint64_t *offsetp);
+    virtual void decode_response_append(EventPtr &event, uint64_t *offset,
+                                        uint32_t *length) = 0;
 
     /** Seeks current file position asynchronously.  Issues a seek request.
      * The caller will get notified of successful completion or error via the
@@ -322,12 +332,10 @@ namespace Hypertable {
      */
     virtual int64_t length(const String &name, bool accurate = true) = 0;
 
-    /** Decodes the response from a length request
-     *
-     * @param event_ptr Reference to response event
-     * @return length of the file, in bytes
-     */
-    static int64_t decode_response_length(EventPtr &event_ptr);
+    /// Decodes the response from a length request.
+    /// @param event Reference to response event
+    /// @return length of the file, in bytes
+    virtual int64_t decode_response_length(EventPtr &event) = 0;
 
     /** Reads data from a file at the specified position asynchronously.
      * Issues a pread request.  The caller will get notified of successful
@@ -359,15 +367,13 @@ namespace Hypertable {
     virtual size_t pread(int fd, void *dst, size_t len, uint64_t offset,
             bool verify_checksum = true) = 0;
 
-    /** Decodes the response from a pread request
-     *
-     * @param event_ptr A reference to the response event
-     * @param dst The destination buffer for read data
-     * @param len The destination buffer size
-     * @return The amount of data read
-     */
-    static size_t decode_response_pread(EventPtr &event_ptr, void *dst,
-            size_t len);
+    /// Decodes the response from a pread request.
+    /// @param event A reference to the response event
+    /// @param buffer Address of buffer pointer
+    /// @param buffer Address of offset variable
+    /// @param buffer Address of length variable
+    virtual void decode_response_pread(EventPtr &event, const void **buffer,
+                                       uint64_t *offset, uint32_t *length) = 0;
 
     /** Creates a directory asynchronously.  Issues a mkdirs request which
      * creates a directory, including all its missing parents.  The caller
@@ -420,41 +426,11 @@ namespace Hypertable {
      */
     virtual void readdir(const String &name, std::vector<Dirent> &listing) = 0;
 
-    /** Decodes the response from a readdir request
-     *
-     * @param event_ptr A reference to the response event
-     * @param listing Reference to output vector of Dirent objects for each entry
-     */
-    static void decode_response_readdir(EventPtr &event_ptr,
-					std::vector<Dirent> &listing);
-
-    /** directory entries for the posix_readdir request */
-    struct DirectoryEntry {
-      String name;
-      uint32_t flags;
-      uint32_t length;
-    };
-
-    /** DirectoryEntry is a directory */
-    static const int DIRENT_DIRECTORY = 1;
-
-    /** Obtains a listing of all files in a directory, including additional
-     * information for each file. Issues a posix_readdir request
-     * and waits for it to complete.
-     *
-     * @param name absolute pathname of directory
-     * @param listing reference to vector of directory entries
-     */
-    virtual void posix_readdir(const String &name,
-            std::vector<DirectoryEntry> &listing) = 0;
-
-    /** Decodes the response from a posix-style readdir request
-     *
-     * @param event_ptr reference to response event
-     * @param listing reference to vector of DirectoryEntries
-     */
-    static void decode_response_posix_readdir(EventPtr &event_ptr,
-                                        std::vector<DirectoryEntry> &listing);
+    /// Decodes the response from a readdir request.
+    /// @param event A reference to the response event
+    /// @param listing Reference to output vector of Dirent objects
+    virtual void decode_response_readdir(EventPtr &event,
+                                         std::vector<Dirent> &listing) = 0;
 
     /** Flushes a file asynchronously.  Isues a flush command which causes all
      * buffered writes to get persisted to disk.  The caller will get notified
@@ -492,15 +468,12 @@ namespace Hypertable {
      */
     virtual bool exists(const String &name) = 0;
 
-    /** Decodes the response from an exists request.
-     *
-     * @param event_ptr A reference to the response event
-     * @return true if the file exists, otherwise false
-     */
-    static bool decode_response_exists(EventPtr &event_ptr);
+    /// Decodes the response from an exists request.
+    /// @param event A reference to the response event
+    /// @return <i>true</i> if the file exists, <i>false</i> otherwise
+    virtual bool decode_response_exists(EventPtr &event) = 0;
 
-    /** Rename a path asynchronously
-     *
+    /** Rename a path asynchronously.
      * @param src The source path
      * @param dst The destination path
      * @param handler The dispatch/callback handler
@@ -517,10 +490,10 @@ namespace Hypertable {
 
     /** Decodes the response from an request that only returns an error code
      *
-     * @param event_ptr A reference to the response event
+     * @param event A reference to the response event
      * @return The error code
      */
-    static int decode_response(EventPtr &event_ptr);
+    static int decode_response(EventPtr &event);
 
     /** Invokes debug request asynchronously
      *
@@ -576,5 +549,5 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_FILESYSTEM_H
+#endif // Common_Filesystem_h
 

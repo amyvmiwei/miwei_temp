@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
       HT_INFOF("Unable to delete state file %s", state_file.c_str());
 
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Lib::Client(context->conn_manager, context->props);
     context->mml_definition =
         new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
     context->monitoring = new Monitoring(context.get());

@@ -1,0 +1,4 @@
+/// @defgroup FsBrokerLibResponseCallback Callback
+/// @ingroup FsBrokerLibResponse
+/// %Response callbacks.
+/// This module contains response callback classes for the file system brokers.

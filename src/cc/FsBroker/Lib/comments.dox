@@ -1,0 +1,6 @@
+/// @defgroup FsBrokerLib Lib
+/// @ingroup FsBroker
+/// File %System %Broker library.
+/// This module contains the client interface and broker framework code for the
+/// file system brokers.
+

@@ -23,6 +23,7 @@
 package org.hypertable.AsyncComm;
 
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public abstract class Protocol {
 

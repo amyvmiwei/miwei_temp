@@ -19,11 +19,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_FSBROKER_CLIENT_H
-#define HYPERTABLE_FSBROKER_CLIENT_H
+/// @file
+/// Declarations for Client.
+/// This file contains declarations for Client, a client proxy class for the
+/// file system broker.
+
+#ifndef FsBroker_Lib_Client_h
+#define FsBroker_Lib_Client_h
 
 #include <FsBroker/Lib/ClientBufferedReaderHandler.h>
-#include <FsBroker/Lib/Protocol.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/ConnectionManager.h>
@@ -36,185 +40,200 @@
 
 #include <unordered_map>
 
-namespace Hypertable { namespace FsBroker {
+namespace Hypertable {
+namespace FsBroker {
+namespace Lib {
 
-    /** Proxy class for FS broker.  As specified in the general contract for a
-     * Filesystem, commands that operate on the same file descriptor are
-     * serialized by the underlying filesystem.  In other words, if you issue
-     * three asynchronous commands, they will get carried out and their
-     * responses will come back in the same order in which they were issued.
+  /// @addtogroup FsBrokerLib
+  /// @{
+
+  /** Proxy class for FS broker.  As specified in the general contract for a
+   * Filesystem, commands that operate on the same file descriptor are
+   * serialized by the underlying filesystem.  In other words, if you issue
+   * three asynchronous commands, they will get carried out and their
+   * responses will come back in the same order in which they were issued.
+   */
+  class Client : public Filesystem {
+  public:
+
+    virtual ~Client();
+
+    /** Constructor with explicit values.  Connects to the FS broker at the
+     * address given by the addr argument and uses the timeout argument for
+     * the request timeout values.
+     *
+     * @param conn_manager_ptr smart pointer to connection manager
+     * @param addr address of FS broker to connect to
+     * @param timeout_ms timeout value in milliseconds to use in requests
      */
-    class Client : public Filesystem {
-    public:
+    Client(ConnectionManagerPtr &conn_manager_ptr,
+	   const sockaddr_in &addr, uint32_t timeout_ms);
 
-      virtual ~Client();
+    /** Constructor with config var map.  The following properties are read
+     * to determine the location of the broker and the request timeout value:
+     * <pre>
+     * FsBroker.port
+     * FsBroker.host
+     * FsBroker.timeout
+     * </pre>
+     *
+     * @param conn_manager_ptr smart pointer to connection manager
+     * @param cfg config variables map
+     */
+    Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &cfg);
 
-      /** Constructor with explicit values.  Connects to the FS broker at the
-       * address given by the addr argument and uses the timeout argument for
-       * the request timeout values.
-       *
-       * @param conn_manager_ptr smart pointer to connection manager
-       * @param addr address of FS broker to connect to
-       * @param timeout_ms timeout value in milliseconds to use in requests
-       */
-      Client(ConnectionManagerPtr &conn_manager_ptr,
-             const sockaddr_in &addr, uint32_t timeout_ms);
+    /** Constructor without connection manager.
+     *
+     * @param comm pointer to the Comm object
+     * @param addr remote address of already connected FsBroker
+     * @param timeout_ms timeout value in milliseconds to use in requests
+     */
+    Client(Comm *comm, const sockaddr_in &addr, uint32_t timeout_ms);
 
-      /** Constructor with config var map.  The following properties are read
-       * to determine the location of the broker and the request timeout value:
-       * <pre>
-       * FsBroker.port
-       * FsBroker.host
-       * FsBroker.timeout
-       * </pre>
-       *
-       * @param conn_manager_ptr smart pointer to connection manager
-       * @param cfg config variables map
-       */
-      Client(ConnectionManagerPtr &conn_manager_ptr, PropertiesPtr &cfg);
+    /** Convenient contructor for dfs testing
+     *
+     * @param host - dfs hostname
+     * @param port - dfs port
+     * @param timeout_ms - timeout (in milliseconds) for requests
+     */
+    Client(const String &host, int port, uint32_t timeout_ms);
 
-      /** Constructor without connection manager.
-       *
-       * @param comm pointer to the Comm object
-       * @param addr remote address of already connected FsBroker
-       * @param timeout_ms timeout value in milliseconds to use in requests
-       */
-      Client(Comm *comm, const sockaddr_in &addr, uint32_t timeout_ms);
+    /** Waits up to max_wait_secs for a connection to be established with the
+     * FS broker.
+     *
+     * @param max_wait_ms maximum amount of time to wait @return true if
+     * connected, false otherwise
+     */
+    bool wait_for_connection(uint32_t max_wait_ms) {
+      if (m_conn_mgr)
+	return m_conn_mgr->wait_for_connection(m_addr, max_wait_ms);
+      return true;
+    }
 
-      /** Convenient contructor for dfs testing
-       *
-       * @param host - dfs hostname
-       * @param port - dfs port
-       * @param timeout_ms - timeout (in milliseconds) for requests
-       */
-      Client(const String &host, int port, uint32_t timeout_ms);
+    void open(const String &name, uint32_t flags, DispatchHandler *handler) override;
+    int open(const String &name, uint32_t flags) override;
+    int open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
+			      uint32_t outstanding, uint64_t start_offset=0,
+			      uint64_t end_offset=0) override;
+    void decode_response_open(EventPtr &event, int32_t *fd) override;
 
-      /** Waits up to max_wait_secs for a connection to be established with the
-       * FS broker.
-       *
-       * @param max_wait_ms maximum amount of time to wait @return true if
-       * connected, false otherwise
-       */
-      bool wait_for_connection(uint32_t max_wait_ms) {
-        if (m_conn_mgr)
-          return m_conn_mgr->wait_for_connection(m_addr, max_wait_ms);
-        return true;
-      }
+    void create(const String &name, uint32_t flags,
+        	int32_t bufsz, int32_t replication,
+        	int64_t blksz, DispatchHandler *handler) override;
+    int create(const String &name, uint32_t flags, int32_t bufsz,
+		       int32_t replication, int64_t blksz) override;
+    void decode_response_create(EventPtr &event, int32_t *fd) override;
 
-      virtual void open(const String &name, uint32_t flags, DispatchHandler *handler);
-      virtual int open(const String &name, uint32_t flags);
-      virtual int open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
-                                uint32_t outstanding, uint64_t start_offset=0,
-                                uint64_t end_offset=0);
+    void close(int32_t fd, DispatchHandler *handler) override;
+    void close(int32_t fd) override;
 
-      virtual void create(const String &name, uint32_t flags,
-                          int32_t bufsz, int32_t replication,
-                          int64_t blksz, DispatchHandler *handler);
-      virtual int create(const String &name, uint32_t flags, int32_t bufsz,
-                         int32_t replication, int64_t blksz);
+    void read(int32_t fd, size_t amount, DispatchHandler *handler) override;
+    size_t read(int32_t fd, void *dst, size_t amount) override;
+    void decode_response_read(EventPtr &event, const void **buffer,
+                              uint64_t *offset, uint32_t *length) override;
 
-      virtual void close(int32_t fd, DispatchHandler *handler);
-      virtual void close(int32_t fd);
+    void append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
+        	DispatchHandler *handler) override;
+    size_t append(int32_t fd, StaticBuffer &buffer,
+			  uint32_t flags = 0) override;
+    void decode_response_append(EventPtr &event, uint64_t *offset,
+                                uint32_t *length) override;
 
-      virtual void read(int32_t fd, size_t amount, DispatchHandler *handler);
-      virtual size_t read(int32_t fd, void *dst, size_t amount);
+    void seek(int32_t fd, uint64_t offset, DispatchHandler *handler) override;
+    void seek(int32_t fd, uint64_t offset) override;
 
-      virtual void append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
-                          DispatchHandler *handler);
-      virtual size_t append(int32_t fd, StaticBuffer &buffer,
-                            uint32_t flags = 0);
+    void remove(const String &name, DispatchHandler *handler) override;
+    void remove(const String &name, bool force = true) override;
 
-      virtual void seek(int32_t fd, uint64_t offset, DispatchHandler *handler);
-      virtual void seek(int32_t fd, uint64_t offset);
+    void length(const String &name, bool accurate,
+                DispatchHandler *handler) override;
+    int64_t length(const String &name, bool accurate = true) override;
+    int64_t decode_response_length(EventPtr &event) override;
 
-      virtual void remove(const String &name, DispatchHandler *handler);
-      virtual void remove(const String &name, bool force = true);
+    void pread(int32_t fd, size_t len, uint64_t offset,
+               DispatchHandler *handler) override;
+    size_t pread(int32_t fd, void *dst, size_t len, uint64_t offset,
+			 bool verify_checksum) override;
+    void decode_response_pread(EventPtr &event, const void **buffer,
+                               uint64_t *offset, uint32_t *length) override;
 
-      virtual void length(const String &name, bool accurate,
-                          DispatchHandler *handler);
-      virtual int64_t length(const String &name, bool accurate = true);
+    void mkdirs(const String &name, DispatchHandler *handler) override;
+    void mkdirs(const String &name) override;
 
-      virtual void pread(int32_t fd, size_t len, uint64_t offset,
-                         DispatchHandler *handler);
-      virtual size_t pread(int32_t fd, void *dst, size_t len, uint64_t offset,
-			   bool verify_checksum);
+    void flush(int32_t fd, DispatchHandler *handler) override;
+    void flush(int32_t fd) override;
 
-      virtual void mkdirs(const String &name, DispatchHandler *handler);
-      virtual void mkdirs(const String &name);
+    void rmdir(const String &name, DispatchHandler *handler) override;
+    void rmdir(const String &name, bool force = true) override;
 
-      virtual void flush(int32_t fd, DispatchHandler *handler);
-      virtual void flush(int32_t fd);
+    void readdir(const String &name, DispatchHandler *handler) override;
+    void readdir(const String &name, std::vector<Dirent> &listing) override;
+    void decode_response_readdir(EventPtr &event,
+                                 std::vector<Dirent> &listing) override;
 
-      virtual void rmdir(const String &name, DispatchHandler *handler);
-      virtual void rmdir(const String &name, bool force = true);
+    void exists(const String &name, DispatchHandler *handler) override;
+    bool exists(const String &name) override;
+    bool decode_response_exists(EventPtr &event) override;
 
-      virtual void readdir(const String &name, DispatchHandler *handler);
-      virtual void readdir(const String &name, std::vector<Dirent> &listing);
+    void rename(const String &src, const String &dst,
+                DispatchHandler *handler) override;
+    void rename(const String &src, const String &dst) override;
 
-      virtual void posix_readdir(const String &name,
-              std::vector<Filesystem::DirectoryEntry> &listing);
+    void debug(int32_t command, StaticBuffer &serialized_parameters) override;
+    void debug(int32_t command, StaticBuffer &serialized_parameters,
+               DispatchHandler *handler) override;
 
-      virtual void exists(const String &name, DispatchHandler *handler);
-      virtual bool exists(const String &name);
+    /** Checks the status of the FS broker.  Issues a status command and
+     * waits for it to return.
+     */
+    void status();
 
-      virtual void rename(const String &src, const String &dst,
-                          DispatchHandler *handler);
-      virtual void rename(const String &src, const String &dst);
-
-      virtual void debug(int32_t command, StaticBuffer &serialized_parameters);
-      virtual void debug(int32_t command, StaticBuffer &serialized_parameters,
-                         DispatchHandler *handler);
-
-      /** Checks the status of the FS broker.  Issues a status command and
-       * waits for it to return.
-       */
-      void status();
-
-      /** Shuts down the FS broker.  Issues a shutdown command to the FS
-       * broker.  If the flag is set to Protocol::SHUTDOWN_FLAG_IMMEDIATE, then
-       * the broker will call exit(0) directly from the I/O reactor thread.
-       * Otherwise, a shutdown command will get added to the broker's
-       * application queue, allowing the shutdown to be handled more
-       * gracefully.
-       *
-       * @param flags controls how broker gets shut down
-       * @param handler response handler
-       */
-      void shutdown(uint16_t flags, DispatchHandler *handler);
-
-      Protocol *get_protocol_object() { return &m_protocol; }
-
-      /** Gets the configured request timeout value.
-       *
-       * @return timeout value in milliseconds
-       */
-      uint32_t get_timeout() { return m_timeout_ms; }
-
-    private:
-
-      /** Sends a message to the FS broker.
-       *
-       * @param cbp message to send
-       * @param handler response handler
-       */
-      void send_message(CommBufPtr &cbp, DispatchHandler *handler);
-
-      typedef std::unordered_map<uint32_t, ClientBufferedReaderHandler *>
-          BufferedReaderMap;
-
-      Mutex                 m_mutex;
-      Comm                 *m_comm;
-      ConnectionManagerPtr  m_conn_mgr;
-      InetAddr              m_addr;
-      uint32_t              m_timeout_ms;
-      Protocol              m_protocol;
-      BufferedReaderMap     m_buffered_reader_map;
+    enum {
+      /// Perform immediate shutdown
+      SHUTDOWN_FLAG_IMMEDIATE = 0x01
     };
 
-    typedef intrusive_ptr<Client> ClientPtr;
+    /** Shuts down the FS broker.  Issues a shutdown command to the FS
+     * broker.  If the flag is set to SHUTDOWN_FLAG_IMMEDIATE, then
+     * the broker will call exit(0) directly from the I/O reactor thread.
+     * Otherwise, a shutdown command will get added to the broker's
+     * application queue, allowing the shutdown to be handled more
+     * gracefully.
+     *
+     * @param flags controls how broker gets shut down
+     * @param handler response handler
+     */
+    void shutdown(uint16_t flags, DispatchHandler *handler);
 
-}} // namespace Hypertable::FsBroker
+    /** Gets the configured request timeout value.
+     *
+     * @return timeout value in milliseconds
+     */
+    uint32_t get_timeout() { return m_timeout_ms; }
+
+  private:
+
+    /** Sends a message to the FS broker.
+     *
+     * @param cbuf message to send
+     * @param handler response handler
+     */
+    void send_message(CommBufPtr &cbuf, DispatchHandler *handler);
+
+    Mutex m_mutex;
+    Comm *m_comm;
+    ConnectionManagerPtr m_conn_mgr;
+    InetAddr m_addr;
+    uint32_t m_timeout_ms;
+    std::unordered_map<uint32_t, ClientBufferedReaderHandler *> m_buffered_reader_map;
+  };
+
+  typedef intrusive_ptr<Client> ClientPtr;
+
+  /// @}
+
+}}}
 
 
-#endif // HYPERTABLE_FSBROKER_CLIENT_H
+#endif // FsBroker_Lib_Client_h
 

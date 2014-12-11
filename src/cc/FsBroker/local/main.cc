@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,7 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "LocalBroker.h"
+
+#include <FsBroker/Lib/Config.h>
+#include <FsBroker/Lib/ConnectionHandlerFactory.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/Init.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -31,22 +47,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/Init.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
-
-#include "FsBroker/Lib/Config.h"
-#include "FsBroker/Lib/ConnectionHandlerFactory.h"
-
-#include "LocalBroker.h"
-
 using namespace Hypertable;
+using namespace Hypertable::FsBroker;
 using namespace Config;
 using namespace std;
 
@@ -94,7 +96,7 @@ int main(int argc, char **argv) {
     ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
     BrokerPtr broker = new LocalBroker(properties);
     ConnectionHandlerFactoryPtr chfp =
-        new FsBroker::ConnectionHandlerFactory(comm, app_queue, broker);
+      new FsBroker::Lib::ConnectionHandlerFactory(comm, app_queue, broker);
     InetAddr listen_addr(INADDR_ANY, port);
 
     comm->listen(listen_addr, chfp);

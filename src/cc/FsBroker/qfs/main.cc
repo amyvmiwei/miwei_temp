@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,7 +19,21 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "QfsBroker.h"
+
+#include <FsBroker/Lib/Config.h>
+#include <FsBroker/Lib/ConnectionHandlerFactory.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+
+#include <Common/Init.h>
+#include <Common/FileUtils.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -30,20 +44,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "Common/Init.h"
-#include "Common/FileUtils.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-
-#include "FsBroker/Lib/Config.h"
-#include "FsBroker/Lib/ConnectionHandlerFactory.h"
-
-#include "QfsBroker.h"
-
 using namespace Hypertable;
+using namespace Hypertable::FsBroker;
 using namespace Hypertable::Config;
 using namespace std;
 
@@ -81,7 +83,7 @@ int main(int argc, char **argv) {
     BrokerPtr broker = new QfsBroker(properties);
 
     ConnectionHandlerFactoryPtr chfp =
-        new FsBroker::ConnectionHandlerFactory(comm, app_queue, broker);
+      new FsBroker::Lib::ConnectionHandlerFactory(comm, app_queue, broker);
     InetAddr listen_addr(INADDR_ANY, port);
 
     comm->listen(listen_addr, chfp);

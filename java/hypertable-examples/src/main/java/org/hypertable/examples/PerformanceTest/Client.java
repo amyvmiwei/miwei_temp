@@ -42,7 +42,7 @@ import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.DispatchHandler;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ReactorFactory;
-import org.hypertable.AsyncComm.Serialization;
+import org.hypertable.Common.Serialization;
 
 public class Client {
 

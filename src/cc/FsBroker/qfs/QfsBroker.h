@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_QFSROKER_H
-#define HYPERTABLE_QFSBROKER_H
+#ifndef FsBroker_qfs_QfsBroker_h
+#define FsBroker_qfs_QfsBroker_h
 
 #include <FsBroker/Lib/Broker.h>
 #include <FsBroker/Lib/MetricsHandler.h>
@@ -40,12 +40,10 @@ namespace KFS {
 }
 
 namespace Hypertable {
-  using namespace FsBroker;
+namespace FsBroker {
+  using namespace Lib;
 
 
-  /**
-   * A subclass of Hypertable::FsBroker::OpenFileData to hold the fields needed by the QfsBroker
-   */
   class OpenFileDataQfs: public OpenFileData {
   public:
   OpenFileDataQfs(const std::string &fname, int fd, KFS::KfsClient *client)
@@ -58,8 +56,6 @@ namespace Hypertable {
   };
 
 
-  /**
-   */
   class OpenFileDataQfsPtr : public OpenFileDataPtr {
   public:
   OpenFileDataQfsPtr() : OpenFileDataPtr() { }
@@ -69,35 +65,30 @@ namespace Hypertable {
     }
   };
 
-  /**
-   * QfsBroker implementation class. @see Hypertable::FsBroker::Broker
-   */
   class QfsBroker : public FsBroker::Broker {
   public:
     QfsBroker(PropertiesPtr& cfg);
     virtual ~QfsBroker();
 
-    virtual void open(ResponseCallbackOpen *cb, const char *fname, uint32_t flags, uint32_t bufsz);
+    virtual void open(Response::Callback::Open *cb, const char *fname, uint32_t flags, uint32_t bufsz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
 
-    virtual void create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags, int32_t bufsz, int16_t replication, int64_t blksz);
-    virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
-    virtual void append(ResponseCallbackAppend *, uint32_t fd, uint32_t amount, const void *data, bool flush);
+    virtual void create(Response::Callback::Open *cb, const char *fname, uint32_t flags, int32_t bufsz, int16_t replication, int64_t blksz);
+    virtual void read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount);
+    virtual void append(Response::Callback::Append *, uint32_t fd, uint32_t amount, const void *data, bool flush);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
-    virtual void length(ResponseCallbackLength *cb, const char *fname,
+    virtual void length(Response::Callback::Length *cb, const char *fname,
                         bool accurate = true);
-    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+    virtual void pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
                        uint32_t amount, bool verify_checksum);
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
-    virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);
-    virtual void posix_readdir(ResponseCallbackPosixReaddir *cb,
-			       const char *dname);
-    virtual void exists(ResponseCallbackExists *cb, const char *fname);
+    virtual void readdir(Response::Callback::Readdir *cb, const char *dname);
+    virtual void exists(Response::Callback::Exists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
     virtual void debug(ResponseCallback *cb, int32_t command,
                        StaticBuffer &serialized_parameters);
@@ -114,5 +105,6 @@ namespace Hypertable {
     void report_error(ResponseCallback *cb, int error);
     KFS::KfsClient* const m_client;
   };
-}
-#endif // HYPERTABLE_QFSBROKER_H
+}}
+
+#endif // FsBroker_qfs_QfsBroker_h

@@ -383,7 +383,7 @@ int main(int argc, char **argv) {
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
-    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Lib::Client(context->conn_manager, context->props);
     context->rsc_manager = new RangeServerConnectionManager();
 
     context->toplevel_dir = properties->get_str("Hypertable.Directory");

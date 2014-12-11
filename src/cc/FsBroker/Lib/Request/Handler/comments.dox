@@ -1,0 +1,5 @@
+/// @defgroup FsBrokerLibRequestHandler Handler
+/// @ingroup FsBrokerLibRequest
+/// %Request handlers.
+/// This module contains application request handler classes for the
+/// file system brokers.

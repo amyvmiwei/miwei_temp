@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -28,43 +28,54 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class RequestHandlerSeek extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-    public RequestHandlerSeek(Comm comm, Broker broker, Event event) {
-        super(event);
-        mComm = comm;
-        mBroker = broker;
+  static final byte VERSION = 1;
+
+  public RequestHandlerSeek(Comm comm, Broker broker, Event event) {
+    super(event);
+    mComm = comm;
+    mBroker = broker;
+  }
+
+  public void run() {
+    ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+
+    try {
+
+      if (mEvent.payload.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+
+      int version = (int)mEvent.payload.get();
+      if (version != VERSION)
+        throw new ProtocolException("Seek parameters version mismatch, expected " +
+                                    VERSION + ", got " + version);
+
+      int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
+      int start_position = mEvent.payload.position();
+
+      int fd = mEvent.payload.getInt();
+      long offset = mEvent.payload.getLong();
+
+      if ((mEvent.payload.position() - start_position) < encoding_length)
+        mEvent.payload.position(start_position + encoding_length);
+      
+      mBroker.Seek(cb, fd, offset);
+
     }
-
-    public void run() {
-        int   fd;
-        long  offset;
-        ResponseCallback cb = new ResponseCallback(mComm, mEvent);
-
-        try {
-
-            if (mEvent.payload.remaining() < 12)
-                throw new ProtocolException("Truncated message");
-
-            fd = mEvent.payload.getInt();
-            offset = mEvent.payload.getLong();
-
-            mBroker.Seek(cb, fd, offset);
-
-        }
-        catch (ProtocolException e) {
-            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-            log.severe("Protocol error (SEEK) - " + e.getMessage());
-            if (error != Error.OK)
-                log.severe("Problem sending (SEEK) error back to client - "
-                           + Error.GetText(error));
-        }
+    catch (Exception e) {
+      int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (SEEK) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (SEEK) error back to client - "
+                   + Error.GetText(error));
     }
+  }
 
-    private Comm       mComm;
-    private Broker mBroker;
+  private Comm mComm;
+  private Broker mBroker;
 }

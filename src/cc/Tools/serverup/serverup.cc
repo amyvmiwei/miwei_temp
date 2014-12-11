@@ -140,7 +140,7 @@ namespace {
       _exit(0);
     }
 
-    FsBroker::ClientPtr fs = new FsBroker::Client(conn_mgr, properties);
+    FsBroker::Lib::ClientPtr fs = new FsBroker::Lib::Client(conn_mgr, properties);
 
     if (!fs->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to fsbroker");

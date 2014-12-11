@@ -1,5 +1,5 @@
-/** -*- C++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,7 +17,8 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include <cerrno>
 #include <string>
 
@@ -35,6 +36,7 @@ extern "C" {
 #include "CephBroker.h"
 
 using namespace Hypertable;
+using namespace Hypertable::FsBroker;
 
 atomic_t CephBroker::ms_next_fd = ATOMIC_INIT(0);
 
@@ -67,7 +69,7 @@ CephBroker::~CephBroker() {
   ceph_deinitialize();
 }
 
-void CephBroker::open(ResponseCallbackOpen *cb, const char *fname,
+void CephBroker::open(Response::Callback::Open *cb, const char *fname,
 		      uint32_t flags, uint32_t bufsz) {
   int fd, ceph_fd;
   String abspath;
@@ -95,7 +97,7 @@ void CephBroker::open(ResponseCallbackOpen *cb, const char *fname,
   }
 }
 
-void CephBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+void CephBroker::create(Response::Callback::Open *cb, const char *fname, uint32_t flags,
 			int32_t bufsz, int16_t replication, int64_t blksz){
   int fd, ceph_fd;
   int oflags;
@@ -153,7 +155,7 @@ void CephBroker::close(ResponseCallback *cb, uint32_t fd) {
   cb->response_ok();
 }
 
-void CephBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
+void CephBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataCephPtr fdata;
   ssize_t nread;
   uint64_t offset;
@@ -185,7 +187,7 @@ void CephBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   cb->response(offset, buf);
 }
 
-void CephBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
+void CephBroker::append(Response::Callback::Append *cb, uint32_t fd,
 			uint32_t amount, const void *data, bool sync)
 {
   OpenFileDataCephPtr fdata;
@@ -264,7 +266,7 @@ void CephBroker::remove(ResponseCallback *cb, const char *fname) {
   cb->response_ok();
 }
 
-void CephBroker::length(ResponseCallbackLength *cb, const char *fname,
+void CephBroker::length(Response::Callback::Length *cb, const char *fname,
                     bool accurate) {
   int r;
   struct stat statbuf;
@@ -283,7 +285,7 @@ void CephBroker::length(ResponseCallbackLength *cb, const char *fname,
   cb->response(statbuf.st_size);
 }
 
-void CephBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+void CephBroker::pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
 		       uint32_t amount, bool) {
   OpenFileDataCephPtr fdata;
   ssize_t nread;
@@ -397,7 +399,7 @@ void CephBroker::shutdown(ResponseCallback *cb) {
   poll(0, 0, 2000);
 }
 
-void CephBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
+void CephBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {
   std::vector<Filesystem::Dirent> listing;
   String absdir;
 
@@ -440,14 +442,8 @@ void CephBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   cb->response(listing);
 }
 
-void CephBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
-        const char *dname) {
-  HT_ERROR("posix_readdir is not implemented");
-  cb->error(Error::NOT_IMPLEMENTED, "posix_readdir is not implemented");
-}
 
-
-void CephBroker::exists(ResponseCallbackExists *cb, const char *fname) {
+void CephBroker::exists(Response::Callback::Exists *cb, const char *fname) {
   String abspath;
   struct stat statbuf;
   

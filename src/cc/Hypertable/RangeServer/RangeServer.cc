@@ -253,7 +253,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
-  FsBroker::Client *dfsclient = new FsBroker::Client(conn_mgr, props);
+  FsBroker::Lib::Client *dfsclient = new FsBroker::Lib::Client(conn_mgr, props);
 
   int dfs_timeout;
   if (props->has("FsBroker.Timeout"))
@@ -276,7 +276,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     uint16_t logport = cfg.get_i16("CommitLog.DfsBroker.Port");
     InetAddr addr(loghost, logport);
 
-    dfsclient = new FsBroker::Client(conn_mgr, addr, dfs_timeout);
+    dfsclient = new FsBroker::Lib::Client(conn_mgr, addr, dfs_timeout);
 
     if (!dfsclient->wait_for_connection(30000))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to commit log FS broker");

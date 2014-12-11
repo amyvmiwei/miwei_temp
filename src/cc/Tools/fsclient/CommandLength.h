@@ -24,15 +24,15 @@
 
 #include <vector>
 
-#include "Common/InteractiveCommand.h"
+#include <Common/InteractiveCommand.h>
 
-#include "FsBroker/Lib/Client.h"
+#include <FsBroker/Lib/Client.h>
 
 namespace Hypertable {
 
   class CommandLength : public InteractiveCommand {
   public:
-    CommandLength(FsBroker::Client *client) : m_client(client) { return; }
+    CommandLength(FsBroker::Lib::Client *client) : m_client(client) { return; }
     virtual const char *command_text() { return "length"; }
     virtual const char **usage() { return ms_usage; }
     virtual void run();
@@ -40,7 +40,7 @@ namespace Hypertable {
   private:
     static const char *ms_usage[];
 
-    FsBroker::Client *m_client;
+    FsBroker::Lib::Client *m_client;
   };
 }
 

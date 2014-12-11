@@ -23,7 +23,7 @@ package org.hypertable.examples.PerformanceTest;
 
 import java.nio.ByteBuffer;
 
-import org.hypertable.AsyncComm.Serialization;
+import org.hypertable.Common.Serialization;
 
 public class MessageSummary extends Message {
 

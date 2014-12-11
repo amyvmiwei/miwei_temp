@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -21,12 +21,13 @@
 
 package org.hypertable.FsBroker.Lib;
 
-import org.hypertable.Common.Error;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.CommBuf;
 import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
+import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class ResponseCallbackOpen extends ResponseCallback {
 
@@ -34,11 +35,15 @@ public class ResponseCallbackOpen extends ResponseCallback {
     super(comm, event);
   }
 
+  static final byte VERSION = 1;
+
   public int response(int fd) {
     CommHeader header = new CommHeader();
     header.initialize_from_request_header(mEvent.header);
-    CommBuf cbuf = new CommBuf(header, 8);
+    CommBuf cbuf = new CommBuf(header, 5 + Serialization.EncodedLengthVInt32(4) + 4);
     cbuf.AppendInt(Error.OK);
+    cbuf.AppendByte(VERSION);
+    Serialization.EncodeVInt32(cbuf.data, 4);
     cbuf.AppendInt(fd);
     return mComm.SendResponse(mEvent.addr, cbuf);
   }

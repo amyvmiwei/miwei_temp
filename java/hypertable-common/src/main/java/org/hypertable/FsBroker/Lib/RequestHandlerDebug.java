@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -28,43 +28,56 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class RequestHandlerDebug extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-    public RequestHandlerDebug(Comm comm, Broker broker, Event event) {
-        super(event);
-        mComm = comm;
-        mBroker = broker;
+  static final byte VERSION = 1;
+
+  public RequestHandlerDebug(Comm comm, Broker broker, Event event) {
+    super(event);
+    mComm = comm;
+    mBroker = broker;
+  }
+
+  public void run() {
+    int     command;
+    ResponseCallback cb = new ResponseCallback(mComm, mEvent);
+
+    try {
+
+      if (mEvent.payload.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+
+      int version = (int)mEvent.payload.get();
+      if (version != VERSION)
+        throw new ProtocolException("Debug parameters version mismatch, expected " +
+                                    VERSION + ", got " + version);
+
+      int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
+      int start_position = mEvent.payload.position();
+
+      command = mEvent.payload.getInt();
+
+      byte [] params = new byte [ mEvent.payload.remaining() ];
+      mEvent.payload.get(params);
+
+      if ((mEvent.payload.position() - start_position) < encoding_length)
+        mEvent.payload.position(start_position + encoding_length);
+
+      mBroker.Debug(cb, command, params);
     }
-
-    public void run() {
-        int     command;
-        ResponseCallback cb = new ResponseCallback(mComm, mEvent);
-
-        try {
-
-            if (mEvent.payload.remaining() < 4)
-                throw new ProtocolException("Truncated message");
-
-            command = mEvent.payload.getInt();
-
-            byte [] params = new byte [ mEvent.payload.remaining() ];
-            mEvent.payload.get(params);
-
-            mBroker.Debug(cb, command, params);
-        }
-        catch (ProtocolException e) {
-            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-            log.severe("Protocol error (DEBUG) - " + e.getMessage());
-            if (error != Error.OK)
-                log.severe("Problem sending (DEBUG) error back to client - "
-                           + Error.GetText(error));
-        }
+    catch (Exception e) {
+      int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (DEBUG) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (DEBUG) error back to client - "
+                   + Error.GetText(error));
     }
+  }
 
-    private Comm       mComm;
-    private Broker mBroker;
+  private Comm mComm;
+  private Broker mBroker;
 }

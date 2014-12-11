@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.logging.Logger;
 
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class SampleClient {
 

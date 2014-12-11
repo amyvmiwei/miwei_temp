@@ -24,15 +24,15 @@
 
 #include <vector>
 
-#include "Common/InteractiveCommand.h"
+#include <Common/InteractiveCommand.h>
 
-#include "FsBroker/Lib/Client.h"
+#include <FsBroker/Lib/Client.h>
 
 namespace Hypertable {
 
   class CommandCopyToLocal : public InteractiveCommand {
   public:
-    CommandCopyToLocal(FsBroker::Client *client) : m_client(client) { return; }
+    CommandCopyToLocal(FsBroker::Lib::Client *client) : m_client(client) { return; }
     virtual const char *command_text() { return "copyToLocal"; }
     virtual const char **usage() { return ms_usage; }
     virtual void run();
@@ -40,7 +40,7 @@ namespace Hypertable {
   private:
     static const char *ms_usage[];
 
-    FsBroker::Client *m_client;
+    FsBroker::Lib::Client *m_client;
   };
 
 }

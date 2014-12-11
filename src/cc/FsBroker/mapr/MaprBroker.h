@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,10 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAPRBROKER_H
-#define HYPERTABLE_MAPRBROKER_H
-
-#include <hdfs.h>
+#ifndef FsBroker_mapr_MaprBroker_h
+#define FsBroker_mapr_MaprBroker_h
 
 #include <FsBroker/Lib/Broker.h>
 #include <FsBroker/Lib/MetricsHandler.h>
@@ -31,6 +29,8 @@
 #include <Common/String.h>
 #include <Common/atomic.h>
 
+#include <hdfs.h>
+
 #include <string>
 
 extern "C" {
@@ -38,11 +38,9 @@ extern "C" {
 }
 
 namespace Hypertable {
-  using namespace FsBroker;
+namespace FsBroker {
+  using namespace Lib;
 
-  /**
-   *
-   */
   class OpenFileDataMapr : public OpenFileData {
   public:
   OpenFileDataMapr(hdfsFS _fs, const String &fname, hdfsFile _file, int _flags) 
@@ -59,9 +57,6 @@ namespace Hypertable {
     String filename;
   };
 
-  /**
-   *
-   */
   class OpenFileDataMaprPtr : public OpenFileDataPtr {
   public:
     OpenFileDataMaprPtr() : OpenFileDataPtr() { }
@@ -73,37 +68,32 @@ namespace Hypertable {
   };
 
 
-  /**
-   *
-   */
   class MaprBroker : public FsBroker::Broker {
   public:
     MaprBroker(PropertiesPtr &props);
     virtual ~MaprBroker();
 
-    virtual void open(ResponseCallbackOpen *cb, const char *fname,
+    virtual void open(Response::Callback::Open *cb, const char *fname,
                       uint32_t flags, uint32_t bufsz);
-    virtual void create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
+    virtual void create(Response::Callback::Open *cb, const char *fname, uint32_t flags,
            int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
-    virtual void read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount);
-    virtual void append(ResponseCallbackAppend *cb, uint32_t fd,
+    virtual void read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount);
+    virtual void append(Response::Callback::Append *cb, uint32_t fd,
                         uint32_t amount, const void *data, bool sync);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
-    virtual void length(ResponseCallbackLength *cb, const char *fname,
+    virtual void length(Response::Callback::Length *cb, const char *fname,
                         bool accurate = true);
-    virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+    virtual void pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
                        uint32_t amount, bool verify_checksum);
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
-    virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);
-    virtual void posix_readdir(ResponseCallbackPosixReaddir *cb,
-            const char *dname);
+    virtual void readdir(Response::Callback::Readdir *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
-    virtual void exists(ResponseCallbackExists *cb, const char *fname);
+    virtual void exists(Response::Callback::Exists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
     virtual void debug(ResponseCallback *, int32_t command,
                        StaticBuffer &serialized_parameters);
@@ -126,6 +116,6 @@ namespace Hypertable {
     uint16_t     m_namenode_port;
   };
 
-}
+}}
 
-#endif // HYPERTABLE_MAPRBROKER_H
+#endif // FsBroker_mapr_MaprBroker_h

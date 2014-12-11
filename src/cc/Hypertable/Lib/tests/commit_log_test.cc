@@ -53,11 +53,11 @@ namespace {
 
   typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
-  //void test1(FsBroker::Client *fs_client);
-  void test_link(FsBroker::Client *fs_client);
+  //void test1(FsBroker::Lib::Client *fs_client);
+  void test_link(FsBroker::Lib::Client *fs_client);
   void write_entries(CommitLog *log, int num_entries, uint64_t *sump,
                      CommitLogBase *link_log);
-  void read_entries(FsBroker::Client *fs_client, CommitLogReader *log_reader,
+  void read_entries(FsBroker::Lib::Client *fs_client, CommitLogReader *log_reader,
                     uint64_t *sump);
 }
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
      * connect to FS broker
      */
     InetAddr addr(get_str("fs-host"), get_i16("fs-port"));
-    FsBroker::ClientPtr fs = new FsBroker::Client(conn_mgr, addr, timeout);
+    FsBroker::Lib::ClientPtr fs = new FsBroker::Lib::Client(conn_mgr, addr, timeout);
 
     if (!fs->wait_for_connection(10000)) {
       HT_ERROR("Unable to connect to FS Broker, exiting...");
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 namespace {
 
 #if 0
-  void test1(FsBroker::Client *fs_client) {
+  void test1(FsBroker::Lib::Client *fs_client) {
     String log_dir = "/hypertable/test_log";
     String fname;
     CommitLog *log;
@@ -134,7 +134,7 @@ namespace {
   }
 #endif
 
-  void test_link(FsBroker::Client *fs_client) {
+  void test_link(FsBroker::Lib::Client *fs_client) {
     String log_dir = "/hypertable/test_log";
     String fname;
     CommitLog *log;
@@ -245,7 +245,7 @@ namespace {
   }
 
   void
-  read_entries(FsBroker::Client *fs_client, CommitLogReader *log_reader,
+  read_entries(FsBroker::Lib::Client *fs_client, CommitLogReader *log_reader,
                uint64_t *sump) {
     const uint8_t *block;
     size_t block_len;

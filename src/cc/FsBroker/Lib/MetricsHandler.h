@@ -38,117 +38,116 @@
 #include <mutex>
 
 namespace Hypertable {
+namespace FsBroker {
+namespace Lib {
 
-  namespace FsBroker {
+  /// @addtogroup FsBrokerLib
+  /// @{
 
-    /// @addtogroup libFsBroker
-    /// @{
+  /// Collects and publishes %FsBroker metrics.
+  /// This class acts as the timer dispatch handler for periodic metrics
+  /// collection for FsBroker.
+  class MetricsHandler : public DispatchHandler {
+  public:
 
-    /// Collects and publishes %FsBroker metrics.
-    /// This class acts as the timer dispatch handler for periodic metrics
-    /// collection for FsBroker.
-    class MetricsHandler : public DispatchHandler {
-    public:
+    /// Constructor.
+    /// Initializes #m_collection_interval to the property
+    /// <code>Hypertable.Monitoring.Interval</code> and allocates a Ganglia
+    /// collector object, initializing it with "hyperspace" and
+    /// <code>Hypertable.Metrics.Ganglia.Port</code>.  Lastly, calls
+    /// Comm::set_timer() to register a timer for
+    /// #m_collection_interval milliseconds in the future and passes
+    /// <code>this</code> as the timer handler.
+    /// @param props %Properties object
+    /// @param type Type of broker (e.g. "local", "qfs", etc.)
+    MetricsHandler(PropertiesPtr &props, const std::string &type);
 
-      /// Constructor.
-      /// Initializes #m_collection_interval to the property
-      /// <code>Hypertable.Monitoring.Interval</code> and allocates a Ganglia
-      /// collector object, initializing it with "hyperspace" and
-      /// <code>Hypertable.Metrics.Ganglia.Port</code>.  Lastly, calls
-      /// Comm::set_timer() to register a timer for
-      /// #m_collection_interval milliseconds in the future and passes
-      /// <code>this</code> as the timer handler.
-      /// @param props %Properties object
-      /// @param type Type of broker (e.g. "local", "qfs", etc.)
-      MetricsHandler(PropertiesPtr &props, const std::string &type);
+    /// Destructor.
+    /// Cancels the timer.
+    virtual ~MetricsHandler();
 
-      /// Destructor.
-      /// Cancels the timer.
-      virtual ~MetricsHandler();
+    /// Collects and publishes metrics.
+    /// This method updates the <code>requests/s</code> and general process
+    /// metrics and publishes them via #m_ganglia_collector.  After metrics have
+    /// been collected, the timer is re-registered for #m_collection_interval
+    /// milliseconds in the future.
+    /// @param event %Comm layer timer event
+    virtual void handle(EventPtr &event);
 
-      /// Collects and publishes metrics.
-      /// This method updates the <code>requests/s</code> and general process
-      /// metrics and publishes them via #m_ganglia_collector.  After metrics have
-      /// been collected, the timer is re-registered for #m_collection_interval
-      /// milliseconds in the future.
-      /// @param event %Comm layer timer event
-      virtual void handle(EventPtr &event);
+    /// Adds bytes read.
+    /// Adds <code>count</code> to #m_bytes_read.
+    /// @param count Count of bytes read
+    void add_bytes_read(int64_t count) {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_bytes_read += count;
+    }
 
-      /// Adds bytes read.
-      /// Adds <code>count</code> to #m_bytes_read.
-      /// @param count Count of bytes read
-      void add_bytes_read(int64_t count) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_bytes_read += count;
-      }
+    /// Adds bytes written.
+    /// Adds <code>count</code> to #m_bytes_written.
+    /// @param count Count of bytes written
+    void add_bytes_written(int64_t count) {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_bytes_written += count;
+    }
 
-      /// Adds bytes written.
-      /// Adds <code>count</code> to #m_bytes_written.
-      /// @param count Count of bytes written
-      void add_bytes_written(int64_t count) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_bytes_written += count;
-      }
+    /// Adds sync information.
+    /// Adds <code>latency_nsec</code> to #m_sync_latency and increments
+    /// #m_syncs.
+    /// @param latency Latency of sync
+    void add_sync(int64_t latency_nsec) {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_syncs++;
+      m_sync_latency += (int)(latency_nsec/1000000LL);
+    }
 
-      /// Adds sync information.
-      /// Adds <code>latency_nsec</code> to #m_sync_latency and increments
-      /// #m_syncs.
-      /// @param latency Latency of sync
-      void add_sync(int64_t latency_nsec) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_syncs++;
-        m_sync_latency += (int)(latency_nsec/1000000LL);
-      }
+    /// Increments error count.
+    /// Increments m_errors.
+    void increment_error_count() {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_errors++;
+    }
 
-      /// Increments error count.
-      /// Increments m_errors.
-      void increment_error_count() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_errors++;
-      }
+  private:
+    /// %Mutex for serializing access to members
+    std::mutex m_mutex;
 
-    private:
-      /// %Mutex for serializing access to members
-      std::mutex m_mutex;
+    /// Ganglia metrics collector
+    MetricsCollectorGangliaPtr m_ganglia_collector;
 
-      /// Ganglia metrics collector
-      MetricsCollectorGangliaPtr m_ganglia_collector;
+    /// General process metrics tracker
+    MetricsProcess m_metrics_process;
 
-      /// General process metrics tracker
-      MetricsProcess m_metrics_process;
+    /// FsBroker type (e.g. "local", "qfs", etc.)
+    std::string m_type;
 
-      /// FsBroker type (e.g. "local", "qfs", etc.)
-      std::string m_type;
+    /// %Metrics collection interval
+    int32_t m_collection_interval {};
 
-      /// %Metrics collection interval
-      int32_t m_collection_interval {};
+    /// %Timestamp of last metrics collection
+    int64_t m_last_timestamp;
 
-      /// %Timestamp of last metrics collection
-      int64_t m_last_timestamp;
+    /// Bytes written since last metrics collection
+    int64_t m_bytes_written {};
 
-      /// Bytes written since last metrics collection
-      int64_t m_bytes_written {};
+    /// Bytes read since last metrics collection
+    int64_t m_bytes_read {};
 
-      /// Bytes read since last metrics collection
-      int64_t m_bytes_read {};
+    /// Cumulative sync latency since last metrics collection
+    int32_t m_sync_latency {};
 
-      /// Cumulative sync latency since last metrics collection
-      int32_t m_sync_latency {};
+    /// Syncs since last metrics collection
+    int32_t m_syncs {};
 
-      /// Syncs since last metrics collection
-      int32_t m_syncs {};
+    /// Error count since last metrics collection
+    int32_t m_errors {};
 
-      /// Error count since last metrics collection
-      int32_t m_errors {};
+  };
 
-    };
+  /// Smart pointer to MetricsHandler
+  typedef std::shared_ptr<MetricsHandler> MetricsHandlerPtr;
 
-    /// Smart pointer to MetricsHandler
-    typedef std::shared_ptr<MetricsHandler> MetricsHandlerPtr;
+  /// @}
 
-    /// @}
-
-  }
-}
+}}}
 
 #endif // FsBroker_Lib_MetricsHandler_h

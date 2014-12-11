@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,6 +27,7 @@ import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class ResponseCallbackLength extends ResponseCallback {
 
@@ -34,11 +35,15 @@ public class ResponseCallbackLength extends ResponseCallback {
     super(comm, event);
   }
 
+  static final byte VERSION = 1;
+
   public int response(long length) {
     CommHeader header = new CommHeader();
     header.initialize_from_request_header(mEvent.header);
-    CommBuf cbuf = new CommBuf(header, 12);
+    CommBuf cbuf = new CommBuf(header, 5 + Serialization.EncodedLengthVInt32(8) + 8);
     cbuf.AppendInt(Error.OK);
+    cbuf.AppendByte(VERSION);
+    Serialization.EncodeVInt32(cbuf.data, 8);
     cbuf.AppendLong(length);
     return mComm.SendResponse(mEvent.addr, cbuf);
   }

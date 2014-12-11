@@ -126,6 +126,12 @@ endforeach ()
 # Install libssh and libssl
 HT_INSTALL_LIBS(lib ${Libssh_LIBRARIES} ${Libssl_LIBRARIES})
 
+# Install Libssh dependencies
+string(REPLACE " " ";" Libssh_LIB_DEPENDENCIES_LIST ${Libssh_LIB_DEPENDENCIES})
+foreach(thrift_dep ${Libssh_LIB_DEPENDENCIES_LIST})
+  HT_INSTALL_LIBS(lib ${thrift_dep})
+endforeach ()
+
 # copy cronolog to the /bin directory
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
       ${CMAKE_INSTALL_PREFIX}/bin)

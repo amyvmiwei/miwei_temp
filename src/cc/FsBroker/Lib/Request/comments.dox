@@ -1,0 +1,5 @@
+/// @defgroup FsBrokerLibRequest Request
+/// @ingroup FsBrokerLib
+/// Request handling code.
+/// This module contains code for handling incoming requests to the
+/// file system brokers.

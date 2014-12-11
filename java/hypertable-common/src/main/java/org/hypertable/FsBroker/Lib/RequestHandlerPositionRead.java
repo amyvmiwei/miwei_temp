@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,51 +27,64 @@ import org.hypertable.AsyncComm.ApplicationHandler;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.Event;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Serialization;
 
 public class RequestHandlerPositionRead extends ApplicationHandler {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-    public RequestHandlerPositionRead(Comm comm, Broker broker,
-                                      Event event) {
-        super(event);
-        mComm = comm;
-        mBroker = broker;
+  static final byte VERSION = 1;
+
+  public RequestHandlerPositionRead(Comm comm, Broker broker,
+                                    Event event) {
+    super(event);
+    mComm = comm;
+    mBroker = broker;
+  }
+
+  public void run() {
+    int   fd, amount;
+    long  offset;
+    boolean  verify_checksum;
+    ResponseCallbackPositionRead cb =
+      new ResponseCallbackPositionRead(mComm, mEvent);
+
+    try {
+
+      if (mEvent.payload.remaining() < 2)
+        throw new ProtocolException("Truncated message");
+
+      int version = (int)mEvent.payload.get();
+      if (version != VERSION)
+        throw new ProtocolException("Pread parameters version mismatch, expected " +
+                                    VERSION + ", got " + version);
+
+      int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
+      int start_position = mEvent.payload.position();
+
+      fd = mEvent.payload.getInt();
+
+      offset = mEvent.payload.getLong();
+
+      amount = mEvent.payload.getInt();
+
+      verify_checksum = mEvent.payload.get() != 0;
+
+      if ((mEvent.payload.position() - start_position) < encoding_length)
+        mEvent.payload.position(start_position + encoding_length);
+
+      mBroker.PositionRead(cb, fd, offset, amount, verify_checksum);
+
     }
-
-    public void run() {
-        int   fd, amount;
-        long  offset;
-	boolean  verify_checksum;
-        ResponseCallbackPositionRead cb =
-            new ResponseCallbackPositionRead(mComm, mEvent);
-
-        try {
-
-            if (mEvent.payload.remaining() < 16)
-                throw new ProtocolException("Truncated message");
-
-            fd = mEvent.payload.getInt();
-
-            offset = mEvent.payload.getLong();
-
-            amount = mEvent.payload.getInt();
-
-            verify_checksum = mEvent.payload.get() != 0;
-
-            mBroker.PositionRead(cb, fd, offset, amount, verify_checksum);
-
-        }
-        catch (ProtocolException e) {
-            int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
-            log.severe("Protocol error (PREAD) - " + e.getMessage());
-            if (error != Error.OK)
-                log.severe("Problem sending (PREAD) error back to client - "
-                           + Error.GetText(error));
-        }
+    catch (Exception e) {
+      int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());
+      log.severe("Protocol error (PREAD) - " + e.getMessage());
+      if (error != Error.OK)
+        log.severe("Problem sending (PREAD) error back to client - "
+                   + Error.GetText(error));
     }
+  }
 
-    private Comm       mComm;
-    private Broker mBroker;
+  private Comm mComm;
+  private Broker mBroker;
 }

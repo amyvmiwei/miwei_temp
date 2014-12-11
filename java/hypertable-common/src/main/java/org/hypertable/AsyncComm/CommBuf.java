@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -21,6 +21,8 @@
 
 
 package org.hypertable.AsyncComm;
+
+import org.hypertable.Common.Serialization;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;

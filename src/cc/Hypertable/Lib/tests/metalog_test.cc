@@ -142,7 +142,7 @@ main(int ac, char *av[]) {
     String host = get_str("fs-host");
     uint16_t port = get_i16("fs-port");
 
-    FsBroker::Client *client = new FsBroker::Client(host, port, timeout);
+    FsBroker::Lib::Client *client = new FsBroker::Lib::Client(host, port, timeout);
 
     if (!client->wait_for_connection(timeout)) {
       HT_ERROR_OUT <<"Unable to connect to FS: "<< host <<':'<< port << HT_END;
