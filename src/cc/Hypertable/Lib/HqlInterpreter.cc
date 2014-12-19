@@ -257,18 +257,15 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
     else
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
 
-    if (state.scan.display_timestamps) {
-      if (state.scan.keys_only)
-        fout << "#timestamp" << fs << "row\n";
-      else
-        fout << "#timestamp" << fs << "row" << fs << "column" << fs << "value\n";
-    }
-    else {
-      if (state.scan.keys_only)
-        fout << "#row\n";
-      else
-        fout << "#row" << fs << "column" << fs << "value\n";
-    }
+    fout << "#";
+    if (state.scan.display_revisions)
+      fout << "revision" << fs;
+    if (state.scan.display_timestamps)
+      fout << "timestamp" << fs;
+    if (state.scan.keys_only)
+      fout << "row\n";
+    else
+      fout << "row" << fs << "column" << fs << "value\n";
   }
   else if (!outf) {
     cb.on_scan(*scanner.get());
@@ -305,10 +302,21 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
 
       cb.total_values_size += cell.value_len;
     }
-    if (state.scan.display_timestamps) {
-      if (cb.format_ts_in_nanos) {
-        fout << cell.timestamp << fs;
+    if (state.scan.display_revisions) {
+      if (cb.format_ts_in_nanos)
+        fout << cell.revision << fs;
+      else {
+        nsec = cell.revision % 1000000000LL;
+        unix_time = cell.revision / 1000000000LL;
+        localtime_r(&unix_time, &tms);
+        fout << Hypertable::format("%d-%02d-%02d %02d:%02d:%02d.%09d%c",
+                        tms.tm_year + 1900, tms.tm_mon + 1, tms.tm_mday,
+                        tms.tm_hour, tms.tm_min, tms.tm_sec, nsec, fs);
       }
+    }
+    if (state.scan.display_timestamps) {
+      if (cb.format_ts_in_nanos)
+        fout << cell.timestamp << fs;
       else {
         nsec = cell.timestamp % 1000000000LL;
         unix_time = cell.timestamp / 1000000000LL;

@@ -69,6 +69,7 @@
 #include <cctype>
 #include <functional>
 #include <set>
+#include <iostream>
 
 namespace Hypertable {
   namespace Hql {
@@ -242,10 +243,7 @@ namespace Hypertable {
 
     class ScanState {
     public:
-      ScanState() : display_timestamps(false), keys_only(false),
-          current_rowkey_set(false), start_time_set(false),
-          end_time_set(false), current_timestamp_set(false),
-          current_relop(0), last_boolean_op(BOOLOP_AND), buckets(0) { }
+      ScanState() { }
 
       void set_time_interval(::int64_t start, ::int64_t end) {
         HQL_DEBUG("("<< start <<", "<< end <<")");
@@ -267,21 +265,22 @@ namespace Hypertable {
 
       ScanSpecBuilder builder;
       String outfile;
-      bool display_timestamps;
-      bool keys_only;
+      bool display_timestamps {};
+      bool display_revisions {};
+      bool keys_only {};
       String current_rowkey;
-      bool current_rowkey_set;
+      bool current_rowkey_set {};
       RowInterval current_ri;
       CellInterval current_ci;
       String current_cell_row;
       String current_cell_column;
-      bool    start_time_set;
-      bool    end_time_set;
-      ::int64_t current_timestamp;
-      bool    current_timestamp_set;
-      int current_relop;
-      int last_boolean_op;
-      int buckets;
+      bool    start_time_set {};
+      bool    end_time_set {};
+      ::int64_t current_timestamp {};
+      bool    current_timestamp_set {};
+      int current_relop {};
+      int last_boolean_op {BOOLOP_AND};
+      int buckets {};
     };
 
     class ParserState {
@@ -1621,6 +1620,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_display_revisions {
+      scan_set_display_revisions(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.scan.display_revisions=true;
+      }
+      ParserState &state;
+    };
+
     struct scan_clear_display_timestamps {
       scan_clear_display_timestamps(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -2569,6 +2576,7 @@ namespace Hypertable {
           Token NOT          = as_lower_d["not"];
           Token EXISTS       = as_lower_d["exists"];
           Token DISPLAY_TIMESTAMPS = as_lower_d["display_timestamps"];
+          Token DISPLAY_REVISIONS = as_lower_d["display_revisions"];
           Token RETURN_DELETES = as_lower_d["return_deletes"];
           Token SCAN_AND_FILTER_ROWS = as_lower_d["scan_and_filter_rows"];
           Token KEYS_ONLY    = as_lower_d["keys_only"];
@@ -3297,6 +3305,7 @@ namespace Hypertable {
             | CELL_OFFSET >> uint_p[scan_set_cell_offset(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
+            | DISPLAY_REVISIONS[scan_set_display_revisions(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]
             | KEYS_ONLY[scan_set_keys_only(self.state)]
             | NO_CACHE[scan_set_no_cache(self.state)]
