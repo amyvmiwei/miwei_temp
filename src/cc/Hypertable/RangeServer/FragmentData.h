@@ -24,15 +24,15 @@
 /// This file contains the type declarations for FragmentData, a class for
 /// accumulating phantom update data for a phantom range.
 
-#ifndef HYPERTABLE_FRAGMENTDATA_H
-#define HYPERTABLE_FRAGMENTDATA_H
+#ifndef Hypertable_RangeServer_FragmentData_h
+#define Hypertable_RangeServer_FragmentData_h
 
 #include <Hypertable/RangeServer/Range.h>
 #include <Hypertable/RangeServer/ScanContext.h>
 
 #include <Hypertable/Lib/CommitLog.h>
 #include <Hypertable/Lib/Key.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <AsyncComm/Event.h>
 
@@ -125,4 +125,4 @@ namespace Hypertable {
   /// @}
 }
 
-#endif // HYPERTABLE_FRAGMENTDATA_H
+#endif // Hypertable_RangeServer_FragmentData_h

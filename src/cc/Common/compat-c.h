@@ -32,11 +32,9 @@
  * The %Common library contains general purpose utility classes used by all
  * other modules within Hypertable.  It is not dependent on any other library
  * defined in %Hypertable.
- * @{
- * @}
  */
 
-/** Portability macros for C code. */
+/* Portability macros for C code. */
 #ifdef __cplusplus
 #  define HT_EXTERN_C  extern "C"
 #else

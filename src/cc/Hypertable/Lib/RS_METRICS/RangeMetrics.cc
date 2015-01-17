@@ -25,10 +25,11 @@
 /// aggregating metrics for an individual range.
 
 #include <Common/Compat.h>
+
 #include "RangeMetrics.h"
 
 #include <Hypertable/Lib/Key.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/Error.h>
 #include <Common/Logger.h>

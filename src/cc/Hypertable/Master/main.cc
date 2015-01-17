@@ -32,7 +32,6 @@
 #include <Hypertable/Master/Context.h>
 #include <Hypertable/Master/LoadBalancer.h>
 #include <Hypertable/Master/MetaLogDefinitionMaster.h>
-#include <Hypertable/Master/OperationBalance.h>
 #include <Hypertable/Master/OperationInitialize.h>
 #include <Hypertable/Master/OperationMoveRange.h>
 #include <Hypertable/Master/OperationProcessor.h>
@@ -68,6 +67,7 @@ extern "C" {
 
 using namespace Hypertable;
 using namespace Config;
+using namespace std;
 
 namespace {
 
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
       HT_INFOF("Unable to delete state file %s", state_file.c_str());
 
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->dfs = new FsBroker::Lib::Client(context->conn_manager, context->props);
+    context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
     context->mml_definition =
         new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
     context->monitoring = new Monitoring(context.get());
@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
     RangeServerConnectionPtr rsc;
     String log_dir = context->toplevel_dir + "/servers/master/log/"
         + context->mml_definition->name();
-    MetaLog::EntityPtr bpa_entity;
+    BalancePlanAuthority *bpa {};
 
     mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
             log_dir);
@@ -250,39 +250,36 @@ int main(int argc, char **argv) {
 
       entities2.reserve(entities.size());
       foreach_ht (MetaLog::EntityPtr &entity, entities) {
-        rsc = dynamic_cast<RangeServerConnection *>(entity.get());
-        if (rsc) {
-          if (rsc_set.count(rsc.get()) > 0)
-            rsc_set.erase(rsc.get());
-          rsc_set.insert(rsc.get());
+	if (dynamic_cast<RangeServerConnection *>(entity.get())) {
+	  RangeServerConnectionPtr rsc {dynamic_pointer_cast<RangeServerConnection>(entity)};
+          if (rsc_set.count(rsc) > 0)
+            rsc_set.erase(rsc);
+          rsc_set.insert(rsc);
         }
-        else if (dynamic_cast<BalancePlanAuthority *>(entity.get())) {
-          bpa_entity = entity;
+	else {
+	  if (dynamic_cast<BalancePlanAuthority *>(entity.get())) {
+	    bpa = dynamic_cast<BalancePlanAuthority *>(entity.get());
+	    context->set_balance_plan_authority(entity);
+	  }
+	  else if (dynamic_cast<SystemState *>(entity.get()))
+	    context->system_state = dynamic_pointer_cast<SystemState>(entity);
           entities2.push_back(entity);
         }
-        else if (dynamic_cast<SystemState *>(entity.get())) {
-          context->system_state = dynamic_cast<SystemState *>(entity.get());
-          entities2.push_back(entity);
-        }
-        else
-          entities2.push_back(entity);
       }
+      // Insert uniq'ed RangeServerConnections
       foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
-        entities2.push_back(rsc.get());
+        entities2.push_back(rsc);
       entities.swap(entities2);
     }
 
     if (!context->system_state)
-      context->system_state = new SystemState();
+      context->system_state = make_shared<SystemState>();
 
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               log_dir, entities);
 
-    if (bpa_entity) {
-      BalancePlanAuthority *bpa = dynamic_cast<BalancePlanAuthority *>(bpa_entity.get());
+    if (bpa) {
       bpa->set_mml_writer(context->mml_writer);
-      entities.push_back(bpa_entity);
-      context->set_balance_plan_authority(bpa);
       std::stringstream sout;
       sout << "Loading BalancePlanAuthority: " << *bpa;
       HT_INFOF("%s", sout.str().c_str());
@@ -300,36 +297,35 @@ int main(int argc, char **argv) {
     context->op = new OperationProcessor(context, worker_count);
 
     // First do System Upgrade
-    operation = new OperationSystemUpgrade(context);
+    operation = make_shared<OperationSystemUpgrade>(context);
     context->op->add_operation(operation);
     context->op->wait_for_empty();
 
     // Then reconstruct state and start execution
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
-      operation = dynamic_cast<Operation *>(entity.get());
-      if (operation) {
-
-        if (operation->get_remove_approval_mask() && !operation->removal_approved())
+      Operation *op = dynamic_cast<Operation *>(entity.get());
+      if (op) {
+	operation = dynamic_pointer_cast<Operation>(entity);
+        if (op->get_remove_approval_mask() && !op->removal_approved())
           context->reference_manager->add(operation);
 
-        if (dynamic_cast<OperationMoveRange *>(operation.get()))
-          context->add_move_operation(operation.get());
+        if (dynamic_cast<OperationMoveRange *>(op))
+          context->add_move_operation(operation);
 
         // master was interrupted in the middle of rangeserver failover
-        if (dynamic_cast<OperationRecover *>(operation.get())) {
+        if (dynamic_cast<OperationRecover *>(op)) {
           HT_INFO("Recovery was interrupted; continuing");
-          OperationRecover *op =
-            dynamic_cast<OperationRecover *>(operation.get());
-          if (!op->location().empty()) {
+          OperationRecover *recover_op = dynamic_cast<OperationRecover *>(op);
+          if (!recover_op->location().empty()) {
             operations.push_back(operation);
-            recovery_ops[op->location()] = operation;
+            recovery_ops[recover_op->location()] = operation;
           }
         }
         else
           operations.push_back(operation);
       }
       else if (dynamic_cast<RangeServerConnection *>(entity.get())) {
-        rsc = dynamic_cast<RangeServerConnection *>(entity.get());
+        rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
         context->rsc_manager->add_server(rsc);
       }
     }
@@ -338,17 +334,16 @@ int main(int argc, char **argv) {
     // For each RangeServerConnection that doesn't already have an
     // outstanding OperationRecover, create and add one
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
-      rsc = dynamic_cast<RangeServerConnection *>(entity.get());
-      if (rsc) {
+      if (dynamic_cast<RangeServerConnection *>(entity.get())) {
+        rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
         if (recovery_ops.find(rsc->location()) == recovery_ops.end())
-          operations.push_back(new OperationRecover(context, rsc,
-                                                    OperationRecover::RESTART));
+          operations.push_back(make_shared<OperationRecover>(context, rsc, OperationRecover::RESTART));
       }
     }
     recovery_ops.clear();
 
     if (operations.empty()) {
-      OperationPtr init_op = new OperationInitialize(context);
+      OperationPtr init_op = make_shared<OperationInitialize>(context);
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
         init_op->set_state(OperationState::CREATE_RS_METRICS);
       operations.push_back(init_op);
@@ -366,10 +361,11 @@ int main(int argc, char **argv) {
     }
 
     // Add PERPETUAL operations
-    operation = new OperationWaitForServers(context);
+    operation = make_shared<OperationWaitForServers>(context);
     operations.push_back(operation);
-    context->recovery_barrier_op = new OperationTimedBarrier(context, Dependency::RECOVERY, Dependency::RECOVERY_BLOCKER);
-    operation = new OperationRecoveryBlocker(context);
+    context->recovery_barrier_op =
+      make_shared<OperationTimedBarrier>(context, Dependency::RECOVERY, Dependency::RECOVERY_BLOCKER);
+    operation = make_shared<OperationRecoveryBlocker>(context);
     operations.push_back(operation);
 
     context->op->add_operations(operations);

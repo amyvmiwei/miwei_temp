@@ -24,8 +24,8 @@
 /// This file contains the type declarations for the ScanContext, a class that
 /// provides context for a scan.
 
-#ifndef HYPERTABLE_SCANCONTEXT_H
-#define HYPERTABLE_SCANCONTEXT_H
+#ifndef Hypertable_RangeServer_ScanContext_h
+#define Hypertable_RangeServer_ScanContext_h
 
 #include <Common/ByteString.h>
 #include <Common/Error.h>
@@ -34,9 +34,9 @@
 
 #include <Hypertable/Lib/CellPredicate.h>
 #include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/ScanSpec.h>
 #include <Hypertable/Lib/Schema.h>
-#include <Hypertable/Lib/Types.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -83,8 +83,9 @@ namespace Hypertable {
      *
      * @param rev scan revision
      * @param ss scan specification
-     * @param range range specifier
+     * @param range range specification
      * @param schema smart pointer to schema object
+     * @param columns Vector of column identifiers
      */
     ScanContext(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
                 SchemaPtr &schema, std::set<uint8_t> *columns=0) :
@@ -169,6 +170,6 @@ namespace Hypertable {
 
   typedef intrusive_ptr<ScanContext> ScanContextPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_SCANCONTEXT_H
+#endif // Hypertable_RangeServer_ScanContext_h

@@ -346,8 +346,8 @@ void QfsBroker::debug(ResponseCallback *cb, int32_t command, StaticBuffer &seria
                                            command));
 }
 
-void QfsBroker::status(ResponseCallback *cb) {
-  cb->response_ok();
+void QfsBroker::status(Response::Callback::Status *cb) {
+  cb->response(0, "OK");
 }
 
 void QfsBroker::shutdown(ResponseCallback *cb) {

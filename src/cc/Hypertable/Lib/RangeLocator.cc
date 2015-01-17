@@ -19,19 +19,19 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-
-#include "Common/Error.h"
-#include "Common/ScopeGuard.h"
+#include <Common/Compat.h>
 
 #include "Hyperspace/Session.h"
 
-#include "Key.h"
-#include "NameIdMapper.h"
-#include "RootFileHandler.h"
-#include "RangeLocator.h"
-#include "ScanBlock.h"
-#include "ScanSpec.h"
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/RootFileHandler.h>
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/ScanBlock.h>
+#include <Hypertable/Lib/ScanSpec.h>
+
+#include <Common/Error.h>
+#include <Common/ScopeGuard.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -64,6 +64,7 @@ extern "C" {
   } while (false)
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace std;
 
 namespace {

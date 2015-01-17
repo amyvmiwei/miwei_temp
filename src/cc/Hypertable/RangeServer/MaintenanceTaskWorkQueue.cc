@@ -53,7 +53,7 @@ void MaintenanceTaskWorkQueue::execute() {
 	Global::work_queue.push_back(entity_task);
       }
       else
-	m_completed.push_back(entity_task.get());
+	m_completed.push_back(entity_task);
     }
     catch (Hypertable::Exception &e) {
       HT_ERROR_OUT << e << HT_END;

@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,15 +22,15 @@
 #ifndef HYPERTABLE_OPERATIONRECOVERRANGES_H
 #define HYPERTABLE_OPERATIONRECOVERRANGES_H
 
-#include <vector>
-
-#include "Hypertable/Lib/Types.h"
-#include "Hypertable/Lib/RangeRecoveryPlan.h"
-
 #include "Operation.h"
+
+#include <Hypertable/Lib/RangeServerRecovery/Plan.h>
+
+#include <vector>
 
 namespace Hypertable {
 
+  using namespace Lib;
   using namespace std;
 
   class OperationRecoverRanges : public Operation {
@@ -45,10 +45,11 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const;
-    virtual void encode_state(uint8_t **bufp) const;
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    uint8_t encoding_version_state() const override;
+    size_t encoded_length_state() const override;
+    void encode_state(uint8_t **bufp) const override;
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
 
   private:
@@ -68,12 +69,12 @@ namespace Hypertable {
 
     String m_location;
     String m_parent_dependency;
-    int m_type;
-    RangeRecoveryPlan m_plan;
+    int32_t m_type;
+    RangeServerRecovery::Plan m_plan;
     StringSet m_redo_set;
     String m_type_str;
-    uint32_t m_timeout {};
-    int m_plan_generation {};
+    int32_t m_timeout {};
+    int32_t m_plan_generation {};
     time_t m_last_notification {};
   };
 

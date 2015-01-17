@@ -23,27 +23,17 @@ set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/fsclient")
 set(TEST_DEPENDENCIES ${DST_DIR}/words)
 
 set(fsclient_SRCS
-CommandCopyFromLocal.cc
-CommandCopyToLocal.cc
-CommandLength.cc
-CommandMkdirs.cc
-CommandRemove.cc
-CommandRmdir.cc
-CommandShutdown.cc
-CommandExists.cc
+CommandInterpreter.cc
+Utility.cc
 )
 
-# dfclient lib
-add_library(HyperFsCmds ${fsclient_SRCS})
-target_link_libraries(HyperFsCmds HyperFsBroker)
-
 # fsclient - command interpreter
-add_executable(fsclient fsclient.cc)
-target_link_libraries(fsclient HyperFsCmds ${EDITLINE_LIBRARIES})
+add_executable(fsclient fsclient.cc ${fsclient_SRCS})
+target_link_libraries(fsclient HyperCommon HyperComm HyperFsBroker Hypertable ${EDITLINE_LIBRARIES})
 
 # fsTest
-add_executable(fsTest fsTest.cc fsTestThreadFunction.cc ${TEST_DEPENDENCIES})
-target_link_libraries(fsTest HyperFsCmds)
+add_executable(fsTest fsTest.cc FsTestThreadFunction.cc Utility.cc ${TEST_DEPENDENCIES})
+target_link_libraries(fsTest HyperCommon HyperComm HyperFsBroker)
 
 configure_file(${SRC_DIR}/fsTest.golden ${DST_DIR}/fsTest.golden COPYONLY)
 
@@ -57,7 +47,7 @@ set(ADDITIONAL_MAKE_CLEAN_FILES ${DST_DIR}/words)
 add_test(HyperFsBroker fsTest)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS HyperFsCmds fsclient
+  install(TARGETS fsclient
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

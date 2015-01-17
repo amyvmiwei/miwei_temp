@@ -128,7 +128,7 @@ namespace Hypertable {
 
 }
 
-/** Convenience macro which tests if a failure should be induced; if yes then an
+/* Convenience macro which tests if a failure should be induced; if yes then an
  * error is thrown/returned or the application pauses/exits
  */
 #define HT_MAYBE_FAIL(_label_) \
@@ -136,7 +136,7 @@ namespace Hypertable {
     Hypertable::FailureInducer::instance->maybe_fail(_label_); \
   }
 
-/** Convenience macro which tests if a failure should be induced induced;
+/* Convenience macro which tests if a failure should be induced induced;
  * if yes then an error is thrown/returned or the application pauses/exits
  */
 #define HT_MAYBE_FAIL_X(_label_, _exp_) \
@@ -144,7 +144,7 @@ namespace Hypertable {
     Hypertable::FailureInducer::instance->maybe_fail(_label_); \
   }
 
-/** Convenience macro for executing arbitrary code if a failure is induced */
+/* Convenience macro for executing arbitrary code if a failure is induced */
 #define HT_FAILURE_SIGNALLED(_label_) \
   Hypertable::FailureInducer::enabled() && \
     Hypertable::FailureInducer::instance->failure_signalled(_label_)

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,26 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/InetAddr.h"
-
-#include <iostream>
-
-#include "AsyncComm/DispatchHandler.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Tools/Lib/CommandShell.h"
-
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/HqlCommandInterpreter.h"
-#include "Hypertable/Lib/RangeServerClient.h"
+#include <Common/Compat.h>
 
 #include "RangeServerCommandInterpreter.h"
 
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/HqlCommandInterpreter.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
+
+#include <Hyperspace/Session.h>
+
+#include <Tools/Lib/CommandShell.h>
+
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/Init.h>
+#include <Common/InetAddr.h>
+
+#include <iostream>
+
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace Config;
 using namespace std;
 
@@ -105,7 +107,7 @@ int main(int argc, char **argv) {
     Comm *comm = Comm::instance();
 
     // Create Range Server client object
-    RangeServerClientPtr client = new RangeServerClient(comm, timeout);
+    RangeServer::ClientPtr client = make_shared<RangeServer::Client>(comm, timeout);
 
     DispatchHandlerPtr dispatch_handler_ptr = new RangeServerDispatchHandler();
     // connect to RangeServer

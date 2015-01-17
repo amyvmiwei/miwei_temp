@@ -34,39 +34,22 @@
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib::Request::Parameters;
 
-namespace {
-  uint8_t VERSION {1};
+uint8_t Length::encoding_version() const {
+  return 1;
 }
 
-size_t Length::encoded_length() const {
-  size_t length = internal_encoded_length();
-  return 1 + Serialization::encoded_length_vi32(length) + length;
+size_t Length::encoded_length_internal() const {
+  return 1 + Serialization::encoded_length_vstr(m_fname);
 }
 
-void Length::encode(uint8_t **bufp) const {
-  Serialization::encode_i8(bufp, VERSION);
-  Serialization::encode_vi32(bufp, internal_encoded_length());
+void Length::encode_internal(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_fname);
   Serialization::encode_bool(bufp, m_accurate);
 }
 
-void Length::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t version = Serialization::decode_i8(bufp, remainp);
-  if (version != VERSION)
-    HT_THROWF(Error::PROTOCOL_ERROR,
-	      "Length parameters version mismatch, expected %d, got %d",
-	      (int)VERSION, (int)version);
-  uint32_t encoding_length = Serialization::decode_vi32(bufp, remainp);
-  const uint8_t *end = *bufp + encoding_length;
+void Length::decode_internal(uint8_t version, const uint8_t **bufp,
+			     size_t *remainp) {
   m_fname.clear();
   m_fname.append(Serialization::decode_vstr(bufp, remainp));
   m_accurate = Serialization::decode_bool(bufp, remainp);
-  // If encoding is longer than we expect, that means we're decoding a newer
-  // version, so skip the newer portion that we don't know about
-  if (*bufp < end)
-    *bufp = end;
-}
-
-size_t Length::internal_encoded_length() const {
-  return 1 + Serialization::encoded_length_vstr(m_fname);
 }

@@ -223,7 +223,7 @@ namespace Hypertable {
     /// and #m_current_disk_usage variables by summing the corresponding
     /// values from the cell stores in <code>stores</code>.  The disk
     /// usage is computed as the uncompressed disk usage.  If the access group
-    /// is <i>in memory<i>, then the disk usage is taken to be the logical
+    /// is <i>in memory</i>, then the disk usage is taken to be the logical
     /// size as reported by the cell cache manager. If
     /// <code>collection_performed</code> is set to <i>true</i>, then
     /// #m_last_collection_time is set to <code>t</code> and
@@ -241,7 +241,7 @@ namespace Hypertable {
     /// tracker state to the output stream <code>out</code>.  Each state
     /// variable is formatted as follows:
     /// <pre>
-    /// <label> '\t' <name> '\t' <value> '\n'
+    /// &lt;label&gt; '\\t' &lt;name&gt; '\\t' &lt;value&gt; '\\n'
     /// </pre>
     /// @param out Output stream on which to print state
     /// @param label String label to print at beginning of each line.

@@ -104,7 +104,7 @@ namespace Hypertable {
     /// removed, if there was one.  Then room is created in the cache for the
     /// new entry by removing the oldest entries until enough space is
     /// available.  Finally, a new cache entry is created and inserted into the
-    /// cache.  This function also maintains the #m_available_memory value which
+    /// cache.  This function also maintains the #m_avail_memory value which
     /// represents how much room is available in the cache.  It is computed as
     /// #m_max_memory minus an approximation of how much space is taken up by
     /// the existing cache entries.

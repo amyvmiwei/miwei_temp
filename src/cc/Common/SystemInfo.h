@@ -120,11 +120,16 @@ namespace Hypertable {
    * etc)
    */
   struct DiskStat {
-    DiskStat() 
-    : reads_rate(0.0), writes_rate(0.0), read_rate(0.0), write_rate(0.0),
-      prev_stat(0) { }
+    DiskStat() { }
+    DiskStat(const DiskStat &other);
     ~DiskStat();
+    void swap (DiskStat &other);
     DiskStat &refresh(const char *dir_prefix = "/");
+    DiskStat &operator=(const DiskStat &other) {
+      DiskStat tmp(other);
+      swap(tmp);
+      return *this;
+    }
     bool operator==(const DiskStat &other) const;
     bool operator!=(const DiskStat &other) const {
       return !(*this == other);
@@ -132,14 +137,14 @@ namespace Hypertable {
 
     String prefix;
     // aggregate io ops rate
-    double reads_rate;
-    double writes_rate;
+    double reads_rate {};
+    double writes_rate {};
 
     // aggreate transfer rate in bytes/s
-    double read_rate;
-    double write_rate;
+    double read_rate {};
+    double write_rate {};
 
-    void *prev_stat;
+    void *prev_stat {};
     Stopwatch stopwatch;
   };
 
@@ -149,22 +154,29 @@ namespace Hypertable {
    */
   struct SwapStat {
     SwapStat() : prev_stat(0) { }
+    SwapStat(const SwapStat &other);
     ~SwapStat();
+    void swap (SwapStat &other);
     SwapStat &refresh();
+    SwapStat &operator=(const SwapStat &other) {
+      SwapStat tmp(other);
+      swap(tmp);
+      return *this;
+    }
     bool operator==(const SwapStat &other) const;
     bool operator!=(const SwapStat &other) const {
       return !(*this == other);
     }
 
     // aggregate in MB
-    double total;
-    double used;
-    double free;
+    double total {};
+    double used {};
+    double free {};
 
-    uint64_t page_in;
-    uint64_t page_out;
+    uint64_t page_in {};
+    uint64_t page_out {};
 
-    void *prev_stat;
+    void *prev_stat {};
   };
 
   /**

@@ -88,20 +88,20 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
 }
 
 
-void MaintenanceScheduler::exclude(const TableIdentifier *table) {
+void MaintenanceScheduler::exclude(const TableIdentifier &table) {
   lock_guard<mutex> lock(m_mutex);
-  if (m_table_blacklist.count(table->id) > 0)
+  if (m_table_blacklist.count(table.id) > 0)
     return;
-  m_table_blacklist.insert(table->id);
+  m_table_blacklist.insert(table.id);
   // Drop range maintenance tasks for table ID
   function<bool(Range *)> drop_predicate =
-    [table](Range *r) -> bool {return r->get_table_id().compare(table->id)==0;};
+    [table](Range *r) -> bool {return r->get_table_id().compare(table.id)==0;};
   Global::maintenance_queue->drop_range_tasks(drop_predicate);
 }
 
-void MaintenanceScheduler::include(const TableIdentifier *table) {
+void MaintenanceScheduler::include(const TableIdentifier &table) {
   lock_guard<mutex> lock(m_mutex);
-  m_table_blacklist.erase(table->id);
+  m_table_blacklist.erase(table.id);
 }
 
 
@@ -329,7 +329,7 @@ void MaintenanceScheduler::schedule() {
     // Remove logs that were removed from the MetaLogEntityRemoveOkLogs entity
     if (!removed_logs.empty()) {
       Global::remove_ok_logs->remove(removed_logs);
-      Global::rsml_writer->record_state(Global::remove_ok_logs.get());
+      Global::rsml_writer->record_state(Global::remove_ok_logs);
     }
   }
 

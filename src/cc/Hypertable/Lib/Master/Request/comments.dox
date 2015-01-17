@@ -1,0 +1,5 @@
+/// @defgroup libHypertableMasterRequest Request
+/// @ingroup libHypertableMaster
+/// Request handling code.
+/// This module contains code for handling incoming requests to the %Master
+/// server.

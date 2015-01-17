@@ -24,11 +24,12 @@
 /// This file contains declarations for OperationCreateTable, an Operation class
 /// for creating a table.
 
-#ifndef HYPERTABLE_OPERATIONCREATETABLE_H
-#define HYPERTABLE_OPERATIONCREATETABLE_H
+#ifndef Hypertable_Master_OperationCreateTable_h
+#define Hypertable_Master_OperationCreateTable_h
 
 #include <Hypertable/Master/Operation.h>
 
+#include <Hypertable/Lib/Master/Request/Parameters/CreateTable.h>
 #include <Hypertable/Lib/TableParts.h>
 
 namespace Hypertable {
@@ -45,9 +46,8 @@ namespace Hypertable {
   public:
 
     /// Constructor.
-    /// Initializes #m_name with <code>name</code>, #m_schema with
-    /// <code>schema</code>, and #m_parts with <code>parts</code>.  #m_name is
-    /// canonicalized with a call to Utility::canonicalize_pathname().
+    /// Initializes #m_params with <code>name</code> and <code>schema</code>,
+    /// and initializes #m_parts with <code>parts</code>.
     /// @param context %Master context
     /// @param name Full pathname of table to create
     /// @param schema %Table schema
@@ -65,9 +65,8 @@ namespace Hypertable {
     /// Constructor with client request.
     /// Initializes base class constructor, and then initializes the member
     /// variables as follows:
-    ///   - Decodes request with a call to decode_request()
-    ///   - Canonicalizes #m_name with a call to Utility::canonicalize_pathname()
-    ///   - #m_name is added as an exclusivity
+    ///   - Decodes request parameters
+    ///   - Table name is added as an exclusivity
     ///   - Adds METADATA and SYSTEM as dependencies
     ///   - If table is a system table, INIT is added as a dependency
     /// @param context %Master context
@@ -90,7 +89,7 @@ namespace Hypertable {
     /// <tr>
     /// <td>INITIAL</td>
     /// <td><ul>
-    /// <li>Verifies that a table of name #m_name does not already exist in
+    /// <li>Verifies that a table with the same name does not already exist in
     ///     Hyperspace and completes with error Error::NAME_ALREADY_IN_USE if it
     ///     does.</li>
     /// <li>Obtains current timestamp and uses it as the schema generation
@@ -218,14 +217,14 @@ namespace Hypertable {
 
     /// Returns encoding version of serialization format.
     /// @return Encoding version of serialization format.
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /// Returns serialized state length.
     /// This method returns the length of the serialized representation of the
     /// object state.
     /// @return Serialized length
     /// @see encode() for a description of the serialized %format.
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
     
     /// Writes serialized encoding of object state.
     /// This method writes a serialized encoding of object state to the memory
@@ -236,7 +235,7 @@ namespace Hypertable {
     ///   <th>Encoding</th><th>Description</th>
     ///   </tr>
     ///   <tr>
-    ///   <td>vstr</td><td>%Table name (#m_name)</td>
+    ///   <td>vstr</td><td>%Table name</td>
     ///   </tr>
     ///   <tr>
     ///   <td>vstr</td><td>%Table schema (#m_schema)</td>
@@ -254,47 +253,31 @@ namespace Hypertable {
     ///   </tr>
     /// </table>
     /// @param bufp Address of destination buffer pointer (advanced by call)
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /// Reads serialized encoding of object state.
     /// This method restores the state of the object by decoding a serialized
     /// representation of the state from the memory location pointed to by
     /// <code>*bufp</code>.
+    /// @param version Encoding version
     /// @param bufp Address of source buffer pointer (advanced by call)
     /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
     /// (decremented by call)
     /// @see encode() for a description of the serialized %format.
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp);
 
-    /// Decodes a request that triggered the operation.
-    /// This method decodes a request sent from a client that caused this
-    /// object to get created.  The encoding has the following format:
-    /// <table>
-    ///   <tr>
-    ///   <th>Encoding</th><th>Description</th>
-    ///   </tr>
-    ///   <tr>
-    ///   <td>vstr</td><td>%Table name (#m_name)</td>
-    ///   </tr>
-    ///   <tr>
-    ///   <td>vstr</td><td>%Table schema (#m_schema)</td>
-    ///   </tr>
-    /// </table>
-    /// @param bufp Address of source buffer pointer (advanced by call)
-    /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-    /// (decremented by call)
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp);
 
   private:
 
-    /// Pathtname of table to create
-    String m_name;
-
-    /// %Schema for the table
-    String m_schema;
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::CreateTable m_params;
 
     /// %Table identifier
     TableIdentifierManaged m_table;
+
+    /// %Schema for the table
+    String m_schema;
 
     /// %Proxy name of server to hold initial range
     String m_location;
@@ -308,4 +291,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_OPERATIONCREATETABLE_H
+#endif // Hypertable_Master_OperationCreateTable_h

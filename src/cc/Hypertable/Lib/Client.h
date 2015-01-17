@@ -30,7 +30,7 @@
 #include "AsyncComm/ConnectionManager.h"
 #include "Hyperspace/Session.h"
 
-#include "MasterClient.h"
+#include "Master/Client.h"
 #include "NameIdMapper.h"
 #include "NamespaceCache.h"
 #include "TableCache.h"
@@ -119,7 +119,7 @@ namespace Hypertable {
 
     Hyperspace::SessionPtr& get_hyperspace_session();
 
-    MasterClientPtr get_master_client();
+    Lib::Master::ClientPtr get_master_client();
 
     NameIdMapperPtr get_nameid_mapper();
 
@@ -142,7 +142,7 @@ namespace Hypertable {
     ApplicationQueueInterfacePtr m_app_queue;
     Hyperspace::SessionPtr  m_hyperspace;
     NameIdMapperPtr         m_namemap;
-    MasterClientPtr         m_master_client;
+    Lib::Master::ClientPtr m_master_client;
     RangeLocatorPtr         m_range_locator;
     uint32_t                m_timeout_ms;
     String                  m_install_dir;

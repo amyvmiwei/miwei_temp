@@ -24,11 +24,11 @@
 /// This file contains declarations for GroupCommitInterface, a class that
 /// defines the interface to the group commit mechanism.
 
-#ifndef HYPERSPACE_GROUPCOMMITINTERFACE_H
-#define HYPERSPACE_GROUPCOMMITINTERFACE_H
+#ifndef Hypertable_RangeServer_GroupCommitInterface_h
+#define Hypertable_RangeServer_GroupCommitInterface_h
 
 #include <Hypertable/Lib/Schema.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <AsyncComm/Event.h>
 
@@ -55,7 +55,7 @@ namespace Hypertable {
 
     /// Adds a batch of updates to the group commit queue.
     virtual void add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
-                     const TableIdentifier *table, uint32_t count,
+                     const TableIdentifier &table, uint32_t count,
                      StaticBuffer &buffer, uint32_t flags) = 0;
 
     /// Processes queued updates that are ready to be committed.
@@ -68,5 +68,5 @@ namespace Hypertable {
   /// @}
 }
 
-#endif // HYPERSPACE_GROUPCOMMITINTERFACE_H
+#endif // Hypertable_RangeServer_GroupCommitInterface_h
 

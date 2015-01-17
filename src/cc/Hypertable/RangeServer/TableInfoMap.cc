@@ -98,12 +98,12 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
 
 
 
-void TableInfoMap::promote_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log) {
+void TableInfoMap::promote_staged_range(const TableIdentifier &table, RangePtr &range, const char *transfer_log) {
   ScopedLock lock(m_mutex);
   StringSet linked_logs;
   int error;
 
-  InfoMap::iterator iter = m_map.find(table->id);
+  InfoMap::iterator iter = m_map.find(table.id);
   HT_ASSERT(iter != m_map.end());
 
   if (transfer_log && *transfer_log) {
@@ -113,9 +113,9 @@ void TableInfoMap::promote_staged_range(const TableIdentifier *table, RangePtr &
       CommitLog *log;
       if (range->is_root())
         log = Global::root_log;
-      else if (table->is_metadata())
+      else if (table.is_metadata())
         log = Global::metadata_log;
-      else if (table->is_system())
+      else if (table.is_system())
         log = Global::system_log;
       else
         log = Global::user_log;
@@ -130,7 +130,7 @@ void TableInfoMap::promote_staged_range(const TableIdentifier *table, RangePtr &
     }
   }
 
-  HT_MAYBE_FAIL_X("add-staged-range-2", !table->is_system());
+  HT_MAYBE_FAIL_X("add-staged-range-2", !table.is_system());
 
   linked_logs.insert(transfer_log);
 
@@ -139,9 +139,9 @@ void TableInfoMap::promote_staged_range(const TableIdentifier *table, RangePtr &
   // Record Range and RemoveOkLogs entities in RSML
   if (Global::rsml_writer == 0)
     HT_THROW(Error::SERVER_SHUTTING_DOWN, "Pointer to RSML Writer is NULL");
-  std::vector<MetaLog::Entity *> entities;
+  std::vector<MetaLog::EntityPtr> entities;
   entities.push_back(range->metalog_entity());
-  entities.push_back(Global::remove_ok_logs.get());
+  entities.push_back(Global::remove_ok_logs);
   Global::rsml_writer->record_state(entities);
 
   (*iter).second->promote_staged_range(range);
@@ -204,13 +204,13 @@ void TableInfoMap::merge(TableInfoMap *other) {
 }
 
 void TableInfoMap::merge(TableInfoMap *other,
-                         vector<MetaLog::Entity *> &entities,
+                         vector<MetaLog::EntityPtr> &entities,
                          StringSet &transfer_logs) {
   ScopedLock lock(m_mutex);
   if (Global::rsml_writer == 0)
     HT_THROW(Error::SERVER_SHUTTING_DOWN, "");
   Global::remove_ok_logs->insert(transfer_logs);
-  entities.push_back(Global::remove_ok_logs.get());
+  entities.push_back(Global::remove_ok_logs);
   Global::rsml_writer->record_state(entities);
   merge_unlocked(other);
   entities.clear();

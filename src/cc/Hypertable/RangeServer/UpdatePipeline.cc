@@ -28,12 +28,13 @@
 #include "UpdatePipeline.h"
 
 #include <Hypertable/RangeServer/Global.h>
-#include <Hypertable/RangeServer/ResponseCallbackUpdate.h>
+#include <Hypertable/RangeServer/Response/Callback/Update.h>
 #include <Hypertable/RangeServer/UpdateContext.h>
 #include <Hypertable/RangeServer/UpdateRecRange.h>
 #include <Hypertable/RangeServer/UpdateRecTable.h>
 
 #include <Hypertable/Lib/ClusterId.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
 
 #include <Common/DynamicBuffer.h>
 #include <Common/FailureInducer.h>
@@ -43,6 +44,7 @@
 #include <set>
 
 using namespace Hypertable;
+using namespace Hypertable::RangeServer;
 using namespace std;
 
 UpdatePipeline::UpdatePipeline(ContextPtr &context, QueryCachePtr &query_cache,
@@ -575,7 +577,7 @@ void UpdatePipeline::commit() {
         bool sync = false;
         if (table_update->id.is_user()) {
           log = Global::user_log;
-          if ((table_update->flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
+          if ((table_update->flags & Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
             user_log_needs_syncing = true;
         }
         else if (table_update->id.is_metadata()) {
@@ -761,7 +763,7 @@ void UpdatePipeline::add_and_respond() {
       }
 
       foreach_ht (UpdateRequest *request, table_update->requests) {
-        ResponseCallbackUpdate cb(m_context->comm, request->event);
+	Response::Callback::Update cb(m_context->comm, request->event);
 
         if (table_update->error != Error::OK) {
           if ((error = cb.error(table_update->error, table_update->error_msg)) != Error::OK)

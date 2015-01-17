@@ -65,7 +65,7 @@ main(int ac, char *av[]) {
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
-    context->dfs = new FsBroker::Lib::Client(context->conn_manager, context->props);
+    context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
 
     client = new Hypertable::Client("htgc");
     ns = client->open_namespace("sys");

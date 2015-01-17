@@ -35,8 +35,9 @@
 #include <Hypertable/RangeServer/MaintenanceFlag.h>
 #include <Hypertable/RangeServer/MergeScannerAccessGroup.h>
 
+#include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/Schema.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/PageArena.h>
 #include <Common/ReferenceCount.h>

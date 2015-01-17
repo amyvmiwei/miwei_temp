@@ -178,7 +178,7 @@ void Reader::load_file(const String &fname) {
         continue;
       }
 
-      EntityPtr entity = m_definition->create(header);
+      EntityPtr entity(m_definition->create(header));
 
       buf.clear();
       buf.ensure(header.length);

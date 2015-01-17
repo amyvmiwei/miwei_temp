@@ -1,0 +1,4 @@
+/// @defgroup RangeServerResponseCallback Callback
+/// @ingroup RangeServerResponse
+/// %Response callbacks.
+/// This module contains response callback classes for the range server.

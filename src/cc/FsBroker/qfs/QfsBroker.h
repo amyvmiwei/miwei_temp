@@ -85,7 +85,7 @@ namespace FsBroker {
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
-    virtual void status(ResponseCallback *cb);
+    virtual void status(Response::Callback::Status *cb);
     virtual void shutdown(ResponseCallback *cb);
     virtual void readdir(Response::Callback::Readdir *cb, const char *dname);
     virtual void exists(Response::Callback::Exists *cb, const char *fname);

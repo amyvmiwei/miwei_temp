@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,18 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONRENAMETABLE_H
-#define HYPERTABLE_OPERATIONRENAMETABLE_H
+#ifndef Hypertable_Master_OperationRenameTable_h
+#define Hypertable_Master_OperationRenameTable_h
 
 #include "Operation.h"
 
+#include <Hypertable/Lib/Master/Request/Parameters/RenameTable.h>
 #include <Hypertable/Lib/TableParts.h>
 
 namespace Hypertable {
 
   class OperationRenameTable : public Operation {
   public:
-    OperationRenameTable(ContextPtr &context, const String &old_name, const String &new_name);
+    OperationRenameTable(ContextPtr &context, const String &from, const String &to);
     OperationRenameTable(ContextPtr &context, const MetaLog::EntityHeader &header_);
     OperationRenameTable(ContextPtr &context, EventPtr &event);
     virtual ~OperationRenameTable() { }
@@ -39,20 +40,24 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const;
-    virtual void encode_state(uint8_t **bufp) const;
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    uint8_t encoding_version_state() const override;
+    size_t encoded_length_state() const override;
+    void encode_state(uint8_t **bufp) const override;
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
-    void initialize_dependencies();
-    String m_old_name;
-    String m_new_name;
+
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::RenameTable m_params;
+
+    /// Table ID path for new name
     String m_id;
+
+    /// Index tables requiring renaming
     TableParts m_parts;
   };
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_OPERATIONRENAMETABLE_H
+#endif // Hypertable_Master_OperationRenameTable_h

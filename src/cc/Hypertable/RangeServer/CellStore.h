@@ -35,7 +35,7 @@
 #include <Hypertable/RangeServer/KeyDecompressor.h>
 
 #include <Hypertable/Lib/BlockCompressionCodec.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/Mutex.h>
 #include <Common/String.h>

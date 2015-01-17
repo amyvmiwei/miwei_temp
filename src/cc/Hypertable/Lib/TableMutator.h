@@ -22,14 +22,6 @@
 #ifndef HYPERTABLE_TABLEMUTATOR_H
 #define HYPERTABLE_TABLEMUTATOR_H
 
-#include <iostream>
-
-#include "AsyncComm/ConnectionManager.h"
-
-#include "Common/Properties.h"
-#include "Common/StringExt.h"
-#include "Common/Timer.h"
-
 #include "Cells.h"
 #include "ClientObject.h"
 #include "KeySpec.h"
@@ -38,9 +30,16 @@
 #include "TableMutatorQueue.h"
 #include "TableCallback.h"
 #include "RangeLocator.h"
-#include "RangeServerClient.h"
 #include "Schema.h"
-#include "Types.h"
+#include "TableIdentifier.h"
+
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Properties.h>
+#include <Common/StringExt.h>
+#include <Common/Timer.h>
+
+#include <iostream>
 
 namespace Hypertable {
 

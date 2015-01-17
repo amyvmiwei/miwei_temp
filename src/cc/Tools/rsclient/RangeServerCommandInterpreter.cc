@@ -52,11 +52,12 @@ extern "C" {
 
 #define BUFFER_SIZE 65536
 
-using namespace std;
-using namespace Hypertable;
-using namespace Hypertable::Config;
 using namespace Hql;
+using namespace Hypertable::Config;
+using namespace Hypertable::Lib;
+using namespace Hypertable;
 using namespace Serialization;
+using namespace std;
 
 namespace {
 
@@ -88,7 +89,7 @@ namespace {
 
 RangeServerCommandInterpreter::RangeServerCommandInterpreter(
     Hyperspace::SessionPtr &hyperspace, const sockaddr_in addr,
-    RangeServerClientPtr &range_server)
+    RangeServer::ClientPtr &range_server)
   : m_hyperspace(hyperspace), m_addr(addr),
     m_range_server(range_server), m_cur_scanner_id(-1) {
   HqlHelpText::install_range_server_client_text();
@@ -364,15 +365,6 @@ int RangeServerCommandInterpreter::execute_line(const String &line) {
         TableIdentifier empty_table;
         HT_ASSERT(state.flags);
         m_range_server->compact(m_addr, empty_table, "", state.flags);
-      }
-    }
-    else if (state.command == COMMAND_METADATA_SYNC) {
-      if (state.table_name != "") {
-        m_range_server->metadata_sync(m_addr, table->id, 0, state.columns);
-      }
-      else {
-        HT_ASSERT(state.flags);
-        m_range_server->metadata_sync(m_addr, "", state.flags, state.columns);
       }
     }
     else

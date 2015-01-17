@@ -30,7 +30,7 @@ using namespace Hypertable;
 using namespace Hql;
 using namespace std;
 
-MasterCommandInterpreter::MasterCommandInterpreter(MasterClientPtr &master)
+MasterCommandInterpreter::MasterCommandInterpreter(Lib::Master::ClientPtr &master)
   : m_master(master) {
   HqlHelpText::install_master_client_text();
 }

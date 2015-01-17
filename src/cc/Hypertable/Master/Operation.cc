@@ -138,14 +138,18 @@ void Operation::display(std::ostream &os) {
   }
 }
 
-size_t Operation::encoded_length() const {
-  size_t length = 22;
+uint8_t Operation::encoding_version() const {
+  return 1;
+}
 
-  if (m_state == OperationState::COMPLETE) {
+size_t Operation::encoded_length_internal() const {
+  size_t length = 20;
+
+  if (m_state == OperationState::COMPLETE)
     length += 8 + encoded_result_length();
-  }
   else {
-    length += encoded_state_length();
+    size_t state_length = encoded_length_state();
+    length += 1 + Serialization::encoded_length_vi32(state_length) + state_length;
     length += Serialization::encoded_length_vi32(m_exclusivities.size()) +
       Serialization::encoded_length_vi32(m_dependencies.size()) +
       Serialization::encoded_length_vi32(m_obstructions.size());
@@ -167,9 +171,7 @@ size_t Operation::encoded_length() const {
   return length;
 }
 
-void Operation::encode(uint8_t **bufp) const {
-
-  Serialization::encode_i16(bufp, encoding_version());
+void Operation::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_state);
   Serialization::encode_i64(bufp, m_expiration_time.sec);
   Serialization::encode_i32(bufp, m_expiration_time.nsec);
@@ -180,6 +182,8 @@ void Operation::encode(uint8_t **bufp) const {
     encode_result(bufp);
   }
   else {
+    Serialization::encode_i8(bufp, encoding_version_state());
+    Serialization::encode_vi32(bufp, encoded_length_state());
     encode_state(bufp);
     Serialization::encode_vi32(bufp, m_exclusivities.size());
     for (auto & str : m_exclusivities)
@@ -199,15 +203,91 @@ void Operation::encode(uint8_t **bufp) const {
   }
 }
 
+void Operation::decode_internal(uint8_t version, const uint8_t **bufp,
+                                size_t *remainp) {
+
+  m_state = Serialization::decode_i32(bufp, remainp);
+  m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
+  m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
+  m_remove_approvals = Serialization::decode_i16(bufp, remainp);
+  m_remove_approval_mask = Serialization::decode_i16(bufp, remainp);
+  if (m_state == OperationState::COMPLETE) {
+    m_hash_code = Serialization::decode_i64(bufp, remainp);
+    decode_result(bufp, remainp);
+  }
+  else {
+
+    // Decode operation state
+    uint8_t version = Serialization::decode_i8(bufp, remainp);
+    if (version > encoding_version_state())
+      HT_THROWF(Error::PROTOCOL_ERROR, "Unsupported version %d", (int)version);
+    size_t encoding_length = Serialization::decode_vi32(bufp, remainp);
+    const uint8_t *end = *bufp + encoding_length;
+    size_t tmp_remain = encoding_length;
+    decode_state(version, bufp, &tmp_remain);
+    HT_ASSERT(*bufp <= end);
+    *remainp -= encoding_length;
+    // If encoding is longer than we expect, that means we're decoding a newer
+    // version, so skip the newer portion that we don't know about
+    if (*bufp < end)
+      *bufp = end;
+
+    String str;
+    size_t length;
+    m_exclusivities.clear();
+    length = Serialization::decode_vi32(bufp, remainp);
+    for (size_t i=0; i<length; i++) {
+      str = Serialization::decode_vstr(bufp, remainp);
+      m_exclusivities.insert(str);
+    }
+
+    m_dependencies.clear();
+    length = Serialization::decode_vi32(bufp, remainp);
+    for (size_t i=0; i<length; i++) {
+      str = Serialization::decode_vstr(bufp, remainp);
+      m_dependencies.insert(str);
+    }
+
+    m_obstructions.clear();
+    length = Serialization::decode_vi32(bufp, remainp);
+    for (size_t i=0; i<length; i++) {
+      str = Serialization::decode_vstr(bufp, remainp);
+      m_obstructions.insert(str);
+    }
+
+    // permanent obstructions
+    m_obstructions_permanent.clear();
+    length = Serialization::decode_vi32(bufp, remainp);
+    for (size_t i=0; i<length; i++) {
+      str = Serialization::decode_vstr(bufp, remainp);
+      m_obstructions_permanent.insert(str);
+    }
+    // sub operations
+    m_sub_ops.clear();
+    length = Serialization::decode_vi32(bufp, remainp);
+    for (size_t i=0; i<length; i++)
+      m_sub_ops.push_back( Serialization::decode_vi64(bufp, remainp) );
+
+  }
+
+}
+
 void Operation::decode(const uint8_t **bufp, size_t *remainp,
                        uint16_t definition_version) {
+  if (definition_version < 4)
+    decode_old(bufp, remainp, definition_version);
+  else
+    Entity::decode(bufp, remainp);
+}
+
+void Operation::decode_old(const uint8_t **bufp, size_t *remainp,
+                           uint16_t definition_version) {
   String str;
   size_t length;
+  uint8_t version {};
 
   if (definition_version >= 2)
-    m_decode_version = Serialization::decode_i16(bufp, remainp);
-  else
-    m_decode_version = 0;
+    version = (uint8_t)Serialization::decode_i16(bufp, remainp);
   m_state = Serialization::decode_i32(bufp, remainp);
   m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
   m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
@@ -220,7 +300,7 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp,
     decode_result(bufp, remainp);
   }
   else {
-    decode_state(bufp, remainp);
+    decode_state_old(version, bufp, remainp);
 
     m_exclusivities.clear();
     length = Serialization::decode_vi32(bufp, remainp);
@@ -283,16 +363,16 @@ bool Operation::removal_approved() {
   return m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask;
 }
 
-void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
-  std::vector<MetaLog::Entity *> entities;
+void Operation::record_state(std::vector<MetaLog::EntityPtr> &additional) {
+  std::vector<MetaLog::EntityPtr> entities;
   entities.reserve(1 + additional.size() + m_sub_ops.size());
   // Add this
   if (removal_approved())
     mark_for_removal();
-  entities.push_back(this);
+  entities.push_back(shared_from_this());
   // Add additional entities
-  for (auto entity : additional) {
-    Operation *op = dynamic_cast<Operation *>(entity);
+  for (auto & entity : additional) {
+    OperationPtr op = dynamic_pointer_cast<Operation>(entity);
     if (op && op->removal_approved())
       op->mark_for_removal();
     entities.push_back(entity);
@@ -305,11 +385,11 @@ void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
       op->mark_for_removal();
     else
       new_sub_ops.push_back(op->id());
-    entities.push_back(op.get());
+    entities.push_back(op);
   }
   m_context->mml_writer->record_state(entities);
-  for (auto entity : entities) {
-    Operation *op = dynamic_cast<Operation *>(entity);
+  for (auto & entity : entities) {
+    OperationPtr op = dynamic_pointer_cast<Operation>(entity);
     if (op && op->marked_for_removal())
       m_context->reference_manager->remove(op);
   }
@@ -317,7 +397,7 @@ void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
 }
 
 void Operation::complete_error(int error, const String &msg,
-                               std::vector<MetaLog::Entity *> &additional) {
+                               std::vector<MetaLog::EntityPtr> &additional) {
   {
     ScopedLock lock(m_mutex);
     m_state = OperationState::COMPLETE;
@@ -344,15 +424,15 @@ void Operation::complete_error(int error, const String &msg,
   record_state(additional);
 }
 
-void Operation::complete_error(int error, const String &msg, MetaLog::Entity *additional) {
-  std::vector<MetaLog::Entity *> entities;
+void Operation::complete_error(int error, const String &msg, MetaLog::EntityPtr additional) {
+  std::vector<MetaLog::EntityPtr> entities;
   if (additional)
     entities.push_back(additional);
   complete_error(error, msg, entities);
 }
 
 
-void Operation::complete_ok(std::vector<MetaLog::Entity *> &additional) {
+void Operation::complete_ok(std::vector<MetaLog::EntityPtr> &additional) {
   {
     ScopedLock lock(m_mutex);
     m_state = OperationState::COMPLETE;
@@ -368,8 +448,8 @@ void Operation::complete_ok(std::vector<MetaLog::Entity *> &additional) {
   record_state(additional);
 }
 
-void Operation::complete_ok(MetaLog::Entity *additional) {
-  std::vector<MetaLog::Entity *> entities;
+void Operation::complete_ok(MetaLog::EntityPtr additional) {
+  std::vector<MetaLog::EntityPtr> entities;
   if (additional)
     entities.push_back(additional);
   complete_ok(entities);
@@ -391,12 +471,10 @@ void Operation::obstructions(DependencySet &obstructions) {
   obstructions.insert(m_obstructions_permanent.begin(), m_obstructions_permanent.end());
 }
 
-void Operation::fetch_sub_operations(std::vector<Operation *> &sub_ops) {
+void Operation::fetch_sub_operations(std::vector<OperationPtr> &sub_ops) {
   ScopedLock lock(m_mutex);
-  for (int64_t id : m_sub_ops) {
-    OperationPtr op = m_context->reference_manager->get(id);
-    sub_ops.push_back(op.get());
-  }
+  for (int64_t id : m_sub_ops)
+    sub_ops.push_back(m_context->reference_manager->get(id));
 }
 
 
@@ -431,7 +509,7 @@ bool Operation::unblock() {
 }
 
 bool Operation::validate_subops() {
-  vector<MetaLog::Entity *> entities;
+  vector<MetaLog::EntityPtr> entities;
 
   for (int64_t id : m_sub_ops) {
     OperationPtr op = m_context->reference_manager->get(id);
@@ -445,7 +523,7 @@ bool Operation::validate_subops() {
              (Lld)op->hash_code());
     ScopedLock lock(m_mutex);
     m_dependencies.erase(dependency_string);
-    entities.push_back(op.get());
+    entities.push_back(op);
   }
 
   m_sub_ops.clear();
@@ -454,7 +532,7 @@ bool Operation::validate_subops() {
   return true;
 }
 
-void Operation::stage_subop(Operation *operation) {
+void Operation::stage_subop(OperationPtr operation) {
   string dependency_string =
     format("%s subop %s %lld", name().c_str(), operation->name().c_str(),
            (Lld)operation->hash_code());

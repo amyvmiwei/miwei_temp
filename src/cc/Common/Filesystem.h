@@ -37,9 +37,13 @@
 #include <Common/Serializable.h>
 #include <Common/String.h>
 #include <Common/StaticBuffer.h>
-#include <Common/ReferenceCount.h>
+#include <Common/Timer.h>
 
+#include <memory>
+#include <string>
 #include <vector>
+
+using namespace std;
 
 #define HT_DIRECT_IO_ALIGNMENT      512
 
@@ -65,7 +69,7 @@ namespace Hypertable {
    *
    * This abstract base class is overwritten by the various FsBrokers.
    */
-  class Filesystem : public ReferenceCount {
+  class Filesystem {
   public:
     enum OptionType { O_FLUSH = 1 };
 
@@ -79,22 +83,6 @@ namespace Hypertable {
     class Dirent : public Serializable {
 
     public:
-      /// Returns encoded length of parameters
-      /// @return Encoded length of parameters
-      size_t encoded_length() const override;
-
-      /// Encodes parameters to buffer
-      /// @param bufp Address of buffer to encode parameters to
-      /// (advanced by call)
-      void encode(uint8_t **bufp) const override;
-
-      /// Decodes parameters from buffer
-      /// @param bufp Address of buffer from which to decode parameters
-      /// (advanced by call)
-      /// @param remainp Address of remaining encoded data in buffer
-      /// (advanced by call)
-      void decode(const uint8_t **bufp, size_t *remainp) override;
-
       /// File or directory name
       String name;
       /// Length of file
@@ -105,8 +93,15 @@ namespace Hypertable {
       bool is_dir {};
 
     private:
-      /// Returns encoded length minus leading length field
-      size_t internal_encoded_length() const;
+
+      uint8_t encoding_version() const override;
+
+      size_t encoded_length_internal() const override;
+
+      void encode_internal(uint8_t **bufp) const override;
+
+      void decode_internal(uint8_t version, const uint8_t **bufp,
+			   size_t *remainp) override;
       
     };
 
@@ -234,8 +229,8 @@ namespace Hypertable {
     /// Decodes the response from a read request.
     /// @param event A reference to the response event
     /// @param buffer Address of buffer pointer
-    /// @param buffer Address of offset variable
-    /// @param buffer Address of length variable
+    /// @param offset Address of offset variable
+    /// @param length Address of length variable
     virtual void decode_response_read(EventPtr &event, const void **buffer,
                                       uint64_t *offset, uint32_t *length) = 0;
 
@@ -370,8 +365,8 @@ namespace Hypertable {
     /// Decodes the response from a pread request.
     /// @param event A reference to the response event
     /// @param buffer Address of buffer pointer
-    /// @param buffer Address of offset variable
-    /// @param buffer Address of length variable
+    /// @param offset Address of offset variable
+    /// @param length Address of length variable
     virtual void decode_response_pread(EventPtr &event, const void **buffer,
                                        uint64_t *offset, uint32_t *length) = 0;
 
@@ -488,6 +483,19 @@ namespace Hypertable {
      */
     virtual void rename(const String &src, const String &dst) = 0;
 
+    /// Check status of filesystem
+    /// @param output Nagios-style status output text
+    /// @param timer Deadline timer
+    /// @return Nagios-style status code
+    virtual int32_t status(string &output, Timer *timer=0) = 0;
+
+    /// Decodes the response from an status request.
+    /// @param event reference to response event
+    /// @param code Address of variable to hold status code
+    /// @param output Reference to string to hold status text
+    virtual void decode_response_status(EventPtr &event, int32_t *code,
+                                        string &output) = 0;
+
     /** Decodes the response from an request that only returns an error code
      *
      * @param event A reference to the response event
@@ -538,7 +546,8 @@ namespace Hypertable {
     static String basename(String name, char separator = '/');
   };
 
-  typedef intrusive_ptr<Filesystem> FilesystemPtr;
+  /// Smart pointer to Filesystem
+  typedef std::shared_ptr<Filesystem> FilesystemPtr;
 
   inline bool operator< (const Filesystem::Dirent& lhs,
 			 const Filesystem::Dirent& rhs) {

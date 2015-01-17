@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2007-2012 Hypertable, Inc.
+# Copyright (C) 2007-2014 Hypertable, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 # limitations under the License.
 #
 
-if [ -e /proc/sys/vm/swappiness ] ; then 
-  echo "/proc/sys/vm/swappiness = `cat /proc/sys/vm/swappiness`"
-fi
+#if [ -e /proc/sys/vm/swappiness ] ; then 
+#  echo "/proc/sys/vm/swappiness = `cat /proc/sys/vm/swappiness`"
+#fi
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)

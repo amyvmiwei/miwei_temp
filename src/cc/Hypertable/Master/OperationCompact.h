@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,36 +25,41 @@
  * for carrying out a manual compaction operation.
  */
 
-#ifndef HYPERTABLE_OPERATIONCOMPACT_H
-#define HYPERTABLE_OPERATIONCOMPACT_H
-
-#include "Common/StringExt.h"
+#ifndef Hypertable_Master_OperationCompact_h
+#define Hypertable_Master_OperationCompact_h
 
 #include "Operation.h"
 
+#include <Hypertable/Lib/Master/Request/Parameters/Compact.h>
+
+#include <Common/StringExt.h>
+
+#include <string>
+
 namespace Hypertable {
 
-  /** @addtogroup Master
-   *  @{
-   */
+  /// @addtogroup Master
+  /// @{
 
-  /** Carries out a manual compaction operation. */
+  /// Carries out a manual compaction operation.
   class OperationCompact : public Operation {
   public:
 
-    /** Constructor for constructing object from %MetaLog entry.
-     * @param context %Master context
-     * @param header_ %MetaLog header
-     */
+    /// Constructor for constructing object from %MetaLog entry.
+    /// @param context %Master context
+    /// @param header_ %MetaLog header
     OperationCompact(ContextPtr &context, const MetaLog::EntityHeader &header_);
     
-    /** Constructor for constructing object from AsyncComm event 
-     * @param context %Master context
-     * @param event %Event received from AsyncComm from client request
-     */
+    /// Constructor for constructing object from AsyncComm event.
+    /// Decodes #m_params from message payload, then initializes the dependency
+    /// graph state as follows:
+    ///   - <b>dependencies</b> - Dependency::INIT
+    ///   - <b>exclusivities</b> - %Table pathname
+    /// @param context %Master context
+    /// @param event %Event received from AsyncComm from client request
     OperationCompact(ContextPtr &context, EventPtr &event);
 
-    /** Destructor. */
+    /// Destructor.
     virtual ~OperationCompact() { }
 
     /** Carries out the manual compaction operation.
@@ -107,26 +112,26 @@ namespace Hypertable {
     /** Returns name of operation ("OperationCompact")
      * @return %Operation name
      */
-    virtual const String name();
+    virtual const std::string name();
 
     /** Returns descriptive label for operation
      * @return Descriptive label for operation
      */
-    virtual const String label();
+    virtual const std::string label();
 
     /** Writes human readable representation of object to output stream.
      * @param os Output stream
      */
     virtual void display_state(std::ostream &os);
 
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /** Returns serialized state length.
      * This method returns the length of the serialized representation of the
      * object state.  See encode() for a description of the serialized format.
      * @return Serialized length
      */
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
 
     /** Writes serialized encoding of object state.
      * This method writes a serialized encoding of object state to the memory
@@ -163,41 +168,21 @@ namespace Hypertable {
      * </table>
      * @param bufp Address of destination buffer pointer (advanced by call)
      */
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /** Reads serialized encoding of object state.
      * This method restores the state of the object by decoding a serialized
      * representation of the state from the memory location pointed to by
      * <code>*bufp</code>.  See encode() for a description of the
      * serialized format.
+     * @param version Encoding version
      * @param bufp Address of source buffer pointer (advanced by call)
      * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
      * (decremented by call)
      */
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
-    /** Decodes a request that triggered the operation.
-     * This method decodes a request sent from a client that caused this
-     * object to get created.  The encoding has the following format:
-     * <table>
-     *   <tr>
-     *   <th>Encoding</th><th>Description</th>
-     *   </tr>
-     *   <tr>
-     *   <td>vstr</td><td> Pathname of table to compact</td>
-     *   </tr>
-     *   <tr>
-     *   <td>vstr</td><td> Row key of range to compact</td>
-     *   </tr>
-     *   <tr>
-     *   <td>i32</td><td> Compaction flags (see RangeServerProtocol::CompactionFlags)</td>
-     *   </tr>
-     * </table>
-     * @param bufp Address of source buffer pointer (advanced by call)
-     * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-     * (decremented by call)
-     */
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
 
@@ -209,17 +194,11 @@ namespace Hypertable {
      */
     void initialize_dependencies();
 
-    /// Pathname of table to compact
-    String m_name;
-
-    /// Row key of range to compact
-    String m_row;
-
-    /// Compaction flags (see RangeServerProtocol::CompactionFlags)
-    uint32_t m_flags;
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::Compact m_params;
 
     /// %Table identifier
-    String m_id;
+    std::string m_id;
 
     /// Set of participating range servers
     StringSet m_servers;
@@ -228,8 +207,8 @@ namespace Hypertable {
     StringSet m_completed;
   };
 
-  /* @}*/
+  /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONCOMPACT_H
+#endif // Hypertable_Master_OperationCompact_h

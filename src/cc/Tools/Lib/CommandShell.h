@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,13 +22,14 @@
 #ifndef HYPERTABLE_COMMAND_SHELL_H
 #define HYPERTABLE_COMMAND_SHELL_H
 
-#include <histedit.h>
-
-#include "Common/ReferenceCount.h"
-#include "Common/Properties.h"
-
 #include "CommandInterpreter.h"
 #include "Notifier.h"
+
+#include <Common/Config.h>
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+
+#include <histedit.h>
 
 namespace Hypertable {
 
@@ -85,6 +86,13 @@ namespace Hypertable {
   };
 
   typedef intrusive_ptr<CommandShell> CommandShellPtr;
+
+  struct CommandShellPolicy : Config::Policy {
+    static void init_options() {
+      CommandShell::add_options(Config::cmdline_desc());
+    }
+  };
+
 
 } // namespace Hypertable
 

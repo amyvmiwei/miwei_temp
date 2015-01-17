@@ -19,16 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATORASYNC_H
-#define HYPERTABLE_TABLEMUTATORASYNC_H
-
-#include <iostream>
-
-#include "AsyncComm/ConnectionManager.h"
-
-#include "Common/Properties.h"
-#include "Common/StringExt.h"
-#include "Common/Timer.h"
+#ifndef Hypertable_Lib_TableMutatorAsync_h
+#define Hypertable_Lib_TableMutatorAsync_h
 
 #include "Cells.h"
 #include "ClientObject.h"
@@ -36,9 +28,16 @@
 #include "Table.h"
 #include "TableMutatorAsyncScatterBuffer.h"
 #include "RangeLocator.h"
-#include "RangeServerClient.h"
 #include "Schema.h"
-#include "Types.h"
+#include "TableIdentifier.h"
+
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Properties.h>
+#include <Common/StringExt.h>
+#include <Common/Timer.h>
+
+#include <iostream>
 
 namespace Hypertable {
 
@@ -298,6 +297,6 @@ namespace Hypertable {
     TableMutator *m_mutator;
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLEMUTATORASYNC_H
+#endif // Hypertable_Lib_TableMutatorAsync_h

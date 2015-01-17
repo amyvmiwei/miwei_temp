@@ -113,15 +113,15 @@ TableInfo::change_start_row(const String &old_start_row, const String &new_start
 }
 
 
-bool TableInfo::get_range(const RangeSpec *range_spec, RangePtr &range) {
+bool TableInfo::get_range(const RangeSpec &range_spec, RangePtr &range) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range_spec->start_row, range_spec->end_row);
+  RangeInfo range_info(range_spec.start_row, range_spec.end_row);
 
   auto iter = m_active_set.find(range_info);
 
   if (iter == m_active_set.end() || !iter->range) {
-    HT_DEBUG_OUT << "TableInfo couldn't find range (" << range_spec->start_row
-        << ", " << range_spec->end_row << ")" << HT_END;
+    HT_DEBUG_OUT << "TableInfo couldn't find range (" << range_spec.start_row
+        << ", " << range_spec.end_row << ")" << HT_END;
     return false;
   }
 
@@ -129,30 +129,30 @@ bool TableInfo::get_range(const RangeSpec *range_spec, RangePtr &range) {
   return true;
 }
 
-bool TableInfo::has_range(const RangeSpec *range_spec) {
+bool TableInfo::has_range(const RangeSpec &range_spec) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range_spec->start_row, range_spec->end_row);
+  RangeInfo range_info(range_spec.start_row, range_spec.end_row);
   if (m_active_set.find(range_info) == m_active_set.end())
     return false;
   return true;
 }
 
 
-bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
+bool TableInfo::remove_range(const RangeSpec &range_spec, RangePtr &range) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range_spec->start_row, range_spec->end_row);
+  RangeInfo range_info(range_spec.start_row, range_spec.end_row);
   auto iter = m_active_set.find(range_info);
 
   if (iter == m_active_set.end() || !iter->range) {
     HT_INFOF("Problem removing range %s[%s..%s] from TableInfo, range not found",
-             m_identifier.id, range_spec->start_row, range_spec->end_row);
+             m_identifier.id, range_spec.start_row, range_spec.end_row);
     return false;
   }
 
   range = iter->range;
 
   HT_INFOF("Removing range %s[%s..%s] from TableInfo",
-           m_identifier.id, range_spec->start_row, range_spec->end_row);
+           m_identifier.id, range_spec.start_row, range_spec.end_row);
 
   m_active_set.erase(iter);
 
@@ -160,24 +160,24 @@ bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
 }
 
 
-void TableInfo::stage_range(const RangeSpec *range_spec,
+void TableInfo::stage_range(const RangeSpec &range_spec,
                             boost::xtime deadline) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range_spec->start_row, range_spec->end_row);
+  RangeInfo range_info(range_spec.start_row, range_spec.end_row);
 
   /// If already staged, wait for staging to complete
   while (m_staged_set.find(range_info) != m_staged_set.end()) {
     if (!m_cond.timed_wait(lock, deadline))
       HT_THROWF(Error::REQUEST_TIMEOUT, "Waiting for staging of %s[%s..%s]",
-                m_identifier.id, range_spec->start_row, range_spec->end_row);
+                m_identifier.id, range_spec.start_row, range_spec.end_row);
   }
 
   /// Throw exception if already or still loaded
   auto iter = m_active_set.find(range_info);
 
   if (iter != m_active_set.end()) {
-    String name = format("%s[%s..%s]", m_identifier.id, range_spec->start_row,
-                         range_spec->end_row);
+    String name = format("%s[%s..%s]", m_identifier.id, range_spec.start_row,
+                         range_spec.end_row);
     int state = iter->range->get_state();
     if (state != RangeState::STEADY)
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_YET_RELINQUISHED,
@@ -192,9 +192,9 @@ void TableInfo::stage_range(const RangeSpec *range_spec,
   m_cond.notify_all();
 }
 
-void TableInfo::unstage_range(const RangeSpec *range_spec) {
+void TableInfo::unstage_range(const RangeSpec &range_spec) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range_spec->start_row, range_spec->end_row);
+  RangeInfo range_info(range_spec.start_row, range_spec.end_row);
   auto iter = m_staged_set.find(range_info);
   HT_ASSERT(iter != m_staged_set.end());
   m_staged_set.erase(iter);

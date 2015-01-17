@@ -67,7 +67,7 @@ namespace Hypertable {
     /** Constructor.
      * This initializes the connection handler and installs the
      * interval timer.
-     * @param %Master context object
+     * @param context %Master context object
      */
     ConnectionHandler(ContextPtr &context);
 

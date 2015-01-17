@@ -25,18 +25,18 @@
  * conversion functions for representing system variables.
  */
 
-#ifndef HYPERTABLE_SYSTEMVARIABLE_H
-#define HYPERTABLE_SYSTEMVARIABLE_H
+#ifndef Hypertable_Lib_SystemvVriable_h
+#define Hypertable_Lib_SystemvVriable_h
 
-#include "Common/String.h"
+#include <Common/Serializable.h>
+#include <Common/String.h>
 
 #include <vector>
 
 namespace Hypertable {
 
-  /** @addtogroup libHypertable
-   *  @{
-   */
+  /// @addtogroup libHypertable
+  ///  @{
 
   namespace SystemVariable {
 
@@ -47,11 +47,37 @@ namespace Hypertable {
       COUNT    = 1    /**< Valid code count */
     };
 
-    /** Holds a variable code and boolean value.
-     */
-    struct Spec {
-      int code;   /**< Variable code */
-      bool value; /**< Variable value */
+    /// Holds a variable code and boolean value.
+    struct Spec : public Serializable {
+
+      /// Variable code
+      int32_t code;
+
+      /// Variable value
+      bool value;
+      
+      /// Returns encoding version.
+      /// @return Encoding version
+      uint8_t encoding_version() const override;
+
+      /// Returns internal serialized length.
+      /// @return Internal serialized length
+      /// @see encode_internal() for encoding format
+      size_t encoded_length_internal() const override;
+
+      /// Writes serialized representation of object to a buffer.
+      /// @param bufp Address of destination buffer pointer (advanced by call)
+      void encode_internal(uint8_t **bufp) const override;
+
+      /// Reads serialized representation of object from a buffer.
+      /// @param version Encoding version
+      /// @param bufp Address of destination buffer pointer (advanced by call)
+      /// @param remainp Address of integer holding amount of serialized object
+      /// remaining
+      /// @see encode_internal() for encoding format
+      void decode_internal(uint8_t version, const uint8_t **bufp,
+                           size_t *remainp) override;
+
     };
 
     /** Converts variable code to variable string.
@@ -77,13 +103,13 @@ namespace Hypertable {
      * @param specs Vector of variable specifications
      * @return Textual representation of variable specifications
      */
-    String specs_to_string(std::vector<Spec> &specs);
+    String specs_to_string(const std::vector<Spec> &specs);
 
     /** Returns encoded length of variable specs vector.
      * @param specs Vector of variable specs
      * @return Encoded length of <code>specs</code>
      */
-    size_t encoded_length_specs(std::vector<Spec> &specs);
+    size_t encoded_length_specs(const std::vector<Spec> &specs);
 
     /** Encodes a vector of variable specs.
      * This method encodes a vector of variable specs formatted as follows:
@@ -97,7 +123,7 @@ namespace Hypertable {
      * @param specs Vector of variable specs
      * @param bufp Address of destination buffer pointer (advanced by call)
      */
-    void encode_specs(std::vector<Spec> &specs, uint8_t **bufp);
+    void encode_specs(const std::vector<Spec> &specs, uint8_t **bufp);
 
     /** Decodes a vector of variable specs.
      * See encode_state() for format description.
@@ -108,10 +134,10 @@ namespace Hypertable {
     void decode_specs(std::vector<Spec> &specs,
                       const uint8_t **bufp, size_t *remainp);
 
-  } // namespace SystemVariable
+  }
 
-  /** @} */
+  /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_SYSTEMVARIABLE_H
+#endif // Hypertable_Lib_SystemvVriable_h

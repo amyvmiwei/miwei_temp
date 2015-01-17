@@ -639,8 +639,8 @@ void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
 }
 
 
-void LocalBroker::status(ResponseCallback *cb) {
-  cb->response_ok();
+void LocalBroker::status(Response::Callback::Status *cb) {
+  cb->response(0, "OK");
 }
 
 

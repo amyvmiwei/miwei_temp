@@ -85,7 +85,7 @@ void OperationRecoverRanges::execute() {
 
     HT_MAYBE_FAIL(format("recover-server-ranges-%s-initial-1", m_type_str.c_str()));
     set_state(OperationState::PHANTOM_LOAD);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL(format("recover-server-ranges-%s-initial-2", m_type_str.c_str()));
 
     // fall through
@@ -97,7 +97,7 @@ void OperationRecoverRanges::execute() {
 
     if (recovery_plan_has_changed()) {
       set_state(OperationState::INITIAL);
-      m_context->mml_writer->record_state(this);
+      m_context->mml_writer->record_state(shared_from_this());
       break;
     }
 
@@ -115,7 +115,7 @@ void OperationRecoverRanges::execute() {
     }
     HT_MAYBE_FAIL(format("recover-server-ranges-%s-load-3", m_type_str.c_str()));
     set_state(OperationState::REPLAY_FRAGMENTS);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
     // fall through to replay fragments
 
@@ -141,7 +141,7 @@ void OperationRecoverRanges::execute() {
     }
     HT_MAYBE_FAIL(format("recover-server-ranges-%s-replay-3", m_type_str.c_str()));
     set_state(OperationState::PREPARE);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
     // fall through to prepare
 
@@ -169,7 +169,7 @@ void OperationRecoverRanges::execute() {
     }
     HT_MAYBE_FAIL(format("recover-server-ranges-%s-prepare-3", m_type_str.c_str()));
     set_state(OperationState::COMMIT);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
     // fall through to commit
 
@@ -185,7 +185,7 @@ void OperationRecoverRanges::execute() {
     }
     HT_MAYBE_FAIL(format("recover-server-ranges-%s-commit-3", m_type_str.c_str()));
     set_state(OperationState::ACKNOWLEDGE);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
     // fall through
 
@@ -276,13 +276,11 @@ void OperationRecoverRanges::initialize_obstructions_dependencies() {
                                  spec.range.end_row));
 }
 
-#define OPERATION_RECOVER_RANGES_VERSION 2
-
-uint16_t OperationRecoverRanges::encoding_version() const {
-  return OPERATION_RECOVER_RANGES_VERSION;
+uint8_t OperationRecoverRanges::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationRecoverRanges::encoded_state_length() const {
+size_t OperationRecoverRanges::encoded_length_state() const {
   return Serialization::encoded_length_vstr(m_location) + 
     + 4 + 4 + m_plan.encoded_length();
 }
@@ -294,17 +292,20 @@ void OperationRecoverRanges::encode_state(uint8_t **bufp) const {
   m_plan.encode(bufp);
 }
 
-void OperationRecoverRanges::decode_state(const uint8_t **bufp,
-        size_t *remainp) {
-  decode_request(bufp, remainp);
+void OperationRecoverRanges::decode_state(uint8_t version, const uint8_t **bufp,
+                                          size_t *remainp) {
+  m_location = Serialization::decode_vstr(bufp, remainp);
+  m_type = Serialization::decode_i32(bufp, remainp);
+  m_plan_generation = Serialization::decode_i32(bufp, remainp);
+  m_plan.decode(bufp, remainp);
 }
 
-void OperationRecoverRanges::decode_request(const uint8_t **bufp,
-        size_t *remainp) {
-  if (m_decode_version == 0)
+void OperationRecoverRanges::decode_state_old(uint8_t version, const uint8_t **bufp,
+                                          size_t *remainp) {
+  if (version == 0)
     Serialization::decode_i16(bufp, remainp); // skip old version
   m_location = Serialization::decode_vstr(bufp, remainp);
-  if (m_decode_version < 2) {
+  if (version < 2) {
     string parent_dependency = Serialization::decode_vstr(bufp, remainp);
     m_obstructions_permanent.insert(parent_dependency);
   }
@@ -313,13 +314,18 @@ void OperationRecoverRanges::decode_request(const uint8_t **bufp,
   m_plan.decode(bufp, remainp);
 }
 
+void OperationRecoverRanges::decode_request(const uint8_t **bufp,
+                                            size_t *remainp) {
+  HT_ASSERT(!"Not implemented!");
+}
+
 bool OperationRecoverRanges::phantom_load_ranges() {
-  RangeServerClient rsc(m_context->comm);
+  RangeServer::Client rsc(m_context->comm);
   CommAddress addr;
   bool success = true;
   StringSet locations;
   m_plan.receiver_plan.get_locations(locations);
-  vector<uint32_t> fragments;
+  vector<int32_t> fragments;
 
   m_plan.replay_plan.get_fragments(fragments);
   foreach_ht (const String &location, locations) {
@@ -412,7 +418,7 @@ bool OperationRecoverRanges::get_new_recovery_plan() {
              (int)m_plan.receiver_plan.size());
     create_futures();
     initialize_obstructions_dependencies();
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     return true;
   }
   return false;
@@ -438,10 +444,10 @@ void OperationRecoverRanges::set_type_str() {
 }
 
 bool OperationRecoverRanges::replay_fragments() {
-  RangeServerClient rsc(m_context->comm);
+  RangeServer::Client rsc(m_context->comm);
   CommAddress addr;
   StringSet locations;
-  vector<uint32_t> fragments;
+  vector<int32_t> fragments;
 
   RecoveryStepFuturePtr future = 
     m_context->recovery_state().get_replay_future(id());
@@ -506,7 +512,7 @@ bool OperationRecoverRanges::replay_fragments() {
 
 bool OperationRecoverRanges::prepare_to_commit() {
   StringSet locations;
-  RangeServerClient rsc(m_context->comm);
+  RangeServer::Client rsc(m_context->comm);
   CommAddress addr;
 
   RecoveryStepFuturePtr future = 
@@ -557,7 +563,7 @@ bool OperationRecoverRanges::prepare_to_commit() {
 
 bool OperationRecoverRanges::commit() {
   StringSet locations;
-  RangeServerClient rsc(m_context->comm);
+  RangeServer::Client rsc(m_context->comm);
   CommAddress addr;
   BalancePlanAuthority *bpa = m_context->get_balance_plan_authority();
 
@@ -621,7 +627,7 @@ bool OperationRecoverRanges::commit() {
 
 bool OperationRecoverRanges::acknowledge() {
   StringSet locations;
-  RangeServerClient rsc(m_context->comm);
+  RangeServer::Client rsc(m_context->comm);
   CommAddress addr;
   bool success = true;
   vector<QualifiedRangeSpec> acknowledged;

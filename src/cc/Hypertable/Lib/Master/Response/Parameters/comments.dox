@@ -1,0 +1,5 @@
+/// @defgroup libHypertableMasterResponseParameters Parameters
+/// @ingroup libHypertableMasterResponse
+/// %Response parameters.
+/// This module contains encode/decode classes for response parameters from
+/// %Master operations.

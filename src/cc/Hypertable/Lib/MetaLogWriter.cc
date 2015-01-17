@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -31,8 +31,15 @@
 #include "Common/Path.h"
 #include "Common/StringExt.h"
 
+#include <boost/algorithm/string.hpp>
+#include <boost/shared_array.hpp>
+
+#include "MetaLog.h"
+#include "MetaLogWriter.h"
+
 #include <algorithm>
 #include <cassert>
+#include <memory>
 
 extern "C" {
 #include <sys/types.h>
@@ -40,14 +47,9 @@ extern "C" {
 #include <fcntl.h>
 }
 
-#include <boost/algorithm/string.hpp>
-#include <boost/shared_array.hpp>
-
-#include "MetaLog.h"
-#include "MetaLogWriter.h"
-
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
+using namespace std;
 
 namespace {
   const int32_t FS_BUFFER_SIZE = -1;
@@ -97,18 +99,11 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
   write_header();
 
   // Write existing entries
-  std::vector<Entity *> entities;
-  entities.reserve(initial_entities.size());
-  foreach_ht (EntityPtr &entity, initial_entities)
-    entities.push_back(entity.get());
-  if (!entities.empty())
-    record_state(entities);
+  record_state(initial_entities);
 
   // Write "Recover" entity
-  if (!skip_recover_entry) {
-    EntityRecover recover_entity;
-    record_state(&recover_entity);
-  }
+  if (!skip_recover_entry)
+    record_state(make_shared<EntityRecover>());
 
 }
 
@@ -186,7 +181,7 @@ void Writer::write_header() {
 }
 
 
-void Writer::record_state(Entity *entity) {
+void Writer::record_state(EntityPtr entity) {
   ScopedLock lock(m_mutex);
   size_t length;
   StaticBuffer buf;
@@ -216,18 +211,21 @@ void Writer::record_state(Entity *entity) {
   m_offset += buf.size;
 }
 
-void Writer::record_state(std::vector<Entity *> &entities) {
+void Writer::record_state(std::vector<EntityPtr> &entities) {
   ScopedLock lock(m_mutex);
   boost::shared_array<StaticBuffer> buffers( new StaticBuffer[entities.size()] );
   uint8_t *ptr;
   size_t length = 0;
   size_t total_length = 0;
 
+  if (entities.empty())
+    return;
+
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
   size_t i=0;
-  foreach_ht (Entity *entity, entities) {
+  for (auto & entity : entities) {
     Locker<Entity> lock(*entity);
     length = EntityHeader::LENGTH + (entity->marked_for_removal() ? 0 : entity->encoded_length());
     buffers[i].set(new uint8_t [length], length);
@@ -257,7 +255,7 @@ void Writer::record_state(std::vector<Entity *> &entities) {
   m_offset += buf.size;
 }
 
-void Writer::record_removal(Entity *entity) {
+void Writer::record_removal(EntityPtr entity) {
   ScopedLock lock(m_mutex);
   StaticBuffer buf(EntityHeader::LENGTH);
   uint8_t backup_buf[EntityHeader::LENGTH];
@@ -282,31 +280,32 @@ void Writer::record_removal(Entity *entity) {
 }
 
 
-void Writer::record_removal(std::vector<Entity *> &entities) {
+void Writer::record_removal(std::vector<EntityPtr> &entities) {
   ScopedLock lock(m_mutex);
-  size_t length = entities.size() * EntityHeader::LENGTH;
+
+  if (entities.empty())
+    return;
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
-  {
-    StaticBuffer buf(length);
-    boost::shared_array<uint8_t> backup_buf( new uint8_t [length] );
-    uint8_t *ptr = buf.base;
+  size_t length = entities.size() * EntityHeader::LENGTH;
+  StaticBuffer buf(length);
+  boost::shared_array<uint8_t> backup_buf( new uint8_t [length] );
+  uint8_t *ptr = buf.base;
 
-    for (size_t i=0; i<entities.size(); i++) {
-      entities[i]->header.flags |= EntityHeader::FLAG_REMOVE;
-      entities[i]->header.length = 0;
-      entities[i]->header.checksum = 0;
-      entities[i]->header.encode( &ptr );
-    }
-
-    HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
-    memcpy(backup_buf.get(), buf.base, buf.size);
-
-    FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-    m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
-    m_offset += buf.size;
+  for (auto &entity : entities) {
+    entity->header.flags |= EntityHeader::FLAG_REMOVE;
+    entity->header.length = 0;
+    entity->header.checksum = 0;
+    entity->header.encode( &ptr );
   }
+
+  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
+  memcpy(backup_buf.get(), buf.base, buf.size);
+
+  FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
+  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  m_offset += buf.size;
 
 }

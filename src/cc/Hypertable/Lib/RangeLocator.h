@@ -19,31 +19,31 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGELOCATOR_H
-#define HYPERTABLE_RANGELOCATOR_H
+#ifndef Hypertable_Lib_RangeLocator_h
+#define Hypertable_Lib_RangeLocator_h
 
-#include "Common/Mutex.h"
-#include "Common/Error.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Timer.h"
-#include "Common/Properties.h"
+#include <Hypertable/Lib/LocationCache.h>
+#include <Hypertable/Lib/RangeLocationInfo.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
+#include <Hypertable/Lib/ScanBlock.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
-#include "AsyncComm/ConnectionManager.h"
+#include <Hyperspace/Session.h>
 
-#include "Hyperspace/Session.h"
+#include <AsyncComm/ConnectionManager.h>
 
-#include "LocationCache.h"
-#include "RangeServerClient.h"
-#include "RangeLocationInfo.h"
-#include "Schema.h"
-#include "Types.h"
+#include <Common/Mutex.h>
+#include <Common/Error.h>
+#include <Common/ReferenceCount.h>
+#include <Common/Timer.h>
+#include <Common/Properties.h>
 
 #include <deque>
 #include <vector>
 
 namespace Hypertable {
 
-  class RangeServerClient;
   class RangeLocator;
   class RangeLocatorHyperspaceSessionCallback: public Hyperspace::SessionCallback {
   public:
@@ -174,7 +174,7 @@ namespace Hypertable {
     Hyperspace::HandleCallbackPtr m_root_handler;
     bool                   m_root_stale;
     RangeLocationInfo      m_root_range_info;
-    RangeServerClient      m_range_server;
+    Lib::RangeServer::Client m_range_server;
     uint8_t                m_startrow_cid;
     uint8_t                m_location_cid;
     TableIdentifier        m_metadata_table;
@@ -193,6 +193,6 @@ namespace Hypertable {
 
   typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_RANGELOCATOR_H
+#endif // Hypertable_Lib_RangeLocator_h

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,14 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METALOGDEFINITIONMASTER_H
-#define HYPERTABLE_METALOGDEFINITIONMASTER_H
-
-#include "Common/ReferenceCount.h"
-
-#include "Hypertable/Lib/MetaLogDefinition.h"
+#ifndef Hypertable_Master_MetaLogDefinitionmaster_h
+#define Hypertable_Master_MetaLogDefinitionmaster_h
 
 #include "Context.h"
+
+#include <Hypertable/Lib/MetaLogDefinition.h>
 
 namespace Hypertable {
   namespace MetaLog {
@@ -35,9 +33,9 @@ namespace Hypertable {
       DefinitionMaster(const char *backup_label) : Definition(backup_label) { }
       DefinitionMaster(ContextPtr &context, const char *backup_label) : Definition(backup_label)
           , m_context(context) { }
-      virtual uint16_t version();
-      virtual const char *name();
-      virtual Entity *create(const EntityHeader &header);
+      uint16_t version() override;
+      const char *name() override;
+      EntityPtr create(const EntityHeader &header) override;
     private:
       ContextPtr m_context;
     };
@@ -46,4 +44,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_METALOGDEFINITIONMASTER_H
+#endif // Hypertable_Master_MetaLogDefinitionmaster_h

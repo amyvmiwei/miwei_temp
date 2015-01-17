@@ -100,7 +100,7 @@ namespace Hypertable {
       /// Equality comparison.
       /// Returns <i>true</i> if the #m_index and #m_offset members are equal.
       /// @param other Iterator with which to compare
-      /// @eturn <i>true</i> if this iteratore is equal to <code>other</code>,
+      /// @return <i>true</i> if this iteratore is equal to <code>other</code>,
       /// <i>false</i> otherwise.
       bool equal(iterator const& other) const {
         return this->m_index == other.m_index &&
@@ -166,7 +166,7 @@ namespace Hypertable {
     }
 
     /// Returns <i>true</i> if last line collected is partial.
-    /// If the last character collected is <b>not</i> a newline character, this
+    /// If the last character collected is <b>not</b> a newline character, this
     /// function returns <i>true</i>, indicating that the collection has
     /// stopped in the middle of a line and there are more line characters to be
     /// read.

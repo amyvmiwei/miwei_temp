@@ -233,7 +233,7 @@ int main(int argc, char **argv) {
   master_args.push_back("--verbose");
   master_args.push_back((const char *)0);
 
-  client_args.push_back("hyperspace");
+  client_args.push_back("ht_hyperspace");
   client_args.push_back("--config=./hyperspaceTest.cfg");
   client_args.push_back("--test-mode");
   client_args.push_back(hyperspace_replica_port_arg.c_str());
@@ -246,11 +246,11 @@ int main(int argc, char **argv) {
   {
     ServerLauncher master("./Hyperspace.Master",
                           (char * const *)&master_args[0]);
-    ServerLauncher client1("./hyperspace",
+    ServerLauncher client1("./ht_hyperspace",
                            (char * const *)&client_args[0], "client1.out");
-    ServerLauncher client2("./hyperspace",
+    ServerLauncher client2("./ht_hyperspace",
                            (char * const *)&client_args[0], "client2.out");
-    ServerLauncher client3("./hyperspace",
+    ServerLauncher client3("./ht_hyperspace",
                            (char * const *)&client_args[0], "client3.out");
 
     g_fd1 = client1.get_write_descriptor();

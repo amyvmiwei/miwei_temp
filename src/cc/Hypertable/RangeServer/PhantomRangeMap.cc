@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -21,7 +21,7 @@
 
 #include "Common/Compat.h"
 
-#include "Hypertable/Lib/Types.h"
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
 
 #include "PhantomRangeMap.h"
 
@@ -44,7 +44,7 @@ void PhantomRangeMap::reset(int plan_generation) {
 
 void PhantomRangeMap::insert(const QualifiedRangeSpec &spec,
                              const RangeState &state, SchemaPtr schema,
-                             const vector<uint32_t> &fragments) {
+                             const vector<int32_t> &fragments) {
   if (m_map.find(spec) == m_map.end()) {
     QualifiedRangeSpec copied_spec(m_arena, spec);
     RangeState copied_state(m_arena, state);

@@ -43,7 +43,7 @@ extern "C" {
 
 #include "Hyperspace/DirEntry.h"
 #include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Types.h"
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
@@ -58,7 +58,7 @@ using namespace Config;
 
 Namespace::Namespace(const String &name, const String &id, PropertiesPtr &props,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap, MasterClientPtr &master_client,
+    ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap, Lib::Master::ClientPtr &master_client,
     RangeLocatorPtr &range_locator, TableCachePtr &table_cache, 
     uint32_t timeout, Client *client)
   : m_name(name), m_id(id), m_props(props),

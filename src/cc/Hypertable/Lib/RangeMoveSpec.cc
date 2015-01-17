@@ -30,29 +30,66 @@
 
 using namespace std;
 using namespace Hypertable;
-using namespace Serialization;
 
-size_t RangeMoveSpec::encoded_length() const {
-  return table.encoded_length() + range.encoded_length() +
-    encoded_length_vstr(source_location) + encoded_length_vstr(dest_location) + 5;
+uint8_t RangeMoveSpec::encoding_version() const {
+  return 1;
 }
 
-void RangeMoveSpec::encode(uint8_t **bufp) const {
+size_t RangeMoveSpec::encoded_length_internal() const {
+  return table.encoded_length() + range.encoded_length() +
+    Serialization::encoded_length_vstr(source_location) +
+    Serialization::encoded_length_vstr(dest_location) + 5;
+}
+
+/// @details
+/// Encoding is as follows:
+/// <table>
+/// <tr>
+/// <th>Encoding</th>
+/// <th>Description</th>
+/// </tr>
+/// <tr>
+/// <td>TableIdentifier</td>
+/// <td>Table identifier</td>
+/// </tr>
+/// <tr>
+/// <td>RangeSpec</td>
+/// <td>Range specification</td>
+/// </tr>
+/// <tr>
+/// <td>vstr</td>
+/// <td>Source location</td>
+/// </tr>
+/// <tr>
+/// <td>vstr</td>
+/// <td>Destination location</td>
+/// </tr>
+/// <tr>
+/// <td>i32</td>
+/// <td>Error code</td>
+/// </tr>
+/// <tr>
+/// <td>bool</td>
+/// <td>Complete flag</td>
+/// </tr>
+/// </table>
+void RangeMoveSpec::encode_internal(uint8_t **bufp) const {
   table.encode(bufp);
   range.encode(bufp);
-  encode_vstr(bufp, source_location);
-  encode_vstr(bufp, dest_location);
-  encode_i32(bufp, error);
-  encode_bool(bufp, complete);
+  Serialization::encode_vstr(bufp, source_location);
+  Serialization::encode_vstr(bufp, dest_location);
+  Serialization::encode_i32(bufp, error);
+  Serialization::encode_bool(bufp, complete);
 }
 
-void RangeMoveSpec::decode(const uint8_t **bufp, size_t *remainp) {
+void RangeMoveSpec::decode_internal(uint8_t version, const uint8_t **bufp,
+                                      size_t *remainp) {
   table.decode(bufp, remainp);
   range.decode(bufp, remainp);
-  source_location = decode_vstr(bufp, remainp);
-  dest_location = decode_vstr(bufp, remainp);
-  error = decode_i32(bufp, remainp);
-  complete = decode_bool(bufp, remainp);
+  source_location = Serialization::decode_vstr(bufp, remainp);
+  dest_location = Serialization::decode_vstr(bufp, remainp);
+  error = Serialization::decode_i32(bufp, remainp);
+  complete = Serialization::decode_bool(bufp, remainp);
 }
 
 /** @relates RangeMoveSpec */

@@ -84,7 +84,7 @@ namespace Hypertable {
     /// <td>header</td><td>compressed data</td><td>reserve</td>
     /// </tr>
     /// </table>
-    /// @param intput Input buffer
+    /// @param input Input buffer
     /// @param output Output buffer
     /// @param header Block header populated by function
     /// @param reserve Additional space to reserve at end of <code>output</code>
@@ -98,7 +98,7 @@ namespace Hypertable {
     /// <i>true</i>.  It then decompresses the <code>input</code> buffer and
     /// fills in <code>header</code>.
     /// @see deflate() for description of input buffer format
-    /// @param intput Input buffer
+    /// @param input Input buffer
     /// @param output Output buffer
     /// @param header Block header
     virtual void inflate(const DynamicBuffer &input, DynamicBuffer &output,

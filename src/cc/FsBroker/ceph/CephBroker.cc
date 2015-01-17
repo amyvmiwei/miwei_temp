@@ -387,8 +387,8 @@ void CephBroker::flush(ResponseCallback *cb, uint32_t fd) {
   cb->response_ok();
 }
 
-void CephBroker::status(ResponseCallback *cb) {
-  cb->response_ok();
+void CephBroker::status(Response::Callback::Status *cb) {
+  cb->response(0, "OK");
   /*perhaps a total cheat, but both the local and Kosmos brokers
     included in Hypertable also do this. */
 }

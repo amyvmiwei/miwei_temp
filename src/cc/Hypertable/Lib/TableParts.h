@@ -79,30 +79,6 @@ namespace Hypertable {
     /// otherwise
     inline bool qualifier_index() const { return m_parts & QUALIFIER_INDEX; }
 
-    /// Returns serialized length
-    /// @return Serialized length
-    /// @see encode() for serialization format
-    virtual size_t encoded_length() const override { return 1; };
-
-    /// Writes serialized representation to a buffer.
-    /// Serialized format is as follows:
-    /// <table>
-    ///   <tr>
-    ///   <th>Encoding</th><th>Description</th>
-    ///   </tr>
-    ///   <tr>
-    ///   <td>1 byte</td><td>Bitmask of part bits</td>
-    ///   </tr>
-    /// </table>
-    /// @param bufp Address of destination buffer pointer (advanced by call)
-    virtual void encode(uint8_t **bufp) const override;
-
-    /// Reads serialized representation from a buffer.
-    /// @param bufp Address of destination buffer pointer (advanced by call)
-    /// @param remainp Address of integer holding amount of remaining buffer
-    /// @see encode() for serialization format
-    virtual void decode(const uint8_t **bufp, size_t *remainp) override;
-
     /// Returns human readable string describing table parts.
     /// @return Human readable string describing table parts.
     const std::string to_string() const;
@@ -116,6 +92,15 @@ namespace Hypertable {
     void clear() { m_parts = 0; }
 
   private:
+
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
 
     /// Bitmask representing table parts.
     int8_t m_parts {};

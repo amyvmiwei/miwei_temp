@@ -58,9 +58,9 @@ namespace Hypertable {
     BlockHeaderCommitLog(uint16_t version=LatestVersion);
 
     /** Constructor with member initializers.
-     * Initializes #m_version to the default latest version, #m_revision to
+     * Initializes base class BlockHeader, and sets #m_revision to
      * <code>revision</code>, and #m_cluster_id to <code>cluster_id</code>.
-     * @param version Version of commit log block header
+     * @param magic Magic string
      * @param revision Revision number of most recent cell in the block
      * @param cluster_id Cluster ID of originating cluster
      */

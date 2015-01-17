@@ -31,7 +31,7 @@
 #include <Hypertable/RangeServer/UpdateRecRange.h>
 #include <Hypertable/RangeServer/UpdateRequest.h>
 
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <unordered_map>
 #include <vector>

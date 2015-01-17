@@ -67,7 +67,7 @@ namespace Hypertable {
     ///   "1-2/2/4 1 * * *"
     ///   "2-1 1 * * *"
     ///   "1-8/ 1 * * *"
-    /// <pre>
+    /// </pre>
     /// @see <code>Common/tests/crontab_test.cc</code> for more examples.
     /// @param spec The crontab string describing the time interval
     /// @throws Error::COMMAND_PARSE_ERROR if the spec cannot be parsed

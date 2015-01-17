@@ -53,24 +53,8 @@ namespace Parameters {
     /// Constructor.
     /// Initializes with response parameters for encoding.  Sets #m_exists to
     /// <code>exists</code>.
-    /// @param fname File name
+    /// @param exists Flag indicating whether or not the file exists
     Exists(bool exists) : m_exists(exists) {}
-
-    /// Returns encoded length of parameters
-    /// @return Encoded length of parameters
-    size_t encoded_length() const override;
-
-    /// Encodes parameters to buffer
-    /// @param bufp Address of buffer to encode parameters to
-    /// (advanced by call)
-    void encode(uint8_t **bufp) const override;
-
-    /// Decodes parameters from buffer
-    /// @param bufp Address of buffer from which to decode parameters
-    /// (advanced by call)
-    /// @param remainp Address of remaining encoded data in buffer
-    /// (advanced by call)
-    void decode(const uint8_t **bufp, size_t *remainp) override;
 
     /// Gets exists flag
     /// @return Exists flag
@@ -78,8 +62,14 @@ namespace Parameters {
 
   private:
 
-    /// Returns internal encoded length
-    size_t internal_encoded_length() const;
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
 
     /// Exists flag
     bool m_exists;

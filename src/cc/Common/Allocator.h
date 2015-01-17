@@ -115,14 +115,8 @@ struct AllocatorBase {
    *
    * @param p A pointer to the memory area where the new object will be
    *        constructed
-   * @param val An object that is copied
+   * @param args Arguments
    */
-#if 0
-  void construct(pointer p, const T& val) {
-    new(static_cast<void*>(p)) T(val);
-  }
-#endif
-
   template< class U, class... Args >
     void construct( U* p, Args&&... args ) {
     ::new((void *)p) U(std::forward<Args>(args)...);

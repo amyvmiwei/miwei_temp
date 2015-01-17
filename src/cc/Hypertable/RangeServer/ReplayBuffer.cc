@@ -25,13 +25,15 @@
 
 using namespace std;
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace Hypertable::Property;
 
 ReplayBuffer::ReplayBuffer(PropertiesPtr &props, Comm *comm,
-     RangeRecoveryReceiverPlan &plan, const String &location,
-     int plan_generation)
+                           const RangeServerRecovery::ReceiverPlan &plan,
+                           const String &location,
+                           int32_t plan_generation)
   : m_comm(comm), m_plan(plan), m_location(location),
-    m_plan_generation(plan_generation), m_memory_used(0) {
+    m_plan_generation(plan_generation) {
   m_flush_limit_aggregate =
       (size_t)props->get_i64("Hypertable.RangeServer.Failover.FlushLimit.Aggregate");
   m_flush_limit_per_range =

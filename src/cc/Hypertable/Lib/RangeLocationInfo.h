@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,23 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGELOCATIONINFO_H
-#define HYPERTABLE_RANGELOCATIONINFO_H
+#ifndef Hypertable_Lib_RangeLocationInfo_h
+#define Hypertable_Lib_RangeLocationInfo_h
 
 #include "AsyncComm/CommAddress.h"
-#include "Types.h"
 
 namespace Hypertable {
 
-/** Holds range start and end row plus location */
-class RangeLocationInfo {
- public:
-  String start_row;
-  String end_row;
-  CommAddress addr;
-};
+  /// @addtogroup libHypertable
+  /// @{
 
-} // namespace Hypertable
+  /// Holds range start and end row plus location.
+  class RangeLocationInfo {
+  public:
+    String start_row;
+    String end_row;
+    CommAddress addr;
+  };
 
-#endif // HYPERTABLE_RANGELOCATIONINFO_H
+  /// @}
+
+}
+
+#endif // Hypertable_Lib_RangeLocationInfo_h
 

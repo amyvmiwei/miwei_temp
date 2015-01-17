@@ -36,12 +36,11 @@
 #include <Hypertable/RangeServer/MetaLogEntityRange.h>
 #include <Hypertable/RangeServer/PhantomRangeMap.h>
 #include <Hypertable/RangeServer/QueryCache.h>
-#include <Hypertable/RangeServer/ResponseCallbackAcknowledgeLoad.h>
-#include <Hypertable/RangeServer/ResponseCallbackCreateScanner.h>
-#include <Hypertable/RangeServer/ResponseCallbackFetchScanblock.h>
-#include <Hypertable/RangeServer/ResponseCallbackGetStatistics.h>
-#include <Hypertable/RangeServer/ResponseCallbackPhantomUpdate.h>
-#include <Hypertable/RangeServer/ResponseCallbackUpdate.h>
+#include <Hypertable/RangeServer/Response/Callback/AcknowledgeLoad.h>
+#include <Hypertable/RangeServer/Response/Callback/CreateScanner.h>
+#include <Hypertable/RangeServer/Response/Callback/GetStatistics.h>
+#include <Hypertable/RangeServer/Response/Callback/PhantomUpdate.h>
+#include <Hypertable/RangeServer/Response/Callback/Update.h>
 #include <Hypertable/RangeServer/ScannerMap.h>
 #include <Hypertable/RangeServer/TableInfo.h>
 #include <Hypertable/RangeServer/TableInfoMap.h>
@@ -49,11 +48,13 @@
 #include <Hypertable/RangeServer/UpdatePipeline.h>
 
 #include <Hypertable/Lib/Cells.h>
-#include <Hypertable/Lib/MasterClient.h>
+#include <Hypertable/Lib/Master/Client.h>
 #include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+#include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/RangeState.h>
 #include <Hypertable/Lib/StatsRangeServer.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Hyperspace/Session.h>
 
@@ -72,12 +73,14 @@
 #include <map>
 #include <memory>
 
+using namespace Hyperspace::Lib;
+using namespace Hyperspace;
+using namespace Hypertable::RangeServer;
+
 namespace Hypertable {
-
-  using namespace Hyperspace;
-
-  class ConnectionHandler;
-  class UpdateRecTable;
+namespace RangeServer { class ConnectionHandler; }
+class UpdateRecTable;
+namespace Apps {
 
   /// @defgroup RangeServer RangeServer
   /// @ingroup Hypertable
@@ -92,88 +95,86 @@ namespace Hypertable {
     virtual ~RangeServer();
 
     // range server protocol implementations
-    void compact(ResponseCallback *, const TableIdentifier *,
-                 const char *row, uint32_t flags);
-    void create_scanner(ResponseCallbackCreateScanner *,
-                        const TableIdentifier *,
-                        const  RangeSpec *, const ScanSpec *,
+    void compact(ResponseCallback *, const TableIdentifier &,
+                 const char *row, int32_t flags);
+    void create_scanner(Response::Callback::CreateScanner *,
+                        const TableIdentifier &,
+                        const  RangeSpec &, const ScanSpec &,
                         QueryCache::Key *);
-    void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
-    void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
-    void load_range(ResponseCallback *, const TableIdentifier *,
-                    const RangeSpec *, const RangeState *,
+    void destroy_scanner(ResponseCallback *cb, int32_t scanner_id);
+    void fetch_scanblock(Response::Callback::CreateScanner *, int32_t scanner_id);
+    void load_range(ResponseCallback *, const TableIdentifier &,
+                    const RangeSpec &, const RangeState &,
                     bool needs_compaction);
-    void acknowledge_load(ResponseCallback *, const TableIdentifier *,
-                          const RangeSpec *);
-    void acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
-                          const vector<QualifiedRangeSpec> &ranges);
-    void update_schema(ResponseCallback *, const TableIdentifier *,
+    void acknowledge_load(Response::Callback::AcknowledgeLoad *cb,
+                          const vector<QualifiedRangeSpec> &specs);
+    void update_schema(ResponseCallback *, const TableIdentifier &,
                        const char *);
 
     /** Inserts data into a table.
      */
-    void update(ResponseCallbackUpdate *cb, uint64_t cluster_id,
-                const TableIdentifier *table, uint32_t count,
+    void update(Response::Callback::Update *cb, uint64_t cluster_id,
+                const TableIdentifier &table, uint32_t count,
                 StaticBuffer &buffer, uint32_t flags);
     void batch_update(std::vector<UpdateRecTable *> &updates, boost::xtime expire_time);
 
     void commit_log_sync(ResponseCallback *cb, uint64_t cluster_id,
-                         const TableIdentifier *table);
+                         const TableIdentifier &table);
 
     /**
      */
-    void drop_table(ResponseCallback *cb, const TableIdentifier *table);
+    void drop_table(ResponseCallback *cb, const TableIdentifier &table);
 
     void dump(ResponseCallback *, const char *, bool);
 
     /** @deprecated */
-    void dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *table,
+    void dump_pseudo_table(ResponseCallback *cb, const TableIdentifier &table,
                            const char *pseudo_table, const char *outfile);
-    void get_statistics(ResponseCallbackGetStatistics *cb,
-                        std::vector<SystemVariable::Spec> &specs,
+    void get_statistics(Response::Callback::GetStatistics *cb,
+                        const std::vector<SystemVariable::Spec> &specs,
                         uint64_t generation);
 
-    void drop_range(ResponseCallback *, const TableIdentifier *,
-                    const RangeSpec *);
+    void drop_range(ResponseCallback *, const TableIdentifier &,
+                    const RangeSpec &);
 
-    void relinquish_range(ResponseCallback *, const TableIdentifier *,
-                          const RangeSpec *);
+    void relinquish_range(ResponseCallback *, const TableIdentifier &,
+                          const RangeSpec &);
     void heapcheck(ResponseCallback *, const char *);
 
     void metadata_sync(ResponseCallback *, const char *, uint32_t flags, std::vector<const char *> columns);
 
     void replay_fragments(ResponseCallback *, int64_t op_id,
-        const String &location, int plan_generation, int type,
-        const vector<uint32_t> &fragments,
-        RangeRecoveryReceiverPlan &receiver_plan, uint32_t replay_timeout);
+        const String &location, int32_t plan_generation, int32_t type,
+        const vector<int32_t> &fragments,
+        const RangeServerRecovery::ReceiverPlan &receiver_plan, int32_t replay_timeout);
 
     void phantom_load(ResponseCallback *, const String &location,
-                      int plan_generation,
-                      const vector<uint32_t> &fragments, 
+                      int32_t plan_generation,
+                      const vector<int32_t> &fragments, 
                       const vector<QualifiedRangeSpec> &specs,
                       const vector<RangeState> &states);
 
-    void phantom_update(ResponseCallbackPhantomUpdate *, const String &location,
-                        int plan_generation, QualifiedRangeSpec &range,
-                        uint32_t fragment, EventPtr &event);
+    void phantom_update(Response::Callback::PhantomUpdate *, const String &location,
+                        int32_t plan_generation, const QualifiedRangeSpec &range,
+                        int32_t fragment, EventPtr &event);
 
     void phantom_prepare_ranges(ResponseCallback *, int64_t op_id,
-        const String &location, int plan_generation, 
+        const String &location, int32_t plan_generation, 
         const vector<QualifiedRangeSpec> &ranges);
 
     void phantom_commit_ranges(ResponseCallback *, int64_t op_id,
-        const String &location, int plan_generation, 
+        const String &location, int32_t plan_generation, 
         const vector<QualifiedRangeSpec> &ranges);
 
     void set_state(ResponseCallback *cb,
-                   std::vector<SystemVariable::Spec> &specs,
-                   uint64_t generation);
+                   const std::vector<SystemVariable::Spec> &specs,
+                   int64_t generation);
 
     /// Enables maintenance for a table.
     /// @param cb Response callback
     /// @param table %Table identifier
     void table_maintenance_enable(ResponseCallback *cb,
-                                  const TableIdentifier *table);
+                                  const TableIdentifier &table);
 
     /// Disables maintenance for a table.
     /// This function disables maintenance for the table identified by
@@ -183,7 +184,7 @@ namespace Hypertable {
     /// @param cb Response callback
     /// @param table %Table identifier
     void table_maintenance_disable(ResponseCallback *cb,
-                                   const TableIdentifier *table);
+                                   const TableIdentifier &table);
 
     /**
      * Blocks while the maintenance queue is non-empty
@@ -224,7 +225,7 @@ namespace Hypertable {
     static void map_table_schemas(const String &parent, const std::vector<DirEntryAttr> &listing,
                                   TableSchemaMap &table_schemas);
     void replay_load_range(TableInfoMap &replay_map,
-                           MetaLogEntityRange *range_entity);
+                           MetaLogEntityRangePtr &range_entity);
     void replay_log(TableInfoMap &replay_map, CommitLogReaderPtr &log_reader);
 
     void verify_schema(TableInfoPtr &, uint32_t generation, const TableSchemaMap *table_schemas=0);
@@ -233,12 +234,12 @@ namespace Hypertable {
     bool live(const QualifiedRangeSpec &spec);
 
     void group_commit_add(EventPtr &event, uint64_t cluster_id,
-                          SchemaPtr &schema, const TableIdentifier *table,
+                          SchemaPtr &schema, const TableIdentifier &table,
                           uint32_t count, StaticBuffer &buffer, uint32_t flags);
 
     /** Performs a "test and set" operation on #m_get_statistics_outstanding
      * @param value New value for #m_get_statistics_outstanding
-     * @param Previous value of #m_get_statistics_outstanding
+     * @return Previous value of #m_get_statistics_outstanding
      */
     bool test_and_set_get_statistics_outstanding(bool value) {
       ScopedLock lock(m_mutex);
@@ -268,7 +269,7 @@ namespace Hypertable {
     uint64_t               m_existence_file_handle;
     LockSequencer          m_existence_file_sequencer;
     ConnectionHandler     *m_master_connection_handler;
-    MasterClientPtr        m_master_client;
+    Lib::Master::ClientPtr        m_master_client;
     Hyperspace::SessionPtr m_hyperspace;
 
     /// Outstanding scanner map
@@ -327,6 +328,6 @@ namespace Hypertable {
 
   /// @}
 
-} // namespace Hypertable
+}}
 
 #endif // HYPERTABLE_RANGESERVER_H

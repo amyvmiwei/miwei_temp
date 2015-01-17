@@ -44,30 +44,10 @@ typedef struct {
   volatile int counter;
 } atomic_t;
 
-/**
- * Initialization macro for atomic variables; 
- * use like this:
- *
- *   atomic_t atom = ATOMIC_INIT(0);
- *   
- * @param i The initialization value
- */
 #define ATOMIC_INIT(i)          { (i) }
 
-/**
- * Atomically reads the value of v.
- *
- * @param v Pointer to an atomic_t variable
- * @return The integer value of the variable
- */
 #define atomic_read(v)          ((v)->counter)
 
-/**
- * Atomically sets the value of v to i.
- *
- * @param v Pointer to an atomic_t variable
- * @param i The new value of the variable
- */
 #define atomic_set(v, i)        (((v)->counter) = (i))
 
 /**
@@ -229,20 +209,8 @@ static __inline__ int atomic_add_negative(int i, atomic_t *v)
   return c;
 }
 
-/**
- * Atomically increments v and returns the new value
- *
- * @param v Pointer to an atomic_t variable
- * @return The new, incremented value
- */
 #define atomic_inc_return(v)  (atomic_add_return(1, v))
 
-/**
- * Atomically decrements v and returns the new value
- *
- * @param v Pointer to an atomic_t variable
- * @return The new, decremented value
- */
 #define atomic_dec_return(v)  (atomic_sub_return(1, v))
 
 /* These are x86-specific, used by some header files */

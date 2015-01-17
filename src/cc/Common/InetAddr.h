@@ -21,7 +21,7 @@
 
 /** @file
  * Internet address wrapper classes and utility functions.
- * The @ref Endpoint structure manages a hostname:port pair, and the
+ * The Endpoint structure manages a hostname:port pair, and the
  * InetAddr class wraps the sockaddr_in structure.
  */
 

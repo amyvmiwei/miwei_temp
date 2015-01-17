@@ -1,0 +1,5 @@
+/// @defgroup libHypertableRangeServerResponseParameters Parameters
+/// @ingroup libHypertableRangeServerResponse
+/// %Response parameters.
+/// This module contains encode/decode classes for response parameters from
+/// %RangeServer functions.

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc
  *
  * This file is part of Hypertable.
@@ -19,25 +19,22 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGEREPLAYBUFFER_H
-#define HYPERTABLE_RANGEREPLAYBUFFER_H
+#ifndef Hypertable_RangeServer_RangeReplayBuffer_h
+#define Hypertable_RangeServer_RangeReplayBuffer_h
 
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/StaticBuffer.h"
-#include "Common/Properties.h"
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+#include <Hypertable/Lib/SerializedKey.h>
 
-#include "AsyncComm/CommAddress.h"
+#include <AsyncComm/CommAddress.h>
 
-#include "Hypertable/Lib/Types.h"
-#include "Hypertable/Lib/SerializedKey.h"
+#include <Common/DynamicBuffer.h>
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StaticBuffer.h>
+#include <Common/StringExt.h>
 
 namespace Hypertable {
 
-  /**
-   *
-   */
   class RangeReplayBuffer : public ReferenceCount {
   public:
     RangeReplayBuffer(const String &location, const QualifiedRangeSpec &range) :
@@ -61,6 +58,6 @@ namespace Hypertable {
 
   typedef intrusive_ptr<RangeReplayBuffer> RangeReplayBufferPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_RANGEREPLAYBUFFER_H
+#endif // Hypertable_RangeServer_RangeReplayBuffer_h

@@ -64,6 +64,8 @@ public interface Broker {
 
   void Rename(ResponseCallback cb, String src, String dst);
 
+  void Status(ResponseCallbackStatus cb);
+
   void Debug(ResponseCallback cb, int command, byte [] parmas);
 
 }

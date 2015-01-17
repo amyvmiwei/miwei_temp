@@ -45,11 +45,12 @@
 #include <Hypertable/Lib/CommitLog.h>
 #include <Hypertable/Lib/CommitLogReader.h>
 #include <Hypertable/Lib/Key.h>
-#include <Hypertable/Lib/MasterClient.h>
+#include <Hypertable/Lib/Master/Client.h>
+#include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/RangeState.h>
 #include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 #include <Hypertable/Lib/Timestamp.h>
-#include <Hypertable/Lib/Types.h>
 
 #include <Common/Barrier.h>
 #include <Common/ReferenceCount.h>
@@ -118,16 +119,16 @@ namespace Hypertable {
     typedef std::map<String, AccessGroup *> AccessGroupMap;
     typedef std::vector<AccessGroupPtr> AccessGroupVector;
 
-    Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
-          const RangeSpec *, RangeSet *, const RangeState *, bool needs_compaction=false);
-    Range(MasterClientPtr &, SchemaPtr &, MetaLogEntityRange *, RangeSet *);
+    Range(Lib::Master::ClientPtr &, const TableIdentifier &, SchemaPtr &,
+          const RangeSpec &, RangeSet *, const RangeState &, bool needs_compaction=false);
+    Range(Lib::Master::ClientPtr &, SchemaPtr &, MetaLogEntityRangePtr &, RangeSet *);
     virtual ~Range() {}
     void add(const Key &key, const ByteString value);
 
     void lock();
     void unlock();
 
-    MetaLogEntityRange *metalog_entity() { return m_metalog_entity.get(); }
+    MetaLogEntityRangePtr metalog_entity() { return m_metalog_entity; }
 
     void create_scanner(ScanContextPtr &scan_ctx, MergeScannerRangePtr &scanner);
 
@@ -364,7 +365,7 @@ namespace Hypertable {
 
     Mutex            m_mutex;
     Mutex            m_schema_mutex;
-    MasterClientPtr  m_master_client;
+    Lib::Master::ClientPtr  m_master_client;
     MetaLogEntityRangePtr m_metalog_entity;
     AccessGroupHintsFile m_hints_file;
     SchemaPtr        m_schema;

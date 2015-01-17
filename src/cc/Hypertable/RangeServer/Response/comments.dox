@@ -1,0 +1,5 @@
+/// @defgroup RangeServerResponse Response
+/// @ingroup RangeServer
+/// Response handling code.
+/// This module contains code for handling outgoing responses from the
+/// range server.

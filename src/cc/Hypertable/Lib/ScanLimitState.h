@@ -25,27 +25,27 @@
  * track limits during a scan.
  */
 
-#ifndef HYPERTABLE_SCANLIMITSTATE_H
-#define HYPERTABLE_SCANLIMITSTATE_H
+#ifndef Hypertable_Lib_ScanLimitState_h
+#define Hypertable_Lib_ScanLimitState_h
 
-#include "ScanSpec.h"
+#include <Hypertable/Lib/ScanSpec.h>
 
 namespace Hypertable {
+namespace Lib {
 
-/** Tracks row and cell limits used to enforce scan limit predicates.
- */
-class ScanLimitState {
-public:
-  ScanLimitState(const ScanSpec &spec) 
-    : row_limit(spec.row_limit), rows_seen(0), cell_limit(spec.cell_limit),
-      cells_seen(0) { }
-  String last_row;   //!< Last row processed
-  size_t row_limit;  //!< Row limit
-  size_t rows_seen;  //!< Number of complete rows seen
-  size_t cell_limit; //!< Cell limit
-  size_t cells_seen; //!< Cells seen
-};
+  /// Tracks row and cell limits used to enforce scan limit predicates.
+  class ScanLimitState {
+  public:
+    ScanLimitState(const ScanSpec &spec) 
+      : row_limit(spec.row_limit), rows_seen(0), cell_limit(spec.cell_limit),
+        cells_seen(0) { }
+    String last_row;   //!< Last row processed
+    size_t row_limit;  //!< Row limit
+    size_t rows_seen;  //!< Number of complete rows seen
+    size_t cell_limit; //!< Cell limit
+    size_t cells_seen; //!< Cells seen
+  };
 
-} // namespace Hypertable
+}}
 
-#endif // HYPERTABLE_SCANLIMITSTATE_H
+#endif // Hypertable_Lib_ScanLimitState_h

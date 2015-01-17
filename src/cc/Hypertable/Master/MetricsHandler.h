@@ -67,7 +67,7 @@ namespace Hypertable {
     virtual void handle(EventPtr &event);
 
     /// Increments operation count.
-    /// Increments #m_operations which is used in computing operations/s.
+    /// Increments operation count which is used in computing operations/s.
     void operation_increment() {
       m_operations.current++;
     }

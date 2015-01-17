@@ -34,38 +34,22 @@
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib::Request::Parameters;
 
-namespace {
-  uint8_t VERSION {1};
+uint8_t Seek::encoding_version() const {
+  return 1;
 }
 
-size_t Seek::encoded_length() const {
-  size_t length = internal_encoded_length();
-  return 1 + Serialization::encoded_length_vi32(length) + length;
+size_t Seek::encoded_length_internal() const {
+  return 12;
 }
 
-void Seek::encode(uint8_t **bufp) const {
-  Serialization::encode_i8(bufp, VERSION);
-  Serialization::encode_vi32(bufp, internal_encoded_length());
+void Seek::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_fd);
   Serialization::encode_i64(bufp, m_offset);
 }
 
-void Seek::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t version = Serialization::decode_i8(bufp, remainp);
-  if (version != VERSION)
-    HT_THROWF(Error::PROTOCOL_ERROR,
-	      "Seek parameters version mismatch, expected %d, got %d",
-	      (int)VERSION, (int)version);
-  uint32_t encoding_length = Serialization::decode_vi32(bufp, remainp);
-  const uint8_t *end = *bufp + encoding_length;
+void Seek::decode_internal(uint8_t version, const uint8_t **bufp,
+			   size_t *remainp) {
+  (void)version;
   m_fd = (int32_t)Serialization::decode_i32(bufp, remainp);
   m_offset = Serialization::decode_i64(bufp, remainp);
-  // If encoding is longer than we expect, that means we're decoding a newer
-  // version, so skip the newer portion that we don't know about
-  if (*bufp < end)
-    *bufp = end;
-}
-
-size_t Seek::internal_encoded_length() const {
-  return 12;
 }

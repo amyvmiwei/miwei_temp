@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -76,8 +76,6 @@ namespace Hypertable {
 
     virtual const String name() { return "RangeServerConnection"; }
     virtual void display(std::ostream &os);
-    virtual size_t encoded_length() const;
-    virtual void encode(uint8_t **bufp) const;
 
     /** Decodes serialized RangeServerConnection object.
      * @param bufp Address of source buffer pointer (advanced by call)
@@ -85,23 +83,35 @@ namespace Hypertable {
      * <code>*bufp</code> (decremented by call).
      * @param definition_version Version of DefinitionMaster
      */
-    virtual void decode(const uint8_t **bufp, size_t *remainp,
-                        uint16_t definition_version);
+    void decode(const uint8_t **bufp, size_t *remainp,
+                uint16_t definition_version) override;
 
   private:
-    uint64_t m_handle;
+
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
+    void decode_old(const uint8_t **bufp, size_t *remainp);
+
+    uint64_t m_handle {};
     RangeServerHyperspaceCallback *m_hyperspace_callback;
     String m_location;
     String m_hostname;
-    int32_t m_state;
+    int32_t m_state {};
     CommAddress m_comm_addr;
     InetAddr m_local_addr;
     InetAddr m_public_addr;
-    double m_disk_fill_percentage;
-    bool m_connected;
-    bool m_recovering;
+    double m_disk_fill_percentage {};
+    bool m_connected {};
+    bool m_recovering {};
   };
-  typedef intrusive_ptr<RangeServerConnection> RangeServerConnectionPtr;
+  typedef std::shared_ptr<RangeServerConnection> RangeServerConnectionPtr;
 
 } // namespace Hypertable
 

@@ -34,31 +34,26 @@
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib::Response::Parameters;
 
-namespace {
-  uint8_t VERSION {1};
+uint8_t Readdir::encoding_version() const {
+  return 1;
 }
 
-size_t Readdir::encoded_length() const {
-  size_t length = internal_encoded_length();
-  return 1 + Serialization::encoded_length_vi32(length) + length;
+size_t Readdir::encoded_length_internal() const {
+  size_t length = 4;
+  for (const Filesystem::Dirent &entry : m_listing)
+    length += entry.encoded_length();
+  return length;
 }
 
-void Readdir::encode(uint8_t **bufp) const {
-  Serialization::encode_i8(bufp, VERSION);
-  Serialization::encode_vi32(bufp, internal_encoded_length());
+void Readdir::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_listing.size());
   for (const Filesystem::Dirent &entry : m_listing)
     entry.encode(bufp);
 }
 
-void Readdir::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t version = Serialization::decode_i8(bufp, remainp);
-  if (version != VERSION)
-    HT_THROWF(Error::PROTOCOL_ERROR,
-	      "Readdir parameters version mismatch, expected %d, got %d",
-	      (int)VERSION, (int)version);
-  uint32_t encoding_length = Serialization::decode_vi32(bufp, remainp);
-  const uint8_t *end = *bufp + encoding_length;
+void Readdir::decode_internal(uint8_t version, const uint8_t **bufp,
+			      size_t *remainp) {
+  (void)version;
   int32_t count = (int32_t)Serialization::decode_i32(bufp, remainp);
   m_listing.reserve(count);
   Filesystem::Dirent entry;
@@ -66,15 +61,4 @@ void Readdir::decode(const uint8_t **bufp, size_t *remainp) {
     entry.decode(bufp, remainp);
     m_listing.push_back(entry);
   }
-  // If encoding is longer than we expect, that means we're decoding a newer
-  // version, so skip the newer portion that we don't know about
-  if (*bufp < end)
-    *bufp = end;
-}
-
-size_t Readdir::internal_encoded_length() const {
-  size_t length = 4;
-  for (const Filesystem::Dirent &entry : m_listing)
-    length += entry.encoded_length();
-  return length;
 }

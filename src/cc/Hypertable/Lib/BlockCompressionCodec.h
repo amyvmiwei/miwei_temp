@@ -70,7 +70,7 @@ namespace Hypertable {
     virtual ~BlockCompressionCodec() { }
 
     /// Compresses a buffer.
-    /// @param intput Input buffer
+    /// @param input Input buffer
     /// @param output Output buffer
     /// @param header Block header populated by function
     /// @param reserve Additional space to reserve at end of <code>output</code>
@@ -78,7 +78,7 @@ namespace Hypertable {
                          BlockHeader &header, size_t reserve=0) = 0;
 
     /// Decompresses a buffer.
-    /// @param intput Input buffer
+    /// @param input Input buffer
     /// @param output Output buffer
     /// @param header Block header
     virtual void inflate(const DynamicBuffer &input, DynamicBuffer &output,

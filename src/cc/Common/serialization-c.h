@@ -98,18 +98,18 @@
 } while (0)
 
 
-/**
+/*
  * Encode a boolean value
  */
 #define HT_ENCODE_BOOL(_op_, _v_) *(_op_)++ = (_v_) ? 1 : 0
 
 
-/**
+/*
  * Encode a 8-bit integer (byte)
  */
 #define HT_ENCODE_I8(_op_, _v_) *(_op_)++ = _v_
 
-/**
+/*
  * Decode a 8-bit integer (a byte/character)
  */
 #define HT_DECODE_I8(_ip_, _r_, _v_) do { \
@@ -117,7 +117,7 @@
   _v_ = *(_ip_)++; \
 } while (0)
 
-/**
+/*
  * Encode a 16 bit integer in little endian format
  */
 #ifdef HT_LITTLE_ENDIAN
@@ -132,7 +132,7 @@
   } while (0)
 #endif
 
-/**
+/*
  * Decoded a 16 bit integer encoded in little endian format
  */
 #ifdef HT_LITTLE_ENDIAN
@@ -150,7 +150,7 @@
 #endif
 
 
-/**
+/*
  * Enocde a 32-bit integer in little endian format
  */
 #ifdef HT_LITTLE_ENDIAN
@@ -167,7 +167,7 @@
   } while (0)
 #endif
 
-/**
+/*
  * Decode a 32-bit integer encoded in little endian format
  */
 #ifdef HT_LITTLE_ENDIAN
@@ -187,7 +187,7 @@
 #endif
 
 
-/**
+/*
  * Encode a 64-bit integer in little endian format
  */
 #ifdef HT_LITTLE_ENDIAN
@@ -208,7 +208,7 @@
   } while (0)
 #endif
 
-/**
+/*
  * Decode a 64-bit integer encoded in little endian format
  */
 #ifdef HT_LITTLE_ENDIAN
@@ -246,7 +246,7 @@
 #define HT_MAX_LEN_VINT32 5
 #define HT_MAX_LEN_VINT64 10
 
-/**
+/*
  * vint encoded length of a 32-bit integer
  */
 #define HT_ENCODED_LEN_VI32(_v_) \
@@ -255,7 +255,7 @@
     (_v_ <= HT_MAX_V3B ? 3 : \
      (_v_ <= HT_MAX_V4B ? 4 : 5))))
 
-/**
+/*
  * vint encoded length of a 64-bit integer
  */
 #define HT_ENCODED_LEN_VI64(_v_) \
@@ -287,7 +287,7 @@
   HT_ENCODE_VINT_(_op_, _v_, _done_) \
   HT_ENCODE_VINT_(_op_, _v_, _done_)
 
-/**
+/*
  * Encode a 32-bit integer in vint format
  *
  * @param _op_ - output buffer pointer
@@ -302,7 +302,7 @@
   HT_THROW_UNPOSSIBLE("reach here encoding vint32"); \
 } while (0)
 
-/**
+/*
  * Encode a 64-bit integer in vint format
  *
  * @param _op_ - output buffer pointer
@@ -338,7 +338,7 @@
   HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_) \
   HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_)
 
-/**
+/*
  * Decode a 32-bit integer encoded in vint format
  *
  * @param _ip_ - input buffer pointer
@@ -353,7 +353,7 @@
   HT_THROW_BAD_VINT("vint32"); \
 } while (0)
 
-/**
+/*
  * Decode a 64-bit integer encoded in vint format
  *
  * @param _ip_ - input buffer pointer
@@ -371,7 +371,7 @@
 } while (0)
 
 
-/**
+/*
  * Encode a buffer in bytes32 format (i32, data)
  *
  * @param _op_ - output buffer pointer
@@ -384,7 +384,7 @@
   _op_ += _len_; \
 } while (0)
 
-/**
+/*
  * Decode bytes32 (i32, data)
  *
  * @param _ip_ - input buffer pointer
@@ -401,7 +401,7 @@
   _len_ = _tmp_; \
 } while (0)
 
-/**
+/*
  * Encode a string buffer in str16 format (i16, data, null)
  *
  * @param _op_ - output buffer pointer
@@ -418,7 +418,7 @@
   *(*bufp)++ = 0; /* null */ \
 } while (0)
 
-/**
+/*
  * Decode str16 (i16, data, null)
  *
  * @param _ip_ - input buffer pointer
@@ -434,7 +434,7 @@
 } while (0)
 
 
-/**
+/*
  * Encode in vstr format (vint, data, null)
  *
  * @param _op_ - output buffer pointer
@@ -451,7 +451,7 @@
   *(_op_)++ = 0; \
 } while (0)
 
-/**
+/*
  * Decode a vstr (vint, data, null)
  */
 #define HT_DECODE_VSTR(_ip_, _r_, _out_, _len_) do { \

@@ -19,8 +19,11 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "ReplayDispatchHandler.h"
+
+#include <AsyncComm/Protocol.h>
 
 using namespace std;
 using namespace Hypertable;
@@ -33,7 +36,7 @@ void ReplayDispatchHandler::handle(Hypertable::EventPtr &event) {
   String msg;
 
   if (event->type == Event::MESSAGE) {
-    error = Protocol::response_code(event);
+    error = Hypertable::Protocol::response_code(event);
     const uint8_t *decode_ptr = event->payload + 4;
     size_t decode_remain = event->payload_len - 4;
 

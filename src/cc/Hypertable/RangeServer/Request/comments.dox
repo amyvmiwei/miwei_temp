@@ -1,0 +1,5 @@
+/// @defgroup RangeServerRequest Request
+/// @ingroup RangeServer
+/// Request handling code.
+/// This module contains code for handling incoming requests to the
+/// range server.

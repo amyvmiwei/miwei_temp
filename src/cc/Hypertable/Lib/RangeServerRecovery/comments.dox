@@ -1,0 +1,4 @@
+/// @defgroup libHypertableRangeServerRecovery RangeServerRecovery
+/// @ingroup libHypertable
+/// %RangeServer recovery data structures.
+/// This module contains data structure used in %RangeServer recovery.

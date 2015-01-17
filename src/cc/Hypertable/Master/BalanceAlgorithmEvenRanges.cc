@@ -130,8 +130,9 @@ namespace {
     // update range distribution info and add move to balance plan
     --(src_range_dist_it->second);
     ++(dst_range_dist_it->second);
-    RangeMoveSpecPtr move = new RangeMoveSpec(src_server.c_str(), dst_server.c_str(),
-                                              table.c_str(), start_row.c_str(), end_row.c_str());
+    RangeMoveSpecPtr move =
+      make_shared<RangeMoveSpec>(src_server.c_str(), dst_server.c_str(),
+                                 table.c_str(), start_row.c_str(), end_row.c_str());
     plan->moves.push_back(move);
 
     // randomly shuffle the contents of the empty_servers vector to avoid

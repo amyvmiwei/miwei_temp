@@ -70,8 +70,7 @@ OperationRecover::OperationRecover(ContextPtr &context,
 
 
 void OperationRecover::execute() {
-  vector<MetaLog::Entity *> removable_move_ops;
-  Operation *sub_op;
+  vector<MetaLog::EntityPtr> removable_move_ops;
   int state = get_state();
   String subject, message;
 
@@ -174,32 +173,28 @@ void OperationRecover::execute() {
 
   case OperationState::ISSUE_REQUESTS:
     if (m_root_specs.size()) {
-      sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::ROOT);
       HT_INFOF("Number of root ranges to recover for location %s = %u",
                m_location.c_str(), (unsigned)m_root_specs.size());
-      stage_subop(sub_op);
+      stage_subop(make_shared<OperationRecoverRanges>(m_context, m_location,
+                                                      RangeSpec::ROOT));
     }
     if (m_metadata_specs.size()) {
-      sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::METADATA);
       HT_INFOF("Number of metadata ranges to recover for location %s = %u",
                m_location.c_str(), (unsigned)m_metadata_specs.size());
-      stage_subop(sub_op);
+      stage_subop(make_shared<OperationRecoverRanges>(m_context, m_location,
+                                                      RangeSpec::METADATA));
     }
     if (m_system_specs.size()) {
-      sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::SYSTEM);
       HT_INFOF("Number of system ranges to recover for location %s = %d",
                m_location.c_str(), (int)m_system_specs.size());
-      stage_subop(sub_op);
+      stage_subop(make_shared<OperationRecoverRanges>(m_context, m_location,
+                                                      RangeSpec::SYSTEM));
     }
     if (m_user_specs.size()) {
-      sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::USER);
       HT_INFOF("Number of user ranges to recover for location %s = %d",
                m_location.c_str(), (int)m_user_specs.size());
-      stage_subop(sub_op);
+      stage_subop(make_shared<OperationRecoverRanges>(m_context, m_location,
+                                                      RangeSpec::USER));
     }
     set_state(OperationState::FINALIZE);
     record_state();
@@ -308,7 +303,7 @@ void OperationRecover::clear_server_state() {
   //
   // if m_rsc is NULL then it was already removed
   if (m_rsc) {
-    m_context->mml_writer->record_removal(m_rsc.get());
+    m_context->mml_writer->record_removal(m_rsc);
     m_context->rsc_manager->erase_server(m_rsc);
 
     // drop server from monitor list
@@ -331,7 +326,7 @@ void OperationRecover::create_recovery_plan() {
                              m_user_specs, m_user_states);
 }
 
-void OperationRecover::read_rsml(vector<MetaLog::Entity *> &removable_move_ops) {
+ void OperationRecover::read_rsml(vector<MetaLog::EntityPtr> &removable_move_ops) {
   // move rsml and commit log to some recovered dir
   MetaLog::DefinitionPtr rsml_definition
       = new MetaLog::DefinitionRangeServer(m_location.c_str());  
@@ -410,9 +405,12 @@ void OperationRecover::read_rsml(vector<MetaLog::Entity *> &removable_move_ops) 
         }
       }
       else if ((ack_task = dynamic_cast<MetaLog::EntityTaskAcknowledgeRelinquish *>(entity.get())) != 0) {
-        OperationRelinquishAcknowledge ack_op(m_context, ack_task->location,
-                                      &ack_task->table, &ack_task->range_spec);
-        ack_op.execute();
+        OperationPtr operation =
+          make_shared<OperationRelinquishAcknowledge>(m_context,
+                                                      ack_task->location,
+                                                      ack_task->table,
+                                                      ack_task->range_spec);
+        operation->execute();
       }
     }
   }
@@ -423,7 +421,7 @@ void OperationRecover::read_rsml(vector<MetaLog::Entity *> &removable_move_ops) 
 
 
 void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity,
-                                           vector<MetaLog::Entity *> &removable_move_ops) {
+                                           vector<MetaLog::EntityPtr> &removable_move_ops) {
   String start_row, end_row;
   String split_row = range_entity->get_split_row();
   String old_boundary_row = range_entity->get_old_boundary_row();
@@ -450,30 +448,21 @@ void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity,
   OperationPtr operation = m_context->get_move_operation(hash_code);
   if (operation) {
     if (operation->remove_approval_add(0x01)) {
-      m_context->remove_move_operation(operation.get());
-      removable_move_ops.push_back(operation.get());
+      m_context->remove_move_operation(operation);
+      removable_move_ops.push_back(operation);
     }
     int64_t soft_limit = range_entity->get_soft_limit();
     range_entity->clear_state();
     range_entity->set_soft_limit(soft_limit);
-
-    String original_transfer_log = range_entity->get_original_transfer_log();
-    if (!original_transfer_log.empty()) {
-      HT_INFOF("Removing transfer log %s", original_transfer_log.c_str());
-      if (m_context->dfs->exists(original_transfer_log))
-        m_context->dfs->rmdir(original_transfer_log);
-    }
   }
   
 }
 
-#define OPERATION_RECOVER_VERSION 1
-
-uint16_t OperationRecover::encoding_version() const {
-  return OPERATION_RECOVER_VERSION;
+uint8_t OperationRecover::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationRecover::encoded_state_length() const {
+size_t OperationRecover::encoded_length_state() const {
   size_t len = Serialization::encoded_length_vstr(m_location) + 16;
   for (size_t i=0; i<m_root_specs.size(); i++)
     len += m_root_specs[i].encoded_length() + m_root_states[i].encoded_length();
@@ -514,13 +503,7 @@ void OperationRecover::encode_state(uint8_t **bufp) const {
   }
 }
 
-void OperationRecover::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
-}
-
-void OperationRecover::decode_request(const uint8_t **bufp, size_t *remainp) {
-  if (m_decode_version == 0)
-    Serialization::decode_i16(bufp, remainp);  // skip old version
+void OperationRecover::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
   m_location = Serialization::decode_vstr(bufp, remainp);
   int nn;
   QualifiedRangeSpec spec;
@@ -555,3 +538,8 @@ void OperationRecover::decode_request(const uint8_t **bufp, size_t *remainp) {
   }
 }
 
+void OperationRecover::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  if (version == 0)
+    Serialization::decode_i16(bufp, remainp);  // skip old version
+  decode_state(version, bufp, remainp);
+}

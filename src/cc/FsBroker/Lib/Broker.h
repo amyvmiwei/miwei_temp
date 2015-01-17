@@ -28,6 +28,7 @@
 #include "Response/Callback/Append.h"
 #include "Response/Callback/Length.h"
 #include "Response/Callback/Readdir.h"
+#include "Response/Callback/Status.h"
 #include "Response/Callback/Exists.h"
 
 #include <Common/ReferenceCount.h>
@@ -177,7 +178,7 @@ namespace Lib {
      * Check status of FSBroker.
      * @param cb call cb->response_ok()
      */
-    virtual void status(ResponseCallback *cb) = 0;
+    virtual void status(Response::Callback::Status *cb) = 0;
 
     /**
      * Gracefully shutdown broker, closeing open files.
@@ -188,6 +189,7 @@ namespace Lib {
     /**
      * Check for the existence of a file.
      *
+     * @param cb Response callback
      * @param fname The file to be checked.
      */
     virtual void exists(Response::Callback::Exists *cb, const char *fname) = 0;

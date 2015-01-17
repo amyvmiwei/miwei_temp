@@ -101,9 +101,9 @@ int main(int argc, char **argv) {
     // Initialize cluster ID from Hyperspace, enabling ClusterId::get()
     ClusterId cluster_id(Global::hyperspace);
     
-    RangeServerPtr range_server
-      = std::make_shared<RangeServer>(properties, conn_manager, app_queue,
-                                      Global::hyperspace);
+    Apps::RangeServerPtr range_server
+      = std::make_shared<Apps::RangeServer>(properties, conn_manager, app_queue,
+					    Global::hyperspace);
 
     app_queue->join();
 

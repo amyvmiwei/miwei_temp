@@ -18,14 +18,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/Time.h"
-
-#include "Hypertable/Lib/StatsRangeServer.h"
+#include <Common/Compat.h>
 
 #include "DispatchHandlerOperationGetStatistics.h"
+
+#include <Hypertable/Lib/RangeServer/Response/Parameters/GetStatistics.h>
+#include <Hypertable/Lib/StatsRangeServer.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Time.h>
 
 using namespace Hypertable;
 
@@ -69,7 +71,11 @@ void DispatchHandlerOperationGetStatistics::result_callback(const EventPtr &even
         stats->fetch_error = 0;
         stats->fetch_error_msg = "";
         try {
-          RangeServerClient::decode_response_get_statistics(event, *stats->stats.get());
+          size_t remaining = event->payload_len - 4;
+          const uint8_t *ptr = event->payload + 4;
+          Lib::RangeServer::Response::Parameters::GetStatistics params;
+          params.decode(&ptr, &remaining);
+          *stats->stats.get() = params.stats();
           stats->stats_timestamp = stats->fetch_timestamp;
         }
         catch (Exception &e) {

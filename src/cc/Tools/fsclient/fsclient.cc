@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,7 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "CommandInterpreter.h"
+
+#include <Hypertable/Lib/Config.h>
+
+#include <FsBroker/Lib/Config.h>
+
+#include <Tools/Lib/CommandShell.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/Config.h>
+
+#include <Common/Error.h>
+#include <Common/Init.h>
+#include <Common/Properties.h>
+#include <Common/Usage.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
+
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -28,30 +49,6 @@ extern "C" {
 #include <editline/readline.h>
 }
 
-#include <boost/algorithm/string.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include <Common/InteractiveCommand.h>
-#include "Common/Properties.h"
-#include "Common/Usage.h"
-#include "AsyncComm/Comm.h"
-
-#include "FsBroker/Lib/Config.h"
-
-#include "CommandCopyFromLocal.h"
-#include "CommandCopyToLocal.h"
-#include "CommandLength.h"
-#include "CommandMkdirs.h"
-#include "CommandRemove.h"
-#include "CommandRmdir.h"
-#include "CommandShutdown.h"
-#include "CommandExists.h"
-
-#include <boost/algorithm/string.hpp>
-
 using namespace Hypertable;
 using namespace Config;
 using namespace std;
@@ -59,52 +56,41 @@ using namespace boost;
 
 namespace {
 
-  struct MyPolicy : Policy {
+  const char *usage =
+    "\n"
+    "Usage: ht_fsclient [options] <host>[:<port>]\n\nOptions"
+    ;
+
+  struct AppPolicy : Policy {
     static void init_options() {
-      cmdline_desc("Usage: %s [Options]\n\n"
-        "This is a command line interface to the DFS broker.\n\n"
-        "Options").add_options()
-        ("batch", "Don't print interactive messages")
-        ("eval,e", str(), "Evalute semicolon separted commands")
+      cmdline_desc(usage).add_options()
         ("nowait", "Don't wait for certain commands to complete (e.g. shutdown)")
+        ("output-only", "Display status output and exit with status 0")
         ;
+      cmdline_hidden_desc().add_options()("address", str(), "");
+      cmdline_positional_desc().add("address", -1);
+    }
+    static void init() {
+      if (has("address")) {
+        Endpoint e = InetAddr::parse_endpoint(get_str("address"));
+        properties->set("FsBroker.Host", e.host);
+        if (e.port)
+          properties->set("FsBroker.Port", e.port);
+      }
     }
   };
 
-  typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
+  typedef Meta::list<CommandShellPolicy, FsClientPolicy,
+                     DefaultCommPolicy, AppPolicy> Policies;
 
-  char *line_read = 0;
-  bool batch_mode = false;
-  String input_str;
-
-  char *rl_gets () {
-
-    if (line_read) {
-      free (line_read);
-      line_read = (char *)NULL;
-    }
-
-    if (batch_mode) {
-      if (!getline(cin, input_str))
-        return 0;
-      boost::trim(input_str);
-      return (char *)input_str.c_str();
-    }
-
-    /* Get a line from the user. */
-    line_read = readline ("dfsclient> ");
-
-    /* If the line has any text in it, save it on the history. */
-    if (line_read && *line_read)
-      add_history (line_read);
-
-    return line_read;
-  }
-
-} // local namespace
+}
 
 
 int main(int argc, char **argv) {
+  int error = 1;
+  bool silent {};
+  bool output_only {};
+
   try {
     init_with_policies<Policies>(argc, argv);
     InetAddr addr;
@@ -113,12 +99,13 @@ int main(int argc, char **argv) {
     ::uint32_t timeout_ms;
     bool nowait = has("nowait");
 
+    output_only = has("output-only");
+    silent = has("silent") && get_bool("silent");
+
     if (has("DfsBroker.Port"))
       port = get_i16("DfsBroker.Port");
     else
       port = get_i16("FsBroker.Port");
-
-    batch_mode = has("batch");
 
     if (has("timeout"))
       timeout_ms = get_i32("timeout");
@@ -126,94 +113,42 @@ int main(int argc, char **argv) {
       timeout_ms = get_i32("Hypertable.Request.Timeout");
 
     InetAddr::initialize(&addr, host.c_str(), port);
+
     DispatchHandlerSynchronizer *sync_handler = new DispatchHandlerSynchronizer();
     DispatchHandlerPtr default_handler(sync_handler);
     EventPtr event;
     Comm *comm = Comm::instance();
 
-    comm->connect(addr, default_handler);
-    sync_handler->wait_for_reply(event);
-
-    bool connected = !(event->type == Event::DISCONNECT && event->error == Error::COMM_CONNECT_ERROR);
-
-    FsBroker::Lib::Client *client = new FsBroker::Lib::Client(comm, addr, timeout_ms);
-
-    vector<InteractiveCommand *>  commands;
-    commands.push_back(new CommandCopyFromLocal(client));
-    commands.push_back(new CommandCopyToLocal(client));
-    commands.push_back(new CommandLength(client));
-    commands.push_back(new CommandMkdirs(client));
-    commands.push_back(new CommandRemove(client));
-    commands.push_back(new CommandRmdir(client));
-    commands.push_back(new CommandShutdown(client, nowait, connected));
-    commands.push_back(new CommandExists(client));
-
-    /**
-     * Non-interactive mode
-     */
-    String eval = get_str("eval", String());
-    size_t i;
-
-    if (eval.length()) {
-      std::vector<String> strs;
-      split(strs, eval, is_any_of(";"));
-
-      foreach_ht(String cmd, strs) {
-        trim(cmd);
-
-        for (i=0; i<commands.size(); i++) {
-          if (commands[i]->matches(cmd.c_str())) {
-            commands[i]->parse_command_line(cmd.c_str());
-            commands[i]->run();
-            break;
-          }
-        }
-        if (i == commands.size()) {
-          HT_ERRORF("Unrecognized command : %s", cmd.c_str());
-          return 1;
-        }
-      }
-      return 0;
+    if ((error = comm->connect(addr, default_handler)) != Error::OK) {
+      if (!silent)
+        cout << "FsBroker CRITICAL - " << Error::get_text(error) << endl;
+      _exit(output_only ? 0 : 2);
     }
 
-    if (!batch_mode)
-      cout <<"Welcome to dsftool, a command-line interface to the DFS broker.\n"
-	   <<"Type 'help' for a description of commands.\n" << endl;
-
-    using_history();
-    const char *line;
-
-    while ((line = rl_gets()) != 0) {
-      if (*line == 0)
-        continue;
-
-      for (i=0; i<commands.size(); i++) {
-        if (commands[i]->matches(line)) {
-          commands[i]->parse_command_line(line);
-          commands[i]->run();
-          break;
-        }
-      }
-
-      if (i == commands.size()) {
-        if (!strcmp(line, "quit") || !strcmp(line, "exit"))
-          exit(0);
-        else if (!strcmp(line, "help")) {
-          cout << endl;
-          for (i=0; i<commands.size(); i++) {
-            Usage::dump(commands[i]->usage());
-            cout << endl;
-          }
-        }
-        else
-          cout << "Unrecognized command." << endl;
-      }
-
+    /// this should have a deadline
+    if (!sync_handler->wait_for_connection()) {
+      if (!silent)
+        cout << "FsBroker CRITICAL - connect error" << endl;
+      _exit(output_only ? 0 : 2);
     }
+
+    FsBroker::Lib::ClientPtr client = make_shared<FsBroker::Lib::Client>(comm, addr, timeout_ms);
+
+    CommandInterpreterPtr interp = new fsclient::CommandInterpreter(client, nowait);
+
+    CommandShellPtr shell = new CommandShell("fsclient", interp, properties);
+
+    error = shell->run();
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    if (!silent) {
+      cout << "FsBroker CRITICAL - " << Error::get_text(e.code());
+      const char *msg = e.what();
+      if (msg && *msg)
+        cout << " - " << msg;
+      cout << endl;
+    }
+    _exit(output_only ? 0 : 2);
   }
-  _exit(0);
+  _exit(error);
 }

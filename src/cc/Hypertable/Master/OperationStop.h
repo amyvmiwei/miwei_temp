@@ -19,10 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONSTOP_H
-#define HYPERTABLE_OPERATIONSTOP_H
+#ifndef Hypertable_Master_OperationStop_h
+#define Hypertable_Master_OperationStop_h
 
 #include "OperationEphemeral.h"
+
+#include <Hypertable/Lib/Master/Request/Parameters/Stop.h>
 
 namespace Hypertable {
 
@@ -31,18 +33,18 @@ namespace Hypertable {
     OperationStop(ContextPtr &context, EventPtr &event);
     virtual ~OperationStop() { }
 
-    virtual void execute();
-    virtual const String name();
-    virtual const String label();
-
-    virtual void display_state(std::ostream &os);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void execute() override;
+    const String name() override;
+    const String label() override;
+    void display_state(std::ostream &os) override;
 
   private:
-    String m_server;
-    bool m_recover;
+
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::Stop m_params;
+
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONSTOP_H
+#endif // Hypertable_Master_OperationStop_h

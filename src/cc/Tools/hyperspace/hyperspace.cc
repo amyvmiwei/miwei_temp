@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -45,14 +45,16 @@ using namespace boost;
 
 class SessionHandler : public SessionCallback {
 public:
-  virtual void jeopardy() { cout << "SESSION CALLBACK: Jeopardy" << endl; }
-  virtual void safe() { cout << "SESSION CALLBACK: Safe" << endl; }
-  virtual void expired() { cout << "SESSION CALLBACK: Expired" << endl; }
-  virtual void disconnected() { cout << "SESSION CALLBACK: Disconnected" << endl; }
-  virtual void reconnected() { cout << "SESSION CALLBACK: Reconnected" << endl; }
+  virtual void jeopardy() { }
+  virtual void safe() { }
+  virtual void expired() { }
+  virtual void disconnected() { }
+  virtual void reconnected() { }
 };
 
 int main(int argc, char **argv) {
+  bool silent {};
+
   typedef Cons<HyperspaceCommandShellPolicy, DefaultCommPolicy> MyPolicy;
 
   try {
@@ -65,6 +67,9 @@ int main(int argc, char **argv) {
     init_with_policy<MyPolicy>(argc, argv);
     HsClientState::exit_status = 0;
     comm = Comm::instance();
+
+    int32_t timeout = has("timeout") ? get_i32("timeout") : 10000;
+    silent = has("silent") && get_bool("silent");
 
     session_ptr = new Hyperspace::Session(comm, properties);
     session_ptr->add_callback(&session_handler);
@@ -80,18 +85,24 @@ int main(int argc, char **argv) {
       FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
-    if(!session_ptr->wait_for_connection(30000)) {
-      cerr << "Unable to establish connection with Hyperspace, exitting..."
-           << endl;
-      exit(1);
+    if(!session_ptr->wait_for_connection(timeout)) {
+      if (!silent)
+        cout << "Hyperspace CRITICAL - connect error" << endl;
+      _exit(2);
     }
 
     HsClientState::exit_status = shell->run();
     return HsClientState::exit_status;
   }
   catch(Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    return 1;
+    if (!silent) {
+      cout << "Hyperspace CRITICAL - " << Error::get_text(e.code());
+      const char *msg = e.what();
+      if (msg && *msg)
+        cout << " - " << msg;
+      cout << endl;
+    }
+    _exit(2);
   }
   return 0;
 }

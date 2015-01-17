@@ -116,13 +116,13 @@ namespace Hypertable {
       /// If the starting character is '{' it skips over quoted strings and
       /// comments and nested blocks to find the matching block close character
       /// '}'.  The parameter <code>*endp</code> is set to the end of the quoted
-      /// string or code block, if found.  If <code>linep<code> is not null, it
+      /// string or code block, if found.  If <code>linep</code> is not null, it
       /// is incremented for each newline character encountered.
       /// @param base Pointer to beginning of quoted string or block
       /// @param endp Address of pointer to hold pointer to end of string or
       /// block
       /// @param linep Address of newline counter
-      /// @param <i>true</i> if end of string or block was found, <i>false</i>
+      /// @return <i>true</i> if end of string or block was found, <i>false</i>
       /// otherwise.
       extern bool find_end_char(const char *base, const char **endp,
                                 size_t *linep=nullptr);
@@ -172,7 +172,7 @@ namespace Hypertable {
       /// <code>vmap</code>, the string is replaced with the mapped value for
       /// <code>name</code> in <code>vmap</code>.  If the variable reference is
       /// escaped (i.e. <code>\$name</code>) then it is skipped.
-      /// @param intput Input text
+      /// @param input Input text
       /// @param output Output text with variables substituted
       /// @param vmap Variable map mapping name -> sustitution text
       /// @return <i>true</i> if any variable sustitutions were performed,

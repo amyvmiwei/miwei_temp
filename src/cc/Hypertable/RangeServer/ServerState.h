@@ -56,7 +56,7 @@ namespace Hypertable {
     /// Sets state variables.
     /// @param generation Generation number of state variables
     /// @param specs Vector of state variables
-    void set(uint64_t generation, std::vector<SystemVariable::Spec> &specs);
+    void set(int64_t generation, const std::vector<SystemVariable::Spec> &specs);
 
   private:
 
@@ -64,7 +64,7 @@ namespace Hypertable {
     Mutex m_mutex;
 
     /// System state generation
-    uint64_t m_generation;
+    int64_t m_generation;
 
     /// System state variable specifications
     std::vector<SystemVariable::Spec> m_specs;

@@ -42,7 +42,7 @@ namespace Hypertable {
 
     /// Adds an operation.
     /// Adds <code>operation</code> to #m_map using it's ID as the key.
-    /// @param Smart pointer to operation to add
+    /// @param operation Smart pointer to operation to add
     /// @return <i>true</i> if successfully added, <i>false</i> if not added
     /// because operation already exists in #m_map.
     bool add(OperationPtr operation) {

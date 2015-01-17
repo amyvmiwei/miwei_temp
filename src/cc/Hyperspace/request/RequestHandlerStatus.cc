@@ -19,10 +19,14 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "AsyncComm/ResponseCallback.h"
+#include <Common/Compat.h>
 
 #include "RequestHandlerStatus.h"
+
+#include <Hyperspace/Master.h>
+#include <Hyperspace/response/ResponseCallbackStatus.h>
+
+#include <AsyncComm/ResponseCallback.h>
 
 using namespace Hyperspace;
 using namespace Hypertable;
@@ -31,6 +35,6 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerStatus::run() {
-  ResponseCallback cb(m_comm, m_event);
-  cb.response_ok();
+  ResponseCallbackStatus cb(m_comm, m_event);
+  m_master->status(&cb);
 }

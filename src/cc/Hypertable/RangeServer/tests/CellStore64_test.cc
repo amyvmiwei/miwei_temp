@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
                          Config::properties->get_i16("FsBroker.Port"));
 
     conn_mgr = new ConnectionManager();
-    Global::dfs = new FsBroker::Lib::Client(conn_mgr, addr, 15000);
+    Global::dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
     client = (FsBroker::Lib::Client *)Global::dfs.get();

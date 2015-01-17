@@ -465,35 +465,35 @@ namespace Hypertable {
     return r.render(out);
   }
 
-/** Convenience macro to create an exception stack trace */
+/* Convenience macro to create an exception stack trace */
 #define HT_EXCEPTION(_code_, _msg_) \
   Exception(_code_, _msg_, __LINE__, HT_FUNC, __FILE__)
 
-/** Convenience macro to create an chained exception */
+/* Convenience macro to create an chained exception */
 #define HT_EXCEPTION2(_code_, _ex_, _msg_) \
   Exception(_code_, _msg_, _ex_, __LINE__, HT_FUNC, __FILE__)
 
-/** Convenience macro to throw an exception */
+/* Convenience macro to throw an exception */
 #define HT_THROW(_code_, _msg_) throw HT_EXCEPTION(_code_, _msg_)
 
-/** Convenience macro to throw an exception */
+/* Convenience macro to throw an exception */
 #define HT_THROW_(_code_) HT_THROW(_code_, "")
 
-/** Convenience macro to throw a chained exception */
+/* Convenience macro to throw a chained exception */
 #define HT_THROW2(_code_, _ex_, _msg_) throw HT_EXCEPTION2(_code_, _ex_, _msg_)
 
-/** Convenience macro to throw a chained exception */
+/* Convenience macro to throw a chained exception */
 #define HT_THROW2_(_code_, _ex_) HT_THROW2(_code_, _ex_, "")
 
-/** Convenience macro to throw an exception with a printf-like message */
+/* Convenience macro to throw an exception with a printf-like message */
 #define HT_THROWF(_code_, _fmt_, ...) \
   throw HT_EXCEPTION(_code_, Hypertable::format(_fmt_, __VA_ARGS__))
 
-/** Convenience macro to throw a chained exception with a printf-like message */
+/* Convenience macro to throw a chained exception with a printf-like message */
 #define HT_THROW2F(_code_, _ex_, _fmt_, ...) \
   throw HT_EXCEPTION2(_code_, _ex_, Hypertable::format(_fmt_, __VA_ARGS__))
 
-/** Convenience macro to catch and rethrow exceptions with a printf-like
+/* Convenience macro to catch and rethrow exceptions with a printf-like
  * message */
 #define HT_RETHROWF(_fmt_, ...) \
   catch (Exception &e) { HT_THROW2F(e.code(), e, _fmt_, __VA_ARGS__); } \
@@ -509,16 +509,16 @@ namespace Hypertable {
     throw; \
   }
 
-/** Convenience macro to catch and rethrow exceptions */
+/* Convenience macro to catch and rethrow exceptions */
 #define HT_RETHROW(_s_) HT_RETHROWF("%s", _s_)
 
-/** Convenience macro to execute a code block and rethrow all exceptions */
+/* Convenience macro to execute a code block and rethrow all exceptions */
 #define HT_TRY(_s_, _code_) do { \
   try { _code_; } \
   HT_RETHROW(_s_) \
 } while (0)
 
-/** Convenience macros for catching and logging exceptions in destructors */
+/* Convenience macros for catching and logging exceptions in destructors */
 #define HT_LOG_EXCEPTION(_s_) \
   catch (Exception &e) { HT_ERROR_OUT << e <<", "<< _s_ << HT_END; } \
   catch (std::bad_alloc &e) { \
@@ -528,7 +528,7 @@ namespace Hypertable {
   catch (...) { \
     HT_ERROR_OUT << "Caught unknown exception, " << _s_ << HT_END; }
 
-/** Convenience macro to execute code and log all exceptions */
+/* Convenience macro to execute code and log all exceptions */
 #define HT_TRY_OR_LOG(_s_, _code_) do { \
   try { _code_; } \
   HT_LOG_EXCEPTION(_s_) \

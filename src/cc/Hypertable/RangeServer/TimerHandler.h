@@ -40,7 +40,9 @@
 
 namespace Hypertable {
 
-  class RangeServer;
+  namespace Apps {
+    class RangeServer;
+  }
 
   /// @addtogroup RangeServer
   /// @{
@@ -68,7 +70,7 @@ namespace Hypertable {
     /// registers itself with the RangeServer with a call to
     /// RangeServer::register_timer, and then schedules a timer interrupt
     /// immediately.
-    TimerHandler(Comm *comm, RangeServer *range_server);
+    TimerHandler(Comm *comm, Apps::RangeServer *range_server);
 
     /// Start timer.
     /// This method sets a timer for 0 milliseconds in the future with itself
@@ -171,7 +173,7 @@ namespace Hypertable {
     Comm *m_comm;
 
     /// RangeServer
-    RangeServer *m_range_server;
+    Apps::RangeServer *m_range_server;
 
     /// Application queue
     ApplicationQueuePtr m_app_queue;

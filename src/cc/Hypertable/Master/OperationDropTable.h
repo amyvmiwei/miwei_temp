@@ -24,11 +24,12 @@
 /// This file contains declarations for OperationDropTable, an Operation class
 /// for dropping (removing) a table from the system.
 
-#ifndef HYPERTABLE_OPERATIONDROPTABLE_H
-#define HYPERTABLE_OPERATIONDROPTABLE_H
+#ifndef Hypertable_Master_OperationDropTable_h
+#define Hypertable_Master_OperationDropTable_h
 
 #include <Hypertable/Master/Operation.h>
 
+#include <Hypertable/Lib/Master/Request/Parameters/DropTable.h>
 #include <Hypertable/Lib/TableParts.h>
 
 #include <Common/StringExt.h>
@@ -46,8 +47,11 @@ namespace Hypertable {
 
     /// Constructor.
     /// Initializes object by passing MetaLog::EntityType::OPERATION_DROP_TABLE
-    /// to parent Operation constructor and sets #m_name to <code>name</code>
-    /// and #m_if_exists to <code>if_exists</code>.  It completes the
+    /// to parent Operation constructor and initializes #m_params with
+    /// <code>name</code> and <code>if_exists</code>.  Lastly, it initializes
+    /// the dependency graph state as follows:
+    ///   - <b>dependencies</b> - INIT
+    ///   - <b>exclusivities</b> - %Table pathname
     /// initialization with a call to initialize_dependencies().
     /// @param context %Master context
     /// @param name Pathname of table to drop
@@ -82,8 +86,8 @@ namespace Hypertable {
     /// <td>INITIAL</td>
     /// <td><ul>
     /// <li>Gets table ID from %Hyperspace and stores it in #m_id.  If mapping
-    /// does not exist in %Hyperspace, then if #m_if_exists is <i>true</i> it
-    /// completes successfully, otherwise it completes with error
+    /// does not exist in %Hyperspace, then if the <i>if exists</i> parameter is
+    /// <i>true</i> it completes successfully, otherwise it completes with error
     /// Error::TABLE_NOT_FOUND</li>
     /// <li>Transitions to DROP_VALUE_INDEX</li>
     /// <li>Persists self to MML and returns</li>
@@ -171,19 +175,19 @@ namespace Hypertable {
     /// Writes human readable representation of object to output stream.
     /// The string returned has the following format:
     /// <pre>
-    ///  name=<TableName> id=<TableId>
+    ///  name=&lt;TableName&gt; id=&lt;TableId&gt;
     /// </pre>
     /// @param os Output stream
     virtual void display_state(std::ostream &os);
 
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /// Returns serialized state length.
     /// This method returns the length of the serialized representation of the
     /// object state.
     /// @return Serialized length.
     /// @see encode() for a description of the serialized %format.
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
 
     /// Writes serialized encoding of object state.
     /// This method writes a serialized encoding of object state to the memory
@@ -220,41 +224,25 @@ namespace Hypertable {
     ///   </tr>
     /// </table>
     /// @param bufp Address of destination buffer pointer (advanced by call)
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /// Decodes state from serialized object.
     /// This method restores the state of the object by decoding a serialized
     /// representation of the state from the memory location pointed to by
-    /// <code>*bufp</code>.  This method is implemented by first calling
-    /// decode_request() to decode and load the #m_if_exists and #m_name
-    /// variables and then decodes and loads the remaining variables.
+    /// <code>*bufp</code>.
+    /// @param version Encoding version
     /// @param bufp Address of source buffer pointer (advanced by call)
     /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
     /// (decremented by call)
     /// @see encode() for a description of the serialized %format
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
-    /// Decodes request portion ofstate from serialized object.
-    /// This method decodes and loads the #m_if_exists and #m_name variables
-    /// which are the first two variables of the encoding.
-    /// @param bufp Address of source buffer pointer (advanced by call)
-    /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-    /// (decremented by call)
-    /// @see encode() for a description of the serialized %format
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
 
-    /// Initializes dependency graph state.
-    /// This method initializes the dependency graph state as follows:
-    ///
-    ///   - <b>dependencies</b> - INIT
-    ///   - <b>exclusivities</b> - %Table pathname
-    ////
-    void initialize_dependencies();
-
-    /// Pathtname of table to drop
-    String m_name;
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::DropTable m_params;
 
     /// %Table ID string
     String m_id;
@@ -265,15 +253,12 @@ namespace Hypertable {
     /// %Range servers for which drop table operation has completed successfuly
     StringSet m_completed;
 
-    /// If table being dropped does not exist, succeed without generating error
-    bool m_if_exists {};
-
     /// Specification for which parts of table to drop
     TableParts m_parts {TableParts::ALL};
   };
 
   /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONDROPTABLE_H
+#endif // Hypertable_Master_OperationDropTable_h

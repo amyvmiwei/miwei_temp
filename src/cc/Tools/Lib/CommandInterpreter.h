@@ -36,6 +36,7 @@ namespace Hypertable {
     void set_timestamp_output_format(const String &format);
     void set_silent(bool silent) { m_silent = silent; }
     void set_test_mode(bool mode) { m_test_mode = mode; }
+    void set_interactive_mode(bool mode) { m_interactive = mode; }
 
     bool silent_mode() { return m_silent; }
     bool test_mode() { return m_test_mode; }
@@ -46,6 +47,7 @@ namespace Hypertable {
     int m_timestamp_output_format;
     bool m_silent;
     bool m_test_mode;
+    bool m_interactive;
   };
 
   typedef intrusive_ptr<CommandInterpreter> CommandInterpreterPtr;

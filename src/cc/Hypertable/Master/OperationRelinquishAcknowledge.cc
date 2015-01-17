@@ -19,14 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/md5.h"
+#include <Common/Compat.h>
 
 #include "OperationMoveRange.h"
 #include "OperationProcessor.h"
@@ -34,12 +27,20 @@
 #include "ReferenceManager.h"
 #include "Utility.h"
 
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+#include <Common/md5.h>
+
 using namespace Hypertable;
 
 OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &ctx,
-              const String &source, TableIdentifier *table, RangeSpec *range)
+              const String &source, TableIdentifier &table, RangeSpec &range)
   : OperationEphemeral(ctx, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE),
-    m_source(source), m_table(*table), m_range(*range) {
+    m_params(source, table, range) {
 }
 
 
@@ -48,49 +49,47 @@ OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &conte
                        MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
+  m_params.decode(&ptr, &remaining);
   m_dependencies.insert(Dependency::INIT);
 }
 
 void OperationRelinquishAcknowledge::execute() {
 
   HT_INFOF("Entering RelinquishAcknowledge-%lld %s[%s..%s] source=%s state=%s",
-           (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row,
-           m_source.c_str(), OperationState::get_text(m_state));
+           (Lld)header.id, m_params.table().id, m_params.range_spec().start_row,
+           m_params.range_spec().end_row, m_params.source().c_str(),
+           OperationState::get_text(m_state));
 
   HT_MAYBE_FAIL("relinquish-acknowledge-INITIAL-a");
   HT_MAYBE_FAIL("relinquish-acknowledge-INITIAL-b");
 
-  int64_t hash_code = Utility::range_hash_code(m_table, m_range,
-          String("OperationMoveRange-") + m_source);
+  int64_t hash_code
+    = Utility::range_hash_code(m_params.table(), m_params.range_spec(),
+                               String("OperationMoveRange-")+m_params.source());
 
-  OperationPtr move_op = m_context->get_move_operation(hash_code);
-
-  if (move_op) {
-    if (move_op->remove_approval_add(0x01)) {
-      move_op->record_state();
-      m_context->remove_move_operation(move_op.get());
+  OperationPtr operation = m_context->get_move_operation(hash_code);
+  if (operation) {
+    if (operation->remove_approval_add(0x01)) {
+      operation->record_state();
+      m_context->remove_move_operation(operation);
     }
   }
   else
-    HT_WARNF("Skipping relinquish_acknowledge(%s %s[%s..%s] because correspoing MoveRange does not exist",
-             m_source.c_str(), m_table.id, m_range.start_row, m_range.end_row);
+    HT_WARNF("Skipping relinquish_acknowledge(%s %s[%s..%s] "
+             "because correspoing MoveRange does not exist",
+             m_params.source().c_str(), m_params.table().id,
+             m_params.range_spec().start_row, m_params.range_spec().end_row);
 
   complete_ok();
 
   HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] from %s",
-           (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row,
-	   m_source.c_str());
+           (Lld)header.id, m_params.table().id, m_params.range_spec().start_row,
+           m_params.range_spec().end_row, m_params.source().c_str());
 }
 
 void OperationRelinquishAcknowledge::display_state(std::ostream &os) {
-  os << " " << m_table << " " << m_range << " source=" << m_source;
-}
-
-void OperationRelinquishAcknowledge::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_source = Serialization::decode_vstr(bufp, remainp);
-  m_table.decode(bufp, remainp);
-  m_range.decode(bufp, remainp);
+  os << " " << m_params.table() << " " << m_params.range_spec()
+     << " source=" << m_params.source();
 }
 
 const String OperationRelinquishAcknowledge::name() {
@@ -98,18 +97,22 @@ const String OperationRelinquishAcknowledge::name() {
 }
 
 const String OperationRelinquishAcknowledge::label() {
-  return format("RelinquishAcknowledge %s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
+  return format("RelinquishAcknowledge %s[%s..%s]", m_params.table().id,
+                m_params.range_spec().start_row, m_params.range_spec().end_row);
 }
 
 const String OperationRelinquishAcknowledge::graphviz_label() {
-  String start_row = m_range.start_row;
-  String end_row = m_range.end_row;
+  String start_row = m_params.range_spec().start_row;
+  String end_row = m_params.range_spec().end_row;
 
   if (start_row.length() > 20)
-    start_row = start_row.substr(0, 10) + ".." + start_row.substr(start_row.length()-10, 10);
+    start_row = start_row.substr(0, 10) + ".." +
+      start_row.substr(start_row.length()-10, 10);
 
   if (end_row.length() > 20)
-    end_row = end_row.substr(0, 10) + ".." + end_row.substr(end_row.length()-10, 10);
+    end_row = end_row.substr(0, 10) + ".." +
+      end_row.substr(end_row.length()-10, 10);
   
-  return format("RelinquishAcknowledge %s\\n%s\\n%s", m_table.id, start_row.c_str(), end_row.c_str());
+  return format("RelinquishAcknowledge %s\\n%s\\n%s",
+                m_params.table().id, start_row.c_str(), end_row.c_str());
 }

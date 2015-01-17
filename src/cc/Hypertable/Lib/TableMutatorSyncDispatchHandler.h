@@ -24,10 +24,10 @@
 /// This file contains declarations for TableMutatorSyncDispatchHandler, a class
 /// for issuing and responding to RangeServer::commit_log_sync() requests.
 
-#ifndef HYPERTABLE_TABLEMUTATORSYNCDISPATCHHANDLER_H
-#define HYPERTABLE_TABLEMUTATORSYNCDISPATCHHANDLER_H
+#ifndef Hypertable_Lib_TableMutatorSyncDispatchHandler_h
+#define Hypertable_Lib_TableMutatorSyncDispatchHandler_h
 
-#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/CommAddress.h>
@@ -39,6 +39,7 @@
 
 namespace Hypertable {
 
+  using namespace Lib;
   using namespace std;
 
   /**
@@ -88,7 +89,7 @@ namespace Hypertable {
     Mutex              m_mutex;
     boost::condition   m_cond;
     int                m_outstanding;
-    RangeServerClient  m_client;
+    RangeServer::Client m_client;
     vector<ErrorResult> m_errors;
     CommAddressSet      m_pending;
     TableIdentifierManaged &m_table_identifier;
@@ -96,4 +97,4 @@ namespace Hypertable {
 }
 
 
-#endif // HYPERTABLE_TABLEMUTATORSYNCDISPATCHHANDLER_H
+#endif // Hypertable_Lib_TableMutatorSyncDispatchHandler_h

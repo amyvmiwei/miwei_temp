@@ -19,26 +19,29 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLE_H
-#define HYPERTABLE_TABLE_H
+#ifndef Hypertable_Lib_Table_h
+#define Hypertable_Lib_Table_h
 
-#include "Common/ReferenceCount.h"
-#include "Common/Mutex.h"
+#include <Hypertable/Lib/ClientObject.h>
+#include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/ScanSpec.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
 
-#include "AsyncComm/ApplicationQueueInterface.h"
+#include <AsyncComm/ApplicationQueueInterface.h>
 
-#include "ClientObject.h"
-#include "NameIdMapper.h"
-#include "Schema.h"
-#include "RangeLocator.h"
-#include "Types.h"
-#include "RangeServerProtocol.h"
+#include <Common/ReferenceCount.h>
+#include <Common/Mutex.h>
 
 namespace Hyperspace {
   class Session;
 }
 
 namespace Hypertable {
+  
+  using namespace Lib;
 
   class ConnectionManager;
   class ResultCallback;
@@ -66,7 +69,7 @@ namespace Hypertable {
     };
 
     enum {
-      MUTATOR_FLAG_NO_LOG_SYNC = RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC
+      MUTATOR_FLAG_NO_LOG_SYNC = Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC
     };
 
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
@@ -274,6 +277,6 @@ namespace Hypertable {
     Namespace             *m_namespace;
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLE_H
+#endif // Hypertable_Lib_Table_h

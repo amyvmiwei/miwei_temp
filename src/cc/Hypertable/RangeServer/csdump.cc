@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
 
-    FsBroker::Lib::Client *dfs = new FsBroker::Lib::Client(conn_mgr, properties);
+    FsBroker::Lib::ClientPtr dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(timeout)) {
       cerr << "error: timed out waiting for FS broker" << endl;

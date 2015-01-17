@@ -64,7 +64,7 @@ OperationProcessor::OperationProcessor(ContextPtr &context, size_t thread_count)
 }
 
 
-void OperationProcessor::add_operation(OperationPtr &operation) {
+void OperationProcessor::add_operation(OperationPtr operation) {
   ScopedLock lock(m_context.mutex);
 
   //HT_INFOF("Adding operation %s", operation->label().c_str());
@@ -688,13 +688,11 @@ void OperationProcessor::update_operation(Vertex v, OperationPtr &operation) {
   m_context.op->add_dependencies(v, operation);
 
   // Add sub-operations
-  std::vector<Operation *> sub_ops;
+  std::vector<OperationPtr> sub_ops;
   operation->fetch_sub_operations(sub_ops);
-  OperationPtr sub_op;
   for (auto op : sub_ops) {
     if (m_context.op_ids.count(op->id()) == 0 && !op->is_complete()) {
-      sub_op = op;
-      m_context.op->add_operation_internal(sub_op);
+      m_context.op->add_operation_internal(op);
     }
   }
 

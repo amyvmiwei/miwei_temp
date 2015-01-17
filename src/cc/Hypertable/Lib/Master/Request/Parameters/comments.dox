@@ -1,0 +1,5 @@
+/// @defgroup libHypertableMasterRequestParameters Parameters
+/// @ingroup libHypertableMasterRequest
+/// %Request parameters.
+/// This module contains encode/decode classes for request parameters to %Master
+/// functions.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,10 +25,11 @@
  * the sending operation results back to requesting clients.
  */
 
-
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include "ResponseManager.h"
+
+#include <Hypertable/Lib/Master/Request/Parameters/FetchResult.h>
 
 using namespace Hypertable;
 
@@ -41,7 +42,7 @@ void ResponseManager::operator()() {
   bool timed_wait;
   bool shutdown = false;
   std::vector<OperationPtr> operations;
-  std::vector<MetaLog::Entity *> entities;
+  std::vector<MetaLog::EntityPtr> entities;
 
   try {
 
@@ -94,10 +95,9 @@ void ResponseManager::operator()() {
         operations.clear();
         entities.clear();
         if (!m_context->removal_queue.empty()) {
-          for (std::list<OperationPtr>::iterator iter=m_context->removal_queue.begin();
-               iter != m_context->removal_queue.end(); ++iter) {
-            operations.push_back(*iter);
-            entities.push_back(iter->get());
+          for (auto & operation : m_context->removal_queue) {
+            operations.push_back(operation);
+            entities.push_back(operation);
           }
           m_context->removal_queue.clear();
         }
@@ -123,7 +123,9 @@ void ResponseManager::add_delivery_info(EventPtr &event) {
   const uint8_t *ptr = event->payload;
   size_t remain = event->payload_len;
 
-  delivery_rec.id = Serialization::decode_i64(&ptr, &remain);
+  Lib::Master::Request::Parameters::FetchResult params;
+  params.decode(&ptr, &remain);
+  delivery_rec.id = params.get_id();
 
   if ((iter = operation_identifier_index.find(delivery_rec.id)) == operation_identifier_index.end()) {
     delivery_rec.event = event;

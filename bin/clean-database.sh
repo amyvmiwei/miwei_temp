@@ -43,13 +43,14 @@ wait_for_server_shutdown thriftbroker "thrift broker" "$@" &
 wait_for_server_shutdown rangeserver "range server" "$@" &
 wait_for_server_shutdown master "hypertable master" "$@" &
 wait_for_server_shutdown hyperspace "hyperspace" "$@" &
+wait
 
 case $confirm in
   y|Y)
     #
     # Clear state
     #
-    check_server "$@" fsbroker 
+    $HYPERTABLE_HOME/bin/ht-check-fsbroker.sh --silent "$@"
     if [ $? != 0 ] ; then
       echo "ERROR: FsBroker not running, database not cleaned"
       # remove local stuff anyway.
@@ -60,8 +61,8 @@ case $confirm in
     TOPLEVEL="/"`$HYPERTABLE_HOME/bin/get_property $@ Hypertable.Directory`"/"
     TOPLEVEL=`echo $TOPLEVEL | tr -s "/" | sed 's/.$//g'`
 
-    $HYPERTABLE_HOME/bin/fsclient --timeout 60000 --eval "rmdir $TOPLEVEL/servers" "$@"
-    $HYPERTABLE_HOME/bin/fsclient --timeout 60000 --eval "rmdir $TOPLEVEL/tables" "$@"
+    $HYPERTABLE_HOME/bin/fsclient --timeout 60000 -e "rmdir $TOPLEVEL/servers" "$@"
+    $HYPERTABLE_HOME/bin/fsclient --timeout 60000 -e "rmdir $TOPLEVEL/tables" "$@"
     echo "Removed $TOPLEVEL/servers in FS"
     echo "Removed $TOPLEVEL/tables in FS"
     /bin/rm -rf $RUNTIME_ROOT/hyperspace/*
@@ -79,7 +80,4 @@ esac
 #
 # Stop fsbroker
 #
-stop_server fsbroker
-sleep 1
-wait_for_server_shutdown fsbroker "FS broker" "$@" &
-wait
+$HYPERTABLE_HOME/bin/ht-stop-fsbroker.sh "$@"

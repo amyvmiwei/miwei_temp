@@ -104,10 +104,10 @@ bool SystemVariable::default_value(int var_code) {
   return defaults[var_code];
 }
 
-String SystemVariable::specs_to_string(std::vector<Spec> &specs) {
+String SystemVariable::specs_to_string(const std::vector<Spec> &specs) {
   bool first = true;
   String str;
-  foreach_ht (Spec &spec, specs) {
+  for (auto &spec : specs) {
     if (!first)
       str += ",";
     if (spec.code < SystemVariable::COUNT)
@@ -121,13 +121,50 @@ String SystemVariable::specs_to_string(std::vector<Spec> &specs) {
 }
 
 
-size_t SystemVariable::encoded_length_specs(std::vector<Spec> &specs) {
+uint8_t SystemVariable::Spec::encoding_version() const {
+  return 1;
+}
+
+size_t SystemVariable::Spec::encoded_length_internal() const {
+  return 5;
+}
+
+/// @details
+/// Encoding is as follows:
+/// <table>
+/// <tr>
+/// <th>Encoding</th>
+/// <th>Description</th>
+/// </tr>
+/// <tr>
+/// <td>i32</td>
+/// <td>Variable code</td>
+/// </tr>
+/// <tr>
+/// <td>bool</td>
+/// <td>Variable value</td>
+/// </tr>
+/// </table>
+void SystemVariable::Spec::encode_internal(uint8_t **bufp) const {
+  Serialization::encode_i32(bufp, code);
+  Serialization::encode_bool(bufp, value);
+}
+
+void SystemVariable::Spec::decode_internal(uint8_t version, const uint8_t **bufp,
+                                           size_t *remainp) {
+  code = Serialization::decode_i32(bufp, remainp);
+  value = Serialization::decode_bool(bufp, remainp);
+}
+
+
+
+size_t SystemVariable::encoded_length_specs(const std::vector<Spec> &specs) {
   return 4 + (5 * specs.size());
 }
 
-void SystemVariable::encode_specs(std::vector<Spec> &specs, uint8_t **bufp) {
+void SystemVariable::encode_specs(const std::vector<Spec> &specs, uint8_t **bufp) {
   Serialization::encode_i32(bufp, specs.size());
-  foreach_ht (Spec &spec, specs) {
+  for (auto &spec : specs) {
     Serialization::encode_i32(bufp, spec.code);
     Serialization::encode_bool(bufp, spec.value);
   }

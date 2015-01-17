@@ -30,6 +30,7 @@
 #include <Hypertable/RangeServer/Global.h>
 
 #include <Hypertable/Lib/ClusterId.h>
+#include <Hypertable/Lib/RangeServer/Request/Parameters/PhantomUpdate.h>
 
 using namespace std;
 using namespace Hypertable;
@@ -56,8 +57,6 @@ void FragmentData::clear() {
 void FragmentData::merge(TableIdentifier &table, RangePtr &range,
                          CommitLogPtr &log) {
 
-  String location;
-  QualifiedRangeSpec range_spec;
   Key key;
   SerializedKey serkey;
   ByteString value;
@@ -69,24 +68,21 @@ void FragmentData::merge(TableIdentifier &table, RangePtr &range,
 
   // de-serialize all objects
   foreach_ht(EventPtr &event, m_data) {
-    const uint8_t *decode_ptr = event->payload;
-    size_t decode_remain = event->payload_len;
-    location = Serialization::decode_vstr(&decode_ptr, &decode_remain);
-    (void)Serialization::decode_i32(&decode_ptr, &decode_remain);
-    range_spec.decode(&decode_ptr, &decode_remain);
-    // skip "fragment"
-    (void)Serialization::decode_i32(&decode_ptr, &decode_remain);
+    const uint8_t *ptr = event->payload;
+    size_t remain = event->payload_len;
+    Lib::RangeServer::Request::Parameters::PhantomUpdate params;
+    params.decode(&ptr, &remain);
 
     dbuf.clear();
-    dbuf.ensure(table.encoded_length() + decode_remain);
+    dbuf.ensure(table.encoded_length() + remain);
     table.encode(&dbuf.ptr);
 
     latest_revision = TIMESTAMP_MIN;
 
-    mod = (const uint8_t *)decode_ptr;
-    mod_end = mod + decode_remain;
+    mod = (const uint8_t *)ptr;
+    mod_end = mod + remain;
 
-    total_bytes += decode_remain;
+    total_bytes += remain;
 
     while (mod < mod_end) {
       serkey.ptr = mod;
@@ -108,7 +104,7 @@ void FragmentData::merge(TableIdentifier &table, RangePtr &range,
     
     HT_ASSERT(dbuf.ptr-dbuf.base <= (long)dbuf.size);
 
-    if (decode_remain)
+    if (remain)
       log->write(ClusterId::get(), dbuf, latest_revision, false);
   }
 

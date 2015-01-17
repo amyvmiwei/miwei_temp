@@ -22,7 +22,7 @@
  * This class efficiently allocates memory chunks from large memory pages.
  * This reduces the number of heap allocations, thus causing less heap
  * fragmentation and higher performance. The PageArena memory allocator can
- * not be used for STL classes - use @ref PageArenaAllocator instead.
+ * not be used for STL classes - use PageArenaAllocator instead.
  */
 
 #ifndef HYPERTABLE_PAGEARENA_H
@@ -328,7 +328,9 @@ class PageArena : boost::noncopyable {
     std::swap(m_gappy_limit, other.m_gappy_limit);
   }
 
-  /** Write allocator statistics to @ref out */
+ /// Write allocator statistics to output stream.
+ /// @param out Output stream
+ /// @return Output stream
   std::ostream& dump_stat(std::ostream& out) const {
     out << "pages=" << m_pages << ", total=" << m_total << ", used=" << m_used
         << "(" << m_used * 100. / m_total << "%)";

@@ -1,10 +1,3 @@
-
-Welcome to the hypertable command interpreter.
-For information about Hypertable, visit http://hypertable.com
-
-Type 'help' for a list of commands, or 'help shell' for a
-list of shell meta commands.
-
 CREATE NAMESPACE "/test";
 USE "/test";
 CREATE TABLE foo('test');
@@ -27,18 +20,18 @@ CREATE TABLE foo (
 
 DROP TABLE foo;
 DROP NAMESPACE "/test";
-Error: MasterClient operation drop_namespace('test', if_exists=false) failed - HYPERSPACE directory not empty
+Error: Client operation drop_namespace('test', flags=) failed - HYPERSPACE directory not empty
 USE "/test";
 DROP NAMESPACE "subtest";
 RENAME TABLE foo TO foo_renamed;
 GET LISTING;
 foo_renamed
 DROP TABLE foo;
-Error: MasterClient operation drop_table('test/foo', if_exists=false) failed - HYPERTABLE table does not exist
+Error: Client operation drop_table('test/foo', if_exists=false) failed - HYPERTABLE table does not exist
 DROP TABLE foo_renamed;
 DROP NAMESPACE "/test";
 CREATE TABLE foo('test');
-Error: MasterClient operation create_table('test/foo') failed - HYPERTABLE namespace does not exist
+Error: Client operation create_table('test/foo') failed - HYPERTABLE namespace does not exist
 CREATE NAMESPACE "/test";
 USE "/test";
 DROP TABLE IF EXISTS hypertable;
@@ -3083,10 +3076,10 @@ DROP TABLE "ns/r";
 CREATE NAMESPACE issue565 IF NOT EXISTS;
 USE issue565;
 DROP NAMESPACE ns;
-Error: MasterClient operation drop_namespace('/issue565/ns', if_exists=false) failed - HYPERTABLE namespace does not exist
+Error: Client operation drop_namespace('/issue565/ns', flags=) failed - HYPERTABLE namespace does not exist
 CREATE NAMESPACE ns;
 CREATE NAMESPACE ns;
-Error: MasterClient operation create_namespace('issue565/ns', 0x0) failed - HYPERTABLE namespace exists
+Error: Client operation create_namespace('issue565/ns', flags=) failed - HYPERTABLE namespace exists
 GET LISTING;
 ns	(namespace)
 CREATE NAMESPACE ns IF NOT EXISTS;
@@ -3158,7 +3151,7 @@ USE "/RenameTest";
 CREATE TABLE foo (a);
 CREATE TABLE bar (a);
 RENAME TABLE foo TO bar;
-Error: MasterClient operation rename_table(old='RenameTest/foo', new='RenameTest/bar') failed - HYPERTABLE name already in use
+Error: Client operation rename_table(old='RenameTest/foo', new='RenameTest/bar') failed - HYPERTABLE name already in use
 # issue 1237
 CREATE NAMESPACE '/1';
 CREATE NAMESPACE '/1/2';

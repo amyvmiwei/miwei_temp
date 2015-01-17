@@ -56,7 +56,7 @@ namespace Hypertable { namespace ClusterDefinition {
     /// <code>content</code>, and then sets #m_next pointing to the beginning of
     /// the content.
     /// @param fname Pathname of cluster definition file
-    /// @param fname Content of cluster definition file
+    /// @param content Content of cluster definition file
     Tokenizer(const string &fname, const string &content);
 
     /// Returns the directory path containing the cluster definition file.
@@ -80,7 +80,7 @@ namespace Hypertable { namespace ClusterDefinition {
 
     /// Identifies token type of line starting at <code>base</code>.
     /// This function determines the token type (Token::Type) of the
-    /// line starting at <code>base</code> and ending at </code>end</code>.
+    /// line starting at <code>base</code> and ending at <code>end</code>.
     /// @param base Pointer to beginning of next line
     /// @param end Pointer to end of line or end of content
     /// @return Token type of line pointed to by <code>base</code>

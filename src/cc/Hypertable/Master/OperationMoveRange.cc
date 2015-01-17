@@ -19,69 +19,83 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-#include "Common/System.h"
-#include "Common/md5.h"
-
-#include "AsyncComm/ResponseCallback.h"
-
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "OperationMoveRange.h"
 #include "OperationProcessor.h"
 #include "Utility.h"
 #include "BalancePlanAuthority.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
+
+#include <AsyncComm/ResponseCallback.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+#include <Common/System.h>
+#include <Common/md5.h>
+
+#include <string>
+
 extern "C" {
 #include <poll.h>
 }
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace Hyperspace;
+using namespace std;
 
-OperationMoveRange::OperationMoveRange(ContextPtr &context, const String &source,
+OperationMoveRange::OperationMoveRange(ContextPtr &context,const string &source,
         const TableIdentifier &table, const RangeSpec &range,
-        const String &transfer_log, uint64_t soft_limit, bool is_split)
+        const string &transfer_log, int64_t soft_limit, bool is_split)
   : Operation(context, MetaLog::EntityType::OPERATION_MOVE_RANGE),
-    m_table(table), m_range(range), m_transfer_log(transfer_log),
-    m_soft_limit(soft_limit), m_is_split(is_split), m_source(source) {
-  m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row,
-          m_range.end_row);
+    m_params(source, table, range, transfer_log, soft_limit, is_split) {
+  m_range_name = format("%s[%s..%s]", table.id, range.start_row,
+                        range.end_row);
   initialize_dependencies();
-  m_hash_code = Utility::range_hash_code(m_table, m_range,
-          String("OperationMoveRange-") + m_source);
+  m_hash_code =
+    Utility::range_hash_code(table, range,string("OperationMoveRange-")+source);
   set_remove_approval_mask(0x03);
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context,
-        const MetaLog::EntityHeader &header_)
-  : Operation(context, header_), m_source("UNKNOWN") {
+                                       const MetaLog::EntityHeader &header_)
+  : Operation(context, header_) {
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_MOVE_RANGE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
+  m_params.decode(&ptr, &remaining);
+  m_range_name = format("%s[%s..%s]", m_params.table().id,
+                        m_params.range_spec().start_row,
+          m_params.range_spec().end_row);
+  m_hash_code = Utility::range_hash_code(m_params.table(),m_params.range_spec(),
+          string("OperationMoveRange-") + m_params.source());
+
   set_remove_approval_mask(0x03);
+  initialize_dependencies();
 }
 
 void OperationMoveRange::initialize_dependencies() {
-  m_exclusivities.insert(Utility::range_hash_string(m_table, m_range,
+  m_exclusivities.insert(Utility::range_hash_string(m_params.table(),
+                                                    m_params.range_spec(),
               "OperationMoveRange"));
 
   m_dependencies.insert(Dependency::INIT);
   m_dependencies.insert(Dependency::SERVERS);
-  m_dependencies.insert(Utility::range_hash_string(m_table, m_range, ""));
+  m_dependencies.insert(Utility::range_hash_string(m_params.table(),
+                                                   m_params.range_spec(), ""));
 
-  if (!strcmp(m_table.id, TableIdentifier::METADATA_ID)) {
+  if (!strcmp(m_params.table().id, TableIdentifier::METADATA_ID)) {
     m_dependencies.insert(Dependency::ROOT);
   }
-  else if (!strncmp(m_table.id, "0/", 2)) {
+  else if (!strncmp(m_params.table().id, "0/", 2)) {
     m_dependencies.insert(Dependency::ROOT);
     m_dependencies.insert(Dependency::METADATA);
   }
@@ -90,14 +104,17 @@ void OperationMoveRange::initialize_dependencies() {
     m_dependencies.insert(Dependency::METADATA);
     m_dependencies.insert(Dependency::SYSTEM);
   }
-  m_obstructions.insert(String("OperationMove ") + m_range_name);
-  m_obstructions.insert(String(m_table.id) + " move range");
+  m_obstructions.insert(string("OperationMove ") + m_range_name);
+  m_obstructions.insert(string(m_params.table().id) + " move range");
 }
 
 void OperationMoveRange::execute() {
   int32_t state = get_state();
-  String old_destination = m_destination;
-  BalancePlanAuthority *bpa = m_context->get_balance_plan_authority();
+  string old_destination = m_destination;
+  MetaLog::EntityPtr bpa_entity;
+  m_context->get_balance_plan_authority(bpa_entity);
+  BalancePlanAuthorityPtr bpa
+    = static_pointer_cast<BalancePlanAuthority>(bpa_entity);
 
   HT_INFOF("Entering MoveRange-%lld %s state=%s",
           (Lld)header.id, m_range_name.c_str(),
@@ -107,7 +124,8 @@ void OperationMoveRange::execute() {
 
   case OperationState::INITIAL:
 
-    if (!bpa->get_balance_destination(m_table, m_range, m_destination)) {
+    if (!bpa->get_balance_destination(m_params.table(), m_params.range_spec(),
+                                      m_destination)) {
       m_context->op->unblock(Dependency::SERVERS);
       return;
     }
@@ -119,7 +137,7 @@ void OperationMoveRange::execute() {
             old_destination.c_str());
     set_state(OperationState::STARTED);
     HT_MAYBE_FAIL("move-range-INITIAL-a");
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("move-range-INITIAL-b");
     return;
 
@@ -139,20 +157,19 @@ void OperationMoveRange::execute() {
 
   case OperationState::LOAD_RANGE:
     try {
-      RangeServerClient rsc(m_context->comm);
+      RangeServer::Client rsc(m_context->comm);
       CommAddress addr;
       RangeState range_state;
-      TableIdentifier *table = &m_table;
-      RangeSpec *range = &m_range;
 
       addr.set_proxy(m_destination);
-      range_state.soft_limit = m_soft_limit;
-      range_state.transfer_log = m_transfer_log.c_str();
+      range_state.soft_limit = m_params.soft_limit();
+      range_state.transfer_log = m_params.transfer_log().c_str();
       if (m_context->test_mode)
         HT_WARNF("Skipping %s::load_range() because in TEST MODE",
                 m_destination.c_str());
       else
-        rsc.load_range(addr, *table, *range, range_state, !m_is_split);
+        rsc.load_range(addr, m_params.table(), m_params.range_spec(),
+                       range_state, !m_params.is_split());
     }
     catch (Exception &e) {
       if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
@@ -164,13 +181,15 @@ void OperationMoveRange::execute() {
           return;
         }
 
-        if (!Utility::table_exists(m_context, m_table.id)) {
+        if (!Utility::table_exists(m_context, m_params.table().id)) {
           HT_WARNF("Aborting MoveRange %s because table no longer exists",
                    m_range_name.c_str());
-          bpa->balance_move_complete(m_table, m_range);
+          bpa->balance_move_complete(m_params.table(), m_params.range_spec());
           remove_approval_add(0x03);
-          complete_ok(bpa);
-          m_context->remove_move_operation(this);
+          complete_ok(bpa_entity);
+          OperationPtr operation
+            = dynamic_pointer_cast<Operation>(shared_from_this());
+          m_context->remove_move_operation(operation);
           return;
         }
 
@@ -186,14 +205,12 @@ void OperationMoveRange::execute() {
     }
     HT_MAYBE_FAIL("move-range-LOAD_RANGE");
     set_state(OperationState::ACKNOWLEDGE);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
   case OperationState::ACKNOWLEDGE:
     {
-      RangeServerClient rsc(m_context->comm);
+      RangeServer::Client rsc(m_context->comm);
       CommAddress addr;
-      TableIdentifier *table = &m_table;
-      RangeSpec *range = &m_range;
 
       addr.set_proxy(m_destination);
       if (m_context->test_mode) {
@@ -202,7 +219,7 @@ void OperationMoveRange::execute() {
       }
       else {
         try {
-          QualifiedRangeSpec qrs(*table, *range);
+          QualifiedRangeSpec qrs(m_params.table(), m_params.range_spec());
           vector<QualifiedRangeSpec *> range_vec;
           map<QualifiedRangeSpec, int> response_map;
           range_vec.push_back(&qrs);
@@ -221,18 +238,23 @@ void OperationMoveRange::execute() {
                    e.what(), m_destination.c_str());
           poll(0, 0, 5000);
           // Fetch new destination, if it changed, and then try again
-          if (!bpa->get_balance_destination(m_table, m_range, m_destination))
+          if (!bpa->get_balance_destination(m_params.table(),
+                                            m_params.range_spec(),
+                                            m_destination))
             m_context->op->unblock(Dependency::SERVERS);
           return;
         }
       }
     }
-    bpa->balance_move_complete(m_table, m_range);
+    bpa->balance_move_complete(m_params.table(), m_params.range_spec());
     {
       bool remove_ok = remove_approval_add(0x02);
-      complete_ok(bpa);
-      if (remove_ok)
-        m_context->remove_move_operation(this);
+      complete_ok(bpa_entity);
+      if (remove_ok) {
+        OperationPtr operation
+          = dynamic_pointer_cast<Operation>(shared_from_this());
+        m_context->remove_move_operation(operation);
+      }
     }
     break;
 
@@ -248,54 +270,65 @@ void OperationMoveRange::execute() {
 }
 
 void OperationMoveRange::display_state(std::ostream &os) {
-  os << " " << m_table << " " << m_range << " transfer-log='" << m_transfer_log;
-  os << "' soft-limit=" << m_soft_limit << " is_split="
-     << ((m_is_split) ? "true" : "false");
-  os << "source='" << m_source << "' location='" << m_destination << "' ";
+  os << " " << m_params.table() << " " << m_params.range_spec()
+     << " transfer-log='" << m_params.transfer_log()
+     << "' soft-limit=" << m_params.soft_limit() << " is_split="
+     << (m_params.is_split() ? "true" : "false")
+     << "source='" << m_params.source() << "' location='"
+     << m_destination << "' ";
 }
 
-#define OPERATION_MOVE_RANGE_VERSION 1
-
-uint16_t OperationMoveRange::encoding_version() const {
-  return OPERATION_MOVE_RANGE_VERSION;
+uint8_t OperationMoveRange::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationMoveRange::encoded_state_length() const {
-  return Serialization::encoded_length_vstr(m_source)
-      + m_table.encoded_length() + m_range.encoded_length()
-      + Serialization::encoded_length_vstr(m_transfer_log) + 9
-      + Serialization::encoded_length_vstr(m_destination);
+size_t OperationMoveRange::encoded_length_state() const {
+  return m_params.encoded_length() +
+    Serialization::encoded_length_vstr(m_destination);
 }
 
 void OperationMoveRange::encode_state(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, m_source);
-  m_table.encode(bufp);
-  m_range.encode(bufp);
-  Serialization::encode_vstr(bufp, m_transfer_log);
-  Serialization::encode_i64(bufp, m_soft_limit);
-  Serialization::encode_bool(bufp, m_is_split);
+  m_params.encode(bufp);
   Serialization::encode_vstr(bufp, m_destination);
 }
 
-void OperationMoveRange::decode_state(const uint8_t **bufp, size_t *remainp) {
-  set_remove_approval_mask(0x03);
-  decode_request(bufp, remainp);
+void OperationMoveRange::decode_state(uint8_t version, const uint8_t **bufp,
+                                      size_t *remainp) {
+  m_params.decode(bufp, remainp);
   m_destination = Serialization::decode_vstr(bufp, remainp);
+  m_range_name
+    = format("%s[%s..%s]", m_params.table().id, m_params.range_spec().start_row,
+             m_params.range_spec().end_row);
+  m_hash_code
+    = Utility::range_hash_code(m_params.table(), m_params.range_spec(),
+                               string("OperationMoveRange-")+m_params.source());
 }
 
-void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
-  if (get_original_type() != MetaLog::EntityType::OLD_OPERATION_MOVE_RANGE)
-    m_source = Serialization::decode_vstr(bufp, remainp);
-  m_table.decode(bufp, remainp);
-  m_range.decode(bufp, remainp);
-  m_transfer_log = Serialization::decode_vstr(bufp, remainp);
-  m_soft_limit = Serialization::decode_i64(bufp, remainp);
-  m_is_split = Serialization::decode_bool(bufp, remainp);
-  m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row,
-          m_range.end_row);
-  m_hash_code = Utility::range_hash_code(m_table, m_range,
-          String("OperationMoveRange-") + m_source);
+void OperationMoveRange::decode_state_old(uint8_t version, const uint8_t **bufp,
+                                          size_t *remainp) {
+  {
+    string source;
+    if (get_original_type() != MetaLog::EntityType::OLD_OPERATION_MOVE_RANGE)
+      source = Serialization::decode_vstr(bufp, remainp);
+    TableIdentifier table;
+    legacy_decode(bufp, remainp, &table);
+    RangeSpec range_spec;
+    legacy_decode(bufp, remainp, &range_spec);
+    string transfer_log = Serialization::decode_vstr(bufp, remainp);
+    int64_t soft_limit = Serialization::decode_i64(bufp, remainp);
+    bool is_split = Serialization::decode_bool(bufp, remainp);
+    m_params = Master::Request::Parameters::MoveRange(source, table, range_spec,
+                                                      transfer_log, soft_limit,
+                                                      is_split);
+  }
+  m_destination = Serialization::decode_vstr(bufp, remainp);
+  m_range_name = format("%s[%s..%s]", m_params.table().id,
+                        m_params.range_spec().start_row,
+          m_params.range_spec().end_row);
+  m_hash_code = Utility::range_hash_code(m_params.table(),m_params.range_spec(),
+          string("OperationMoveRange-") + m_params.source());
   initialize_dependencies();
+  set_remove_approval_mask(0x03);
 }
 
 void OperationMoveRange::decode_result(const uint8_t **bufp, size_t *remainp) {
@@ -303,23 +336,27 @@ void OperationMoveRange::decode_result(const uint8_t **bufp, size_t *remainp) {
   Operation::decode_result(bufp, remainp);
 }
 
-const String OperationMoveRange::name() {
+const string OperationMoveRange::name() {
   if (m_state == OperationState::COMPLETE)
     return "OperationMoveRange";
-  return format("OperationMoveRange %s %s[%s..%s] -> %s", m_source.c_str(),
-                m_table.id, m_range.start_row, m_range.end_row, m_destination.c_str());
+  return format("OperationMoveRange %s %s[%s..%s] -> %s",
+                m_params.source().c_str(), m_params.table().id,
+                m_params.range_spec().start_row, m_params.range_spec().end_row,
+                m_destination.c_str());
 }
 
-const String OperationMoveRange::label() {
+const string OperationMoveRange::label() {
   if (m_state == OperationState::COMPLETE)
     return "OperationMoveRange";
   return format("MoveRange %s %s[%s..%s] -> %s",
-                m_source.c_str(), m_table.id, m_range.start_row, m_range.end_row, m_destination.c_str());
+                m_params.source().c_str(), m_params.table().id,
+                m_params.range_spec().start_row, m_params.range_spec().end_row,
+                m_destination.c_str());
 }
 
-const String OperationMoveRange::graphviz_label() {
-  String start_row = m_range.start_row;
-  String end_row = m_range.end_row;
+const string OperationMoveRange::graphviz_label() {
+  string start_row = m_params.range_spec().start_row;
+  string end_row = m_params.range_spec().end_row;
 
   if (start_row.length() > 20)
     start_row = start_row.substr(0, 10) + ".."
@@ -331,6 +368,6 @@ const String OperationMoveRange::graphviz_label() {
     end_row = end_row.substr(0, 10) + ".."
         + end_row.substr(end_row.length() - 10, 10);
 
-  return format("MoveRange %s\\n%s\\n%s", m_table.id, start_row.c_str(),
-          end_row.c_str());
+  return format("MoveRange %s\\n%s\\n%s", m_params.table().id,
+                start_row.c_str(), end_row.c_str());
 }

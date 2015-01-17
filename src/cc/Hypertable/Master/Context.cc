@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,23 +25,32 @@
  * context for the Master.
  */
 
-#include "Common/Compat.h"
-#include "Common/FailureInducer.h"
+#include <Common/Compat.h>
 
+#include "BalancePlanAuthority.h"
 #include "Context.h"
 #include "LoadBalancer.h"
 #include "Operation.h"
 #include "OperationRecover.h"
 #include "ReferenceManager.h"
-#include "BalancePlanAuthority.h"
+
+#include <Hypertable/Lib/Master/Request/Parameters/PhantomCommitComplete.h>
+#include <Hypertable/Lib/Master/Request/Parameters/PhantomPrepareComplete.h>
+#include <Hypertable/Lib/Master/Request/Parameters/ReplayComplete.h>
+#include <Hypertable/Lib/Master/Request/Parameters/ReplayStatus.h>
+
+#include <Common/FailureInducer.h>
+
+#include <memory>
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace std;
 
 Context::Context(PropertiesPtr &p) 
   : props(p), timer_interval(0), monitoring_interval(0), gc_interval(0),
     next_monitoring_time(0), next_gc_time(0), test_mode(false),
-    quorum_reached(false), m_balance_plan_authority(0) {
+    quorum_reached(false) {
   master_file_handle = 0;
   balancer = 0;
   response_manager = 0;
@@ -59,7 +68,6 @@ Context::~Context() {
   }
   delete balancer;
   delete reference_manager;
-  delete m_balance_plan_authority;
 }
 
 
@@ -84,33 +92,41 @@ void Context::notification_hook(const String &subject, const String &message) {
   }
 }
 
-void Context::set_balance_plan_authority(BalancePlanAuthority *bpa) {
+void Context::set_balance_plan_authority(MetaLog::EntityPtr bpa) {
   ScopedLock lock(mutex);
+  HT_ASSERT(dynamic_cast<BalancePlanAuthority *>(bpa.get()));
   m_balance_plan_authority = bpa;
 }
 
 BalancePlanAuthority *Context::get_balance_plan_authority() {
   ScopedLock lock(mutex);
   if (!m_balance_plan_authority)
-    m_balance_plan_authority = new BalancePlanAuthority(this, mml_writer);
-  return m_balance_plan_authority;
+    m_balance_plan_authority = make_shared<BalancePlanAuthority>(this, mml_writer);
+  return static_cast<BalancePlanAuthority *>(m_balance_plan_authority.get());
+}
+
+void Context::get_balance_plan_authority(MetaLog::EntityPtr &entity) {
+  ScopedLock lock(mutex);
+  if (!m_balance_plan_authority)
+    m_balance_plan_authority = make_shared<BalancePlanAuthority>(this, mml_writer);
+  entity = m_balance_plan_authority;
 }
 
 void Context::replay_status(EventPtr &event) {
+  Master::Request::Parameters::ReplayStatus params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
-  int64_t id       = Serialization::decode_i64(&decode_ptr, &decode_remain);
-  String location  = Serialization::decode_vstr(&decode_ptr, &decode_remain);
-  int plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
+  params.decode(&decode_ptr, &decode_remain);
 
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
     if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
       HT_WARNF("Unable to determine proxy for replay_status(id=%lld, %s, "
-               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
-               plan_generation, event->addr.format().c_str());
+               "plan_generation=%d) from %s", (Lld)params.op_id(),
+               params.location().c_str(), params.plan_generation(),
+               event->addr.format().c_str());
       return;
     }
     proxy = rsc->location();
@@ -119,34 +135,33 @@ void Context::replay_status(EventPtr &event) {
     proxy = event->proxy;
 
   HT_INFOF("replay_status(id=%lld, %s, plan_generation=%d) from %s",
-           (Lld)id, location.c_str(), plan_generation, proxy.c_str());
+           (Lld)params.op_id(), params.location().c_str(),
+           params.plan_generation(), proxy.c_str());
 
-  RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(id);
+  RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(params.op_id());
 
   if (future)
-    future->status(proxy, plan_generation);
+    future->status(proxy, params.plan_generation());
   else
-    HT_WARN_OUT << "No Recovery replay step future found for operation=" << id << HT_END;
+    HT_WARN_OUT << "No Recovery replay step future found for operation=" << params.op_id() << HT_END;
 
 }
 
 void Context::replay_complete(EventPtr &event) {
+  Master::Request::Parameters::ReplayComplete params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
-  int64_t id       = Serialization::decode_i64(&decode_ptr, &decode_remain);
-  String location  = Serialization::decode_vstr(&decode_ptr, &decode_remain);
-  int plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
-  int32_t error    = Serialization::decode_i32(&decode_ptr, &decode_remain);
-  String error_msg = Serialization::decode_vstr(&decode_ptr, &decode_remain);
+  params.decode(&decode_ptr, &decode_remain);
 
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
     if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
       HT_WARNF("Unable to determine proxy for replay_complete(id=%lld, %s, "
-               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
-               plan_generation, event->addr.format().c_str());
+               "plan_generation=%d) from %s", (Lld)params.op_id(),
+               params.location().c_str(), params.plan_generation(),
+               event->addr.format().c_str());
       return;
     }
     proxy = rsc->location();
@@ -155,44 +170,47 @@ void Context::replay_complete(EventPtr &event) {
     proxy = event->proxy;
 
   HT_INFOF("from %s replay_complete(id=%lld, %s, plan_generation=%d) = %s",
-           proxy.c_str(), (Lld)id, location.c_str(), plan_generation,
-           Error::get_text(error));
+           proxy.c_str(), (Lld)params.op_id(), params.location().c_str(),
+           params.plan_generation(), Error::get_text(params.error()));
 
-  RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(id);
+  RecoveryStepFuturePtr future
+    = m_recovery_state.get_replay_future(params.op_id());
 
   if (future) {
-    if (error == Error::OK)
-      future->success(proxy, plan_generation);
+    if (params.error() == Error::OK)
+      future->success(proxy, params.plan_generation());
     else
-      future->failure(proxy, plan_generation, error, error_msg);
+      future->failure(proxy, params.plan_generation(), params.error(),
+                      params.message());
   }
   else
-    HT_WARN_OUT << "No Recovery replay step future found for operation=" << id << HT_END;
+    HT_WARN_OUT << "No Recovery replay step future found for operation="
+                << params.op_id() << HT_END;
 
 }
 
 void Context::prepare_complete(EventPtr &event) {
+  Master::Request::Parameters::PhantomPrepareComplete params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
-  int64_t id       = Serialization::decode_i64(&decode_ptr, &decode_remain);
-  String location  = Serialization::decode_vstr(&decode_ptr, &decode_remain);
-  int plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
-  int32_t error    = Serialization::decode_i32(&decode_ptr, &decode_remain);
-  String error_msg = Serialization::decode_vstr(&decode_ptr, &decode_remain);
+  params.decode(&decode_ptr, &decode_remain);
 
   HT_INFOF("prepare_complete(id=%lld, %s, plan_generation=%d) = %s",
-           (Lld)id, location.c_str(), plan_generation, Error::get_text(error));
+           (Lld)params.op_id(), params.location().c_str(),
+           params.plan_generation(), Error::get_text(params.error()));
 
-  RecoveryStepFuturePtr future = m_recovery_state.get_prepare_future(id);
+  RecoveryStepFuturePtr future
+    = m_recovery_state.get_prepare_future(params.op_id());
 
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
     if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
       HT_WARNF("Unable to determine proxy for prepare_complete(id=%lld, %s, "
-               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
-               plan_generation, event->addr.format().c_str());
+               "plan_generation=%d) from %s", (Lld)params.op_id(),
+               params.location().c_str(), params.plan_generation(),
+               event->addr.format().c_str());
       return;
     }
     proxy = rsc->location();
@@ -201,37 +219,39 @@ void Context::prepare_complete(EventPtr &event) {
     proxy = event->proxy;
 
   if (future) {
-    if (error == Error::OK)
-      future->success(proxy, plan_generation);
+    if (params.error() == Error::OK)
+      future->success(proxy, params.plan_generation());
     else
-      future->failure(proxy, plan_generation, error, error_msg);
+      future->failure(proxy, params.plan_generation(), params.error(),
+                      params.message());
   }
   else
-    HT_WARN_OUT << "No Recovery prepare step future found for operation=" << id << HT_END;
+    HT_WARN_OUT << "No Recovery prepare step future found for operation="
+                << params.op_id() << HT_END;
 }
 
 void Context::commit_complete(EventPtr &event) {
+  Master::Request::Parameters::PhantomPrepareComplete params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
-  int64_t id       = Serialization::decode_i64(&decode_ptr, &decode_remain);
-  String location  = Serialization::decode_vstr(&decode_ptr, &decode_remain);
-  int plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
-  int32_t error    = Serialization::decode_i32(&decode_ptr, &decode_remain);
-  String error_msg = Serialization::decode_vstr(&decode_ptr, &decode_remain);
+  params.decode(&decode_ptr, &decode_remain);
 
   HT_INFOF("commit_complete(id=%lld, %s, plan_generation=%d) = %s",
-           (Lld)id, location.c_str(), plan_generation, Error::get_text(error));
+           (Lld)params.op_id(), params.location().c_str(),
+           params.plan_generation(), Error::get_text(params.error()));
 
-  RecoveryStepFuturePtr future = m_recovery_state.get_commit_future(id);
+  RecoveryStepFuturePtr future
+    = m_recovery_state.get_commit_future(params.op_id());
 
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
     if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
       HT_WARNF("Unable to determine proxy for commit_complete(id=%lld, %s, "
-               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
-               plan_generation, event->addr.format().c_str());
+               "plan_generation=%d) from %s", (Lld)params.op_id(),
+               params.location().c_str(), params.plan_generation(),
+               event->addr.format().c_str());
       return;
     }
     proxy = rsc->location();
@@ -240,16 +260,18 @@ void Context::commit_complete(EventPtr &event) {
     proxy = event->proxy;
 
   if (future) {
-    if (error == Error::OK)
-      future->success(proxy, plan_generation);
+    if (params.error() == Error::OK)
+      future->success(proxy, params.plan_generation());
     else
-      future->failure(proxy, plan_generation, error, error_msg);
+      future->failure(proxy, params.plan_generation(), params.error(),
+                      params.message());
   }
   else
-    HT_WARN_OUT << "No Recovery commit step future found for operation=" << id << HT_END;
+    HT_WARN_OUT << "No Recovery commit step future found for operation="
+                << params.op_id() << HT_END;
 }
 
-bool Context::add_move_operation(Operation *operation) {
+bool Context::add_move_operation(OperationPtr operation) {
   ScopedLock lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(operation->hash_code());
   if (iter != m_outstanding_move_ops.end())
@@ -258,22 +280,22 @@ bool Context::add_move_operation(Operation *operation) {
   return true;
 }
 
-void Context::remove_move_operation(Operation *operation) {
+void Context::remove_move_operation(OperationPtr operation) {
   ScopedLock lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(operation->hash_code());
   HT_ASSERT(iter != m_outstanding_move_ops.end());
   m_outstanding_move_ops.erase(iter);
 }
 
-Operation *Context::get_move_operation(int64_t hash_code) {
+OperationPtr Context::get_move_operation(int64_t hash_code) {
   ScopedLock lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(hash_code);
   if (iter != m_outstanding_move_ops.end()) {
     OperationPtr operation = reference_manager->get(iter->second);
     HT_ASSERT(operation);
-    return operation.get();
+    return operation;
   }
-  return nullptr;
+  return OperationPtr();
 }
 
 void Context::add_available_server(const String &location) {

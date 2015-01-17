@@ -34,7 +34,6 @@
 #include <Hypertable/Lib/ClusterId.h>
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/KeySpec.h>
-#include <Hypertable/Lib/RangeServerClient.h>
 #include <Hypertable/Lib/Table.h>
 #include <Hypertable/Lib/TableMutatorAsyncDispatchHandler.h>
 #include <Hypertable/Lib/TableMutatorAsyncHandler.h>

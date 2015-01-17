@@ -57,6 +57,7 @@
 #include "RecoveryStepFuture.h"
 #include "SystemState.h"
 
+#include <memory>
 #include <set>
 #include <unordered_map>
 
@@ -140,7 +141,7 @@ namespace Hypertable {
     time_t next_monitoring_time;
     time_t next_gc_time;
     OperationProcessor *op;
-    OperationTimedBarrier *recovery_barrier_op;
+    std::shared_ptr<OperationTimedBarrier> recovery_barrier_op;
     String cluster_name;               //!< Name of cluster
     String location_hash;
     int32_t disk_threshold;            //!< Disk use threshold percentage
@@ -161,14 +162,14 @@ namespace Hypertable {
     /// @return <i>true</i> if operation was successfully added to map,
     /// <i>false</i> if operation was not added to the map because an entry
     /// already exists in the map for the same operation hash code
-    bool add_move_operation(Operation *operation);
+    bool add_move_operation(std::shared_ptr<Operation> operation);
 
     /// Removes operation from active <i>move range</i> operation map.
     /// Removes entry from #m_outstanding_move_ops map correspoding to
     /// <code>operation</code>.
     /// @param operation Move range operation to remove from map
     /// @see add_move_operation().
-    void remove_move_operation(Operation *operation);
+    void remove_move_operation(std::shared_ptr<Operation> operation);
 
     /// Gets operation from active <i>move range</i> operation map.
     /// Gets operation corresponding with <code>hash_code</code> by consulting
@@ -178,7 +179,7 @@ namespace Hypertable {
     /// @return Pointer to outstanding move range operation corresponding with
     /// <code>hash_code</code>, or nullptr if no mapping exists.
     /// @see add_move_operation().
-    Operation *get_move_operation(int64_t hash_code);
+    std::shared_ptr<Operation> get_move_operation(int64_t hash_code);
 
     void add_available_server(const String &location);
     void remove_available_server(const String &location);
@@ -194,19 +195,25 @@ namespace Hypertable {
     /** Invoke notification hook. */
     void notification_hook(const String &subject, const String &message);
 
-    /** set the BalancePlanAuthority. */
-    void set_balance_plan_authority(BalancePlanAuthority *bpa);
+    /// Sets the BalancePlanAuthority.
+    void set_balance_plan_authority(MetaLog::EntityPtr bpa);
 
     // get the BalancePlanAuthority; this creates a new instance when
     // called for the very first time 
     BalancePlanAuthority *get_balance_plan_authority();
+
+    // Gets smart pointer to BalancePlanAuthority.
+    void get_balance_plan_authority(MetaLog::EntityPtr &entity);
 
     RecoveryState &recovery_state() { return m_recovery_state; }
 
   private:
 
     RecoveryState m_recovery_state;
-    BalancePlanAuthority *m_balance_plan_authority;
+
+    /// BalancePlanAuthority entity
+    MetaLog::EntityPtr m_balance_plan_authority {};
+
     /// %Mutex for serializing access to #m_outstanding_move_ops
     Mutex m_outstanding_move_ops_mutex;
     /// Map of outstanding <i>move range</i> operations

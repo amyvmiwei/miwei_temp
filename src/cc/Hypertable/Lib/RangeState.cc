@@ -25,72 +25,21 @@
  * range state.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "RangeState.h"
 
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Serialization;
-
-#define RANGESTATE_VERSION 100
 
 void RangeState::clear() {
   state = STEADY;
   // timestmp shouldn't be cleared
   soft_limit = 0;
   transfer_log = split_point = old_boundary_row = source = 0;
-}
-
-
-size_t RangeState::encoded_length() const {
-  return 10 + 8 + encoded_length_vstr(transfer_log) +
-      encoded_length_vstr(split_point) + encoded_length_vstr(old_boundary_row) +
-    encoded_length_vstr(source);
-}
-
-
-void RangeState::encode(uint8_t **bufp) const {
-  *(*bufp)++ = RANGESTATE_VERSION;
-  *(*bufp)++ = state;
-  encode_i64(bufp, timestamp);
-  encode_i64(bufp, soft_limit);
-  encode_vstr(bufp, transfer_log);
-  encode_vstr(bufp, split_point);
-  encode_vstr(bufp, old_boundary_row);
-  encode_vstr(bufp, source);
-}
-
-
-void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t version;
-  try {
-    version = decode_byte(bufp, remainp);
-    if (version == RANGESTATE_VERSION)
-      state = decode_byte(bufp, remainp);
-    else
-      state = version;
-    timestamp = decode_i64(bufp, remainp);
-    soft_limit = decode_i64(bufp, remainp);
-    transfer_log = decode_vstr(bufp, remainp);
-    split_point = decode_vstr(bufp, remainp);
-    old_boundary_row = decode_vstr(bufp, remainp);
-    if (version == RANGESTATE_VERSION)
-      source = decode_vstr(bufp, remainp);
-  }
-  HT_RETHROW("decoding range state")
-}
-
-void RangeStateManaged::clear() {
-  RangeState::clear();
-  *this = *this;
-}
-
-
-void RangeStateManaged::decode(const uint8_t **bufp, size_t *remainp) {
-  RangeState::decode(bufp, remainp);
-  *this = *this;
 }
 
 String RangeState::get_text(uint8_t state) {
@@ -120,6 +69,75 @@ String RangeState::get_text(uint8_t state) {
   return str;
 }
 
+
+uint8_t RangeState::encoding_version() const {
+  return 1;
+}
+
+size_t RangeState::encoded_length_internal() const {
+  return 17 + Serialization::encoded_length_vstr(transfer_log) +
+    Serialization::encoded_length_vstr(split_point) +
+    Serialization::encoded_length_vstr(old_boundary_row) +
+    Serialization::encoded_length_vstr(source);
+}
+
+/// @details
+/// Encoding is as follows:
+/// <table>
+/// <tr>
+/// <th>Encoding</th>
+/// <th>Description</th>
+/// </tr>
+/// <tr>
+/// <td>i8</td>
+/// <td>State code</td>
+/// </tr>
+/// <tr>
+/// <td>i64</td>
+/// <td>Timestamp</td>
+/// </tr>
+/// <tr>
+/// <td>i64</td>
+/// <td>Soft limit</td>
+/// </tr>
+/// <tr>
+/// <td>vstr</td>
+/// <td>Transfer log</td>
+/// </tr>
+/// <tr>
+/// <td>vstr</td>
+/// <td>Split point</td>
+/// </tr>
+/// <tr>
+/// <td>vstr</td>
+/// <td>Old boundary row</td>
+/// </tr>
+/// <tr>
+/// <td>vstr</td>
+/// <td>Source server location</td>
+/// </tr>
+/// </table>
+void RangeState::encode_internal(uint8_t **bufp) const {
+  Serialization::encode_i8(bufp, state);
+  Serialization::encode_i64(bufp, timestamp);
+  Serialization::encode_i64(bufp, soft_limit);
+  Serialization::encode_vstr(bufp, transfer_log);
+  Serialization::encode_vstr(bufp, split_point);
+  Serialization::encode_vstr(bufp, old_boundary_row);
+  Serialization::encode_vstr(bufp, source);
+}
+
+void RangeState::decode_internal(uint8_t version, const uint8_t **bufp,
+                                 size_t *remainp) {
+  state = Serialization::decode_i8(bufp, remainp);
+  timestamp = Serialization::decode_i64(bufp, remainp);
+  soft_limit = Serialization::decode_i64(bufp, remainp);
+  transfer_log = Serialization::decode_vstr(bufp, remainp);
+  split_point = Serialization::decode_vstr(bufp, remainp);
+  old_boundary_row = Serialization::decode_vstr(bufp, remainp);
+  source = Serialization::decode_vstr(bufp, remainp);
+}
+
 std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
   out <<"{RangeState: state=" << RangeState::get_text(st.state);
   out << " timestamp=" << st.timestamp;
@@ -134,4 +152,15 @@ std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
     out <<" source='"<< st.source << "'";
   out <<"}";
   return out;
+}
+
+void RangeStateManaged::clear() {
+  RangeState::clear();
+  *this = *this;
+}
+
+void RangeStateManaged::decode_internal(uint8_t version, const uint8_t **bufp,
+                                        size_t *remainp) {
+  RangeState::decode_internal(version, bufp, remainp);
+  *this = *this;
 }

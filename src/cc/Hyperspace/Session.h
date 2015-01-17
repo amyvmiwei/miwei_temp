@@ -615,10 +615,12 @@ namespace Hyperspace {
 
     /** Check the status of the Hyperspace master server
      *
+     * @param code Address of variable to hold status code
+     * @param output Reference to string to hold status output text
      * @param timer maximum wait timer
      * @return Error::OK on if server is up and ok or error code on failure
      */
-    int status(Timer *timer=0);
+    int status(int32_t *code, std::string &output, Timer *timer=0);
 
     /** Waits for session state to change to STATE_SAFE.
      *

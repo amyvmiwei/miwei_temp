@@ -124,7 +124,7 @@ void BalanceAlgorithmLoad::compute_plan(BalancePlanPtr &plan,
       if (check_move(heaviest, lightest, ranges_desc_load_it->loadestimate,
                      mean_loadavg)) {
         // add move to balance plan
-        RangeMoveSpecPtr move = new RangeMoveSpec(heaviest.server_id,
+        RangeMoveSpecPtr move = make_shared<RangeMoveSpec>(heaviest.server_id,
             lightest.server_id, ranges_desc_load_it->table_id,
             ranges_desc_load_it->start_row, ranges_desc_load_it->end_row);
         HT_DEBUG_OUT << "Added move to plan: " << *(move.get()) << HT_END;

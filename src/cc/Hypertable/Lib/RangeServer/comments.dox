@@ -1,0 +1,4 @@
+/// @defgroup libHypertableRangeServer RangeServer
+/// @ingroup libHypertable
+/// %RangeServer client library.
+/// This module contains client interface code for the %RangeServer.

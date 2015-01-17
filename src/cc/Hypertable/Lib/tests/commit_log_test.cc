@@ -54,11 +54,10 @@ namespace {
   typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
   //void test1(FsBroker::Lib::Client *fs_client);
-  void test_link(FsBroker::Lib::Client *fs_client);
+  void test_link(FsBroker::Lib::ClientPtr &client);
   void write_entries(CommitLog *log, int num_entries, uint64_t *sump,
                      CommitLogBase *link_log);
-  void read_entries(FsBroker::Lib::Client *fs_client, CommitLogReader *log_reader,
-                    uint64_t *sump);
+  void read_entries(CommitLogReader *log_reader, uint64_t *sump);
 }
 
 
@@ -74,7 +73,7 @@ int main(int argc, char **argv) {
      * connect to FS broker
      */
     InetAddr addr(get_str("fs-host"), get_i16("fs-port"));
-    FsBroker::Lib::ClientPtr fs = new FsBroker::Lib::Client(conn_mgr, addr, timeout);
+    FsBroker::Lib::ClientPtr fs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, addr, timeout);
 
     if (!fs->wait_for_connection(10000)) {
       HT_ERROR("Unable to connect to FS Broker, exiting...");
@@ -84,7 +83,7 @@ int main(int argc, char **argv) {
     srandom(1);
 
     //test1(fs);
-    test_link(fs.get());
+    test_link(fs);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -126,7 +125,7 @@ namespace {
 
     log_reader = new CommitLogReader(fs, fname);
 
-    read_entries(fs_client, log_reader, &sum_read);
+    read_entries(log_reader, &sum_read);
 
     delete log_reader;
 
@@ -134,23 +133,23 @@ namespace {
   }
 #endif
 
-  void test_link(FsBroker::Lib::Client *fs_client) {
+  void test_link(FsBroker::Lib::ClientPtr &client) {
     String log_dir = "/hypertable/test_log";
     String fname;
     CommitLog *log;
     CommitLogReaderPtr log_reader_ptr;
     uint64_t sum_written = 0;
     uint64_t sum_read = 0;
-    FilesystemPtr fs = fs_client;
+    FilesystemPtr fs = client;
 
     // Remove /hypertable/test_log
-    fs_client->rmdir(log_dir);
+    client->rmdir(log_dir);
 
     // Create log directories
-    fs_client->mkdirs(log_dir + "/a");
-    fs_client->mkdirs(log_dir + "/b");
-    fs_client->mkdirs(log_dir + "/c");
-    fs_client->mkdirs(log_dir + "/d");
+    client->mkdirs(log_dir + "/a");
+    client->mkdirs(log_dir + "/b");
+    client->mkdirs(log_dir + "/c");
+    client->mkdirs(log_dir + "/d");
 
     /**
      * Create log "c"
@@ -161,7 +160,7 @@ namespace {
     delete log;
 
     log_reader_ptr = new CommitLogReader(fs, fname);
-    read_entries(fs_client, log_reader_ptr.get(), &sum_read);
+    read_entries(log_reader_ptr.get(), &sum_read);
 
     /**
      * Create log "b" and link in log "c"
@@ -188,13 +187,13 @@ namespace {
     // Open "b", read it, and link it into "a"
     fname = log_dir + "/b";
     log_reader_ptr = new CommitLogReader(fs, fname);
-    read_entries(fs_client, log_reader_ptr.get(), &sum_read);
+    read_entries(log_reader_ptr.get(), &sum_read);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
 
     // Open "d", read it, and link it into "a"
     fname = log_dir + "/d";
     log_reader_ptr = new CommitLogReader(fs, fname);
-    read_entries(fs_client, log_reader_ptr.get(), &sum_read);
+    read_entries(log_reader_ptr.get(), &sum_read);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
 
     delete log;
@@ -202,7 +201,7 @@ namespace {
     sum_read = 0;
     fname = log_dir + "/a";
     log_reader_ptr = new CommitLogReader(fs, fname);
-    read_entries(fs_client, log_reader_ptr.get(), &sum_read);
+    read_entries(log_reader_ptr.get(), &sum_read);
 
     HT_ASSERT(sum_read == sum_written);
   }
@@ -244,9 +243,7 @@ namespace {
     }
   }
 
-  void
-  read_entries(FsBroker::Lib::Client *fs_client, CommitLogReader *log_reader,
-               uint64_t *sump) {
+  void read_entries(CommitLogReader *log_reader, uint64_t *sump) {
     const uint8_t *block;
     size_t block_len;
     uint32_t *iptr;

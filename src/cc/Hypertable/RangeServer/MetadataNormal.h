@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,13 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METADATANORMAL_H
-#define HYPERTABLE_METADATANORMAL_H
+#ifndef Hypertable_RangeServer_MetadataNormal_h
+#define Hypertable_RangeServer_MetadataNormal_h
 
 #include "Metadata.h"
 
+#include <Hypertable/Lib/TableIdentifier.h>
 #include <Hypertable/Lib/TableScanner.h>
-#include <Hypertable/Lib/Types.h>
 
 #include <unordered_map>
 #include <string>
@@ -57,5 +57,5 @@ namespace Hypertable {
   };
 }
 
-#endif // HYPERTABLE_METADATANORMAL_H
+#endif // Hypertable_RangeServer_MetadataNormal_h
 

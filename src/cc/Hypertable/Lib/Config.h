@@ -34,7 +34,6 @@ namespace Hypertable { namespace Config {
   void init_master_client();
   void init_range_server_client_options();
   void init_range_server_client();
-  void init_command_shell_options();
 
   struct ClientPolicy : Policy {
     static void init_options() {
@@ -50,10 +49,6 @@ namespace Hypertable { namespace Config {
   struct RangeServerClientPolicy : Policy {
     static void init_options() { init_range_server_client_options(); }
     static void init() { init_range_server_client(); }
-  };
-
-  struct CommandShellPolicy : Policy {
-    static void init_options() { init_command_shell_options(); }
   };
 
   typedef Meta::list<ClientPolicy, HyperspaceClientPolicy, MasterClientPolicy,

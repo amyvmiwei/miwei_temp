@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,10 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
+
+#include <Common/Compat.h>
+
 #include "Global.h"
 #include "MetaLogEntityTaskAcknowledgeRelinquish.h"
+
+#include <Hypertable/Lib/LegacyDecoder.h>
+
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
@@ -38,7 +43,7 @@ bool EntityTaskAcknowledgeRelinquish::execute() {
 
   try {
     HT_INFOF("relinquish_acknowledge(%s)", label.c_str());
-    Global::master_client->relinquish_acknowledge(location, &table, range_spec);
+    Global::master_client->relinquish_acknowledge(location, table, range_spec);
     Global::immovable_range_set_remove(table, range_spec);
   }
   catch (Exception &e) {
@@ -53,25 +58,14 @@ void EntityTaskAcknowledgeRelinquish::work_queue_add_hook() {
   Global::immovable_range_set_add(table, range_spec);
 }
 
-size_t EntityTaskAcknowledgeRelinquish::encoded_length() const {
-  return Serialization::encoded_length_vstr(location) + 
-    table.encoded_length() + range_spec.encoded_length();
-}
-
-
-void EntityTaskAcknowledgeRelinquish::encode(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, location);
-  table.encode(bufp);
-  range_spec.encode(bufp);
-}
-
-void
-EntityTaskAcknowledgeRelinquish::decode(const uint8_t **bufp, size_t *remainp,
-                                        uint16_t definition_version) {
-  (void)definition_version;
-  location = Serialization::decode_vstr(bufp, remainp);
-  table.decode(bufp, remainp);
-  range_spec.decode(bufp, remainp);
+void EntityTaskAcknowledgeRelinquish::decode(const uint8_t **bufp,
+                                             size_t *remainp,
+                                             uint16_t definition_version) {
+  if (definition_version <= 2) {
+    decode_old(bufp, remainp);
+    return;
+  }
+  Entity::decode(bufp, remainp);
 }
 
 const String EntityTaskAcknowledgeRelinquish::name() {
@@ -82,3 +76,30 @@ void EntityTaskAcknowledgeRelinquish::display(std::ostream &os) {
   os << " " << location << " " << table << " " << range_spec << " ";
 }
 
+uint8_t EntityTaskAcknowledgeRelinquish::encoding_version() const {
+  return 1;
+}
+
+size_t EntityTaskAcknowledgeRelinquish::encoded_length_internal() const {
+  return Serialization::encoded_length_vstr(location) + 
+    table.encoded_length() + range_spec.encoded_length();
+}
+
+void EntityTaskAcknowledgeRelinquish::encode_internal(uint8_t **bufp) const {
+  Serialization::encode_vstr(bufp, location);
+  table.encode(bufp);
+  range_spec.encode(bufp);
+}
+
+void EntityTaskAcknowledgeRelinquish::decode_internal(uint8_t version, const uint8_t **bufp,
+                                                      size_t *remainp) {
+  location = Serialization::decode_vstr(bufp, remainp);
+  table.decode(bufp, remainp);
+  range_spec.decode(bufp, remainp);
+}
+
+void EntityTaskAcknowledgeRelinquish::decode_old(const uint8_t **bufp, size_t *remainp) {
+  location = Serialization::decode_vstr(bufp, remainp);
+  legacy_decode(bufp, remainp, &table);
+  legacy_decode(bufp, remainp, &range_spec);
+}

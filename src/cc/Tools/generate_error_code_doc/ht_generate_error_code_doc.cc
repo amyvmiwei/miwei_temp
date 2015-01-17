@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,10 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-
-#include "Common/Error.h"
-#include "Common/System.h"
+#include <Common/Compat.h>
+#include <Common/Error.h>
+#include <Common/System.h>
 
 #include <iostream>
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,7 +17,7 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-/**
+/*
  * An effective/efficient block compressor for input containing long common
  * strings (e.g. web pages from a website)
  *

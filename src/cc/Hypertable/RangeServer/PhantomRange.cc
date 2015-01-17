@@ -39,10 +39,10 @@ using namespace std;
 PhantomRange::PhantomRange(const QualifiedRangeSpec &spec,
                            const RangeState &state,
                            SchemaPtr &schema,
-                           const vector<uint32_t> &fragments) 
+                           const vector<int32_t> &fragments) 
   : m_range_spec(spec), m_range_state(state), m_schema(schema),
     m_outstanding(fragments.size()), m_state(LOADED) {
-  foreach_ht(uint32_t fragment, fragments) {
+  for (int32_t fragment : fragments) {
     HT_ASSERT(m_fragments.count(fragment) == 0);
     FragmentDataPtr data = new FragmentData();
     m_fragments[fragment] = data;
@@ -54,7 +54,7 @@ int PhantomRange::get_state() {
   return m_state;
 }
 
-bool PhantomRange::add(uint32_t fragment, EventPtr &event) {
+bool PhantomRange::add(int32_t fragment, EventPtr &event) {
   ScopedLock lock(m_mutex);
   FragmentMap::iterator it = m_fragments.find(fragment);
 
@@ -73,12 +73,12 @@ void PhantomRange::purge_incomplete_fragments() {
     it->second->clear();
 }
 
-void PhantomRange::create_range(MasterClientPtr &master_client, 
+void PhantomRange::create_range(Lib::Master::ClientPtr &master_client, 
         TableInfoPtr &table_info, FilesystemPtr &log_dfs) { 
   ScopedLock lock(m_mutex);
 
-  m_range = new Range(master_client, &m_range_spec.table, m_schema,
-                      &m_range_spec.range, table_info.get(), &m_range_state, true);
+  m_range = new Range(master_client, m_range_spec.table, m_schema,
+                      m_range_spec.range, table_info.get(), m_range_state, true);
   m_range->deferred_initialization();
   m_range->metalog_entity()->set_state_bits(RangeState::PHANTOM);
   m_range_state.state |= RangeState::PHANTOM;
@@ -93,7 +93,7 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   *is_empty = true;
 
-  MetaLogEntityRange *metalog_entity = m_range->metalog_entity();
+  MetaLogEntityRangePtr metalog_entity = m_range->metalog_entity();
 
   m_phantom_logname = create_log(log_dfs, recovery_id, metalog_entity);
 
@@ -102,8 +102,8 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   {
     Locker<Range> range_lock(*(m_range.get()));
-    foreach_ht (FragmentMap::value_type &vv, m_fragments)
-      vv.second->merge(m_range_spec.table, m_range, phantom_log);
+    for (auto &entry : m_fragments)
+      entry.second->merge(m_range_spec.table, m_range, phantom_log);
   }
 
   phantom_log->sync();
@@ -177,7 +177,7 @@ bool PhantomRange::committed() {
 
 String PhantomRange::create_log(FilesystemPtr &log_dfs,
                                 int64_t recovery_id,
-                                MetaLogEntityRange *range_entity) {
+                                MetaLogEntityRangePtr &range_entity) {
   TableIdentifier table;
   String start_row, end_row;
   char md5DigestStr[33];

@@ -61,8 +61,8 @@ namespace Hypertable {
      * @param profile_data Scanner profile data
      * @return unique scanner ID
      */
-    uint32_t put(MergeScannerRangePtr &scanner, RangePtr &range,
-                 const TableIdentifier *table, ProfileDataScanner &profile_data);
+    int32_t put(MergeScannerRangePtr &scanner, RangePtr &range,
+                 const TableIdentifier &table, ProfileDataScanner &profile_data);
 
     /**
      * This method retrieves the scanner and range mapped to the given scanner
@@ -77,7 +77,7 @@ namespace Hypertable {
      * function
      * @return true if found, false if not
      */
-    bool get(uint32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
+    bool get(int32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
              TableIdentifierManaged &table, ProfileDataScanner *profile_data);
 
     /**
@@ -87,7 +87,7 @@ namespace Hypertable {
      * @param id scanner id
      * @return true if removed, false if no mapping found
      */
-    bool remove(uint32_t id);
+    bool remove(int32_t id);
 
     /**
      * This method iterates through the scanner map purging mappings that have
@@ -95,7 +95,7 @@ namespace Hypertable {
      *
      * @param max_idle_ms maximum idle time
      */
-    void purge_expired(uint32_t max_idle_ms);
+    void purge_expired(int32_t max_idle_ms);
 
     /**
      * This method retrieves outstanding scanner counts.  It returns the
@@ -113,7 +113,7 @@ namespace Hypertable {
      * @param id Scanner ID of scanner
      * @param profile_data new profile data to associate with scanner
      */
-    void update_profile_data(uint32_t id, ProfileDataScanner &profile_data);
+    void update_profile_data(int32_t id, ProfileDataScanner &profile_data);
 
   private:
 
@@ -143,7 +143,7 @@ namespace Hypertable {
     };
 
     /// Scanner map
-    std::unordered_map<uint32_t, ScanInfo> m_scanner_map;
+    std::unordered_map<int32_t, ScanInfo> m_scanner_map;
 
   };
 

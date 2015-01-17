@@ -75,7 +75,7 @@ void Monitoring::create_dir(const String &dir) {
     HT_INFOF("rangeservers monitoring stats dir %s exists ",dir.c_str());
 }
 
-void Monitoring::add_server(const String &location, StatsSystem &system_info) {
+void Monitoring::add_server(const String &location, const StatsSystem &system_info) {
   ScopedLock lock(m_mutex);
 
   RangeServerMap::iterator iter = m_server_map.find(location);

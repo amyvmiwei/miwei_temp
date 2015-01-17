@@ -91,7 +91,7 @@ namespace Hypertable {
       if (m_rsc->connected()) {
         uint32_t millis = m_context->props->get_i32("Hypertable.Failover.GracePeriod");
         m_context->recovery_barrier_op->advance_into_future(millis);
-        OperationPtr operation = new OperationRecover(m_context, m_rsc);
+        OperationPtr operation = std::make_shared<OperationRecover>(m_context, m_rsc);
         try {
           m_context->op->add_operation(operation);
         }

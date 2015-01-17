@@ -30,7 +30,7 @@
 using namespace Hypertable;
 using namespace Hypertable::Config;
 
-GroupCommit::GroupCommit(RangeServer *range_server) : m_range_server(range_server) {
+GroupCommit::GroupCommit(Apps::RangeServer *range_server) : m_range_server(range_server) {
 
   m_commit_interval = get_i32("Hypertable.RangeServer.CommitInterval");
 
@@ -39,14 +39,14 @@ GroupCommit::GroupCommit(RangeServer *range_server) : m_range_server(range_serve
 
 void
 GroupCommit::add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
-                 const TableIdentifier *table, uint32_t count,
+                 const TableIdentifier &table, uint32_t count,
                  StaticBuffer &buffer, uint32_t flags) {
   ScopedLock lock(m_mutex);
   UpdateRequest *request = new UpdateRequest();
   boost::xtime expire_time = event->deadline();
-  ClusterTableIdPair key = std::make_pair(cluster_id, *table);
+  ClusterTableIdPair key = std::make_pair(cluster_id, table);
 
-  key.second.id = m_flyweight_strings.get(table->id);
+  key.second.id = m_flyweight_strings.get(table.id);
 
   request->buffer = buffer;
   request->count = count;

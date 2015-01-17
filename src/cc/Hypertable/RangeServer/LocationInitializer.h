@@ -29,7 +29,7 @@
 
 #include <Hypertable/RangeServer/Context.h>
 
-#include <Hypertable/Lib/RangeServerProtocol.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
 
 #include <Hyperspace/Session.h>
 
@@ -39,6 +39,8 @@
 #include <Common/Mutex.h>
 
 namespace Hypertable {
+
+  using namespace Lib;
 
   /// @addtogroup RangeServer
   /// @{
@@ -58,7 +60,7 @@ namespace Hypertable {
 
     virtual CommBuf *create_initialization_request();
     virtual bool process_initialization_response(Event *event);
-    virtual uint64_t initialization_command() { return RangeServerProtocol::COMMAND_INITIALIZE; }
+    virtual uint64_t initialization_command() { return Lib::RangeServer::Protocol::COMMAND_INITIALIZE; }
 
     /// Gets assigned location (proxy name) 
     String get();

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,35 +19,40 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-#define HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#ifndef Hypertable_RangeServer_ConnectionHandler_h
+#define Hypertable_RangeServer_ConnectionHandler_h
 
 #include "RangeServer.h"
 
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/DispatchHandler.h>
+
 namespace Hypertable {
+class Comm;
+namespace RangeServer {
 
-  class Comm;
+  /// @addtogroup RangeServer
+  /// @{
 
-  /**
-   */
   class ConnectionHandler : public DispatchHandler {
   public:
 
-    ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr);
+    ConnectionHandler(Comm *comm, ApplicationQueuePtr &aq, Apps::RangeServerPtr rs)
+      : m_comm(comm), m_app_queue(aq), m_range_server(rs) {
+    }
 
     virtual void handle(EventPtr &event);
 
   private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue;
-    RangeServerPtr       m_range_server;
-    bool                 m_shutdown;
+    Comm *m_comm {};
+    ApplicationQueuePtr m_app_queue;
+    Apps::RangeServerPtr m_range_server;
+    bool m_shutdown {};
   };
 
-}
+  /// @}
 
-#endif // HYPERTABLE_RANGESERVER_CONNECTIONHANDLER_H
+}}
+
+#endif // Hypertable_RangeServer_ConnectionHandler_h
 

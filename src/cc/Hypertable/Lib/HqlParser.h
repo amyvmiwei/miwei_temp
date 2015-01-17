@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HQLPARSER_H
-#define HYPERTABLE_HQLPARSER_H
+#ifndef Hypertable_Lib_HqlParser_h
+#define Hypertable_Lib_HqlParser_h
 
 //#define BOOST_SPIRIT_DEBUG  ///$$$ DEFINE THIS WHEN DEBUGGING $$$///
 
@@ -33,45 +33,44 @@
 #define HQL_DEBUG_VAL(str, val)
 #endif
 
+#include <Hypertable/Lib/BalancePlan.h>
+#include <Hypertable/Lib/Cells.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/LoadDataFlags.h>
+#include <Hypertable/Lib/LoadDataSource.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
+#include <Hypertable/Lib/ScanSpec.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/SystemVariable.h>
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/TableParts.h>
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/Time.h>
+#include <Common/TimeInline.h>
+
+#include "HyperAppHelper/Unique.h"
+
 #include <boost/algorithm/string.hpp>
 #include <boost/spirit/include/classic_confix.hpp>
 #include <boost/spirit/include/classic_core.hpp>
 #include <boost/spirit/include/classic_escape_char.hpp>
 #include <boost/spirit/include/classic_symbols.hpp>
 
+#include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <vector>
 
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/Time.h"
-#include "Common/TimeInline.h"
-
-#include "HyperAppHelper/Unique.h"
-
-#include "BalancePlan.h"
-#include "Key.h"
-#include "Cells.h"
-#include "Client.h"
-#include "Schema.h"
-#include "ScanSpec.h"
-#include "Table.h"
-#include "TableParts.h"
-#include "LoadDataFlags.h"
-#include "LoadDataSource.h"
-#include "RangeServerProtocol.h"
-#include "SystemVariable.h"
-
-#include <cctype>
-#include <functional>
-#include <set>
-#include <iostream>
-
 namespace Hypertable {
+  using namespace Lib;
   namespace Hql {
     using namespace boost;
     using namespace boost::spirit;
@@ -118,6 +117,7 @@ namespace Hypertable {
       COMMAND_DUMP_PSEUDO_TABLE,
       COMMAND_SET,
       COMMAND_REBUILD_INDICES,
+      COMMAND_STATUS,
       COMMAND_MAX
     };
 
@@ -653,7 +653,7 @@ namespace Hypertable {
     struct add_range_move_spec {
       add_range_move_spec(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        RangeMoveSpecPtr move_spec = new RangeMoveSpec();
+        RangeMoveSpecPtr move_spec = std::make_shared<RangeMoveSpec>();
         move_spec->table.set_id(state.table_name);
         move_spec->range.set_start_row(state.range_start_row);
         move_spec->range.set_end_row(state.range_end_row);
@@ -2339,15 +2339,15 @@ namespace Hypertable {
         trim_if(range_type_str, is_any_of("'\""));
         to_lower(range_type_str);
         if (range_type_str == "all")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_ALL;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_ALL;
         else if (range_type_str == "root")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_ROOT;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_ROOT;
         else if (range_type_str == "metadata")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_METADATA;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_METADATA;
         else if (range_type_str == "system")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_SYSTEM;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_SYSTEM;
         else if (range_type_str == "user")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_USER;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_USER;
         else
           HT_THROW(Error::HQL_PARSE_ERROR,
                    format("Invalid range type specifier:  %s", range_type_str.c_str()));
@@ -2363,13 +2363,13 @@ namespace Hypertable {
         trim_if(compaction_type_str, is_any_of("'\""));
         to_lower(compaction_type_str);
         if (compaction_type_str == "minor")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_MINOR;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_MINOR;
         else if (compaction_type_str == "major")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_MAJOR;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_MAJOR;
         else if (compaction_type_str == "merging")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_MERGING;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_MERGING;
         else if (compaction_type_str == "gc")
-          state.flags |= RangeServerProtocol::COMPACT_FLAG_GC;
+          state.flags |= RangeServer::Protocol::COMPACT_FLAG_GC;
         else
           HT_THROW(Error::HQL_PARSE_ERROR,
                    format("Invalid compaction type specifier:  %s", compaction_type_str.c_str()));
@@ -2629,6 +2629,7 @@ namespace Hypertable {
           Token SET          = as_lower_d["set"];
           Token REBUILD      = as_lower_d["rebuild"];
           Token INDICES      = as_lower_d["indices"];
+          Token STATUS       = as_lower_d["status"];
 
           /**
            * Start grammar definition
@@ -2710,6 +2711,7 @@ namespace Hypertable {
             | close_statement[set_command(self.state, COMMAND_CLOSE)]
             | shutdown_statement[set_command(self.state, COMMAND_SHUTDOWN)]
             | shutdown_master_statement[set_command(self.state, COMMAND_SHUTDOWN_MASTER)]
+            | status_statement[set_command(self.state, COMMAND_STATUS)]
             | drop_range_statement[set_command(self.state, COMMAND_DROP_RANGE)]
             | replay_start_statement[set_command(self.state,
                 COMMAND_REPLAY_BEGIN)]
@@ -2721,7 +2723,6 @@ namespace Hypertable {
             | balance_statement[set_command(self.state, COMMAND_BALANCE)]
             | heapcheck_statement[set_command(self.state, COMMAND_HEAPCHECK)]
             | compact_statement[set_command(self.state, COMMAND_COMPACT)]
-            | metadata_sync_statement[set_command(self.state, COMMAND_METADATA_SYNC)]
             | stop_statement[set_command(self.state, COMMAND_STOP)]
             | set_statement[set_command(self.state, COMMAND_SET)]
             | rebuild_indices_statement[set_command(self.state, COMMAND_REBUILD_INDICES)]
@@ -2748,17 +2749,6 @@ namespace Hypertable {
 
           stop_statement
             = STOP >> user_identifier[set_rangeserver(self.state)]
-            ;
-
-          metadata_sync_statement
-            = METADATA >> SYNC >> TABLE >> user_identifier[set_table_name(self.state)] >> *(metadata_sync_option_spec)
-            | METADATA >> SYNC >> RANGES
-                      >> (range_type[set_flags_range_type(self.state)]
-                          >> *(PIPE >> range_type[set_flags_range_type(self.state)])) >> *(metadata_sync_option_spec)
-            ;
-
-          metadata_sync_option_spec
-            =  COLUMNS >> identifier[add_column(self.state)] >> *(COMMA >> identifier[add_column(self.state)])
             ;
 
           compact_statement
@@ -2846,6 +2836,10 @@ namespace Hypertable {
 
           shutdown_master_statement
             = SHUTDOWN >> MASTER
+            ;
+
+          status_statement
+            = STATUS
             ;
 
           fetch_scanblock_statement
@@ -3483,6 +3477,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(close_statement);
           BOOST_SPIRIT_DEBUG_RULE(shutdown_statement);
           BOOST_SPIRIT_DEBUG_RULE(shutdown_master_statement);
+          BOOST_SPIRIT_DEBUG_RULE(status_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_range_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_start_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_log_statement);
@@ -3552,7 +3547,7 @@ namespace Hypertable {
           metadata_sync_statement, metadata_sync_option_spec, stop_statement,
           range_type, table_identifier, pseudo_table_reference,
           dump_pseudo_table_statement, set_statement, set_variable_spec,
-          rebuild_indices_statement, index_type_spec;
+          rebuild_indices_statement, index_type_spec, status_statement;
       };
 
       ParserState &state;
@@ -3560,4 +3555,4 @@ namespace Hypertable {
   }
 }
 
-#endif // HYPERTABLE_HQLPARSER_H
+#endif // Hypertable_Lib_HqlParser_h

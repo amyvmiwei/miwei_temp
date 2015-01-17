@@ -32,7 +32,7 @@
 #include "OperationTest.h"
 
 using namespace Hypertable;
-
+using namespace std;
 
 OperationTest::OperationTest(ContextPtr &context, std::vector<String> &results, const String &name,
                              DependencySet &dependencies, DependencySet &exclusivities,
@@ -62,8 +62,9 @@ void OperationTest::execute() {
       DependencySet exclusivities;
       DependencySet dependencies;
       DependencySet obstructions;
-      Operation *op = new OperationTest(m_context, m_results, m_name+"[0]", dependencies, exclusivities, obstructions);
-      stage_subop(op);
+      stage_subop(make_shared<OperationTest>(m_context, m_results, m_name+"[0]",
+                                             dependencies, exclusivities,
+                                             obstructions));
       set_state(OperationState::STARTED);
       return;
     }
@@ -85,11 +86,11 @@ void OperationTest::display_state(std::ostream &os) {
   os << " name=" << m_name <<  " ";
 }
 
-uint16_t OperationTest::encoding_version() const {
+uint8_t OperationTest::encoding_version_state() const {
   return 1;
 }
 
-size_t OperationTest::encoded_state_length() const {
+size_t OperationTest::encoded_length_state() const {
   return Serialization::encoded_length_vstr(m_name);
 }
 
@@ -97,7 +98,11 @@ void OperationTest::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_name);
 }
 
-void OperationTest::decode_state(const uint8_t **bufp, size_t *remainp) {
+void OperationTest::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  decode_request(bufp, remainp);
+}
+
+void OperationTest::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
 }
 

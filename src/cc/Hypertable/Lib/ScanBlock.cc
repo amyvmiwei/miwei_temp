@@ -38,31 +38,25 @@ using namespace Hypertable;
 using namespace Serialization;
 
 
-ScanBlock::ScanBlock() : m_flags(0x0001), m_scanner_id(-1),
-    m_skipped_rows(0), m_skipped_cells(0) {
+ScanBlock::ScanBlock() {
   m_iter = m_vec.end();
 }
 
 
-int ScanBlock::load(EventPtr &event_ptr) {
-  const uint8_t *decode_ptr = event_ptr->payload + 4;
-  size_t decode_remain = event_ptr->payload_len - 4;
+int ScanBlock::load(EventPtr &event) {
+  const uint8_t *decode_ptr = event->payload + 4;
+  size_t decode_remain = event->payload_len - 4;
   uint32_t len;
 
-  m_event = event_ptr;
+  m_event = event;
   m_vec.clear();
   m_iter = m_vec.end();
 
-  if ((m_error = (int)Protocol::response_code(event_ptr)) != Error::OK)
+  if ((m_error = (int)Protocol::response_code(event)) != Error::OK)
     return m_error;
 
   try {
-    m_flags = decode_i16(&decode_ptr, &decode_remain);
-    m_scanner_id = decode_i32(&decode_ptr, &decode_remain);
-    m_skipped_rows = decode_i32(&decode_ptr, &decode_remain);
-    m_skipped_cells = decode_i32(&decode_ptr, &decode_remain);
-    if (event_ptr->header.flags & CommHeader::FLAGS_BIT_PROFILE)
-      m_profile_data.decode(&decode_ptr, &decode_remain);
+    m_response.decode(&decode_ptr, &decode_remain);
     len = decode_i32(&decode_ptr, &decode_remain);
   }
   catch (Exception &e) {

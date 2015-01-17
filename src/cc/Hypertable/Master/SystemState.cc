@@ -19,14 +19,13 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "MetaLogEntityTypes.h"
 #include "SystemState.h"
 
-#define SYSTEM_STATE_VERSION 1
+#include <Common/Config.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 
@@ -51,11 +50,11 @@ SystemState::SystemState(const MetaLog::EntityHeader &header_)
     = Config::properties->get_i32("Hypertable.Master.NotificationInterval");
 }
 
-bool SystemState::admin_set(std::vector<SystemVariable::Spec> &specs) {
+bool SystemState::admin_set(const std::vector<SystemVariable::Spec> &specs) {
   ScopedLock lock(m_mutex);
   bool changed = false;
   int32_t now = (int32_t)time(0);
-  foreach_ht (SystemVariable::Spec &spec, specs) {
+  for (auto &spec : specs) {
     HT_ASSERT(spec.code < (int)m_admin_specified.size());
     String msg = format("System state %s=%s set administratively.",
                         SystemVariable::code_to_string(spec.code),
@@ -185,38 +184,88 @@ void SystemState::display(std::ostream &os) {
   os << "} ";
 }
 
-size_t SystemState::encoded_length() const {
-  return 12 + 4+(9*m_admin_specified.size()) + 4+(9*m_auto_specified.size());
+void SystemState::decode(const uint8_t **bufp, size_t *remainp,
+                         uint16_t definition_version) {
+  if (definition_version < 4) {
+    decode_old(bufp, remainp);
+    return;
+  }
+  Entity::decode(bufp, remainp);
 }
 
-void SystemState::encode(uint8_t **bufp) const {
-  Serialization::encode_i32(bufp, SYSTEM_STATE_VERSION);
+
+uint8_t SystemState::encoding_version() const {
+  return 1;
+}
+
+size_t SystemState::encoded_length_internal() const {
+  size_t length = 8;
+  length += 4;
+  for (auto &spec : m_admin_specified)
+    length += spec.encoded_length() + 4;
+  length += 4;
+  for (auto &spec : m_auto_specified)
+    length += spec.encoded_length() + 4;
+  return length;
+}
+
+void SystemState::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i64(bufp, m_generation);
   Serialization::encode_i32(bufp, m_admin_specified.size());
   for (size_t i=0; i<m_admin_specified.size(); i++) {
-    Serialization::encode_i32(bufp, m_admin_specified[i].code);
-    Serialization::encode_bool(bufp, m_admin_specified[i].value);
+    m_admin_specified[i].encode(bufp);
     Serialization::encode_i32(bufp, m_admin_last_notification[i]);
   }
   Serialization::encode_i32(bufp, m_auto_specified.size());
   for (size_t i=0; i<m_auto_specified.size(); i++) {
-    Serialization::encode_i32(bufp, m_auto_specified[i].code);
-    Serialization::encode_bool(bufp, m_auto_specified[i].value);
+    m_auto_specified[i].encode(bufp);
     Serialization::encode_i32(bufp, m_auto_last_notification[i]);
   }
 }
 
-void SystemState::decode(const uint8_t **bufp, size_t *remainp,
-                         uint16_t definition_version) {
-  int version, count;
-  int32_t timestamp;
+void SystemState::decode_internal(uint8_t version, const uint8_t **bufp,
+                                  size_t *remainp) {
   SystemVariable::Spec spec;
-  (void)definition_version;
-  version = Serialization::decode_i32(bufp, remainp);
-  HT_ASSERT(version == SYSTEM_STATE_VERSION);
   m_generation = Serialization::decode_i64(bufp, remainp);
   // Admin set
+  int count = Serialization::decode_i32(bufp, remainp);
+  for (int i=0; i<count; i++) {
+    spec.decode(bufp, remainp);
+    m_admin_specified.push_back(spec);
+    int32_t timestamp = Serialization::decode_i32(bufp, remainp);
+    m_admin_last_notification.push_back(timestamp);
+  }
+  // Add entries for newly added variables
+  for (int i=count; i<SystemVariable::COUNT; i++) {
+    spec.code = i;
+    spec.value = false;
+    m_admin_specified.push_back(spec);
+    m_admin_last_notification.push_back(0);
+  }
+  // Auto set
   count = Serialization::decode_i32(bufp, remainp);
+  for (int i=0; i<count; i++) {
+    spec.decode(bufp, remainp);
+    m_auto_specified.push_back(spec);
+    int32_t timestamp = Serialization::decode_i32(bufp, remainp);
+    m_auto_last_notification.push_back(timestamp);
+  }
+  // Add entries for newly added variables
+  for (int i=count; i<SystemVariable::COUNT; i++) {
+    spec.code = i;
+    spec.value = false;
+    m_auto_specified.push_back(spec);
+    m_auto_last_notification.push_back(0);
+  }
+}
+
+void SystemState::decode_old(const uint8_t **bufp, size_t *remainp) {
+  int32_t timestamp;
+  SystemVariable::Spec spec;
+  Serialization::decode_i32(bufp, remainp);  // skip version
+  m_generation = Serialization::decode_i64(bufp, remainp);
+  // Admin set
+  int count = Serialization::decode_i32(bufp, remainp);
   for (int i=0; i<count; i++) {
     spec.code = Serialization::decode_i32(bufp, remainp);
     spec.value = Serialization::decode_bool(bufp, remainp);

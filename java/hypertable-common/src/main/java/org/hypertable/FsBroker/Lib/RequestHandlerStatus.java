@@ -32,16 +32,17 @@ public class RequestHandlerStatus extends ApplicationHandler {
 
   static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
-  public RequestHandlerStatus(Comm comm, ApplicationQueue appQueue,
-                              Event event) {
+  public RequestHandlerStatus(Comm comm, Broker broker, Event event) {
     super(event);
     mComm = comm;
+    mBroker = broker;
   }
 
   public void run() {
-    ResponseCallback cb = new ResponseCallback(mComm, mEvent);
-    cb.response_ok();
+    ResponseCallbackStatus cb = new ResponseCallbackStatus(mComm, mEvent);
+    mBroker.Status(cb);
   }
 
   private Comm mComm;
+  private Broker mBroker;
 }

@@ -1,0 +1,5 @@
+/// @defgroup libHypertableRangeServerRequest Request
+/// @ingroup libHypertableRangeServer
+/// Request handling code.
+/// This module contains code for handling incoming requests to the
+/// %RangeServer.

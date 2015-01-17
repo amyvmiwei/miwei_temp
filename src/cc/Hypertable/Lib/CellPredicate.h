@@ -39,6 +39,8 @@
 
 namespace Hypertable {
 
+  using namespace Lib;
+
   /// @addtogroup RangeServer
   /// @{
 

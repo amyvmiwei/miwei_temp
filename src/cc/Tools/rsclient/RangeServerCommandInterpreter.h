@@ -29,7 +29,7 @@
 #include <Hyperspace/Session.h>
 
 #include <Hypertable/Lib/NameIdMapper.h>
-#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
 #include <Hypertable/Lib/SerializedKey.h>
 
 #include <AsyncComm/Comm.h>
@@ -40,12 +40,12 @@
 
 namespace Hypertable {
 
-  class Client;
+  using namespace Lib;
 
   class RangeServerCommandInterpreter : public CommandInterpreter {
   public:
     RangeServerCommandInterpreter(Hyperspace::SessionPtr &,
-        const sockaddr_in addr, RangeServerClientPtr &);
+                                  const sockaddr_in addr, RangeServer::ClientPtr &);
 
     int execute_line(const String &line) override;
 
@@ -57,7 +57,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace;
     NameIdMapperPtr         m_namemap;
     struct sockaddr_in m_addr;
-    RangeServerClientPtr m_range_server;
+    RangeServer::ClientPtr m_range_server;
     typedef std::unordered_map<String, TableInfo *> TableMap;
     TableMap m_table_map;
     int32_t m_cur_scanner_id;

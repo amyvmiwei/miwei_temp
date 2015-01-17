@@ -61,7 +61,7 @@ namespace Hypertable {
    * End Row: <start-row>
    * Access Groups: {
    *   ag_name: {
-   *     LatestStoredRevision: <revision>,
+   *     LatestStoredRevision: &lt;revision&gt;,
    *     DiskUsage: $bytes,
    *     Files: $file_list
    *   }

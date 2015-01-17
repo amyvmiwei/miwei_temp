@@ -23,7 +23,7 @@
 #define HYPERTABLE_NAMESPACE_H
 
 #include <Hypertable/Lib/ClientObject.h>
-#include <Hypertable/Lib/MasterClient.h>
+#include <Hypertable/Lib/Master/Client.h>
 #include <Hypertable/Lib/NameIdMapper.h>
 #include <Hypertable/Lib/NamespaceListing.h>
 #include <Hypertable/Lib/Table.h>
@@ -64,7 +64,7 @@ namespace Hypertable {
     Namespace(const String &name, const String &id, PropertiesPtr &props,
               ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
               ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap,
-              MasterClientPtr &master_client, RangeLocatorPtr &range_locator,
+              Lib::Master::ClientPtr &master_client, RangeLocatorPtr &range_locator,
               TableCachePtr &table_cache, uint32_t timeout, Client *client);
 
     virtual ~Namespace() {}
@@ -322,7 +322,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr  m_hyperspace;
     ApplicationQueueInterfacePtr     m_app_queue;
     NameIdMapperPtr         m_namemap;
-    MasterClientPtr         m_master_client;
+    Lib::Master::ClientPtr m_master_client;
     RangeLocatorPtr         m_range_locator;
     String                  m_toplevel_dir;
     bool                    m_hyperspace_reconnect;

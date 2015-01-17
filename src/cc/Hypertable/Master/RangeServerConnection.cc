@@ -160,28 +160,45 @@ void RangeServerConnection::display(std::ostream &os) {
   os << " ";
 }
 
-size_t RangeServerConnection::encoded_length() const {
-  return 10 + m_public_addr.encoded_length() +
+void RangeServerConnection::decode(const uint8_t **bufp, size_t *remainp,
+                                   uint16_t definition_version) {
+  if (definition_version <= 3) {
+    if (definition_version >= 2)
+      Serialization::decode_i16(bufp, remainp);  // currently not used
+    decode_old(bufp, remainp);
+    return;
+  }
+  Entity::decode(bufp, remainp);
+}
+
+
+uint8_t RangeServerConnection::encoding_version() const {
+  return 1;
+}
+
+size_t RangeServerConnection::encoded_length_internal() const {
+  return 4 + m_public_addr.encoded_length() +
     Serialization::encoded_length_vstr(m_location) +
     Serialization::encoded_length_vstr(m_hostname);
 }
 
-#define RANGESERVER_CONNECTION_VERSION 1
-
-void RangeServerConnection::encode(uint8_t **bufp) const {
-  Serialization::encode_i16(bufp, RANGESERVER_CONNECTION_VERSION);
+void RangeServerConnection::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_state);
-  // was removal_time but not used ...
-  Serialization::encode_i32(bufp, 0);  
   m_public_addr.encode(bufp);
   Serialization::encode_vstr(bufp, m_location);
   Serialization::encode_vstr(bufp, m_hostname);
 }
 
-void RangeServerConnection::decode(const uint8_t **bufp, size_t *remainp,
-                                   uint16_t definition_version) {
-  if (definition_version >= 2)
-    Serialization::decode_i16(bufp, remainp);  // currently not used
+void RangeServerConnection::decode_internal(uint8_t version, const uint8_t **bufp,
+                                            size_t *remainp) {
+  m_state = Serialization::decode_i32(bufp, remainp);
+  m_public_addr.decode(bufp, remainp);
+  m_location = Serialization::decode_vstr(bufp, remainp);
+  m_hostname = Serialization::decode_vstr(bufp, remainp);
+  m_comm_addr.set_proxy(m_location);
+}
+
+void RangeServerConnection::decode_old(const uint8_t **bufp, size_t *remainp) {
   m_state = Serialization::decode_i32(bufp, remainp);
   // was removal_time but not used ...
   Serialization::decode_i32(bufp, remainp);
@@ -189,7 +206,4 @@ void RangeServerConnection::decode(const uint8_t **bufp, size_t *remainp,
   m_location = Serialization::decode_vstr(bufp, remainp);
   m_hostname = Serialization::decode_vstr(bufp, remainp);
   m_comm_addr.set_proxy(m_location);
-  m_connected = false;
 }
-
-

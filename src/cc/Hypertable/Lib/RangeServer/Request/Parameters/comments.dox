@@ -1,0 +1,5 @@
+/// @defgroup libHypertableRangeServerRequestParameters Parameters
+/// @ingroup libHypertableRangeServerRequest
+/// %Request parameters.
+/// This module contains encode/decode classes for request parameters to
+/// %RangeServer functions.

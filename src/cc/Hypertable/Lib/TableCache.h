@@ -19,13 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLECACHE_H
-#define HYPERTABLE_TABLECACHE_H
+#ifndef Hypertable_Lib_TableCache_h
+#define Hypertable_Lib_TableCache_h
 
 #include <Hypertable/Lib/RangeLocator.h>
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/Table.h>
-#include <Hypertable/Lib/Types.h>
 
 #include <AsyncComm/ApplicationQueueInterface.h>
 
@@ -103,7 +102,6 @@ namespace Hypertable {
 
   typedef intrusive_ptr<TableCache> TableCachePtr;
 
-} // namespace Hypertable
+}
 
-
-#endif // HYPERTABLE_TABLECACHE_H
+#endif // Hypertable_Lib_TableCache_h

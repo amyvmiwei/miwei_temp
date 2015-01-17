@@ -25,10 +25,14 @@
  * entity class used to persist a range's state to the RSML.
  */
 
-#include "Common/Compat.h"
-#include "Common/Mutex.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
+
 #include "MetaLogEntityRange.h"
+
+#include <Hypertable/Lib/LegacyDecoder.h>
+
+#include <Common/Mutex.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
@@ -187,62 +191,17 @@ void MetaLogEntityRange::set_load_acknowledged(bool val) {
   m_load_acknowledged = val;
 }
 
-String MetaLogEntityRange::get_original_transfer_log() {
-  ScopedLock lock(m_mutex);
-  return m_original_transfer_log;
-}
-
-void MetaLogEntityRange::set_original_transfer_log(const String &path) {
-  ScopedLock lock(m_mutex);
-  m_original_transfer_log = path;
-}
-
-void MetaLogEntityRange::save_original_transfer_log() {
-  ScopedLock lock(m_mutex);
-  if (m_state.transfer_log && *m_state.transfer_log != 0)
-    m_original_transfer_log = m_state.transfer_log;
-}
-
-
-void MetaLogEntityRange::rollback_transfer_log() {
-  ScopedLock lock(m_mutex);
-  m_state.set_transfer_log(m_original_transfer_log);
-}
-
 String MetaLogEntityRange::get_source() {
   ScopedLock lock(m_mutex);
   return m_state.source ? m_state.source : "";
 }
 
-size_t MetaLogEntityRange::encoded_length() const {
-  return m_table.encoded_length() + m_spec.encoded_length() +
-    m_state.encoded_length() + 2 + 
-    Serialization::encoded_length_vstr(m_original_transfer_log);
-}
-
-void MetaLogEntityRange::encode(uint8_t **bufp) const {
-  m_table.encode(bufp);
-  m_spec.encode(bufp);
-  m_state.encode(bufp);
-  Serialization::encode_bool(bufp, m_needs_compaction);
-  Serialization::encode_bool(bufp, m_load_acknowledged);
-  Serialization::encode_vstr(bufp, m_original_transfer_log);
-}
-
 void MetaLogEntityRange::decode(const uint8_t **bufp, size_t *remainp,
                                 uint16_t definition_version) {
-  (void)definition_version;
-  m_table.decode(bufp, remainp);
-  m_spec.decode(bufp, remainp);
-  m_state.decode(bufp, remainp);
-  m_needs_compaction = Serialization::decode_bool(bufp, remainp);
-  m_load_acknowledged = Serialization::decode_bool(bufp, remainp);
-  if (header.type == EntityType::RANGE2)
-    m_original_transfer_log = Serialization::decode_vstr(bufp, remainp);
-  else {
-    header.type = EntityType::RANGE2;
-    encountered_upgrade = true;
-  }
+  if (definition_version < 3)
+    decode_old(bufp, remainp);
+  else
+    Entity::decode(bufp, remainp);
 }
 
 const String MetaLogEntityRange::name() {
@@ -254,6 +213,44 @@ void MetaLogEntityRange::display(std::ostream &os) {
   os << " " << m_table << " " << m_spec << " " << m_state << " ";
   os << "needs_compaction=" << (m_needs_compaction ? "true" : "false") << " ";
   os << "load_acknowledged=" << (m_load_acknowledged ? "true" : "false") << " ";
-  os << "original_transfer_log=" << m_original_transfer_log << " ";
 }
 
+uint8_t MetaLogEntityRange::encoding_version() const {
+  return 1;
+}
+
+size_t MetaLogEntityRange::encoded_length_internal() const {
+  return m_table.encoded_length() + m_spec.encoded_length() +
+    m_state.encoded_length() + 2;
+}
+
+void MetaLogEntityRange::encode_internal(uint8_t **bufp) const {
+  m_table.encode(bufp);
+  m_spec.encode(bufp);
+  m_state.encode(bufp);
+  Serialization::encode_bool(bufp, m_needs_compaction);
+  Serialization::encode_bool(bufp, m_load_acknowledged);
+}
+
+void MetaLogEntityRange::decode_internal(uint8_t version, const uint8_t **bufp,
+                                         size_t *remainp) {
+  m_table.decode(bufp, remainp);
+  m_spec.decode(bufp, remainp);
+  m_state.decode(bufp, remainp);
+  m_needs_compaction = Serialization::decode_bool(bufp, remainp);
+  m_load_acknowledged = Serialization::decode_bool(bufp, remainp);
+}
+
+void MetaLogEntityRange::decode_old(const uint8_t **bufp, size_t *remainp) {
+  legacy_decode(bufp, remainp, &m_table);
+  legacy_decode(bufp, remainp, &m_spec);
+  legacy_decode(bufp, remainp, &m_state);
+  m_needs_compaction = Serialization::decode_bool(bufp, remainp);
+  m_load_acknowledged = Serialization::decode_bool(bufp, remainp);
+  if (header.type == EntityType::RANGE2)
+    Serialization::decode_vstr(bufp, remainp);
+  else {
+    header.type = EntityType::RANGE2;
+    encountered_upgrade = true;
+  }
+}

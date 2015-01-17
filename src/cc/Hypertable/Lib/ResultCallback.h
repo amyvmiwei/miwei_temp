@@ -31,7 +31,10 @@
 
 #include "ClientObject.h"
 #include "ScanCells.h"
+
 namespace Hypertable {
+
+  using namespace Lib;
 
   class TableScannerAsync;
   class TableMutatorAsync;

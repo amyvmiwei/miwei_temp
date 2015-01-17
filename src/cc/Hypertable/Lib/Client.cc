@@ -20,13 +20,13 @@
  */
 
 #include <Common/Compat.h>
+
 #include "Client.h"
+#include "Master/NamespaceFlag.h"
 
 #include <Hypertable/Lib/Config.h>
 #include <Hypertable/Lib/ClusterId.h>
 #include <Hypertable/Lib/HqlCommandInterpreter.h>
-
-#include <Hypertable/Master/Operation.h>
 
 #include <Hyperspace/DirEntry.h>
 #include <Hypertable/Lib/Config.h>
@@ -90,9 +90,9 @@ void Client::create_namespace(const String &name, Namespace *base, bool create_i
   int flags=0;
 
   if (create_intermediate)
-    flags |= NamespaceFlag::CREATE_INTERMEDIATE;
+    flags |= Lib::Master::NamespaceFlag::CREATE_INTERMEDIATE;
   if (if_not_exists)
-    flags |= NamespaceFlag::IF_NOT_EXISTS;
+    flags |= Lib::Master::NamespaceFlag::IF_NOT_EXISTS;
 
   if (base != NULL) {
     full_name = base->get_name() + '/';
@@ -164,7 +164,8 @@ void Client::drop_namespace(const String &name, Namespace *base, bool if_exists)
   full_name += sub_name;
 
   m_namespace_cache->remove(full_name);
-  m_master_client->drop_namespace(full_name, if_exists);
+  int32_t flags = if_exists ? Lib::Master::NamespaceFlag::IF_EXISTS : 0;
+  m_master_client->drop_namespace(full_name, flags);
 }
 
 Hyperspace::SessionPtr& Client::get_hyperspace_session()
@@ -172,7 +173,7 @@ Hyperspace::SessionPtr& Client::get_hyperspace_session()
   return m_hyperspace;
 }
 
-MasterClientPtr Client::get_master_client() {
+Lib::Master::ClientPtr Client::get_master_client() {
   return m_master_client;
 }
 
@@ -235,8 +236,8 @@ void Client::initialize() {
 
   m_app_queue = new ApplicationQueue(m_props->
                                      get_i32("Hypertable.Client.Workers"));
-  m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_toplevel_dir,
-                                     m_timeout_ms, m_app_queue);
+  m_master_client = new Lib::Master::Client(m_conn_manager, m_hyperspace, m_toplevel_dir,
+                                            m_timeout_ms, m_app_queue);
 
   if (!m_master_client->wait_for_connection(timer))
     HT_THROW(Error::REQUEST_TIMEOUT, "Waiting for Master connection");

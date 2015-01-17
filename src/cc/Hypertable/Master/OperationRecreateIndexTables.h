@@ -29,6 +29,7 @@
 
 #include "Operation.h"
 
+#include <Hypertable/Lib/Master/Request/Parameters/RecreateIndexTables.h>
 #include <Hypertable/Lib/TableParts.h>
 
 #include <Common/String.h>
@@ -45,15 +46,13 @@ namespace Hypertable {
     /// Constructor.
     /// Initializes object by passing
     /// MetaLog::EntityType::OPERATION_RECREATE_INDEX_TABLES to parent Operation
-    /// constructor and then initializes member variables as follows:
-    ///   - Sets #m_name to canonicalized <code>table_name</code>
-    ///   - Sets #m_parts to <code>table_parts</code>
-    ///   - Adds #m_name as an exclusivity
+    /// constructor and then initializes #m_params with <code>name</code> and
+    /// <code>parts</code>.  Adds <code>name</code> as an exclusivity.
     /// @param context %Master context
-    /// @param table_name Pathname of table
-    /// @param table_parts Describes which index tables to re-create
-    OperationRecreateIndexTables(ContextPtr &context, std::string table_name,
-                                 TableParts table_parts);
+    /// @param name Pathname of table
+    /// @param parts Describes which index tables to re-create
+    OperationRecreateIndexTables(ContextPtr &context, std::string name,
+                                 TableParts parts);
 
     /// Constructor with MML entity.
     /// @param context %Master context
@@ -62,12 +61,8 @@ namespace Hypertable {
                                  const MetaLog::EntityHeader &header);
 
     /// Constructor with client request.
-    /// Initializes base class constructor and then initializes member variables
-    /// as follows:
-    ///   - Decodes request with a call to decode_request()
-    ///   - Cannonicalizes #m_name with a call to 
-    ///     Utility::canonicalize_pathname().
-    ///   - Adds #m_name as an exclusivity
+    /// Initializes base class constructor, decodes request parameters and adds
+    /// table name as an exclusivity.
     /// @param context %Master context
     /// @param event %Event received from AsyncComm from client request
     OperationRecreateIndexTables(ContextPtr &context, EventPtr &event);
@@ -167,14 +162,14 @@ namespace Hypertable {
 
     /// Returns encoding version of serialization format.
     /// @return Encoding version of serialization format.
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /// Returns serialized state length.
     /// This method returns the length of the serialized representation of the
     /// object state.
     /// @return Serialized length.
     /// @see encode() for a description of the serialized %format.
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
 
     /// Writes serialized encoding of object state.
     /// This method writes a serialized encoding of object state to the memory
@@ -185,7 +180,7 @@ namespace Hypertable {
     ///   <th>Encoding</th><th>Description</th>
     ///   </tr>
     ///   <tr>
-    ///   <td>vstr</td><td>%Table name (#m_name)</td>
+    ///   <td>vstr</td><td>%Table name</td>
     ///   </tr>
     ///   <tr>
     ///   <td>TableParts</td><td>Specification for which index tables to
@@ -193,47 +188,31 @@ namespace Hypertable {
     ///   </tr>
     /// </table>
     /// @param bufp Address of destination buffer pointer (advanced by call)
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /// Reads serialized encoding of object state.
     /// This method restores the state of the object by decoding a serialized
     /// representation of the state from the memory location pointed to by
     /// <code>*bufp</code>.
+    /// @param version Encoding version
     /// @param bufp Address of source buffer pointer (advanced by call)
     /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
     /// (decremented by call)
     /// @see encode() for a description of the serialized %format.
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
-    /// Decodes a request that triggered the operation.
-    /// This method decodes a request sent from a client that caused this
-    /// object to get created.  The encoding has the following format:
-    /// <table>
-    ///   <tr>
-    ///   <th>Encoding</th><th>Description</th>
-    ///   </tr>
-    ///   <tr>
-    ///   <td>vstr</td><td>%Table name (#m_name)</td>
-    ///   </tr>
-    ///   <tr>
-    ///   <td>TableParts</td><td>Specification of which index tables to
-    ///       re-create (#m_parts)</td>
-    ///   </tr>
-    /// </table>
-    /// @param bufp Address of source buffer pointer (advanced by call)
-    /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-    /// (decremented by call)
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
 
     bool fetch_schema(std::string &schema);
 
-    /// %Table name
-    std::string m_name;
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::RecreateIndexTables m_params;
 
-    /// Specification for which index tables to re-create
+    /// Table parts to recreate
     TableParts m_parts {0};
+
   };
 
   /// @}

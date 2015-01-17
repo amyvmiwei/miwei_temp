@@ -49,9 +49,8 @@ namespace Hypertable {
     /// Constructor.
     /// Initializes object by passing
     /// MetaLog::EntityType::OPERATION_TOGGLE_TABLE_MAINTENANCE to parent Operation
-    /// constructor and then initializes member variables as follows:
-    ///   - Sets #m_name to canonicalized <code>table_name</code>
-    ///   - Adds INIT as a dependency
+    /// constructor, sets #m_name to canonicalized <code>table_name</code>, and
+    /// adds INIT as a dependency.
     /// @param context %Master context
     /// @param table_name %Table pathname
     /// @param toggle_on Flag indicating if maintenance is to be turned on or off
@@ -138,14 +137,14 @@ namespace Hypertable {
     /// @param os Output stream
     virtual void display_state(std::ostream &os);
 
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /// Returns serialized state length.
     /// This method returns the length of the serialized representation of the
     /// object state.
     /// @return Serialized length
     /// @see encode() for a description of the serialized %format.
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
 
     /// Writes serialized encoding of object state.
     /// This method writes a serialized encoding of object state to the memory
@@ -177,20 +176,22 @@ namespace Hypertable {
     ///   <tr>
     ///   <td>vstr</td><td><b>Foreach server</b> in #m_completed, server name</td>
     ///   </tr>
-    ///   <tr>
     /// </table>
     /// @param bufp Address of destination buffer pointer (advanced by call)
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /// Reads serialized encoding of object state.
     /// This method restores the state of the object by decoding a serialized
     /// representation of the state from the memory location pointed to by
     /// <code>*bufp</code>.
+    /// @param version Encoding version
     /// @param bufp Address of source buffer pointer (advanced by call)
     /// @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
     /// (decremented by call)
     /// @see encode() for a description of the serialized %format.
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
 

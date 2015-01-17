@@ -22,12 +22,14 @@
 /// @file
 /// Declarations for OperationAlterTable.
 /// This file contains declarations for OperationAlterTable, an Operation class
-/// for carrying out an ALTER TABLE operation.
+/// for carrying out an <i>alter table</i> operation.
 
 #ifndef Hypertable_Master_OperationAlterTable_h
 #define Hypertable_Master_OperationAlterTable_h
 
 #include <Hypertable/Master/Operation.h>
+
+#include <Hypertable/Lib/Master/Request/Parameters/AlterTable.h>
 
 #include <Common/StringExt.h>
 
@@ -47,6 +49,10 @@ namespace Hypertable {
     OperationAlterTable(ContextPtr &context, const MetaLog::EntityHeader &header_);
     
     /** Constructor for constructing object from AsyncComm event 
+     * Decodes #m_params from message payload and then initializes the
+     * dependency graph state as follows:
+     *   - <b>dependencies</b> - Dependency::INIT
+     *   - <b>exclusivities</b> - %Table pathname
      * @param context %Master context
      * @param event %Event received from AsyncComm from client request
      */
@@ -201,14 +207,14 @@ namespace Hypertable {
 
     /// Returns encoding version
     /// @return Encoding version
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /** Returns serialized state length.
      * This method returns the length of the serialized representation of the
      * object state.  See encode() for a description of the serialized format.
      * @return Serialized length
      */
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
 
     /** Writes serialized encoding of object state.
      * This method writes a serialized encoding of object state to the memory
@@ -230,32 +236,21 @@ namespace Hypertable {
      * </table>
      * @param bufp Address of destination buffer pointer (advanced by call)
      */
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /** Reads serialized encoding of object state.
      * This method restores the state of the object by decoding a serialized
      * representation of the state from the memory location pointed to by
      * <code>*bufp</code>.  See encode() for a description of the
      * serialized format.
+     * @param version Encoding version
      * @param bufp Address of source buffer pointer (advanced by call)
      * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
      * (decremented by call)
      */
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
-    /** Decodes a request that triggered the operation.
-     * This method decodes a request sent from a client that caused this
-     * object to get created.  The encoding has the following format:
-     * <table>
-     *   <tr><th>Encoding</th><th>Description</th></tr>
-     *   <tr><td>vstr</td><td> Pathname of table to compact</td></tr>
-     *   <tr><td>vstr</td><td> New table schema</td></tr>
-     * </table>
-     * @param bufp Address of source buffer pointer (advanced by call)
-     * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-     * (decremented by call)
-     */
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
 
@@ -295,18 +290,10 @@ namespace Hypertable {
     TableParts get_create_index_parts(SchemaPtr &original_schema,
                                       SchemaPtr &alter_schema);
 
-    /** Initializes dependency graph state.
-     * This method initializes the dependency graph state as follows:
-     *
-     *   - <b>dependencies</b> - Dependency::INIT
-     *   - <b>exclusivities</b> - %Table pathname
-     */
-    void initialize_dependencies();
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::AlterTable m_params;
 
-    /// Full table pathname
-    String m_name;
-
-    /// New schema
+    /// %Schema for the table
     String m_schema;
 
     /// %Table identifier
@@ -321,8 +308,6 @@ namespace Hypertable {
     /// Index tables to be created or dropped
     TableParts m_parts;
 
-    /// Proceed even if there's a generation mis-match
-    bool m_force {};
   };
 
   /// @}

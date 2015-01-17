@@ -78,25 +78,25 @@ namespace Hypertable {
     virtual void handle(EventPtr &event);
 
     /// Increments request count.
-    /// Increments #m_requests which is used in computing requests/s.
+    /// Increments request count which is used in computing requests/s.
     void request_increment() {
       m_requests.current++;
     }
 
     /// Increments error count.
-    /// Increments #m_errors which is used in computing errors/s.
+    /// Increments error count which is used in computing errors/s.
     void error_increment() {
       m_errors.current++;
     }
 
     /// Increments connection count.
-    /// Increments #m_active_connections.
+    /// Increments active connection count.
     void connection_increment() {
       m_active_connections++;
     }
 
     /// Decrements connection count.
-    /// Decrements #m_active_connections.
+    /// Decrements active connection count.
     void connection_decrement() {
       m_active_connections--;
     }

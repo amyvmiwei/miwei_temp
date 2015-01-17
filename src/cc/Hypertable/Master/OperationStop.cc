@@ -19,17 +19,19 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/md5.h"
+#include <Common/Compat.h>
 
-#include "OperationProcessor.h"
 #include "OperationStop.h"
+
+#include <Hypertable/Lib/RangeServer/Client.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+#include <Common/md5.h>
 
 using namespace Hypertable;
 
@@ -37,45 +39,38 @@ OperationStop::OperationStop(ContextPtr &context, EventPtr &event)
   : OperationEphemeral(context, event, MetaLog::EntityType::OPERATION_STOP) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
+  m_params.decode(&ptr, &remaining);
   m_dependencies.insert(Dependency::INIT);
 }
 
 void OperationStop::execute() {
-  HT_INFOF("Entering OperationStop-%s recover=%s state=%s",
-          m_server.c_str(), m_recover ? "true" : "false",
-          OperationState::get_text(m_state));
+  HT_INFOF("Entering OperationStop-%s state=%s",
+           m_params.server().c_str(), OperationState::get_text(m_state));
 
   try {
-    RangeServerClient rsc(m_context->comm);
+    Lib::RangeServer::Client rsc(m_context->comm);
     CommAddress addr;
 
-    addr.set_proxy(m_server);
+    addr.set_proxy(m_params.server());
     rsc.shutdown(addr);
   }
   catch (Exception &e) {
     if (e.code() == Error::COMM_INVALID_PROXY
             || e.code() == Error::COMM_NOT_CONNECTED)
-      complete_error(Error::RANGESERVER_NOT_FOUND, m_server);
+      complete_error(Error::RANGESERVER_NOT_FOUND, m_params.server());
     else
-      complete_error(e.code(), m_server);
+      complete_error(e.code(), m_params.server());
     return;
   }
 
   complete_ok();
 
-  HT_INFOF("Leaving OperationStop-%s recover=%s state=%s",
-          m_server.c_str(), m_recover ? "true" : "false",
-          OperationState::get_text(m_state));
+  HT_INFOF("Leaving OperationStop-%s state=%s",
+          m_params.server().c_str(), OperationState::get_text(m_state));
 }
 
 void OperationStop::display_state(std::ostream &os) {
-  os << " " << m_server << " recover=" << m_recover;
-}
-
-void OperationStop::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_server = Serialization::decode_vstr(bufp, remainp);
-  m_recover = Serialization::decode_bool(bufp, remainp);
+  os << " " << m_params.server() << " ";
 }
 
 const String OperationStop::name() {
@@ -83,5 +78,5 @@ const String OperationStop::name() {
 }
 
 const String OperationStop::label() {
-  return format("OperationStop %s", m_server.c_str());
+  return format("OperationStop %s", m_params.server().c_str());
 }

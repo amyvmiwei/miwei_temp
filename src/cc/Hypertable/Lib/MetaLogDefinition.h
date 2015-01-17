@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -26,8 +26,8 @@
  * valid %MetaLog entities for a server.
  */
 
-#ifndef HYPERTABLE_METALOGDEFINITION_H
-#define HYPERTABLE_METALOGDEFINITION_H
+#ifndef Hypertable_Lib_MetaLogDefinition_h
+#define Hypertable_Lib_MetaLogDefinition_h
 
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
@@ -101,7 +101,7 @@ namespace Hypertable {
        * @return Pointer to newly constructed entity, or 0 if entity described
        * by header is no longer used
        */
-      virtual Entity *create(const EntityHeader &header) = 0;
+      virtual EntityPtr create(const EntityHeader &header) = 0;
 
     private:
 
@@ -117,4 +117,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_METALOGDEFINITION_H
+#endif // Hypertable_Lib_MetaLogDefinition_h

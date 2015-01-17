@@ -41,18 +41,20 @@ namespace boost {
 /** Program options. */
 namespace program_options {
 
+using namespace std;
+
 typedef std::vector<std::string> Strings;
 typedef std::vector<int64_t> Int64s;
 
-void validate(boost::any &v, const Strings &values, ::int64_t *, int);
-void validate(boost::any &v, const Strings &values, ::int32_t *, int);
-void validate(boost::any &v, const Strings &values, ::uint16_t *, int);
-void validate(boost::any &v, const Strings &values, double *, int);
+void validate(boost::any &v, const vector<string> &values, ::int64_t *, int);
+void validate(boost::any &v, const vector<string> &values, ::int32_t *, int);
+void validate(boost::any &v, const vector<string> &values, ::uint16_t *, int);
+void validate(boost::any &v, const vector<string> &values, double *, int);
 
 // pre 1.35 vector<T> validate doesn't pickup user defined validate for T
 #if BOOST_VERSION < 103500
 template<typename T>
-void validate(boost::any& v, const Strings &s, std::vector<T>*, int);
+void validate(boost::any& v, const vector<string> &s, std::vector<T>*, int);
 #endif
 
 }} // namespace boost::program_options
@@ -64,12 +66,14 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int);
 
 namespace boost { namespace program_options {
 
+using namespace std;
+
 #if BOOST_VERSION < 103500
 /** Implement validation function for vector<T>, which is not
  * implemented in boost prior to 1.35
  */
 template<typename T>
-void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
+void validate(boost::any& v, const vector<string> &s, std::vector<T>*, int) {
   if (v.empty())
       v = boost::any(std::vector<T>());
 
@@ -80,7 +84,7 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
     try {
       // so we can pick up user defined validate for T here
       boost::any a;
-      Strings sv;
+      vector<string> sv;
       sv.push_back(s[i]);
       validate(a, sv, (T*)0, 0);
       tv->push_back(boost::any_cast<T>(a));

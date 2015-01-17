@@ -102,7 +102,7 @@ namespace Hypertable {
      * at the beginning of the file.  The header that is written consists of
      * eight bytes and has the following format:
      * <pre>
-     * vNNNN\f\n\0
+     * vNNNN\\f\\n\\0
      * </pre>
      * The <code>NNNN</code> component consists of four ASCII digits that
      * represent the latest version number.  The formfeed+newline allows the

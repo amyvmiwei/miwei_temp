@@ -1,0 +1,4 @@
+/// @defgroup fsclient fsclient
+/// @ingroup Tools
+/// File system client.
+/// This program is used to issue commands to the file system broker.

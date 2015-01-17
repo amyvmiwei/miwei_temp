@@ -37,6 +37,6 @@ using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib::Request::Handler;
 
 void Status::run() {
-  ResponseCallback cb(m_comm, m_event);
+  Response::Callback::Status cb(m_comm, m_event);
   m_broker->status(&cb);
 }

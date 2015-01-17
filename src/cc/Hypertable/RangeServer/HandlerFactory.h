@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,33 +22,30 @@
 #ifndef HYPERTABLE_HANDLERFACTORY_H
 #define HYPERTABLE_HANDLERFACTORY_H
 
-#include "AsyncComm/ApplicationQueue.h"
-
 #include "ConnectionHandler.h"
 #include "RangeServer.h"
 
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
 
 namespace Hypertable {
 
   class Comm;
 
-  /**
-   *
-   */
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
     HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue,
-                   RangeServerPtr range_server)
-      : m_comm(comm), m_app_queue_ptr(app_queue),
-        m_range_server_ptr(range_server) { }
+                   Apps::RangeServerPtr range_server)
+      : m_comm(comm), m_app_queue(app_queue),
+        m_range_server(range_server) { }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
-      dhp = new ConnectionHandler(m_comm, m_app_queue_ptr, m_range_server_ptr);
+      dhp = new ConnectionHandler(m_comm, m_app_queue, m_range_server);
     }
   private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    RangeServerPtr       m_range_server_ptr;
+    Comm *m_comm;
+    ApplicationQueuePtr m_app_queue;
+    Apps::RangeServerPtr m_range_server;
   };
 
 }

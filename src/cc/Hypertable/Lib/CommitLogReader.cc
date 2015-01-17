@@ -71,27 +71,22 @@ namespace {
 }
 
 CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir)
-  : CommitLogBase(log_dir), m_fs(fs), m_fragment_queue_offset(0),
-    m_block_buffer(256), m_revision(TIMESTAMP_MIN), m_compressor(0),
-    m_last_fragment_id(-1), m_verbose(false) {
+  : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256),
+    m_revision(TIMESTAMP_MIN), m_last_fragment_id(-1) {
   if (get_bool("Hypertable.CommitLog.SkipErrors"))
     CommitLogBlockStream::ms_assert_on_error = false;
-
   load_fragments(m_log_dir, 0);
   reset();
 }
 
 CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir,
-        const std::vector<uint32_t> &fragment_filter)
-  : CommitLogBase(log_dir), m_fs(fs), m_fragment_queue_offset(0),
-    m_block_buffer(256), m_revision(TIMESTAMP_MIN), m_compressor(0),
-    m_last_fragment_id(-1), m_verbose(false) {
+                                 const std::vector<int32_t> &fragment_filter)
+  : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256),
+    m_revision(TIMESTAMP_MIN),
+    m_fragment_filter(fragment_filter.begin(), fragment_filter.end()),
+    m_last_fragment_id(-1) {
   if (get_bool("Hypertable.CommitLog.SkipErrors"))
     CommitLogBlockStream::ms_assert_on_error = false;
-
-  foreach_ht(uint32_t fragment, fragment_filter)
-    m_fragment_filter.insert(fragment);
-
   load_fragments(log_dir, 0);
   reset();
 }
@@ -253,11 +248,11 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
     }
 
     char *endptr;
-    long num = strtol(listing[i].name.c_str(), &endptr, 10);
+    int32_t num = (int32_t)strtol(listing[i].name.c_str(), &endptr, 10);
     if (m_fragment_filter.size() && log_dir == m_log_dir &&
       m_fragment_filter.find(num) == m_fragment_filter.end()) {
       if (m_verbose)
-        HT_INFOF("Dropping log fragment %s/%ld because it is filtered",
+        HT_INFOF("Dropping log fragment %s/%d because it is filtered",
                  log_dir.c_str(), num);
       //HT_DEBUG_OUT << "Fragments " << num <<" in " << log_dir
       //    << " is part of CommitLog "

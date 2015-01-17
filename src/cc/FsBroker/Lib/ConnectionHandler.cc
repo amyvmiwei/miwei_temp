@@ -32,13 +32,16 @@
 
 #include <AsyncComm/ApplicationQueue.h>
 
+#include <Common/Config.h>
 #include <Common/Error.h>
+#include <Common/FileUtils.h>
 #include <Common/String.h>
 #include <Common/StringExt.h>
 #include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib;
+using namespace Config;
 
 void ConnectionHandler::handle(EventPtr &event) {
 
@@ -59,7 +62,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         if ((flags & Client::SHUTDOWN_FLAG_IMMEDIATE) != 0)
           m_app_queue->shutdown();
         m_broker->shutdown(&cb);
-        exit(0);
+        if (has("pidfile"))
+          FileUtils::unlink(get_str("pidfile"));
+        _exit(0);
       }
       m_app_queue->add(Request::Handler::Factory::create(m_comm, m_broker.get(),
                                                          event));

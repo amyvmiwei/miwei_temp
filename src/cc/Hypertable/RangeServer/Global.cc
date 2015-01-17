@@ -36,8 +36,7 @@ namespace Hypertable {
   FilesystemPtr          Global::dfs;
   FilesystemPtr          Global::log_dfs;
   MaintenanceQueuePtr    Global::maintenance_queue;
-  MasterClientPtr        Global::master_client;
-  RangeServerProtocol   *Global::protocol = 0;
+  Lib::Master::ClientPtr        Global::master_client;
   RangeLocatorPtr        Global::range_locator = 0;
   PseudoTables          *Global::pseudo_tables = 0;
   MetaLogEntityRemoveOkLogsPtr Global::remove_ok_logs;
@@ -82,15 +81,7 @@ namespace Hypertable {
   StringSet              Global::immovable_range_set;
   TimeWindow Global::low_activity_time;
 
-  void Global::add_to_work_queue(MetaLog::EntityTask *entity) {
-    if (entity) {
-      entity->work_queue_add_hook();
-      ScopedLock lock(Global::mutex);
-      Global::work_queue.push_back(entity);
-    }
-  }
-
-  void Global::add_to_work_queue(MetaLog::EntityTaskPtr &entity) {
+  void Global::add_to_work_queue(MetaLog::EntityTaskPtr entity) {
     if (entity) {
       entity->work_queue_add_hook();
       ScopedLock lock(Global::mutex);

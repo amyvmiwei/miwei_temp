@@ -105,9 +105,6 @@ configure_file(${SRC_DIR}/system_state_test.golden
 add_test(MasterOperation-TestSetup env INSTALL_DIR=${INSTALL_DIR} 
          ${CMAKE_CURRENT_SOURCE_DIR}/tests/op_test_setup.sh)
 
-add_test(BalancePlanAuthority-upgrade env INSTALL_DIR=${INSTALL_DIR} 
-         ${CMAKE_CURRENT_SOURCE_DIR}/tests/bpa_upgrade.sh)
-
 add_test(MasterOperation-Processor op_dependency_test)
 
 configure_file(${SRC_DIR}/master_initialize.golden

@@ -54,10 +54,10 @@ namespace Hypertable {
     void schedule();
 
     /// Includes a table for maintenance scheduling.
-    void include(const TableIdentifier *table);
+    void include(const TableIdentifier &table);
 
     /// Excludes a table from maintenance scheduling.
-    void exclude(const TableIdentifier *table);
+    void exclude(const TableIdentifier &table);
 
     /// Sets <i>low memory</i> maintenance prioritization.
     void set_low_memory_mode(bool on) {

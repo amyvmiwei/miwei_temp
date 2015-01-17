@@ -1,0 +1,5 @@
+/// @defgroup RangeServerRequestHandler Handler
+/// @ingroup RangeServerRequest
+/// %Request handlers.
+/// This module contains application request handler classes for the
+/// range server.

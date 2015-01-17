@@ -30,6 +30,8 @@
 #include "Common/SystemInfo.h"
 #include "Common/Mutex.h"
 
+#include <utility>
+
 extern "C" {
 #include <poll.h>
 #include <ncurses.h>
@@ -40,7 +42,7 @@ extern "C" {
 }
 
 #if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
-#include <google/malloc_extension.h>
+#include <gperftools/malloc_extension.h>
 #endif
 
 #define HT_FIELD_NOTIMPL(_field_) (_field_ == (uint64_t)-1)
@@ -477,8 +479,29 @@ MemStat &MemStat::refresh() {
   return *this;
 }
 
+DiskStat::DiskStat(const DiskStat &other) {
+  prefix = other.prefix;
+  reads_rate = other.reads_rate;
+  writes_rate = other.writes_rate;
+  read_rate = other.read_rate;
+  write_rate = other.write_rate;
+  if (prev_stat) {
+    prev_stat = new sigar_disk_usage_t();
+    memcpy(prev_stat, other.prev_stat, sizeof(sigar_disk_usage_t));
+  }
+}
 DiskStat::~DiskStat() {
   delete (sigar_disk_usage_t *)prev_stat;
+}
+
+void DiskStat::swap (DiskStat &other) {
+  prefix.swap(other.prefix);
+  std::swap(reads_rate, other.reads_rate);
+  std::swap(writes_rate, other.writes_rate);
+  std::swap(read_rate, other.read_rate);
+  std::swap(write_rate, other.write_rate);
+  std::swap(prev_stat, other.prev_stat);
+  std::swap(stopwatch, other.stopwatch);
 }
 
 DiskStat &DiskStat::refresh(const char *dir_prefix) {
@@ -513,8 +536,29 @@ DiskStat &DiskStat::refresh(const char *dir_prefix) {
   return *this;
 }
 
+SwapStat::SwapStat(const SwapStat &other) {
+  total = other.total;
+  used = other.used;
+  free = other.free;
+  page_in = other.page_in;
+  page_out = other.page_out;
+  if (other.prev_stat) {
+    prev_stat = new sigar_swap_t();
+    memcpy(prev_stat, other.prev_stat, sizeof(sigar_swap_t));
+  }
+}
+
 SwapStat::~SwapStat() {
   delete (sigar_swap_t *)prev_stat;
+}
+
+void SwapStat::swap (SwapStat &other) {
+  std::swap(total, other.total);
+  std::swap(used, other.used);
+  std::swap(free, other.free);
+  std::swap(page_in, other.page_in);
+  std::swap(page_out, other.page_out);
+  std::swap(prev_stat, other.prev_stat);
 }
 
 SwapStat &SwapStat::refresh() {

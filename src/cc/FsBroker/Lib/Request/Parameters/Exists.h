@@ -56,30 +56,20 @@ namespace Parameters {
     /// @param fname File name
     Exists(const String &fname) : m_fname(fname) {}
 
-    /// Returns encoded length of parameters
-    /// @return Encoded length of parameters
-    size_t encoded_length() const override;
-
-    /// Encodes parameters to buffer
-    /// @param bufp Address of buffer to encode parameters to
-    /// (advanced by call)
-    void encode(uint8_t **bufp) const override;
-
-    /// Decodes parameters from buffer
-    /// @param bufp Address of buffer from which to decode parameters
-    /// (advanced by call)
-    /// @param remainp Address of remaining encoded data in buffer
-    /// (advanced by call)
-    void decode(const uint8_t **bufp, size_t *remainp) override;
-
     /// Gets file name
     /// @return File name
     const char *get_fname() { return m_fname.c_str(); }
 
   private:
 
-    /// Returns internal encoded length
-    size_t internal_encoded_length() const;
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
 
     /// File name
     String m_fname;

@@ -26,8 +26,6 @@
 #include "AsyncComm/ResponseCallback.h"
 #include "Common/Serialization.h"
 
-#include "Hypertable/Lib/Types.h"
-
 #include "Hyperspace/Master.h"
 #include "RequestHandlerExists.h"
 #include "Hyperspace/response/ResponseCallbackExists.h"

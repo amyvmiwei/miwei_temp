@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,8 +19,16 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_REPLAYHANDLER_H
-#define HYPERTABLE_REPLAYHANDLER_H
+#ifndef Hypertable_RangeServer_ReplayDispatchHandler_h
+#define Hypertable_RangeServer_ReplayDispatchHandler_h
+
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
+
+#include <AsyncComm/DispatchHandler.h>
+#include <AsyncComm/Comm.h>
+
+#include <Common/Mutex.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
@@ -28,18 +36,10 @@
 
 #include <map>
 
-#include "Common/Mutex.h"
-
-#include "AsyncComm/DispatchHandler.h"
-#include "AsyncComm/Comm.h"
-
-#include "Hypertable/Lib/Types.h"
-#include "Hypertable/Lib/RangeServerClient.h"
-
 namespace Hypertable {
 
-  /**
-   */
+  using namespace Lib;
+
   class ReplayDispatchHandler : public DispatchHandler {
 
   public:
@@ -59,7 +59,7 @@ namespace Hypertable {
   private:
     Mutex         m_mutex;
     boost::condition m_cond;
-    RangeServerClient m_rsclient;
+    RangeServer::Client m_rsclient;
     String m_recover_location;
     String m_error_msg;
     int32_t m_error;
@@ -68,5 +68,5 @@ namespace Hypertable {
   };
 }
 
-#endif // HYPERSPACE_REPLAYHANDLER_H
+#endif // Hypertable_RangeServer_ReplayDispatchHandler_h
 

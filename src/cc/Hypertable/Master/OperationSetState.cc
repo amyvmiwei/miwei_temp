@@ -25,27 +25,29 @@
  * for setting system state variables.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "DispatchHandlerOperationSetState.h"
 #include "OperationSetState.h"
 #include "Utility.h"
 
+#include <Hypertable/Lib/Key.h>
+
+#include <Hyperspace/Session.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+
 #include <boost/algorithm/string.hpp>
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 
 OperationSetState::OperationSetState(ContextPtr &context)
   : Operation(context, MetaLog::EntityType::OPERATION_SET) {
-  initialize_dependencies();
+  m_exclusivities.insert("SET VARIABLES");
 }
 
 OperationSetState::OperationSetState(ContextPtr &context,
@@ -57,12 +59,8 @@ OperationSetState::OperationSetState(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_SET) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
-  initialize_dependencies();
-  m_context->system_state->admin_set(m_specs);
-}
-
-void OperationSetState::initialize_dependencies() {
+  m_params.decode(&ptr, &remaining);
+  m_context->system_state->admin_set(m_params.specs());
   m_exclusivities.insert("SET VARIABLES");
 }
 
@@ -81,7 +79,7 @@ void OperationSetState::execute() {
     {
       std::vector<NotificationMessage> notifications;
       if (m_context->system_state->get_notifications(notifications)) {
-        foreach_ht (NotificationMessage &msg, notifications)
+        for (auto &msg : notifications)
           m_context->notification_hook(msg.subject, msg.body);
       }
     }
@@ -92,9 +90,9 @@ void OperationSetState::execute() {
 
     set_state(OperationState::STARTED);
     {
-      std::vector<Entity *> entities;
-      entities.push_back(this);
-      entities.push_back(m_context->system_state.get());
+      std::vector<MetaLog::EntityPtr> entities;
+      entities.push_back(shared_from_this());
+      entities.push_back(m_context->system_state);
       m_context->mml_writer->record_state(entities);
     }
 
@@ -108,7 +106,7 @@ void OperationSetState::execute() {
         complete_ok();
         break;
       }
-      foreach_ht (RangeServerConnectionPtr &rsc, servers)
+      for (auto &rsc : servers)
         locations.insert(rsc->location());
       dispatch_handler.initialize();
       dispatch_handler.DispatchHandlerOperation::start(locations);
@@ -117,7 +115,7 @@ void OperationSetState::execute() {
     if (!dispatch_handler.wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;
       dispatch_handler.get_results(results);
-      foreach_ht (const DispatchHandlerOperation::Result &result, results) {
+      for (auto &result : results) {
         if (result.error != Error::OK)
           HT_WARNF("Problem setting state variables at %s - %s",
                    result.location.c_str(), Error::get_text(result.error));
@@ -137,7 +135,7 @@ void OperationSetState::execute() {
 
 void OperationSetState::display_state(std::ostream &os) {
   bool first = true;
-  foreach_ht (const SystemVariable::Spec &spec, m_specs) {
+  for (auto &spec : m_specs) {
     if (!first)
       os << ",";
     os << SystemVariable::code_to_string(spec.code) << "=" << (spec.value ? "true" : "false");
@@ -146,44 +144,45 @@ void OperationSetState::display_state(std::ostream &os) {
   os << " ";
 }
 
-#define OPERATION_SET_STATE_VERSION 1
-
-uint16_t OperationSetState::encoding_version() const {
-  return OPERATION_SET_STATE_VERSION;
+uint8_t OperationSetState::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationSetState::encoded_state_length() const {
-  return 12 + (5 * m_specs.size());
+size_t OperationSetState::encoded_length_state() const {
+  size_t length = m_params.encoded_length() + 12;
+  for (auto &spec : m_specs)
+    length += spec.encoded_length();
+  return length;
 }
 
 void OperationSetState::encode_state(uint8_t **bufp) const {
+  m_params.encode(bufp);
   Serialization::encode_i64(bufp, m_generation);
   Serialization::encode_i32(bufp, m_specs.size());
-  foreach_ht (const SystemVariable::Spec &spec, m_specs) {
-    Serialization::encode_i32(bufp, spec.code);
-    Serialization::encode_bool(bufp, spec.value);
+  for (auto &spec : m_specs)
+    spec.encode(bufp);
+}
+
+void OperationSetState::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  m_params.decode(bufp, remainp);
+  m_generation = Serialization::decode_i64(bufp, remainp);
+  size_t count = (size_t)Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<count; i++) {
+    SystemVariable::Spec spec;
+    spec.decode(bufp, remainp);
+    m_specs.push_back(spec);
   }
 }
 
-void OperationSetState::decode_state(const uint8_t **bufp, size_t *remainp) {
+void OperationSetState::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
   SystemVariable::Spec spec;
   m_specs.clear();
-  if (m_decode_version == 0)
+  if (version == 0)
     Serialization::decode_i32(bufp, remainp); // skip old version
   m_generation = Serialization::decode_i64(bufp, remainp);
   int32_t count = Serialization::decode_i32(bufp, remainp);
   for (int32_t i=0; i<count; i++) {
     spec.code  = Serialization::decode_i32(bufp, remainp);
-    spec.value = Serialization::decode_bool(bufp, remainp);
-    m_specs.push_back(spec);
-  }
-}
-
-void OperationSetState::decode_request(const uint8_t **bufp, size_t *remainp) {
-  int32_t count = Serialization::decode_i32(bufp, remainp);
-  SystemVariable::Spec spec;
-  for (int32_t i=0; i<count; i++) {
-    spec.code = Serialization::decode_i32(bufp, remainp);
     spec.value = Serialization::decode_bool(bufp, remainp);
     m_specs.push_back(spec);
   }

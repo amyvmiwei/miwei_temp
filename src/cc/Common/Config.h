@@ -107,7 +107,7 @@ namespace Hypertable { namespace Config {
    * @param usage Optional usage string (first time)
    * @return Reference to the Description object
    */
-  Desc &cmdline_desc(const char *usage = NULL);
+  Desc &cmdline_desc(const char *usage=nullptr);
 
   /** Set the command line options description
    *

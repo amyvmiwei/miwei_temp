@@ -24,6 +24,7 @@
 #include <Hypertable/Lib/ScanCells.h>
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 
 bool ScanCells::add(EventPtr &event, int *scanner_id) {
   ScanBlockPtr scanblock = std::make_shared<ScanBlock>();

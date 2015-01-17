@@ -55,7 +55,7 @@ namespace Hypertable {
     CommitLogReader(FilesystemPtr &fs, const String &log_dir);
 
     CommitLogReader(FilesystemPtr &fs, const String &log_dir,
-            const std::vector<uint32_t> &fragment_filter);
+                    const std::vector<int32_t> &fragment_filter);
 
     virtual ~CommitLogReader() { }
 
@@ -90,22 +90,22 @@ namespace Hypertable {
     void load_compressor(uint16_t ztype);
 
     FilesystemPtr     m_fs;
-    uint64_t          m_fragment_queue_offset;
+    uint64_t          m_fragment_queue_offset {};
     DynamicBuffer     m_block_buffer;
-    int64_t           m_revision;
+    int64_t           m_revision {};
 
     typedef std::unordered_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
 
     CompressorMap          m_compressor_map;
-    uint16_t               m_compressor_type;
-    BlockCompressionCodec *m_compressor;
-    std::set<uint64_t>     m_fragment_filter;
-    std::vector<uint32_t>  m_init_fragments;
+    uint16_t               m_compressor_type {};
+    BlockCompressionCodec *m_compressor {};
+    std::set<uint32_t>     m_fragment_filter;
+    std::vector<int32_t>  m_init_fragments;
     std::map<uint32_t, uint32_t> m_error_map;
     StringSet              m_linked_logs;
     String                 m_last_fragment_fname;
-    int32_t                m_last_fragment_id;
-    bool                   m_verbose;
+    int32_t                m_last_fragment_id {};
+    bool                   m_verbose {};
   };
 
   /// Smart pointer to CommitLogReader

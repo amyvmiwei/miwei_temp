@@ -159,16 +159,16 @@ int main(int argc, char **argv) {
     /**
      * Check for and connect to commit log DFS broker
      */
-    FsBroker::Lib::Client *dfs_client;
+    FsBroker::Lib::ClientPtr dfs_client;
 
     if (log_host.length()) {
       int log_port = get_i16("log-port");
       InetAddr addr(log_host, log_port);
 
-      dfs_client = new FsBroker::Lib::Client(conn_manager_ptr, addr, timeout);
+      dfs_client = std::make_shared<FsBroker::Lib::Client>(conn_manager_ptr, addr, timeout);
     }
     else {
-      dfs_client = new FsBroker::Lib::Client(conn_manager_ptr, properties);
+      dfs_client = std::make_shared<FsBroker::Lib::Client>(conn_manager_ptr, properties);
     }
 
     if (!dfs_client->wait_for_connection(timeout)) {
@@ -237,9 +237,6 @@ int main(int argc, char **argv) {
         entity_range = dynamic_cast<MetaLogEntityRange *>(entity.get());
         if (entity_range) {
           String log = entity_range->get_transfer_log();
-          if (!log.empty())
-            std::cout << log << "\n";
-          log = entity_range->get_original_transfer_log();
           if (!log.empty())
             std::cout << log << "\n";
         }

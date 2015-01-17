@@ -39,43 +39,27 @@
 using namespace Hypertable;
 using namespace Serialization;
 
-namespace {
-  uint8_t DIRENT_VERSION {1};
+uint8_t Filesystem::Dirent::encoding_version() const {
+  return 1;
 }
 
-size_t Filesystem::Dirent::encoded_length() const {
-  size_t length = internal_encoded_length();
-  return 1 + Serialization::encoded_length_vi32(length) + length;
+size_t Filesystem::Dirent::encoded_length_internal() const {
+  return 13 + encoded_length_vstr(name);
 }
-void Filesystem::Dirent::encode(uint8_t **bufp) const {
-  encode_i8(bufp, DIRENT_VERSION);
-  encode_vi32(bufp, internal_encoded_length());
+
+void Filesystem::Dirent::encode_internal(uint8_t **bufp) const {
   encode_vstr(bufp, name);
   encode_i64(bufp, length);
   encode_i32(bufp, last_modification_time);
   encode_bool(bufp, is_dir);
 }
 
-void Filesystem::Dirent::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t version = Serialization::decode_i8(bufp, remainp);
-  if (version != DIRENT_VERSION)
-    HT_THROWF(Error::PROTOCOL_ERROR,
-	      "Dirent parameters version mismatch, expected %d, got %d",
-	      (int)DIRENT_VERSION, (int)version);
-  uint32_t encoding_length = Serialization::decode_vi32(bufp, remainp);
-  const uint8_t *end = *bufp + encoding_length;
+void Filesystem::Dirent::decode_internal(uint8_t version, const uint8_t **bufp,
+					 size_t *remainp) {
   name = decode_vstr(bufp, remainp);
   length = decode_i64(bufp, remainp);
   last_modification_time = decode_i32(bufp, remainp);
   is_dir = decode_bool(bufp, remainp);
-  // If encoding is longer than we expect, that means we're decoding a newer
-  // version, so skip the newer portion that we don't know about
-  if (*bufp < end)
-    *bufp = end;
-}
-
-size_t Filesystem::Dirent::internal_encoded_length() const {
-  return 13 + encoded_length_vstr(name);
 }
 
 

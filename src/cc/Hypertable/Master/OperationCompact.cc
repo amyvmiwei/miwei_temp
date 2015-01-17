@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,23 +25,27 @@
  * for carrying out a manual compaction operation.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "DispatchHandlerOperationCompact.h"
 #include "OperationCompact.h"
 #include "Utility.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
+
+#include <Hyperspace/Session.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+
 #include <boost/algorithm/string.hpp>
 
+extern "C" {
 #include <poll.h>
+}
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -55,16 +59,9 @@ OperationCompact::OperationCompact(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_COMPACT) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
-  initialize_dependencies();
-}
-
-void OperationCompact::initialize_dependencies() {
-  boost::trim_if(m_name, boost::is_any_of("/ "));
-  if (!m_name.empty()) {
-    m_name = String("/") + m_name;
-    m_exclusivities.insert(m_name);
-  }
+  m_params.decode(&ptr, &remaining);
+  if (!m_params.table_name().empty())
+    m_exclusivities.insert(m_params.table_name());
   add_dependency(Dependency::INIT);
 }
 
@@ -76,22 +73,22 @@ void OperationCompact::execute() {
   int32_t state = get_state();
 
   HT_INFOF("Entering Compact-%lld (table=%s, row=%s) state=%s",
-           (Lld)header.id, m_name.c_str(), m_row.c_str(),
+           (Lld)header.id, m_params.table_name().c_str(), m_params.row().c_str(),
            OperationState::get_text(state));
 
   switch (state) {
 
   case OperationState::INITIAL:
-    if (!m_name.empty()) {
-      if (m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
+    if (!m_params.table_name().empty()) {
+      if (m_context->namemap->name_to_id(m_params.table_name(), m_id, &is_namespace)) {
         if (is_namespace) {
-          complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
+          complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_params.table_name().c_str()));
           return;
         }
         set_state(OperationState::SCAN_METADATA);
       }
       else {
-        complete_error(Error::TABLE_NOT_FOUND, m_name);
+        complete_error(Error::TABLE_NOT_FOUND, m_params.table_name());
         return;
       }
     }
@@ -104,8 +101,8 @@ void OperationCompact::execute() {
 
   case OperationState::SCAN_METADATA:
     servers.clear();
-    if (!m_name.empty())
-      Utility::get_table_server_set(m_context, m_id, m_row, servers);
+    if (!m_params.table_name().empty())
+      Utility::get_table_server_set(m_context, m_id, m_params.row(), servers);
     else
       m_context->get_available_servers(servers);
     {
@@ -120,13 +117,13 @@ void OperationCompact::execute() {
       }
       m_state = OperationState::ISSUE_REQUESTS;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     return;
 
   case OperationState::ISSUE_REQUESTS:
     table.id = m_id.c_str();
     table.generation = 0;
-    op_handler = new DispatchHandlerOperationCompact(m_context, table, m_row, m_flags);
+    op_handler = new DispatchHandlerOperationCompact(m_context, table, m_params.row(), m_params.range_types());
     op_handler->start(m_servers);
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;
@@ -151,7 +148,7 @@ void OperationCompact::execute() {
       }
       // Sleep a little bit to prevent busy wait
       poll(0, 0, 5000);
-      m_context->mml_writer->record_state(this);
+      m_context->mml_writer->record_state(shared_from_this());
       return;
     }
     complete_ok();
@@ -162,26 +159,23 @@ void OperationCompact::execute() {
   }
 
   HT_INFOF("Leaving Compact-%lld (table=%s, row=%s) state=%s",
-           (Lld)header.id, m_name.c_str(), m_row.c_str(),
+           (Lld)header.id, m_params.table_name().c_str(), m_params.row().c_str(),
            OperationState::get_text(get_state()));
 }
 
 
 void OperationCompact::display_state(std::ostream &os) {
-  os << " name=" << m_name << " id=" << m_id << " " 
-     << " row=" << m_row << " flags=" 
-     << RangeServerProtocol::compact_flags_to_string(m_flags);
+  os << " name=" << m_params.table_name() << " id=" << m_id << " " 
+     << " row=" << m_params.row() << " flags=" 
+     << RangeServer::Protocol::compact_flags_to_string(m_params.range_types());
 }
 
-#define OPERATION_COMPACT_VERSION 2
-
-uint16_t OperationCompact::encoding_version() const {
-  return OPERATION_COMPACT_VERSION;
+uint8_t OperationCompact::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationCompact::encoded_state_length() const {
-  size_t length = Serialization::encoded_length_vstr(m_name) +
-    Serialization::encoded_length_vstr(m_row) + 4 +
+size_t OperationCompact::encoded_length_state() const {
+  size_t length = m_params.encoded_length() +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
   foreach_ht (const String &location, m_completed)
@@ -193,9 +187,7 @@ size_t OperationCompact::encoded_state_length() const {
 }
 
 void OperationCompact::encode_state(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, m_name);
-  Serialization::encode_vstr(bufp, m_row);
-  Serialization::encode_i32(bufp, m_flags);
+  m_params.encode(bufp);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
   foreach_ht (const String &location, m_completed)
@@ -205,23 +197,35 @@ void OperationCompact::encode_state(uint8_t **bufp) const {
     Serialization::encode_vstr(bufp, location);
 }
 
-void OperationCompact::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
+void OperationCompact::decode_state(uint8_t version, const uint8_t **bufp,
+                                    size_t *remainp) {
+  m_params.decode(bufp, remainp);
   m_id = Serialization::decode_vstr(bufp, remainp);
   size_t length = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<length; i++)
     m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
-  if (m_decode_version >= 2) {
+  length = Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<length; i++)
+    m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
+}
+
+void OperationCompact::decode_state_old(uint8_t version, const uint8_t **bufp,
+                                        size_t *remainp) {
+  {
+    string name = Serialization::decode_vstr(bufp, remainp);
+    string row  = Serialization::decode_vstr(bufp, remainp);
+    int32_t range_types = Serialization::decode_i32(bufp, remainp);
+    m_params = Lib::Master::Request::Parameters::Compact(name, row, range_types);
+  }
+  m_id = Serialization::decode_vstr(bufp, remainp);
+  size_t length = Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<length; i++)
+    m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
+  if (version >= 2) {
     length = Serialization::decode_i32(bufp, remainp);
     for (size_t i=0; i<length; i++)
       m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
   }
-}
-
-void OperationCompact::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_name = Serialization::decode_vstr(bufp, remainp);
-  m_row  = Serialization::decode_vstr(bufp, remainp);
-  m_flags = Serialization::decode_i32(bufp, remainp);
 }
 
 const String OperationCompact::name() {
@@ -229,6 +233,6 @@ const String OperationCompact::name() {
 }
 
 const String OperationCompact::label() {
-  return format("Compact table='%s' row='%s'", m_name.c_str(), m_row.c_str());
+  return format("Compact table='%s' row='%s'", m_params.table_name().c_str(), m_params.row().c_str());
 }
 

@@ -168,7 +168,7 @@ void ServerConnectionHandler::handle(EventPtr &event) {
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, event);
+        handler = new RequestHandlerStatus(m_comm, m_master.get(), event);
         break;
       case Protocol::COMMAND_SHUTDOWN:
         handler = new RequestHandlerShutdown(m_comm, m_master.get(),

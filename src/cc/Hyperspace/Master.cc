@@ -1190,6 +1190,11 @@ void Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
   m_keepalive_handler_ptr->shutdown();
 }
 
+void Master::status(ResponseCallbackStatus *cb) {
+  HT_INFO("status");
+  cb->response(0, "OK");
+}
+
 /*
  * lock
  */

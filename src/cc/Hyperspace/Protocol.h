@@ -213,7 +213,7 @@ namespace Hyperspace {
      * the pathname.  It first normalizes the pathname by adding a leading '/'
      * character if it does not already exist and stripping any trailing '/'
      * character.
-     * @param name Pathname
+     * @param path Pathname
      * @return %Comm header gid for <code>path</code>
      */
     static uint32_t filename_to_group(const std::string &path) {

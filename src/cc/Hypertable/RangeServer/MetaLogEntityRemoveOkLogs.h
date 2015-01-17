@@ -26,22 +26,20 @@
  * safely removed.
  */
 
-#ifndef HYPERTABLE_METALOGENTITYREMOVEOKLOGS_H
-#define HYPERTABLE_METALOGENTITYREMOVEOKLOGS_H
-
-#include "Common/StringExt.h"
-
-#include "Hypertable/Lib/MetaLogEntity.h"
-#include "Hypertable/Lib/RangeState.h"
-#include "Hypertable/Lib/Types.h"
+#ifndef Hypertable_RangeServer_MetaLogEntityRemoveOkLogs_h
+#define Hypertable_RangeServer_MetaLogEntityRemoveOkLogs_h
 
 #include "MetaLogEntityTypes.h"
 
+#include <Hypertable/Lib/MetaLogEntity.h>
+#include <Hypertable/Lib/RangeState.h>
+
+#include <Common/StringExt.h>
+
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
   /** %MetaLog entity to track transfer logs that can be safely removed
    */
@@ -91,30 +89,6 @@ namespace Hypertable {
       return m_decode_version;
     }
 
-    /** Gets serialized length
-     * @see encode() for serialization %format
-     * @return Serialized length
-     */
-    virtual size_t encoded_length() const;
-
-    /** Writes serialized encoding of entity.
-     * This method writes a serialized encoding of the entity state to the
-     * memory location pointed to by <code>*bufp</code>.  The encoding has the
-     * following format:
-     * <table style="font-family:monospace; ">
-     *   <tr>
-     *   <td>[4-bytes]</td>
-     *   <td>- Number of log pathnames to follow</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[variable]</td>
-     *   <td>- Sequence of log pathnames, each encoded as a vstr</td>
-     *   </tr>
-     * </table>
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     */
-    virtual void encode(uint8_t **bufp) const;
-
     /** Reads serialized encoding of the entity.
      * This method restores the state of the object by decoding a serialized
      * representation of the state from the memory location pointed to by
@@ -125,8 +99,8 @@ namespace Hypertable {
      * @param definition_version Version of DefinitionMaster
      * @see encode() for serialization format
      */    
-    virtual void decode(const uint8_t **bufp, size_t *remainp,
-                        uint16_t definition_version);
+    void decode(const uint8_t **bufp, size_t *remainp,
+                uint16_t definition_version) override;
 
     /** Returns the entity name ("Range")
      * @return %Entity name
@@ -141,6 +115,17 @@ namespace Hypertable {
 
   private:
 
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+                         size_t *remainp) override;
+
+    void decode_old(const uint8_t **bufp, size_t *remainp);
+
     /// Set of log pathnames that can be safely removed
     StringSet m_log_set;
 
@@ -150,10 +135,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to MetaLogEntityRemoveOkLogs
-  typedef intrusive_ptr<MetaLogEntityRemoveOkLogs> MetaLogEntityRemoveOkLogsPtr;
+  typedef std::shared_ptr<MetaLogEntityRemoveOkLogs> MetaLogEntityRemoveOkLogsPtr;
 
-  /* @}*/
+  /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_METALOGENTITYREMOVEOKLOGS_H
+#endif // Hypertable_RangeServer_MetaLogEntityRemoveOkLogs_h

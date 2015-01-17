@@ -25,22 +25,22 @@
  * for setting system state variables.
  */
 
-#ifndef HYPERTABLE_OPERATIONSETVARIABLES_H
-#define HYPERTABLE_OPERATIONSETVARIABLES_H
-
-#include "Common/StringExt.h"
-
-#include "Hypertable/Lib/SystemVariable.h"
+#ifndef Hypertable_Master_OperationSetState_h
+#define Hypertable_Master_OperationSetState_h
 
 #include "Operation.h"
 
+#include <Hypertable/Lib/Master/Request/Parameters/SetState.h>
+#include <Hypertable/Lib/SystemVariable.h>
+
+#include <Common/StringExt.h>
+
 namespace Hypertable {
 
-  /** @addtogroup Master
-   *  @{
-   */
+  /// @addtogroup Master
+  /// @{
 
-  /** Carries out a set variables operation */
+  /// Carries out a set variables operation
   class OperationSetState : public Operation {
   public:
 
@@ -48,7 +48,7 @@ namespace Hypertable {
      * This constructor is used to create a SetState operation that is the
      * result of an automated condition change.  Creating an object with
      * this constructor should be done after SystemState::auto_set() is
-     * called and returns <i>true</i>.
+     * called and returns <i>true</i>.  Sets exclusivity "SET VARIABLES".
      * @param context %Master context
      */
     OperationSetState(ContextPtr &context);
@@ -65,6 +65,7 @@ namespace Hypertable {
      * This constructor is used to create a SetState operation from a client
      * request event.  It decodes the request, which populates the #m_specs
      * vector, and then calls SystemState::admin_set() passing in #m_specs.
+     * Sets exclusivity "SET VARIABLES".
      * @param context %Master context
      * @param event Reference to event object
      */
@@ -117,10 +118,10 @@ namespace Hypertable {
      */
     virtual void display_state(std::ostream &os);
 
-    virtual uint16_t encoding_version() const;
+    uint8_t encoding_version_state() const override;
 
     /** Returns length of encoded state. */
-    virtual size_t encoded_state_length() const;
+    size_t encoded_length_state() const override;
 
     /** Encodes operation state.
      * This method encodes the operation state formatted as follows:
@@ -136,28 +137,17 @@ namespace Hypertable {
      * </pre>
      * @param bufp Address of destination buffer pointer (advanced by call)
      */
-    virtual void encode_state(uint8_t **bufp) const;
+    void encode_state(uint8_t **bufp) const override;
 
     /** Decodes operation state.
      * See encode_state() for format description.
+     * @param version Encoding version
      * @param bufp Address of destination buffer pointer (advanced by call)
      * @param remainp Address of integer holding amount of remaining buffer
      */
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
-    /** Decodes client request.
-     * This method decodes a client request of the following format:
-     * <pre>
-     *   Number of variable specs to follow
-     *   foreach variable spec {
-     *     variable code
-     *     variable value
-     *   }
-     * </pre>
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     * @param remainp Address of integer holding amount of remaining buffer
-     */
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
 
@@ -168,15 +158,18 @@ namespace Hypertable {
      */
     void initialize_dependencies();
 
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::SetState m_params;
+
     /// Generation number of system state variables (#m_specs)a
     uint64_t m_generation;
 
-    /// System state variables
+    /// Current system state variables
     std::vector<SystemVariable::Spec> m_specs;
   };
 
-  /* @}*/
+  /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONSETVARIABLES_H
+#endif // Hypertable_Master_OperationSetState_h

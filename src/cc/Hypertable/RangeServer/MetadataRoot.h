@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,16 +19,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METADATAROOT_H
-#define HYPERTABLE_METADATAROOT_H
-
-#include <vector>
-
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/TableScanner.h"
-#include "Hypertable/Lib/Types.h"
+#ifndef Hypertable_RangeServer_MetadataRoot_h
+#define Hypertable_RangeServer_MetadataRoot_h
 
 #include "Metadata.h"
+
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableScanner.h>
+
+#include <vector>
 
 namespace Hypertable {
   class MetadataRoot : public Metadata {
@@ -48,5 +47,5 @@ namespace Hypertable {
   };
 }
 
-#endif // HYPERTABLE_METADATAROOT_H
+#endif // Hypertable_RangeServer_MetadataRoot_h
 

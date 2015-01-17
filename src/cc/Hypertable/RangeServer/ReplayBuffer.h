@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc
  *
  * This file is part of Hypertable.
@@ -19,25 +19,32 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_REPLAYBUFFER_H
-#define HYPERTABLE_REPLAYBUFFER_H
+#ifndef Hypertable_RangeServer_ReplayBuffer_h
+#define Hypertable_RangeServer_ReplayBuffer_h
 
-#include <map>
-#include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
-#include "AsyncComm/Comm.h"
-
-#include "Hypertable/Lib/Types.h"
-#include "Hypertable/Lib/RangeRecoveryReceiverPlan.h"
 #include "RangeReplayBuffer.h"
 
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+#include <Hypertable/Lib/RangeServerRecovery/ReceiverPlan.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+
+#include <AsyncComm/Comm.h>
+
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+
+#include <map>
+
 namespace Hypertable {
+
+  using namespace Lib;
+  using namespace std;
 
   class ReplayBuffer : public ReferenceCount {
   public:
     ReplayBuffer(PropertiesPtr &props, Comm *comm,
-                 RangeRecoveryReceiverPlan &plan, const String &location,
-                 int plan_generation);
+                 const RangeServerRecovery::ReceiverPlan &plan, const String &location,
+                 int32_t plan_generation);
     
     void add(const TableIdentifier &table, SerializedKey &key,
              ByteString &value);
@@ -53,20 +60,20 @@ namespace Hypertable {
   private:
 
     Comm *m_comm;
-    RangeRecoveryReceiverPlan &m_plan;
+    const RangeServerRecovery::ReceiverPlan &m_plan;
     typedef map<QualifiedRangeSpec, RangeReplayBufferPtr> ReplayBufferMap;
     ReplayBufferMap m_buffer_map;
     String m_location;
-    int m_plan_generation;
-    size_t m_memory_used;
-    size_t m_flush_limit_aggregate;
-    size_t m_flush_limit_per_range;
-    int32_t m_timeout_ms;
-    uint32_t m_fragment;
+    int32_t m_plan_generation {};
+    size_t m_memory_used {};
+    size_t m_flush_limit_aggregate {};
+    size_t m_flush_limit_per_range {};
+    int32_t m_timeout_ms {};
+    uint32_t m_fragment {};
   };
 
   typedef intrusive_ptr<ReplayBuffer> ReplayBufferPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_REPLAYBUFFER_H
+#endif // Hypertable_RangeServer_ReplayBuffer_h

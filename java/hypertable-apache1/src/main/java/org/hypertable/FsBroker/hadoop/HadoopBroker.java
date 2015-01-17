@@ -46,14 +46,15 @@ import org.hypertable.Common.Filesystem;
 import org.hypertable.FsBroker.Lib.Broker;
 import org.hypertable.FsBroker.Lib.OpenFileData;
 import org.hypertable.FsBroker.Lib.OpenFileMap;
+import org.hypertable.FsBroker.Lib.ResponseCallbackAppend;
 import org.hypertable.FsBroker.Lib.ResponseCallbackCreate;
 import org.hypertable.FsBroker.Lib.ResponseCallbackExists;
 import org.hypertable.FsBroker.Lib.ResponseCallbackLength;
 import org.hypertable.FsBroker.Lib.ResponseCallbackOpen;
 import org.hypertable.FsBroker.Lib.ResponseCallbackPositionRead;
-import org.hypertable.FsBroker.Lib.ResponseCallbackReaddir;
 import org.hypertable.FsBroker.Lib.ResponseCallbackRead;
-import org.hypertable.FsBroker.Lib.ResponseCallbackAppend;
+import org.hypertable.FsBroker.Lib.ResponseCallbackReaddir;
+import org.hypertable.FsBroker.Lib.ResponseCallbackStatus;
 
 import org.apache.hadoop.fs.FileStatus;
 
@@ -944,6 +945,12 @@ public class HadoopBroker implements Broker {
             return;
         }
         cb.response_ok();
+    }
+
+    public void Status(ResponseCallbackStatus cb) {
+      int error = cb.response(0, "OK");
+      if (error != 0)
+        log.severe("Problem sending status response - " + Error.GetText(error));
     }
 
     /**

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
 
 #include "MetaLogDefinitionRangeServer.h"
 
@@ -26,29 +27,32 @@
 #include "MetaLogEntityRemoveOkLogs.h"
 #include "MetaLogEntityTaskAcknowledgeRelinquish.h"
 
+#include <memory>
+
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
+using namespace std;
 
 uint16_t DefinitionRangeServer::version() {
-  return 2;
+  return 3;
 }
 
 const char *DefinitionRangeServer::name() {
   return "rsml";
 }
 
-Entity *DefinitionRangeServer::create(const EntityHeader &header) {
+EntityPtr DefinitionRangeServer::create(const EntityHeader &header) {
 
   if (header.type == EntityType::RANGE)
-    return new MetaLogEntityRange(header);
+    return make_shared<MetaLogEntityRange>(header);
   else if (header.type == EntityType::RANGE2)
-    return new MetaLogEntityRange(header);
+    return make_shared<MetaLogEntityRange>(header);
   else if (header.type == EntityType::TASK_REMOVE_TRANSFER_LOG)
-    return 0;  // no longer used
+    return EntityPtr();  // no longer used
   else if (header.type == EntityType::TASK_ACKNOWLEDGE_RELINQUISH)
-    return new EntityTaskAcknowledgeRelinquish(header);
+    return make_shared<EntityTaskAcknowledgeRelinquish>(header);
   else if (header.type == EntityType::REMOVE_OK_LOGS)
-    return new MetaLogEntityRemoveOkLogs(header);
+    return make_shared<MetaLogEntityRemoveOkLogs>(header);
 
   HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE,
             "Unrecognized type (%d) encountered in rsml",

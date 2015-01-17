@@ -32,6 +32,8 @@
 #include <Hypertable/Master/Utility.h>
 
 #include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Hyperspace/Session.h>
 
@@ -47,24 +49,23 @@
 
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace std;
 
 OperationCreateTable::OperationCreateTable(ContextPtr &context,
                                            const String &name,
                                            const String &schema,
                                            TableParts parts)
   : Operation(context, MetaLog::EntityType::OPERATION_CREATE_TABLE),
-    m_name(name), m_schema(schema), m_parts(parts) {
-  Utility::canonicalize_pathname(m_name);
+    m_params(name, schema), m_parts(parts) {
 }
 
 OperationCreateTable::OperationCreateTable(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_CREATE_TABLE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
-  Utility::canonicalize_pathname(m_name);
-  m_exclusivities.insert(m_name);
-  if (!boost::algorithm::starts_with(m_name, "/sys/"))
+  m_params.decode(&ptr, &remaining);
+  m_exclusivities.insert(m_params.name());
+  if (!boost::algorithm::starts_with(m_params.name(), "/sys/"))
     m_dependencies.insert(Dependency::INIT);
   m_dependencies.insert(Dependency::METADATA);
   m_dependencies.insert(Dependency::SYSTEM);
@@ -77,7 +78,7 @@ void OperationCreateTable::execute() {
   bool is_namespace; 
 
   HT_INFOF("Entering CreateTable-%lld(%s, location=%s, parts=%s) state=%s",
-           (Lld)header.id, m_name.c_str(), m_location.c_str(), 
+           (Lld)header.id, m_params.name().c_str(), m_location.c_str(), 
            m_parts.to_string().c_str(), OperationState::get_text(state));
 
   // If skipping primary table creation, jumpt to create index
@@ -88,12 +89,12 @@ void OperationCreateTable::execute() {
 
   case OperationState::INITIAL:
     // Check to see if namespace exists
-    if (m_context->namemap->exists_mapping(m_name, &is_namespace))
+    if (m_context->namemap->exists_mapping(m_params.name(), &is_namespace))
       complete_error(Error::NAME_ALREADY_IN_USE, "");
 
     // Update table/schema generation number
     {
-      SchemaPtr schema = Schema::new_instance(m_schema);
+      SchemaPtr schema = Schema::new_instance(m_params.schema());
       int64_t generation = get_ts64();
       schema->update_generation(generation);
       m_schema = schema->render_xml(true);
@@ -101,13 +102,13 @@ void OperationCreateTable::execute() {
     }
 
     set_state(OperationState::ASSIGN_ID);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("create-table-INITIAL");
     break;
 
   case OperationState::ASSIGN_ID:
     try {
-      Utility::create_table_in_hyperspace(m_context, m_name, m_schema, 
+      Utility::create_table_in_hyperspace(m_context, m_params.name(), m_schema, 
               &m_table);
     }
     catch (Exception &e) {
@@ -139,17 +140,15 @@ void OperationCreateTable::execute() {
   case OperationState::CREATE_INDEX:
 
     if (m_parts.value_index()) {
-      Operation *op = 0;
       try {
         String index_name;
         String index_schema;
 
-        HT_INFOF("  creating index for table %s", m_name.c_str()); 
-        Utility::prepare_index(m_context, m_name, m_schema, 
-                        false, index_name, index_schema);
-        op = new OperationCreateTable(m_context, index_name, index_schema,
-                                      TableParts(TableParts::PRIMARY));
-        stage_subop(op);
+        HT_INFOF("  creating index for table %s", m_params.name().c_str()); 
+        Utility::prepare_index(m_context, m_params.name(), m_params.schema(),
+                               false, index_name, index_schema);
+        stage_subop(make_shared<OperationCreateTable>(m_context, index_name, index_schema,
+                                                      TableParts(TableParts::PRIMARY)));
       }
       catch (Exception &e) {
         if (e.code() == Error::INDUCED_FAILURE)
@@ -180,14 +179,12 @@ void OperationCreateTable::execute() {
       try {
         String index_name;
         String index_schema;
-        Operation *op = 0;
 
-        HT_INFOF("  creating qualifier index for table %s", m_name.c_str()); 
-        Utility::prepare_index(m_context, m_name, m_schema, 
+        HT_INFOF("  creating qualifier index for table %s", m_params.name().c_str()); 
+        Utility::prepare_index(m_context, m_params.name(), m_params.schema(),
                         true, index_name, index_schema);
-        op = new OperationCreateTable(m_context, index_name, index_schema,
-                                      TableParts(TableParts::PRIMARY));
-        stage_subop(op);
+        stage_subop(make_shared<OperationCreateTable>(m_context, index_name, index_schema,
+                                                      TableParts(TableParts::PRIMARY)));
       }
       catch (Exception &e) {
         if (e.code() == Error::INDUCED_FAILURE)
@@ -253,7 +250,7 @@ void OperationCreateTable::execute() {
       m_obstructions.insert(String("OperationMove ") + range_name);
       m_state = OperationState::LOAD_RANGE;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("create-table-ASSIGN_LOCATION");
     break;
 
@@ -272,7 +269,7 @@ void OperationCreateTable::execute() {
     }
     HT_MAYBE_FAIL("create-table-LOAD_RANGE-a");
     set_state(OperationState::ACKNOWLEDGE);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("create-table-LOAD_RANGE-b");
 
   case OperationState::ACKNOWLEDGE:
@@ -307,9 +304,11 @@ void OperationCreateTable::execute() {
     {
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
       m_context->hyperspace->attr_set(tablefile, "x", "", 0);
+      HT_MAYBE_FAIL("create-table-FINALIZE");
+      MetaLog::EntityPtr bpa_entity;
+      m_context->get_balance_plan_authority(bpa_entity);
+      complete_ok(bpa_entity);
     }
-    HT_MAYBE_FAIL("create-table-FINALIZE");
-    complete_ok(m_context->get_balance_plan_authority());
     break;
 
   default:
@@ -317,7 +316,7 @@ void OperationCreateTable::execute() {
   }
 
   HT_INFOF("Leaving CreateTable-%lld(%s, id=%s, generation=%u) state=%s",
-           (Lld)header.id, m_name.c_str(), m_table.id ? m_table.id : "",
+           (Lld)header.id, m_params.name().c_str(), m_table.id ? m_table.id : "",
            (unsigned)m_table.generation,
            OperationState::get_text(get_state()));
 
@@ -325,45 +324,51 @@ void OperationCreateTable::execute() {
 
 
 void OperationCreateTable::display_state(std::ostream &os) {
-  os << " name=" << m_name << " ";
+  os << " name=" << m_params.name() << " ";
   if (m_table.id)
     os << m_table << " ";
   os << " location=" << m_location << " ";
 }
 
-#define OPERATION_CREATE_TABLE_VERSION 2
-
-uint16_t OperationCreateTable::encoding_version() const {
-  return OPERATION_CREATE_TABLE_VERSION;
+uint8_t OperationCreateTable::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationCreateTable::encoded_state_length() const {
-  return Serialization::encoded_length_vstr(m_name) +
+size_t OperationCreateTable::encoded_length_state() const {
+  return m_params.encoded_length() + m_table.encoded_length() +
     Serialization::encoded_length_vstr(m_schema) +
-    m_table.encoded_length() +
     Serialization::encoded_length_vstr(m_location) +
     m_parts.encoded_length();
 }
 
 void OperationCreateTable::encode_state(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, m_name);
-  Serialization::encode_vstr(bufp, m_schema);
+  m_params.encode(bufp);
   m_table.encode(bufp);
+  Serialization::encode_vstr(bufp, m_schema);
   Serialization::encode_vstr(bufp, m_location);
   m_parts.encode(bufp);
 }
 
-void OperationCreateTable::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
+void OperationCreateTable::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  m_params.decode(bufp, remainp);
   m_table.decode(bufp, remainp);
+  m_schema = Serialization::decode_vstr(bufp, remainp);
   m_location = Serialization::decode_vstr(bufp, remainp);
-  if (m_decode_version >= 2)
-    m_parts.decode(bufp, remainp);
+  m_parts.decode(bufp, remainp);
 }
 
-void OperationCreateTable::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_name = Serialization::decode_vstr(bufp, remainp);
-  m_schema = Serialization::decode_vstr(bufp, remainp);
+void OperationCreateTable::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  {
+    string name = Serialization::decode_vstr(bufp, remainp);
+    m_schema = Serialization::decode_vstr(bufp, remainp);
+    m_params = Lib::Master::Request::Parameters::CreateTable(name, m_schema);
+  }
+  legacy_decode(bufp, remainp, &m_table);
+  m_location = Serialization::decode_vstr(bufp, remainp);
+  if (version >= 2) {
+    int8_t parts = (int8_t)Serialization::decode_byte(bufp, remainp);
+    m_parts = TableParts(parts);
+  }
 }
 
 const String OperationCreateTable::name() {
@@ -371,5 +376,5 @@ const String OperationCreateTable::name() {
 }
 
 const String OperationCreateTable::label() {
-  return String("CreateTable ") + m_name;
+  return String("CreateTable ") + m_params.name();
 }

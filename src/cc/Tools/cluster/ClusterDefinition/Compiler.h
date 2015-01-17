@@ -119,7 +119,7 @@ namespace Hypertable {
       /// <td><code> &lt;function&gt; </code></td>
       /// <td> Executes <code>&lt;function&gt;</code> which is one of the task
       /// functions or or a built-in function (<code>show_variables</code>
-      /// or <code>with</code>)</code> </td>
+      /// or <code>with</code>) </td>
       /// </tr>
       /// </table>
       /// A comment header is written to the output script that looks something

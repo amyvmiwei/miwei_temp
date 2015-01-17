@@ -19,36 +19,43 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-
-#include <cmath>
-
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/Serialization.h"
-#include "Common/StringExt.h"
-#include "Common/Time.h"
-#include "Common/md5.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Hypertable/Lib/RangeServerClient.h"
-
-#include <boost/algorithm/string.hpp>
+#include <Common/Compat.h>
 
 #include "RangeServerHyperspaceCallback.h"
 #include "LoadBalancer.h"
 #include "OperationRegisterServer.h"
 #include "OperationProcessor.h"
 
+#include <Hypertable/Lib/RangeServer/Client.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
+#include <Hypertable/Lib/Master/Response/Parameters/RegisterServer.h>
+
+#include <Hyperspace/Session.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+#include <Common/Time.h>
+#include <Common/md5.h>
+
+#include <boost/algorithm/string.hpp>
+
+#include <cmath>
+
 using namespace Hypertable;
+using namespace Hypertable::Lib;
+using namespace std;
 
 OperationRegisterServer::OperationRegisterServer(ContextPtr &context,
                                                  EventPtr &event)
-  : OperationEphemeral(context, event, MetaLog::EntityType::OPERATION_REGISTER_SERVER) {
+  : OperationEphemeral(context, event,
+                       MetaLog::EntityType::OPERATION_REGISTER_SERVER) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
+  m_params.decode(&ptr, &remaining);
+
+  m_location = m_params.location();
 
   if (!m_location.empty()) {
     add_exclusivity(String("RegisterServer ") + m_location);
@@ -56,7 +63,8 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context,
   }
 
   m_local_addr = InetAddr(event->addr);
-  m_public_addr = InetAddr(m_system_stats.net_info.primary_addr, m_listen_port);
+  m_public_addr = InetAddr(m_params.system_stats().net_info.primary_addr,
+                           m_params.listen_port());
   m_received_ts = get_ts64();
 }
 
@@ -69,7 +77,7 @@ void OperationRegisterServer::execute() {
   bool newly_created = false;
 
   if (m_location == "") {
-    if (!m_context->rsc_manager->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
+    if (!m_context->rsc_manager->find_server_by_hostname(m_params.system_stats().net_info.host_name, m_rsc))
       m_context->rsc_manager->find_server_by_public_addr(m_public_addr, m_rsc);
     if (m_rsc)
       m_location = m_rsc->location();
@@ -85,16 +93,17 @@ void OperationRegisterServer::execute() {
     if (m_rsc->get_removed()) {
       String errstr = format("Detected RangeServer marked removed while"
                              "registering server %s(%s), as location %s",
-                             m_system_stats.net_info.host_name.c_str(),
+                             m_params.system_stats().net_info.host_name.c_str(),
                              m_public_addr.format().c_str(),
                              m_location.c_str());
       complete_error(Error::MASTER_RANGESERVER_IN_RECOVERY, errstr);
       HT_ERROR_OUT << errstr << HT_END;
       CommHeader header;
       header.initialize_from_request_header(m_event->header);
-      header.command = RangeServerProtocol::COMMAND_INITIALIZE;
+      header.command = Lib::RangeServer::Protocol::COMMAND_INITIALIZE;
       m_context->system_state->get(specs, &generation);
-      CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
+      CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
+                                                                 specs)));
       encode_response(generation, specs, cbp->get_data_ptr_address());
 
       int error = m_context->comm->send_response(m_event->addr, cbp);
@@ -106,7 +115,7 @@ void OperationRegisterServer::execute() {
   }
 
   if (m_location == "") {
-    uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle,
+    uint64_t id =m_context->hyperspace->attr_incr(m_context->master_file_handle,
                                                    "next_server_id");
     if (m_context->location_hash.empty())
       m_location = format("rs%llu", (Llu)id);
@@ -126,16 +135,15 @@ void OperationRegisterServer::execute() {
   }
 
   if (!m_rsc)
-    m_rsc = new RangeServerConnection(m_location,
-                                      m_system_stats.net_info.host_name,
-                                      m_public_addr);
+    m_rsc = make_shared<RangeServerConnection>(m_location, m_params.system_stats().net_info.host_name, m_public_addr);
 
   if (!m_rsc->get_hyperspace_handle(&handle, &hyperspace_callback)) {
     String fname = m_context->toplevel_dir + "/servers/" + m_location;
     hyperspace_callback
       = new RangeServerHyperspaceCallback(m_context, m_rsc);
     Hyperspace::HandleCallbackPtr cb(hyperspace_callback);
-    handle = m_context->hyperspace->open(fname, Hyperspace::OPEN_FLAG_READ|Hyperspace::OPEN_FLAG_CREATE, cb);
+    handle = m_context->hyperspace->open(fname, Hyperspace::OPEN_FLAG_READ|
+                                         Hyperspace::OPEN_FLAG_CREATE, cb);
     HT_ASSERT(handle);
     m_rsc->set_hyperspace_handle(handle, hyperspace_callback);
   }
@@ -145,9 +153,10 @@ void OperationRegisterServer::execute() {
                    format("%s already connected", m_location.c_str()));
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
-    header.command = RangeServerProtocol::COMMAND_INITIALIZE;
+    header.command = Lib::RangeServer::Protocol::COMMAND_INITIALIZE;
     m_context->system_state->get(specs, &generation);
-    CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
+    CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
+                                                               specs)));
     encode_response(generation, specs, cbp->get_data_ptr_address());
     int error = m_context->comm->send_response(m_event->addr, cbp);
     if (error != Error::OK)
@@ -156,17 +165,17 @@ void OperationRegisterServer::execute() {
     return;
   }
 
-  int32_t difference = (int32_t)abs((m_received_ts - m_register_ts) / 1000LL);
+  int32_t difference = (int32_t)abs((m_received_ts - m_params.now()) / 1000LL);
   if (difference > (3000000 + m_context->max_allowable_skew)) {
     String errstr = format("Detected clock skew while registering server "
             "%s (%s), as location %s register_ts=%llu, received_ts=%llu, "
             "difference=%d > allowable skew %d", 
-            m_system_stats.net_info.host_name.c_str(), 
+            m_params.system_stats().net_info.host_name.c_str(), 
             m_public_addr.format().c_str(), m_location.c_str(), 
-            (Llu)m_register_ts, (Llu)m_received_ts, difference, 
+            (Llu)m_params.now(), (Llu)m_received_ts, difference, 
             m_context->max_allowable_skew);
     String subject = format("Clock skew detected while registering %s (%s)",
-                            m_system_stats.net_info.host_name.c_str(),
+                            m_params.system_stats().net_info.host_name.c_str(),
                             m_location.c_str());
     m_context->notification_hook(subject, errstr);
     complete_error(Error::RANGESERVER_CLOCK_SKEW, errstr);
@@ -174,9 +183,10 @@ void OperationRegisterServer::execute() {
     // clock skew detected by master
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
-    header.command = RangeServerProtocol::COMMAND_INITIALIZE;
+    header.command = Lib::RangeServer::Protocol::COMMAND_INITIALIZE;
     m_context->system_state->get(specs, &generation);
-    CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
+    CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
+                                                               specs)));
 
     encode_response(generation, specs, cbp->get_data_ptr_address());
     int error = m_context->comm->send_response(m_event->addr, cbp);
@@ -193,19 +203,19 @@ void OperationRegisterServer::execute() {
     return;
   }
   else {
-    m_context->monitoring->add_server(m_location, m_system_stats);
+    m_context->monitoring->add_server(m_location, m_params.system_stats());
     String message = format("Registering server %s\nhost = %s\n"
                             "public addr = %s\nlocal addr = %s\n",
                             m_rsc->location().c_str(),
-                            m_system_stats.net_info.host_name.c_str(),
+                            m_params.system_stats().net_info.host_name.c_str(),
                             m_public_addr.format().c_str(),
                             m_local_addr.format().c_str());
 
     if (newly_created) {
-      String subject = format("Registering server %s - %s (%s)",
-                              m_location.c_str(),
-                              m_system_stats.net_info.host_name.c_str(),
-                              m_public_addr.format().c_str());
+      String subject
+        = format("Registering server %s - %s (%s)", m_location.c_str(),
+                 m_params.system_stats().net_info.host_name.c_str(),
+                 m_public_addr.format().c_str());
       m_context->notification_hook(subject, message);
     }
     boost::replace_all(message, "\n", " ");
@@ -215,9 +225,10 @@ void OperationRegisterServer::execute() {
     {
       CommHeader header;
       header.initialize_from_request_header(m_event->header);
-      header.command = RangeServerProtocol::COMMAND_INITIALIZE;
+      header.command = Lib::RangeServer::Protocol::COMMAND_INITIALIZE;
       m_context->system_state->get(specs, &generation);
-      CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
+      CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
+                                                                 specs)));
       encode_response(generation, specs, cbp->get_data_ptr_address());
       int error = m_context->comm->send_response(m_event->addr, cbp);
       if (error != Error::OK)
@@ -227,7 +238,7 @@ void OperationRegisterServer::execute() {
   }
 
   // Wait for server to acquire lock on Hyperspace file
-  if (!m_lock_held) {
+  if (!m_params.lock_held()) {
     boost::xtime deadline;
     boost::xtime_get(&deadline, boost::TIME_UTC_);
     deadline.sec += 120;
@@ -236,7 +247,7 @@ void OperationRegisterServer::execute() {
                                         "lock on Hyperspace file",
                                         m_location.c_str());
       HT_WARNF("%s, sending shutdown request...", notification_body.c_str());
-      RangeServerClient rsclient(m_context->comm);
+      RangeServer::Client rsclient(m_context->comm);
       try {
         rsclient.shutdown(m_event->addr);
         m_context->rsc_manager->disconnect_server(m_rsc);
@@ -252,7 +263,7 @@ void OperationRegisterServer::execute() {
         format("Server registration error for %s (%s)", m_location.c_str(),
                m_rsc->hostname().c_str());
       m_context->notification_hook(notification_subject, notification_body);
-      OperationPtr operation = new OperationRecover(m_context, m_rsc);
+      OperationPtr operation = make_shared<OperationRecover>(m_context, m_rsc);
       try {
         m_context->op->add_operation(operation);
       }
@@ -264,28 +275,24 @@ void OperationRegisterServer::execute() {
     }
   }
 
-  OperationPtr operation;
-
   // At this point, any pending Recover operations should be irrelevant
-  operation = m_context->op->remove_operation( md5_hash("OperationRecover") ^
-                                               md5_hash(m_location.c_str()) );
+  OperationPtr operation(m_context->op->remove_operation(md5_hash("OperationRecover") ^ md5_hash(m_location.c_str())));
   if (operation)
     operation->complete_ok();
 
-  m_context->rsc_manager->connect_server(m_rsc, m_system_stats.net_info.host_name,
-                                         m_local_addr, m_public_addr);
+  m_context->rsc_manager->connect_server(m_rsc, m_params.system_stats().net_info.host_name, m_local_addr, m_public_addr);
 
   m_context->add_available_server(m_location);
 
   // Prevent subsequent registration until lock is released
-  operation =
-    new OperationRegisterServerBlocker(m_context, m_rsc->location());
+  operation = make_shared<OperationRegisterServerBlocker>(m_context,
+                                                          m_rsc->location());
   m_context->op->add_operation(operation);
 
   if (!m_rsc->get_balanced())
     m_context->balancer->signal_new_server();
 
-  m_context->mml_writer->record_state(m_rsc.get());
+  m_context->mml_writer->record_state(m_rsc);
 
   complete_ok();
   m_context->op->unblock(m_location);
@@ -296,18 +303,11 @@ void OperationRegisterServer::execute() {
 }
 
 void OperationRegisterServer::display_state(std::ostream &os) {
-  os << " location=" << m_location << " host=" << m_system_stats.net_info.host_name;
-  os << " register_ts=" << m_register_ts;
+  os << " location=" << m_location << " host="
+     << m_params.system_stats().net_info.host_name;
+  os << " register_ts=" << m_params.now();
   os << " local_addr=" << m_rsc->local_addr().format();
   os << " public_addr=" << m_rsc->public_addr().format() << " ";
-}
-
-void OperationRegisterServer::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_location = Serialization::decode_vstr(bufp, remainp);
-  m_listen_port = Serialization::decode_i16(bufp, remainp);
-  m_lock_held = Serialization::decode_bool(bufp, remainp);
-  m_system_stats.decode(bufp, remainp);
-  m_register_ts = Serialization::decode_i64(bufp, remainp);
 }
 
 const String OperationRegisterServer::name() {
@@ -322,8 +322,8 @@ size_t OperationRegisterServer::encoded_response_length(uint64_t generation,
                              std::vector<SystemVariable::Spec> &specs) const {
   size_t length = 4;
   if (m_error == Error::OK) {
-    length += Serialization::encoded_length_vstr(m_location);
-    length += 8 + SystemVariable::encoded_length_specs(specs);
+    Master::Response::Parameters::RegisterServer params(m_location, generation, specs);
+    length += params.encoded_length();
   }
   else
     length += Serialization::encoded_length_str16(m_error_msg);
@@ -335,9 +335,8 @@ void OperationRegisterServer::encode_response(uint64_t generation,
                                               uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_error);
   if (m_error == Error::OK) {
-    Serialization::encode_vstr(bufp, m_location);
-    Serialization::encode_i64(bufp, generation);
-    SystemVariable::encode_specs(specs, bufp);
+    Master::Response::Parameters::RegisterServer params(m_location, generation, specs);
+    params.encode(bufp);
   }
   else
     Serialization::encode_str16(bufp, m_error_msg);

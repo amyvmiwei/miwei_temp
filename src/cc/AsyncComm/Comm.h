@@ -206,8 +206,8 @@ namespace Hypertable {
      * to see if the proxy name has been registered and represents a valid
      * mapping.
      * @param proxy Proxy name to translate
-     * @param proxy Address of object to hold translated address
-     * @param <i>true</i> if address was translated or could be translated,
+     * @param addr Address of object to hold translated address
+     * @return <i>true</i> if address was translated or could be translated,
      * <i>false</i> otherwise
      */
     bool translate_proxy(const String &proxy, InetAddr *addr);

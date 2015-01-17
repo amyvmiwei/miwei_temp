@@ -64,9 +64,9 @@ namespace Hypertable {
     /// Initializes #m_commit_interval to value of
     /// <code>Hypertable.RangeServer.CommitInterval</code> property.
     /// @param range_server Pointer to RangeServer object
-    GroupCommit(RangeServer *range_server);
+    GroupCommit(Apps::RangeServer *range_server);
     virtual void add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
-                     const TableIdentifier *table, uint32_t count,
+                     const TableIdentifier &table, uint32_t count,
                      StaticBuffer &buffer, uint32_t flags);
     virtual void trigger();
 
@@ -74,7 +74,7 @@ namespace Hypertable {
     /// %Mutex to serialize concurrent access
     Mutex m_mutex;
     /// Pointer to RangeServer
-    RangeServer  *m_range_server;
+    Apps::RangeServer  *m_range_server;
     /// Cached copy of <code>Hypertable.RangeServer.CommitInterval</code>
     /// property
     uint32_t m_commit_interval {};

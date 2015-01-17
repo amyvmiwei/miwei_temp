@@ -116,14 +116,14 @@ namespace Hypertable {
 
     /// Creates scanners on the active and immutable caches and adds them to a
     /// merge scanner.  If the active cache is not empty, a scanner is
-    /// created on it and added to <code>mscanner</code>.  If an immutable cache
+    /// created on it and added to <code>scanner</code>.  If an immutable cache
     /// is installed, a scanner is created on it and added to
-    /// <code>mscanner</code> as well.
-    /// @param mscanner Merge scanner to which immutable cache scanner should be
+    /// <code>scanner</code> as well.
+    /// @param scanner Merge scanner to which immutable cache scanner should be
     /// added
-    /// @param scan_ctx Scan context for initializing scanners
-    void add_scanners(MergeScannerAccessGroup *scanner
-                      , ScanContextPtr &scan_context);
+    /// @param scan_context Scan context for initializing scanners
+    void add_scanners(MergeScannerAccessGroup *scanner,
+                      ScanContextPtr &scan_context);
 
     /// Populates map of split row data.
     /// This method calls CellCache::split_row_estimate_data() on both the
@@ -170,14 +170,14 @@ namespace Hypertable {
     }
 
     /// Checks if active and immutable caches are empty.
-    /// @return <i>true<i> if active cache is empty and immutable cache is not
+    /// @return <i>true</i> if active cache is empty and immutable cache is not
     /// installed or is empty, <i>false</i> otherwise.
     bool empty() {
       return m_active_cache->empty() && immutable_cache_empty();
     }
 
     /// Checks if immutable cache is not installed or is empty.
-    /// @return <i>true<i> if immutable cache is not installed or is empty,
+    /// @return <i>true</i> if immutable cache is not installed or is empty,
     /// <i>false</i> otherwise.
     bool immutable_cache_empty() {
       return !m_immutable_cache || m_immutable_cache->empty();

@@ -156,10 +156,12 @@ void DefaultPolicy::init_options() {
         "Logging level: debug, info, notice, warn, error, crit, alert, fatal")
     ("config", str()->default_value(default_config), "Configuration file.\n")
     ("induce-failure", str(), "Arguments for inducing failure")
+    ("timeout,t", i32(), "System wide timeout in milliseconds")
     ;
   alias("logging-level", "Hypertable.Logging.Level");
   alias("verbose", "Hypertable.Verbose");
   alias("silent", "Hypertable.Silent");
+  alias("timeout", "Hypertable.Request.Timeout");
 
   // pre boost 1.35 doesn't support allow_unregistered, so we have to have the
   // full cfg definition here, which might not be a bad thing.

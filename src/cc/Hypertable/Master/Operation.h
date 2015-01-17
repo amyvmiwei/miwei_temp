@@ -104,16 +104,6 @@ namespace Hypertable {
     extern const char *RECOVERY;
   }
 
-  /// %Namespace operation flags
-  namespace NamespaceFlag {
-    /// Enumeration for namespace operation flags.
-    enum {
-      CREATE_INTERMEDIATE = 0x0001,
-      IF_EXISTS           = 0x0002,
-      IF_NOT_EXISTS       = 0x0004
-    };
-  }
-
   /// Set of dependency string
   typedef std::set<String> DependencySet;
 
@@ -136,7 +126,7 @@ namespace Hypertable {
   public:
 
     /** Constructor with operation type specifier.
-     * Initializes #m_state to OperationState::INITIAL, initializes
+     * Initializes state to OperationState::INITIAL, initializes
      * #m_expiration_time to number of milliseconds in the future as specified
      * by the <code>Hypertable.Request.Timeout</code> property, and initializes
      * #m_hash_code to the <i>id</i> field of MetaLog::Entity#header.
@@ -232,63 +222,8 @@ namespace Hypertable {
      */
     virtual bool exclusive() { return false; }
 
-    /** Decodes initial operation state from Event payload.
-     * Some operations can be created in response to request events sent to the
-     * master by clients.  For these types of operations, this method should be
-     * overridden to decode the initial operation state from the Event object
-     * created in response to a client request.  This method should be called
-     * with <code>bufp</code> initialized to Event::payload and
-     * <code>remainp</code> initialized from Event::payload_len.  The payload
-     * contains initial operation state (request parameters) to be used to
-     * initialize the operation.
-     * @param bufp Address of buffer pointer (initialized to Event payload)
-     * @param remainp Address of integer indicating how much buffer remains
-     */
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
-
-    /** Encoded length of operation state.
-     * @return Length of encoded operation state.
-     */
-    virtual size_t encoded_state_length() const = 0;
-
-    /** Encode operation state.
-     * This method is called by encode() to encode state that is specific
-     * to the operation.  The encoded state is written to the memory location
-     * pointed to by <code>*bufp</code>, which is modified to point to the
-     * first byte after the encoded state.
-     * @param bufp Address of pointer to destination buffer (modified by call)
-     */
-    virtual void encode_state(uint8_t **bufp) const = 0;
-
-    /** Decode operation state.
-     * This method is called by decode() to decode state that is specific
-     * to the operation.  The encoded state should start at the memory location
-     * pointed to by <code>*bufp</code>, and if successfully decoded, will be
-     * modified to point to the first byte past the encoded state.  The
-     * <code>remainp</code> parameter is a pointer to an integer holding the
-     * number of valid/readable bytes pointed to by <code>*bufp</code> and
-     * if decoding is sucessful, will be decremented by the length of the
-     * encoded state.
-     * @param bufp Address of pointer to destination buffer
-     * @param remainp Address of integer holding amount of remaining buffer
-     */
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) = 0;
-
-    /** Write human readable operation state to output stream.
-     * This method is called by display() to write a human readable string
-     * representation of the operation state to <code>os</code>
-     * @param os Output stream to which state string is to be written
-     */
-    virtual void display_state(std::ostream &os) = 0;
-
-    /** Returns version of encoding format.
-     * This is method returns the version of the encoding format.
-     * @return Version of encoding format.
-     */
-    virtual uint16_t encoding_version() const = 0;
-
     /// Length of encoded operation result.
-    /// This method returns the length of the encoded result.
+    /// This method returns the length of the encoded result
     /// @return length of encoded result
     /// @see encode_result() for encoding format.
     virtual size_t encoded_result_length() const;
@@ -319,49 +254,51 @@ namespace Hypertable {
     /// @see encode_result() for encoding format.
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
-    /** Length of encoded operation.
-     * Length of encoded operation.  See encode() for description of encoding
-     * format.
-     * @return length of encoded operation
+    /** Returns version of encoding format of state.
+     * This is method returns the version of the encoding format of the state.
+     * @return Version of encoding format of state.
      */
-    virtual size_t encoded_length() const;
+    virtual uint8_t encoding_version_state() const = 0;
 
-    /** Encode operation.
-     * Encodes operation in the following format:
-     * <table>
-     *   <tr><th> Encoding </th><th> Description </th></tr>
-     *   <tr><td> i16 </td><td> Encoding version </td></tr>
-     *   <tr><td> i32 </td><td> State code </td></tr>
-     *   <tr><td> i64 </td><td> Expiration time seconds </td></tr>
-     *   <tr><td> i32 </td><td> Expiration time nanoseconds </td></tr>
-     *   <tr><td> i16 </td><td> Remove approvals </td></tr>
-     *   <tr><td> i16 </td><td> Remove approval mask </td></tr>
-     * </table>
-     * If state is COMPLETE, the rest of the operation is encoded as
-     * follows:
-     * <table>
-     *   <tr><th> Encoding </th><th> Description </th></tr>
-     *   <tr><td> i64 </td><td> Hash code returned by hash_code() </td></tr>
-     *   <tr><td> variable </td><td> %Result encoded with encode_result() </td></tr>
-     * </table>
-     * Otherwise, if state is not COMPLETE, the rest of the operation is
-     * encoded as follows:
-     * <table>
-     *   <tr><th> Encoding </th><th> Description </th></tr>
-     *   <tr><td> variable </td><td> State encoded with encode_state() </td></tr>
-     *   <tr><td> i32 </td><td> Exclusivity count </td></tr>
-     *   <tr><td> vstr list </td><td> Exclusivity strings </td></tr>
-     *   <tr><td> i32 </td><td> %Dependency count </td></tr>
-     *   <tr><td> vstr list </td><td> %Dependency strings </td></tr>
-     *   <tr><td> i32 </td><td> Obstruction count </td></tr>
-     *   <tr><td> vstr list </td><td> Obstruction strings </td></tr>
-     *   <tr><td> i32 </td><td> Permanent obstruction count </td></tr>
-     *   <tr><td> vstr list </td><td> Permanent obstruction strings </td></tr>
-     *   <tr><td> i32 </td><td> Sub operation count </td></tr>
-     *   <tr><td> i64 list </td><td> Sub operation IDs </td></tr>
-     * </table>
+    /** Encoded length of operation state.
+     * @return Length of encoded operation state.
      */
-    virtual void encode(uint8_t **bufp) const;
+    virtual size_t encoded_length_state() const = 0;
+
+    /** Encode operation state.
+     * This method is called by encode() to encode state that is specific
+     * to the operation.  The encoded state is written to the memory location
+     * pointed to by <code>*bufp</code>, which is modified to point to the
+     * first byte after the encoded state.
+     * @param bufp Address of pointer to destination buffer (modified by call)
+     */
+    virtual void encode_state(uint8_t **bufp) const = 0;
+
+    /** Decode operation state.
+     * This method is called by decode() to decode state that is specific
+     * to the operation.  The encoded state should start at the memory location
+     * pointed to by <code>*bufp</code>, and if successfully decoded, will be
+     * modified to point to the first byte past the encoded state.  The
+     * <code>remainp</code> parameter is a pointer to an integer holding the
+     * number of valid/readable bytes pointed to by <code>*bufp</code> and
+     * if decoding is sucessful, will be decremented by the length of the
+     * encoded state.
+     * @param version Encoding version
+     * @param bufp Address of pointer to destination buffer
+     * @param remainp Address of integer holding amount of remaining buffer
+     */
+    virtual void decode_state(uint8_t version, const uint8_t **bufp,
+                              size_t *remainp) = 0;
+
+    virtual void decode_state_old(uint8_t version, const uint8_t **bufp,
+                                  size_t *remainp) = 0;
+
+    /** Write human readable operation state to output stream.
+     * This method is called by display() to write a human readable string
+     * representation of the operation state to <code>os</code>
+     * @param os Output stream to which state string is to be written
+     */
+    virtual void display_state(std::ostream &os) = 0;
 
     /** Decode operation.
      * Decodes operation.  See encode() for description of encoding format.
@@ -457,13 +394,13 @@ namespace Hypertable {
     /// array is modified to hold the sub operation IDs that were not removed by
     /// this function.
     /// @param additional Additional entities to be recorded in MML
-    void record_state(std::vector<MetaLog::Entity *> &additional);
+    void record_state(std::vector<MetaLog::EntityPtr> &additional);
 
     /// Records operation state to the MML.
     /// This member function creates an empty entity vector and passes it into a
     /// chained call to record_state().
     void record_state() {
-      std::vector<MetaLog::Entity *> additional;
+      std::vector<MetaLog::EntityPtr> additional;
       record_state(additional);
     }
 
@@ -480,7 +417,7 @@ namespace Hypertable {
     /// @param error %Error code of operation result
     /// @param msg %Error message of operation result
     /// @param additional Vector of additional entities to persist to MML
-    void complete_error(int error, const String &msg, std::vector<MetaLog::Entity *> &additional);
+    void complete_error(int error, const String &msg, std::vector<MetaLog::EntityPtr> &additional);
 
     /// Completes operation with error.
     /// <a name="complete_error2"></a>
@@ -489,7 +426,7 @@ namespace Hypertable {
     /// @param error %Error code of operation result
     /// @param msg %Error message of operation result
     /// @param additional Additional entity to persist to MML
-    void complete_error(int error, const String &msg, MetaLog::Entity *additional=0);
+    void complete_error(int error, const String &msg, MetaLog::EntityPtr additional=MetaLog::EntityPtr());
 
     /// Completes operation with exception.
     /// This method chains the call to
@@ -498,7 +435,7 @@ namespace Hypertable {
     /// message, respectively.
     /// @param e %Exception precipitating the operation completion
     /// @param additional Vector of additional entities to persist to MML
-    void complete_error(Exception &e, std::vector<MetaLog::Entity *> &additional) {
+    void complete_error(Exception &e, std::vector<MetaLog::EntityPtr> &additional) {
       complete_error(e.code(), e.what(), additional);
     }
 
@@ -509,12 +446,12 @@ namespace Hypertable {
     /// message, respectively.
     /// @param e %Exception precipitating the operation completion
     /// @param additional Vector of additional entity to persist to MML
-    void complete_error(Exception &e, MetaLog::Entity *additional=0) {
+    void complete_error(Exception &e, MetaLog::EntityPtr additional=MetaLog::EntityPtr()) {
       complete_error(e.code(), e.what(), additional);
     }
 
-    void complete_ok(std::vector<MetaLog::Entity *> &additional);
-    void complete_ok(MetaLog::Entity *additional=0);
+    void complete_ok(std::vector<MetaLog::EntityPtr> &additional);
+    void complete_ok(MetaLog::EntityPtr additional=MetaLog::EntityPtr());
 
     virtual int64_t hash_code() const { return m_hash_code; }
 
@@ -529,7 +466,7 @@ namespace Hypertable {
       m_obstructions_permanent.insert(obstruction);
     }
 
-    void fetch_sub_operations(std::vector<Operation *> &sub_ops);
+    void fetch_sub_operations(std::vector<std::shared_ptr<Operation> > &sub_ops);
 
     void pre_run();
     void post_run();
@@ -568,6 +505,18 @@ namespace Hypertable {
 
   protected:
 
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
+    void decode_old(const uint8_t **bufp, size_t *remainp,
+                    uint16_t definition_version);
+
     /// Handles the results of sub operations.
     /// For each sub operation, fetches the operation from the reference manager.
     /// Checks to see if sub operation resulted in an error, if so, calls
@@ -593,7 +542,7 @@ namespace Hypertable {
     /// <code>operation</code> is added to the reference manager and it's ID is
     /// pushed onto the end of #m_sub_ops.
     /// @param operation Sub operation to stage
-   void stage_subop(Operation *operation);
+    void stage_subop(std::shared_ptr<Operation> operation);
 
     /// Pointer to %Master context
     ContextPtr m_context;
@@ -618,9 +567,6 @@ namespace Hypertable {
 
     /// Result error message
     String m_error_msg;
-
-    /// Version of serialized operation
-    uint16_t m_decode_version {};
 
     /// Flag to signal operation to be unblocked on exit (post_run())
     bool m_unblock_on_exit {};
@@ -655,7 +601,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to Operation
-  typedef intrusive_ptr<Operation> OperationPtr;
+  typedef std::shared_ptr<Operation> OperationPtr;
 
   /// @}
 

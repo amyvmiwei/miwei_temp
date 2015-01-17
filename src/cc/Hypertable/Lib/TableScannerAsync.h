@@ -27,11 +27,9 @@
 #include <Hypertable/Lib/ClientObject.h>
 #include <Hypertable/Lib/ProfileDataScanner.h>
 #include <Hypertable/Lib/RangeLocator.h>
-#include <Hypertable/Lib/RangeServerClient.h>
 #include <Hypertable/Lib/IntervalScannerAsync.h>
 #include <Hypertable/Lib/ScanBlock.h>
 #include <Hypertable/Lib/Schema.h>
-#include <Hypertable/Lib/Types.h>
 #include <Hypertable/Lib/ResultCallback.h>
 #include <Hypertable/Lib/Table.h>
 

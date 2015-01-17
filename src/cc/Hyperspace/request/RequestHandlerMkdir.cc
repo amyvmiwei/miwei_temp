@@ -26,8 +26,6 @@
 #include "AsyncComm/ResponseCallback.h"
 #include "Common/Serialization.h"
 
-#include "Hypertable/Lib/Types.h"
-
 #include "Hyperspace/Master.h"
 #include "RequestHandlerMkdir.h"
 
@@ -35,9 +33,6 @@ using namespace Hyperspace;
 using namespace Hypertable;
 using namespace Serialization;
 
-/*
- *
- */
 void RequestHandlerMkdir::run() {
   ResponseCallback cb(m_comm, m_event);
   size_t decode_remain = m_event->payload_len;

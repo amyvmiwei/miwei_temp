@@ -1,0 +1,5 @@
+/// @defgroup libHypertableMasterResponse Response
+/// @ingroup libHypertableMaster
+/// Response handling code.
+/// This module contains code for handling responses from the %Master
+/// server.

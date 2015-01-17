@@ -22,13 +22,14 @@
 #ifndef HYPERTABLE_OPERATIONRECOVER_H
 #define HYPERTABLE_OPERATIONRECOVER_H
 
-#include "Common/PageArenaAllocator.h"
-
-#include "Hypertable/Lib/Types.h"
-#include "Hypertable/RangeServer/MetaLogEntityRange.h"
-
 #include "Operation.h"
 #include "RangeServerConnection.h"
+
+#include <Hypertable/RangeServer/MetaLogEntityRange.h>
+
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+
+#include <Common/PageArenaAllocator.h>
 
 #include <vector>
 
@@ -72,11 +73,11 @@ namespace Hypertable {
     virtual const String location() { return m_location; }
 
     virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const;
-    virtual void encode_state(uint8_t **bufp) const;
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    uint8_t encoding_version_state() const override;
+    size_t encoded_length_state() const override;
+    void encode_state(uint8_t **bufp) const override;
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
     virtual bool exclusive() { return true; }
 
   private:
@@ -89,11 +90,11 @@ namespace Hypertable {
     void create_recovery_plan();
 
     // read rsml files and populate m_root_range, m_metadata_ranges etc
-    void read_rsml(std::vector<MetaLog::Entity *> &removable_move_ops);
+    void read_rsml(std::vector<MetaLog::EntityPtr> &removable_move_ops);
 
     // check to see if master was notified of newly split-off range
     void handle_split_shrunk(MetaLogEntityRange *range_entity,
-                             std::vector<MetaLog::Entity *> &removable_move_ops);
+                             std::vector<MetaLog::EntityPtr> &removable_move_ops);
 
     // cleans up after this operation is complete
     void clear_server_state();

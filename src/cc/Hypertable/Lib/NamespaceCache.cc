@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -27,7 +27,7 @@ using namespace std;
 
 NamespaceCache::NamespaceCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap, MasterClientPtr &master_client,
+    ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap, Lib::Master::ClientPtr &master_client,
     TableCachePtr &table_cache, uint32_t default_timeout_ms, Client *client)
   : m_props(props), m_range_locator(range_locator), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_app_queue(app_queue),

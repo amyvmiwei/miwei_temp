@@ -73,7 +73,7 @@ namespace Hypertable {
      * @return <i>true</i> if variable state changed and generation
      * number incremented, <i>false</i> otherwise.
      */
-    bool admin_set(std::vector<SystemVariable::Spec> &specs);
+    bool admin_set(const std::vector<SystemVariable::Spec> &specs);
 
     /** Set a variable by administrator.
      * This method updates the values in the #m_admin_specified vector.  If the
@@ -142,31 +142,6 @@ namespace Hypertable {
      */
     virtual void display(std::ostream &os);
 
-    /** Returns length of encoded state. */
-    virtual size_t encoded_length() const;
-
-    /** Encodes system state.
-     * This method encodes the system state formatted as follows:
-     * <pre>
-     * Format version number
-     * System state generation number
-     * Number of administratively set variable specs
-     * foreach administratively set variable spec {
-     *   variable code (i32)
-     *   variable value (bool)
-     *   time (seconds since epoch) of last notification (i32)
-     * }
-     * Number of automatically set variable specs
-     * foreach automatically set variable spec {
-     *   variable code (i32)
-     *   variable value (bool)
-     *   time (seconds since epoch) of last notification (i32)
-     * }
-     * </pre>
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     */
-    virtual void encode(uint8_t **bufp) const;
-
     /** Decodes system state.
      * See encode_state() for format description.
      * @param bufp Address of source buffer pointer (advanced by call)
@@ -174,10 +149,21 @@ namespace Hypertable {
      * <code>*bufp</code> (decremented by call).
      * @param definition_version Version of DefinitionMaster
      */
-    virtual void decode(const uint8_t **bufp, size_t *remainp,
-                        uint16_t definition_version);
+    void decode(const uint8_t **bufp, size_t *remainp,
+                uint16_t definition_version) override;
 
   private:
+
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
+    void decode_old(const uint8_t **bufp, size_t *remainp);
 
     /// Generation number incremented with each state change
     uint64_t m_generation;
@@ -202,7 +188,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to SystemState
-  typedef intrusive_ptr<SystemState> SystemStatePtr;
+  typedef std::shared_ptr<SystemState> SystemStatePtr;
 
   /** @}*/
 

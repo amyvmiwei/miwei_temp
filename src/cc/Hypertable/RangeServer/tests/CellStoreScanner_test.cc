@@ -603,10 +603,9 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
-    Global::dfs = new FsBroker::Lib::Client(conn_mgr, addr, 15000);
+    client = std::make_shared<FsBroker::Lib::Client>(conn_mgr, addr, 15000);
 
-    // force broker client to be destroyed before connection manager
-    client = (FsBroker::Lib::Client *)Global::dfs.get();
+    Global::dfs = client;
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");

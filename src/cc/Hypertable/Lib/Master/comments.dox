@@ -1,0 +1,4 @@
+/// @defgroup libHypertableMaster Master
+/// @ingroup libHypertable
+/// %Master client library.
+/// This module contains client interface code for the %Master server.

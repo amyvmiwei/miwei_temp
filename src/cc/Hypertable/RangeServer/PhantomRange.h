@@ -24,14 +24,15 @@
 /// This file contains declarations for PhantomRange, a class representing a
 /// "phantom" range (i.e. one that is being recovered by a RangeServer).
 
-#ifndef HYPERTABLE_PHANTOMRANGE_H
-#define HYPERTABLE_PHANTOMRANGE_H
+#ifndef Hypertable_RangeServer_PhantomRange_h
+#define Hypertable_RangeServer_PhantomRange_h
 
 #include <Hypertable/RangeServer/Range.h>
 #include <Hypertable/RangeServer/TableInfo.h>
 #include <Hypertable/RangeServer/FragmentData.h>
 
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+#include <Hypertable/Lib/RangeState.h>
 
 #include <Common/String.h>
 #include <Common/Filesystem.h>
@@ -60,8 +61,7 @@ namespace Hypertable {
     };
 
     PhantomRange(const QualifiedRangeSpec &spec, const RangeState &state,
-                 SchemaPtr &schema,
-                 const vector<uint32_t> &fragments);
+                 SchemaPtr &schema, const vector<int32_t> &fragments);
     ~PhantomRange() {}
     /**
      *
@@ -69,12 +69,12 @@ namespace Hypertable {
      * @param event contains data fort his fragment
      * @return true if the add succeded, false means the fragment is already complete
      */
-    bool add(uint32_t fragment, EventPtr &event);
+    bool add(int32_t fragment, EventPtr &event);
     int get_state();
     const RangeState &get_range_state() { return m_range_state; }
 
     void purge_incomplete_fragments();
-    void create_range(MasterClientPtr &master_client, TableInfoPtr &table_info,
+    void create_range(Lib::Master::ClientPtr &master_client, TableInfoPtr &table_info,
                       FilesystemPtr &log_dfs);
     RangePtr& get_range() {
       ScopedLock lock(m_mutex);
@@ -99,9 +99,9 @@ namespace Hypertable {
 
     String create_log(FilesystemPtr &log_dfs,
                       int64_t recovery_id,
-                      MetaLogEntityRange *range_entity);
+                      MetaLogEntityRangePtr &range_entity);
 
-    typedef std::map<uint32_t, FragmentDataPtr> FragmentMap;
+    typedef std::map<int32_t, FragmentDataPtr> FragmentMap;
     Mutex            m_mutex;
     FragmentMap      m_fragments;
     QualifiedRangeSpec m_range_spec;
@@ -119,6 +119,6 @@ namespace Hypertable {
 
   /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_PHANTOMRANGE_H
+#endif // Hypertable_RangeServer_PhantomRange_h

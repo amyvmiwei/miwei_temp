@@ -36,6 +36,7 @@
 #include <Hyperspace/response/ResponseCallbackReaddir.h>
 #include <Hyperspace/response/ResponseCallbackReaddirAttr.h>
 #include <Hyperspace/response/ResponseCallbackReadpathAttr.h>
+#include <Hyperspace/response/ResponseCallbackStatus.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/ConnectionManager.h>
@@ -115,6 +116,7 @@ namespace Hyperspace {
     void readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
                        uint64_t handle, const char *name, const char *attr);
     void shutdown(ResponseCallback *cb, uint64_t session_id);
+    void status(ResponseCallbackStatus *cb);
     void lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
               uint32_t mode, bool try_lock);
     void release(ResponseCallback *cb, uint64_t session_id, uint64_t handle);

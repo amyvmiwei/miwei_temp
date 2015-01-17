@@ -53,24 +53,9 @@ namespace Parameters {
     /// Constructor.
     /// Initializes with parameters for encoding.  Sets #m_from to
     /// <code>from</code> and #m_to to <code>to</code>.
-    /// @param from File name
+    /// @param from Original file name
+    /// @param to New file name
     Rename(const String &from, const String &to) : m_from(from), m_to(to) {}
-
-    /// Returns encoded length of parameters
-    /// @return Encoded length of parameters
-    size_t encoded_length() const override;
-
-    /// Encodes parameters to buffer
-    /// @param bufp Address of buffer to encode parameters to
-    /// (advanced by call)
-    void encode(uint8_t **bufp) const override;
-
-    /// Decodes parameters from buffer
-    /// @param bufp Address of buffer from which to decode parameters
-    /// (advanced by call)
-    /// @param remainp Address of remaining encoded data in buffer
-    /// (advanced by call)
-    void decode(const uint8_t **bufp, size_t *remainp) override;
 
     /// Gets original file name
     /// @return Original file name
@@ -82,8 +67,14 @@ namespace Parameters {
 
   private:
 
-    /// Returns internal encoded length
-    size_t internal_encoded_length() const;
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
 
     /// Original file name
     String m_from;

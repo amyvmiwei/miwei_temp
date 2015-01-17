@@ -144,7 +144,7 @@ namespace Hypertable {
     /// If an error is encountered while attempting to issue command and error
     /// message is stored in #m_error and <i>false</i> is returned.
     /// @param command Command to issue
-    /// @param <i>true</i> if command was successfully issued, <i>false</i>
+    /// @return <i>true</i> if command was successfully issued, <i>false</i>
     /// otherwise.
     bool issue_command(const std::string &command);
 
@@ -152,7 +152,7 @@ namespace Hypertable {
     /// This function blocks on #m_cond until the command previously issued by
     /// issue_command() has completed or stopped due to an error or #m_cancelled
     /// was set to <i>true</i>.
-    /// @return <i>true</i> if command successfully completed, <i>false<i> if
+    /// @return <i>true</i> if command successfully completed, <i>false</i> if
     /// #m_error is contains an error message or #m_command_exit_status was set
     /// to a non-zero value or #m_cancelled is <i>true</i> and #m_state is not
     /// STATE_CONNECTED.

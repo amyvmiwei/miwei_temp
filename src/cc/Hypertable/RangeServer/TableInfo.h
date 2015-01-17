@@ -24,14 +24,15 @@
 /// This file contains type declarations for TableInfo, a class to hold pointers
 /// to Range objects.
 
-#ifndef HYPERTABLE_TABLEINFO_H
-#define HYPERTABLE_TABLEINFO_H
+#ifndef Hypertable_RangeServer_TableInfo_h
+#define Hypertable_RangeServer_TableInfo_h
 
 #include <Hypertable/RangeServer/Range.h>
 #include <Hypertable/RangeServer/RangeSet.h>
 
-#include <Hypertable/Lib/MasterClient.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/Master/Client.h>
+#include <Hypertable/Lib/RangeSpec.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/Mutex.h>
 #include <Common/StringExt.h>
@@ -188,19 +189,19 @@ namespace Hypertable {
     /// @param range_spec Range specification
     /// @param range Reference to returned range object
     /// @return <i>true</i> if found, <i>false</i> otherwise
-    bool get_range(const RangeSpec *range_spec, RangePtr &range);
+    bool get_range(const RangeSpec &range_spec, RangePtr &range);
 
     /// Checks if range corresponding to the given RangeSpec exists in the
     /// active set.
     /// @param range_spec range specification
     /// @return true if found, false otherwise
-    bool has_range(const RangeSpec *range_spec);
+    bool has_range(const RangeSpec &range_spec);
 
     /// Removes the range specified by the given RangeSpec from the active set.
     /// @param range_spec Range specification of range to remove
     /// @param range Reference to returned range object that was removed
     /// @return <i>true</i> if removed, <i>false</i> if not found
-    bool remove_range(const RangeSpec *range_spec, RangePtr &range);
+    bool remove_range(const RangeSpec &range_spec, RangePtr &range);
 
     /// Stages a range to being added.
     /// This function first check to see if the range is already in the process
@@ -216,14 +217,14 @@ namespace Hypertable {
     /// code set to Error::RANGESERVER_RANGE_NOT_YET_RELINQUISHED if the
     /// range is not in the RangeState::STEADY state or
     /// Error::RANGESERVER_RANGE_ALREADY_LOADED if it is
-    void stage_range(const RangeSpec *range_spec,
+    void stage_range(const RangeSpec &range_spec,
                      boost::xtime deadline);
 
     /// Unstages a previously staged range.
     /// This function removes the range specified by <code>range_spec</code>
     /// from #m_staged_set and then signals #m_cond.
     /// @param range_spec range specification of range to remove
-    void unstage_range(const RangeSpec *range_spec);
+    void unstage_range(const RangeSpec &range_spec);
 
     /// Promotes a range from the staged set to the active set.
     /// This function removes the range info object corresponding to the range
@@ -309,6 +310,6 @@ namespace Hypertable {
 
   /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLEINFO_H
+#endif // Hypertable_RangeServer_TableInfo_h

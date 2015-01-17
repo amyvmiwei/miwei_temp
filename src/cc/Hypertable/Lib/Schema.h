@@ -310,7 +310,7 @@ namespace Hypertable {
     /// Checks if access group exists.
     /// Looks up <code>name</code> in #m_access_group_map and returns
     /// <i>true</i> if it is found.
-    /// @param Access group name
+    /// @param name Access group name
     /// @return <i>true</i> if access group exists, <i>false</i> otherwise
     bool access_group_exists(const String &name) const;
 

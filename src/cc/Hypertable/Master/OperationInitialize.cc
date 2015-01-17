@@ -19,22 +19,25 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-#include "Common/System.h"
-
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "OperationCreateNamespace.h"
 #include "OperationCreateTable.h"
 #include "OperationInitialize.h"
 #include "Utility.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+#include <Common/System.h>
+
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace std;
 
 OperationInitialize::OperationInitialize(ContextPtr &context)
   : Operation(context, MetaLog::EntityType::OPERATION_INITIALIZE) {
@@ -49,7 +52,6 @@ OperationInitialize::OperationInitialize(ContextPtr &context,
 
 
 void OperationInitialize::execute() {
-  Operation *operation = 0;
   String filename, schema;
   uint64_t handle = 0;
   RangeSpec range;
@@ -75,8 +77,7 @@ void OperationInitialize::execute() {
                                   OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
     }
 
-    operation = new OperationCreateNamespace(m_context, "/sys", 0);
-    stage_subop(operation);
+    stage_subop(make_shared<OperationCreateNamespace>(m_context, "/sys", 0));
     set_state(OperationState::STARTED);
     record_state();
     HT_MAYBE_FAIL("initialize-INITIAL");
@@ -95,7 +96,7 @@ void OperationInitialize::execute() {
       m_dependencies.insert(Dependency::SERVERS);
       m_state = OperationState::ASSIGN_METADATA_RANGES;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     m_root_range_name = format("%s[%s..%s]", m_table.id, "", Key::END_ROOT_ROW);
     m_metadata_range_name = format("%s[%s..%s]", m_table.id, Key::END_ROOT_ROW, Key::END_ROW_MARKER);
 
@@ -112,7 +113,7 @@ void OperationInitialize::execute() {
       m_dependencies.insert( m_metadata_range_name );
       m_state = OperationState::LOAD_ROOT_METADATA_RANGE;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("initialize-ASSIGN_METADATA_RANGES");
 
   case OperationState::LOAD_ROOT_METADATA_RANGE:
@@ -135,7 +136,7 @@ void OperationInitialize::execute() {
       m_dependencies.insert( m_metadata_range_name );
       m_state = OperationState::LOAD_SECOND_METADATA_RANGE;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
   case OperationState::LOAD_SECOND_METADATA_RANGE:
     try {
@@ -155,7 +156,7 @@ void OperationInitialize::execute() {
       m_dependencies.clear();
       m_state = OperationState::WRITE_METADATA;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
   case OperationState::WRITE_METADATA:
     // Write METADATA entry for 2nd level METADATA range
@@ -172,7 +173,7 @@ void OperationInitialize::execute() {
       m_dependencies.clear();
       m_state = OperationState::CREATE_RS_METRICS;
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     break;
 
   case OperationState::CREATE_RS_METRICS:
@@ -182,11 +183,9 @@ void OperationInitialize::execute() {
                                             TableIdentifier::METADATA_NAME);
     filename = System::install_dir + "/conf/RS_METRICS.xml";
     schema = FileUtils::file_to_string(filename);
-    operation = new OperationCreateTable(m_context, "/sys/RS_METRICS", schema,
-                                         TableParts(TableParts::ALL));
-    stage_subop(operation);
-    operation = new OperationCreateNamespace(m_context, "/tmp", 0);
-    stage_subop(operation);
+    stage_subop(make_shared<OperationCreateTable>(m_context, "/sys/RS_METRICS", schema,
+                                                  TableParts(TableParts::ALL)));
+    stage_subop(make_shared<OperationCreateNamespace>(m_context, "/tmp", 0));
     set_state(OperationState::FINALIZE);
     record_state();
     HT_MAYBE_FAIL("initialize-CREATE_RS_METRICS");
@@ -225,13 +224,11 @@ void OperationInitialize::display_state(std::ostream &os) {
   os << m_table << " ";
 }
 
-#define OPERATION_INITIALIZE_VERSION 1
-
-uint16_t OperationInitialize::encoding_version() const {
-  return OPERATION_INITIALIZE_VERSION;
+uint8_t OperationInitialize::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationInitialize::encoded_state_length() const {
+size_t OperationInitialize::encoded_length_state() const {
   return Serialization::encoded_length_vstr(m_metadata_root_location) +
     Serialization::encoded_length_vstr(m_metadata_secondlevel_location) +
     m_table.encoded_length();
@@ -243,11 +240,22 @@ void OperationInitialize::encode_state(uint8_t **bufp) const {
   m_table.encode(bufp);
 }
 
-void OperationInitialize::decode_state(const uint8_t **bufp, size_t *remainp) {
+void OperationInitialize::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
   set_remove_approval_mask(0x01);
   m_metadata_root_location = Serialization::decode_vstr(bufp, remainp);
   m_metadata_secondlevel_location = Serialization::decode_vstr(bufp, remainp);
   m_table.decode(bufp, remainp);
+  if (m_table.id && *m_table.id != 0) {
+    m_root_range_name = format("%s[%s..%s]", m_table.id, "", Key::END_ROOT_ROW);
+    m_metadata_range_name = format("%s[%s..%s]", m_table.id, Key::END_ROOT_ROW, Key::END_ROW_MARKER);
+  }
+}
+
+void OperationInitialize::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  set_remove_approval_mask(0x01);
+  m_metadata_root_location = Serialization::decode_vstr(bufp, remainp);
+  m_metadata_secondlevel_location = Serialization::decode_vstr(bufp, remainp);
+  legacy_decode(bufp, remainp, &m_table);
   if (m_table.id && *m_table.id != 0) {
     m_root_range_name = format("%s[%s..%s]", m_table.id, "", Key::END_ROOT_ROW);
     m_metadata_range_name = format("%s[%s..%s]", m_table.id, Key::END_ROOT_ROW, Key::END_ROW_MARKER);

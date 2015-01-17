@@ -93,7 +93,7 @@ namespace Lib {
     /// Adds sync information.
     /// Adds <code>latency_nsec</code> to #m_sync_latency and increments
     /// #m_syncs.
-    /// @param latency Latency of sync
+    /// @param latency_nsec Latency of sync in nanoseconds
     void add_sync(int64_t latency_nsec) {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_syncs++;

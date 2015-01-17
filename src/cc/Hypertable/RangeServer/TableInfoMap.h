@@ -119,7 +119,7 @@ namespace Hypertable {
      * @param transfer_log Transfer log for <code>range</code>
      * @see stage_range
      */
-    void promote_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log);
+    void promote_staged_range(const TableIdentifier &table, RangePtr &range, const char *transfer_log);
 
     /** Removes a table from the map
      * @param table_id %Table identifier string
@@ -190,7 +190,7 @@ namespace Hypertable {
      * @param transfer_logs Set of transfer logs
      * @see get_ranges
      */
-    void merge(TableInfoMap *other, vector<MetaLog::Entity *> &entities,
+    void merge(TableInfoMap *other, vector<MetaLog::EntityPtr> &entities,
                StringSet &transfer_logs);
 
   private:

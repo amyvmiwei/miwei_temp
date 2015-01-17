@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,15 +19,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RSCLIENT_TABLEINFO_H
-#define HYPERTABLE_RSCLIENT_TABLEINFO_H
+#ifndef Tools_rsclient_TableInfo_h
+#define Tools_rsclient_TableInfo_h
 
-#include "Common/String.h"
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Types.h"
+#include <Hyperspace/Session.h>
 
-#include "Hyperspace/Session.h"
+#include <Common/String.h>
 
 namespace Hypertable {
 
@@ -47,4 +47,4 @@ namespace Hypertable {
   };
 }
 
-#endif // HYPERTABLE_RSCLIENT_TABLEINFO_H
+#endif // Tools_rsclient_TableInfo_h

@@ -96,7 +96,8 @@ task: stop_thriftbrokers_primary roles: master, slave {
 # Stops the FSBroker and ThriftBroker from the current installation.
 task: stop_thriftbrokers_only roles: thriftbroker {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker fsbroker
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit $?
   }
 }
 
@@ -114,7 +115,7 @@ task: stop_thriftbrokers {
 # Stops FSBrokers in the current installation.
 task: stop_fsbrokers roles: master, slave {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh fsbroker
+    ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit $?
   }
 }
 
@@ -151,7 +152,7 @@ task: stop_monitoring roles: master {
 # Stops Hyperspace in the current installation.
 task: stop_hyperspace roles: hyperspace {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-hyperspace.sh
+    ${INSTALL_PREFIX}/current/bin/ht-stop-hyperspace.sh ${CONFIG} || echo $?
   }
 }
 
@@ -198,18 +199,18 @@ task: kill {
 # installation.
 task: clean_masters roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh || exit $?
   }
 }
 
 
-# Clean Hyperspace state.  Runs the clean-hyperspace.sh script from the current
-# installation.
+# Clean Hyperspace state.  Runs the ht-clean-hyperspace.sh script from the
+# current installation.
 task: clean_hyperspace roles: hyperspace {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/clean-hyperspace.sh
+    ${INSTALL_PREFIX}/current/bin/ht-clean-hyperspace.sh
   }
 }
 
@@ -254,11 +255,11 @@ task: start_monitoring roles: master {
 }
 
 
-# Start hyperspace.  Starts hyperspace by running the start-hyperspace.sh script
+# Start hyperspace.  Starts hyperspace by running the ht-start-hyperspace.sh script
 # from the current installation.
 task: start_hyperspace roles: hyperspace {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/start-hyperspace.sh ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/ht-start-hyperspace.sh ${CONFIG} || exit $?
   }
 }
 
@@ -267,9 +268,9 @@ task: start_hyperspace roles: hyperspace {
 # monitoring server from the current installation.
 task: start_masters roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/start-master.sh ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/start-master.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh || exit $?
   }
 }
 
@@ -279,8 +280,8 @@ task: start_masters roles: master {
 # random start delay of 5000 milliseconds.
 task: start_slaves roles: slave {
   ssh: random-start-delay=5000 {
-    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/start-rangeserver.sh ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/start-rangeserver.sh ${CONFIG} || exit $?
   }
 }
 
@@ -296,8 +297,8 @@ task: start_thriftbrokers_primary roles: master, slave {
 # Start ThriftBrokers on ThriftBroker-only servers.
 task: start_thriftbrokers_only roles: thriftbroker {
   ssh: random-start-delay=5000 {
-    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS}
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS} || exit $?
   }
 }
 

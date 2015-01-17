@@ -54,7 +54,7 @@ namespace Hypertable {
   class AccessGroupOptions {
   public:
 
-    /// Enumeration for #m_isset bits    
+    /// Enumeration for <i>isset</i> bits
     enum {
       /// <i>replication</i> bit
       REPLICATION,

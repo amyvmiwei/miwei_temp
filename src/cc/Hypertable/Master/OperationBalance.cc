@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,21 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Serialization.h"
-#include "Common/Sweetener.h"
-#include "Common/System.h"
-#include "Common/md5.h"
-#include "Common/StringExt.h"
-#include "Common/ScopeGuard.h"
-
-#include "AsyncComm/ResponseCallback.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/TableScanner.h"
+#include <Common/Compat.h>
 
 #include "LoadBalancer.h"
 #include "OperationBalance.h"
@@ -41,20 +27,30 @@
 #include "Utility.h"
 #include "BalancePlanAuthority.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/TableScanner.h>
+
+#include <AsyncComm/ResponseCallback.h>
+
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+#include <Common/Sweetener.h>
+#include <Common/System.h>
+#include <Common/md5.h>
+
 #include <sstream>
 
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace std;
 
 OperationBalance::OperationBalance(ContextPtr &context)
   : Operation(context, MetaLog::EntityType::OPERATION_BALANCE) {
   initialize_dependencies();
-  m_plan = new BalancePlan();
-}
-
-OperationBalance::OperationBalance(ContextPtr &context, BalancePlanPtr &plan)
-  : Operation(context, MetaLog::EntityType::OPERATION_BALANCE), m_plan(plan) {
-  initialize_dependencies();
+  m_plan = make_shared<BalancePlan>();
 }
 
 OperationBalance::OperationBalance(ContextPtr &context,
@@ -68,13 +64,12 @@ OperationBalance::OperationBalance(ContextPtr &context, EventPtr &event)
   initialize_dependencies();
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
+  m_params.decode(&ptr, &remaining);
+  m_plan = make_shared<BalancePlan>(m_params.plan());
 }
 
 void OperationBalance::initialize_dependencies() {
-
   m_hash_code = md5_hash("OperationBalance");
-
   m_dependencies.clear();
   m_dependencies.insert(Dependency::INIT);
   m_dependencies.insert(Dependency::SERVERS);
@@ -98,17 +93,17 @@ void OperationBalance::execute() {
 
     try {
       std::vector<RangeServerConnectionPtr> balanced;
-      std::vector<Entity *> entities;
+      std::vector<MetaLog::EntityPtr> entities;
       int generation = m_context->get_balance_plan_authority()->get_generation();
 
       if (m_plan->empty())
         m_context->balancer->create_plan(m_plan, balanced);
 
       set_state(OperationState::STARTED);
-      entities.push_back(this);
-      foreach_ht (RangeServerConnectionPtr &rsc, balanced) {
+      entities.push_back(shared_from_this());
+      for (auto & rsc : balanced) {
         rsc->set_balanced();
-        entities.push_back(rsc.get());
+        entities.push_back(rsc);
       }
 
       if (!m_context->get_balance_plan_authority()->register_balance_plan(m_plan, generation, entities))
@@ -125,9 +120,9 @@ void OperationBalance::execute() {
 
   case OperationState::STARTED:
     {
-      RangeServerClient rsc(m_context->comm);
+      RangeServer::Client rsc(m_context->comm);
       CommAddress addr;
-      BalancePlanAuthority *bpa = 0;
+      MetaLog::EntityPtr bpa_entity;
 
       if (!m_plan->moves.empty()) {
         uint32_t wait_millis = m_plan->duration_millis / m_plan->moves.size();
@@ -141,9 +136,9 @@ void OperationBalance::execute() {
           catch (Exception &e) {
             move->complete = true;
             move->error = e.code();
-            if (bpa == 0)
-              bpa = m_context->get_balance_plan_authority();
-            bpa->balance_move_complete(move->table, move->range);
+            if (!bpa_entity)
+              m_context->get_balance_plan_authority(bpa_entity);
+            static_pointer_cast<BalancePlanAuthority>(bpa_entity)->balance_move_complete(move->table, move->range);
           }
         }
         std::stringstream sout;
@@ -153,7 +148,7 @@ void OperationBalance::execute() {
           HT_INFOF("%s", sout.str().c_str());
         }
       }
-      complete_ok(bpa);
+      complete_ok(bpa_entity);
     }
     break;
 
@@ -169,29 +164,6 @@ void OperationBalance::display_state(std::ostream &os) {
   os << *(m_plan.get());
 }
 
-#define OPERATION_BALANCE_VERSION 1
-
-uint16_t OperationBalance::encoding_version() const {
-  return OPERATION_BALANCE_VERSION;
-}
-
-size_t OperationBalance::encoded_state_length() const {
-  return m_plan->encoded_length();
-}
-
-void OperationBalance::encode_state(uint8_t **bufp) const {
-  m_plan->encode(bufp);
-}
-
-void OperationBalance::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
-}
-
-void OperationBalance::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_plan = new BalancePlan();
-  m_plan->decode(bufp, remainp);
-}
-
 const String OperationBalance::name() {
   return "OperationBalance";
 }
@@ -203,3 +175,31 @@ const String OperationBalance::label() {
   return name();
 }
 
+
+uint8_t OperationBalance::encoding_version_state() const {
+  return 1;
+}
+
+size_t OperationBalance::encoded_length_state() const {
+  return m_params.encoded_length() + m_plan->encoded_length();
+}
+
+void OperationBalance::encode_state(uint8_t **bufp) const {
+  m_params.encode(bufp);
+  m_plan->encode(bufp);
+}
+
+void OperationBalance::decode_state(uint8_t version,
+                                    const uint8_t **bufp,
+                                    size_t *remainp) {
+  m_params.decode(bufp, remainp);
+  m_plan = make_shared<BalancePlan>();
+  m_plan->decode(bufp, remainp);
+}
+
+void OperationBalance::decode_state_old(uint8_t version,
+                                        const uint8_t **bufp,
+                                        size_t *remainp) {
+  m_plan = make_shared<BalancePlan>();
+  m_plan->decode(bufp, remainp);
+}

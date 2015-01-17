@@ -57,6 +57,7 @@ namespace {
     "echo .............. Echo user input",
     "locate ............ Get the location of Hyperspace Master or all Replicas",
     "dump .............. Dump contents of hyperspace"
+    "status ............ Get server status"
     "",
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
@@ -218,6 +219,16 @@ namespace {
   };
 
 
+  const char *help_status[] = {
+    "status",
+    "",
+    "  This command sends a status request to Hyperspace, printing",
+    "  the status output message to the console and returning the status code.",
+    "  The return value of the last command issued to the interpreter will be",
+    "  used as the exit status.",
+    nullptr
+  };
+
   typedef std::unordered_map<std::string, const char **> HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
@@ -245,6 +256,7 @@ namespace {
     (*map)["getseq"] = help_getsequencer;
     (*map)["locate"] = help_locate;
     (*map)["dump"] = help_dump;
+    (*map)["status"] = help_status;
     return *map;
   }
 

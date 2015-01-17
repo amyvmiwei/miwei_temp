@@ -507,6 +507,22 @@ int HsCommandInterpreter::execute_line(const String &line) {
       cout << result << endl;
     }
 
+    else if (state.command == COMMAND_STATUS) {
+      int32_t code;
+      string output;
+      int32_t error = m_session->status(&code, output);
+      if (error == Error::OK) {
+        if (!m_silent)
+          cout << "Hyperspace " << output << endl;
+      }
+      else {
+        if (!m_silent)
+          cout << "Hyperspace CRITICAL - " << Error::get_text(error) << endl;
+        code = 2;
+      }
+      return code;
+    }
+
     else if (state.command == COMMAND_HELP) {
       const char **text = HsHelpText::get(state.help_str);
 

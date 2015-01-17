@@ -52,6 +52,7 @@
 #include "Response/Parameters/Open.h"
 #include "Response/Parameters/Read.h"
 #include "Response/Parameters/Readdir.h"
+#include "Response/Parameters/Status.h"
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/CommBuf.h>
@@ -573,27 +574,43 @@ Client::shutdown(uint16_t flags, DispatchHandler *handler) {
 }
 
 
-void Client::status() {
+int32_t Client::status(string &output, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommHeader header(Request::Handler::Factory::FUNCTION_STATUS);
   CommBufPtr cbuf( new CommBuf(header) );
 
   try {
-    send_message(cbuf, &sync_handler);
+    send_message(cbuf, &sync_handler, timer);
 
     if (!sync_handler.wait_for_reply(event))
       HT_THROW(Protocol::response_code(event.get()),
                Protocol::string_format_message(event).c_str());
 
-    int error = decode_response(event);
-    if (error != Error::OK)
-      HT_THROW(error, "");
+    int32_t code;
+    decode_response_status(event, &code, output);
+    return code;
   }
   catch (Exception &e) {
     HT_THROW2(e.code(), e, e.what());
   }
 }
+
+void Client::decode_response_status(EventPtr &event, int32_t *code,
+                                    string &output) {
+  int error = Protocol::response_code(event);
+  if (error != Error::OK)
+    HT_THROW(error, Protocol::string_format_message(event));
+
+  const uint8_t *ptr = event->payload + 4;
+  size_t remain = event->payload_len - 4;
+
+  Response::Parameters::Status params;
+  params.decode(&ptr, &remain);
+  *code = params.get_code();
+  output = params.get_output();
+}
+
 
 
 void Client::length(const String &name, bool accurate,
@@ -999,8 +1016,9 @@ Client::debug(int32_t command, StaticBuffer &serialized_parameters) {
 
 
 void
-Client::send_message(CommBufPtr &cbuf, DispatchHandler *handler) {
-  int error = m_comm->send_request(m_addr, m_timeout_ms, cbuf, handler);
+Client::send_message(CommBufPtr &cbuf, DispatchHandler *handler, Timer *timer) {
+  uint32_t deadline = timer ? timer->remaining() : m_timeout_ms;
+  int error = m_comm->send_request(m_addr, deadline, cbuf, handler);
 
   if (error != Error::OK)
     HT_THROWF(error, "FS send_request to %s failed", m_addr.format().c_str());

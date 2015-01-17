@@ -68,20 +68,20 @@ using namespace Hypertable;
 using namespace std;
 
 
-Range::Range(MasterClientPtr &master_client,
-             const TableIdentifier *identifier, SchemaPtr &schema,
-             const RangeSpec *range, RangeSet *range_set,
-             const RangeState *state, bool needs_compaction)
+Range::Range(Lib::Master::ClientPtr &master_client,
+             const TableIdentifier &identifier, SchemaPtr &schema,
+             const RangeSpec &range, RangeSet *range_set,
+             const RangeState &state, bool needs_compaction)
   : m_master_client(master_client),
-    m_hints_file(identifier->id, range->start_row, range->end_row),
+    m_hints_file(identifier.id, range.start_row, range.end_row),
     m_schema(schema), m_range_set(range_set),
-    m_load_metrics(identifier->id, range->start_row, range->end_row) {
-  m_metalog_entity = new MetaLogEntityRange(*identifier, *range, *state, needs_compaction);
+    m_load_metrics(identifier.id, range.start_row, range.end_row) {
+  m_metalog_entity = make_shared<MetaLogEntityRange>(identifier, range, state, needs_compaction);
   initialize();
 }
 
-Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
-             MetaLogEntityRange *range_entity, RangeSet *range_set)
+Range::Range(Lib::Master::ClientPtr &master_client, SchemaPtr &schema,
+             MetaLogEntityRangePtr &range_entity, RangeSet *range_set)
   : m_master_client(master_client),  m_metalog_entity(range_entity), 
     m_hints_file(range_entity->get_table_id(), range_entity->get_start_row(),
                  range_entity->get_end_row()),
@@ -743,7 +743,7 @@ void Range::relinquish_install_log() {
 
     for (int i=0; true; i++) {
       try {
-        Global::rsml_writer->record_state(m_metalog_entity.get());
+        Global::rsml_writer->record_state(m_metalog_entity);
         break;
       }
       catch (Exception &e) {
@@ -843,7 +843,7 @@ void Range::relinquish_finalize() {
   HT_MAYBE_FAIL("relinquish-move-range");
 
   m_master_client->move_range(m_metalog_entity->get_source(),
-			      &table_frozen, range_spec,
+			      table_frozen, range_spec,
                               m_metalog_entity->get_transfer_log(),
                               m_metalog_entity->get_soft_limit(), false);
 
@@ -854,15 +854,15 @@ void Range::relinquish_finalize() {
   }
 
   // Mark the Range entity for removal
-  std::vector<MetaLog::Entity *> entities;
+  std::vector<MetaLog::EntityPtr> entities;
   m_metalog_entity->mark_for_removal();
-  entities.push_back(m_metalog_entity.get());
+  entities.push_back(m_metalog_entity);
 
   // Add acknowledge relinquish task
   MetaLog::EntityTaskPtr acknowledge_relinquish_task =
-    new MetaLog::EntityTaskAcknowledgeRelinquish(m_metalog_entity->get_source(),
-                                                 table_frozen, range_spec);
-  entities.push_back(acknowledge_relinquish_task.get());
+    make_shared<MetaLog::EntityTaskAcknowledgeRelinquish>(m_metalog_entity->get_source(),
+							  table_frozen, range_spec);
+  entities.push_back(acknowledge_relinquish_task);
 
   /**
    * Add the log removal task and remove range from RSML
@@ -1052,7 +1052,7 @@ void Range::split_install_log() {
                                 Global::location_initializer->get());
     for (int i=0; true; i++) {
       try {
-        Global::rsml_writer->record_state(m_metalog_entity.get());
+        Global::rsml_writer->record_state(m_metalog_entity);
         break;
       }
       catch (Exception &e) {
@@ -1314,7 +1314,7 @@ void Range::split_compact_and_shrink() {
     m_metalog_entity->set_state(RangeState::SPLIT_SHRUNK, location);
     for (int i=0; true; i++) {
       try {
-        Global::rsml_writer->record_state(m_metalog_entity.get());
+        Global::rsml_writer->record_state(m_metalog_entity);
         break;
       }
       catch (Exception &e) {
@@ -1373,7 +1373,7 @@ void Range::split_notify_master() {
   }
 
   m_master_client->move_range(m_metalog_entity->get_source(),
-			      &table_frozen, range,
+			      table_frozen, range,
                               m_metalog_entity->get_transfer_log(),
                               soft_limit, true);
 
@@ -1386,16 +1386,16 @@ void Range::split_notify_master() {
   HT_MAYBE_FAIL_X("metadata-split-3", m_is_metadata);
 
   MetaLog::EntityTaskPtr acknowledge_relinquish_task;
-  std::vector<MetaLog::Entity *> entities;
+  std::vector<MetaLog::EntityPtr> entities;
 
   // Add Range entity with updated state
-  entities.push_back(m_metalog_entity.get());
+  entities.push_back(m_metalog_entity);
 
   // Add acknowledge relinquish task
   acknowledge_relinquish_task = 
-    new MetaLog::EntityTaskAcknowledgeRelinquish(m_metalog_entity->get_source(),
-                                                 table_frozen, range);
-  entities.push_back(acknowledge_relinquish_task.get());
+    make_shared<MetaLog::EntityTaskAcknowledgeRelinquish>(m_metalog_entity->get_source(),
+							  table_frozen, range);
+  entities.push_back(acknowledge_relinquish_task);
 
   /**
    * Persist STEADY Metalog state and log removal task
@@ -1503,7 +1503,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
     try {
       ScopedLock lock(m_mutex);
       m_metalog_entity->set_needs_compaction(false);
-      Global::rsml_writer->record_state(m_metalog_entity.get());
+      Global::rsml_writer->record_state(m_metalog_entity);
     }
     catch (Exception &e) {
       HT_ERRORF("Problem updating meta log entry for %s", m_name.c_str());
@@ -1719,7 +1719,7 @@ void Range::acknowledge_load(uint32_t timeout_ms) {
   HT_MAYBE_FAIL_X("user-range-acknowledge-load-1", !m_table.is_system());
 
   try {
-    Global::rsml_writer->record_state(m_metalog_entity.get());
+    Global::rsml_writer->record_state(m_metalog_entity);
   }
   catch (Exception &e) {
     m_metalog_entity->set_load_acknowledged(false);

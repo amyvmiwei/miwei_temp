@@ -19,40 +19,47 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONBALANCE_H
-#define HYPERTABLE_OPERATIONBALANCE_H
+#ifndef Hypertable_Master_OperationBalance_h
+#define Hypertable_Master_OperationBalance_h
 
 #include "Operation.h"
 
-#include "Hypertable/Lib/BalancePlan.h"
+#include <Hypertable/Lib/BalancePlan.h>
+#include <Hypertable/Lib/Master/Request/Parameters/Balance.h>
 
 namespace Hypertable {
 
   class OperationBalance : public Operation {
   public:
     OperationBalance(ContextPtr &context);
-    OperationBalance(ContextPtr &context, BalancePlanPtr &plan);
-    OperationBalance(ContextPtr &context, EventPtr &event);
     OperationBalance(ContextPtr &context, const MetaLog::EntityHeader &header_);
+    OperationBalance(ContextPtr &context, EventPtr &event);
     virtual ~OperationBalance() { }
+
+    void execute() override;
+    const String name() override;
+    const String label() override;
+    void display_state(std::ostream &os) override;
+    bool exclusive() override { return true; }
+
+    uint8_t encoding_version_state() const override;
+    size_t encoded_length_state() const override;
+    void encode_state(uint8_t **bufp) const override;
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+
+  private:
 
     void initialize_dependencies();
 
-    virtual void execute();
-    virtual const String name();
-    virtual const String label();
-    virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const;
-    virtual void encode_state(uint8_t **bufp) const;
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-    virtual bool exclusive() { return true; }
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::Balance m_params;
 
-  private:
+    /// Balance plan
     BalancePlanPtr m_plan;
+
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONBALANCE_H
+#endif // Hypertable_Master_OperationBalance_h

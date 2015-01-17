@@ -22,24 +22,24 @@
 #ifndef Tools_master_client_MasterCommandInterpreter_h
 #define Tools_master_client_MasterCommandInterpreter_h
 
-#include "Common/String.h"
+#include <Tools/Lib/CommandInterpreter.h>
 
-#include "AsyncComm/Comm.h"
+#include <Hypertable/Lib/Master/Client.h>
 
-#include "Tools/Lib/CommandInterpreter.h"
+#include <AsyncComm/Comm.h>
 
-#include "Hypertable/Lib/MasterClient.h"
+#include <Common/String.h>
 
 namespace Hypertable {
 
   class MasterCommandInterpreter : public CommandInterpreter {
   public:
-    MasterCommandInterpreter(MasterClientPtr &master);
+    MasterCommandInterpreter(Lib::Master::ClientPtr &master);
 
     int execute_line(const String &line) override;
 
   private:
-    MasterClientPtr m_master;
+    Lib::Master::ClientPtr m_master;
   };
 
   typedef intrusive_ptr<MasterCommandInterpreter>

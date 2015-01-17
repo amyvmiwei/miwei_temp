@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,28 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGEMOVESPEC_H
-#define HYPERTABLE_RANGEMOVESPEC_H
+/// @file
+/// Declarations for RangeMoveSpec.
+/// This file contains declarations for RangeMoveSpec, a class representing the
+/// specification of a range move.
 
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_Lib_RangeMoveSpec_h
+#define Hypertable_Lib_RangeMoveSpec_h
 
-#include "Types.h"
+#include <Hypertable/Lib/RangeSpec.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+
+#include <Common/Serializable.h>
+
+#include <memory>
 
 namespace Hypertable {
 
-/**
- * Represents a scan predicate.
- */
-  class RangeMoveSpec : public ReferenceCount {
+  /// @addtogroup libHypertable
+  /// @{
+
+  /// Range move specification.
+  class RangeMoveSpec : public Serializable {
   public:
 
     RangeMoveSpec() { clear(); }
@@ -45,17 +54,13 @@ namespace Hypertable {
       range.set_end_row(end_row);
     }
 
-    size_t encoded_length() const;
-    void encode(uint8_t **bufp) const;
-    void decode(const uint8_t **bufp, size_t *remainp);
-
     void clear() {
       table.id = 0;
       table.generation = 0;
       range.start_row = 0;
       range.end_row = 0;
-      source_location = "";
-      dest_location = "";
+      source_location.clear();
+      dest_location.clear();
       error = 0;
       complete = false;
     }
@@ -64,13 +69,41 @@ namespace Hypertable {
     RangeSpecManaged range;
     String source_location;
     String dest_location;
-    int32_t error;
-    bool complete;
+    int32_t error {};
+    bool complete {};
+
+  private:
+
+    /// Returns encoding version.
+    /// @return Encoding version
+    uint8_t encoding_version() const override;
+
+    /// Returns internal serialized length.
+    /// @return Internal serialized length
+    /// @see encode_internal() for encoding format
+    size_t encoded_length_internal() const override;
+
+    /// Writes serialized representation of object to a buffer.
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    void encode_internal(uint8_t **bufp) const override;
+
+    /// Reads serialized representation of object from a buffer.
+    /// @param version Encoding version
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of serialized object
+    /// remaining
+    /// @see encode_internal() for encoding format
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
   };
-  typedef intrusive_ptr<RangeMoveSpec> RangeMoveSpecPtr;
+
+  typedef std::shared_ptr<RangeMoveSpec> RangeMoveSpecPtr;
 
   std::ostream &operator<<(std::ostream &os, const RangeMoveSpec &move_spec);
 
-} // namespace Hypertable
+  /// @}
 
-#endif // HYPERTABLE_RANGEMOVESPEC_H
+}
+
+#endif // Hypertable_Lib_RangeMoveSpec_h

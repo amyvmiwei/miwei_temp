@@ -31,11 +31,13 @@
 
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/KeySpec.h>
-#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/TableMutator.h>
 #include <Hypertable/Lib/TableScanner.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+#include <Hypertable/Lib/RangeSpec.h>
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
 
 #include <Hyperspace/Session.h>
 
@@ -309,7 +311,7 @@ bool next_available_server(ContextPtr &context, String &location, bool urgent) {
 
 void create_table_load_range(ContextPtr &context, const String &location,
                              TableIdentifier &table, RangeSpec &range, bool needs_compaction) {
-  RangeServerClient rsc(context->comm);
+  Lib::RangeServer::Client rsc(context->comm);
   CommAddress addr;
 
   if (context->test_mode) {
@@ -346,7 +348,7 @@ void create_table_load_range(ContextPtr &context, const String &location,
 
 void create_table_acknowledge_range(ContextPtr &context, const String &location,
                                     TableIdentifier &table, RangeSpec &range) {
-  RangeServerClient rsc(context->comm);
+  Lib::RangeServer::Client rsc(context->comm);
   CommAddress addr;
 
   if (context->test_mode) {
@@ -400,12 +402,6 @@ String root_range_location(ContextPtr &context) {
     HT_THROW(e.code(), e.what());
   }
   return location;
-}
-
-void canonicalize_pathname(std::string &pathname) {
-  boost::trim_if(pathname, boost::is_any_of("/ "));
-  if (!pathname.empty())
-    pathname = String("/") + pathname;
 }
 
 }}

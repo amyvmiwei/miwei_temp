@@ -93,7 +93,7 @@ namespace Hypertable {
     bool within_window() const { return m_within_window && m_enabled; }
 
     /// Enables or disables this time window.
-    /// @param value <i>true</i> if enabled, <i>false</i> otherwise
+    /// @param enable <i>true</i> if to enable, <i>false</i> otherwise
     void enable_window(bool enable) { m_enabled = enable; }
 
     /// Indicates if the time window is enabled or disabled.

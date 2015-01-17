@@ -49,6 +49,7 @@ MurmurHash.cc
 Properties.cc
 Random.cc
 Regex.cc
+Serializable.cc
 SleepWakeNotifier.cc
 String.cc
 System.cc
@@ -105,6 +106,9 @@ add_executable(logging_test tests/logging_test.cc)
 target_link_libraries(logging_test HyperCommon)
 
 # serialization tests
+add_executable(Serializable_test tests/Serializable_test.cc)
+target_link_libraries(Serializable_test HyperCommon)
+
 add_executable(sertest tests/sertest.cc)
 target_link_libraries(sertest HyperCommon)
 
@@ -195,6 +199,7 @@ add_test(Common-Exception exception_test)
 add_test(Common-Exception escaper_test)
 add_test(Common-HostSpecification HostSpecification_test)
 add_test(Common-Logging logging_test)
+add_test(Common-Serializable Serializable_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/Serializable_test.golden)
 add_test(Common-Serialization sertest)
 add_test(Common-ScopeGuard scope_guard_test)
 add_test(Common-InetAddr inetaddr_test)

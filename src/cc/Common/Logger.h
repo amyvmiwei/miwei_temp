@@ -168,7 +168,7 @@ namespace Logger {
 
 #define HT_LOG_BUFSZ 1024
 
-/** The HT_ABORT macro terminates the application and generates a core dump */
+/* The HT_ABORT macro terminates the application and generates a core dump */
 #ifdef HT_USE_ABORT
 #  define HT_ABORT abort()
 #else

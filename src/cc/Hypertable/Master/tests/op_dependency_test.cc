@@ -41,6 +41,7 @@
 
 using namespace Hypertable;
 using namespace Config;
+using namespace std;
 
 namespace {
 
@@ -130,7 +131,7 @@ int main(int argc, char **argv) {
 
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
-    context->dfs = new FsBroker::Lib::Client(context->conn_manager, context->props);
+    context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     String log_dir = context->toplevel_dir + "/servers/master/log";
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
@@ -154,19 +155,19 @@ int main(int argc, char **argv) {
 
     dependencies.insert("op1");
     exclusivities.clear();
-    operation = new OperationTest(context, results, "A", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "A", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
-    operation = new OperationTest(context, results, "B", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "B", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
     dependencies.insert("op2");
     exclusivities.clear();
-    operation = new OperationTest(context, results, "C", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "C", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
-    operation = new OperationTest(context, results, "D", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "D", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
@@ -174,7 +175,7 @@ int main(int argc, char **argv) {
     dependencies.insert("op4");
     exclusivities.clear();
     exclusivities.insert("op1");
-    operation = new OperationTest(context, results, "E", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "E", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
@@ -182,7 +183,7 @@ int main(int argc, char **argv) {
     dependencies.insert("rs2");
     exclusivities.clear();
     exclusivities.insert("op2");
-    operation = new OperationTest(context, results, "F", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "F", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
@@ -190,7 +191,7 @@ int main(int argc, char **argv) {
     dependencies.insert("op5");
     exclusivities.clear();
     exclusivities.insert("op3");
-    operation = new OperationTest(context, results, "G", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "G", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
@@ -199,7 +200,7 @@ int main(int argc, char **argv) {
     dependencies.insert("rs1");
     exclusivities.clear();
     exclusivities.insert("op4");
-    operation = new OperationTest(context, results, "H", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "H", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
@@ -208,31 +209,31 @@ int main(int argc, char **argv) {
     dependencies.insert("rs2");
     exclusivities.clear();
     exclusivities.insert("op5");
-    operation = new OperationTest(context, results, "I", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "I", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
     exclusivities.clear();
     exclusivities.insert("/n1");
-    operation = new OperationTest(context, results, "J", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "J", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
     exclusivities.clear();
     exclusivities.insert("/n2");
-    operation = new OperationTest(context, results, "K", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "K", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
     exclusivities.clear();
     exclusivities.insert("rs1");
-    operation = new OperationTest(context, results, "L", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "L", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.clear();
     exclusivities.clear();
     exclusivities.insert("rs2");
-    operation = new OperationTest(context, results, "M", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "M", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     context->op->add_operations(operations);
@@ -258,50 +259,50 @@ int main(int argc, char **argv) {
     obstructions.clear();
 
     dependencies.insert("foo");
-    operation = new OperationTest(context, results, "A", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "A", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
     dependencies.clear();
 
     exclusivities.insert("foo");
-    operation = new OperationTest(context, results, "E", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "E", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
-    operation = new OperationTest(context, results, "D", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "D", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     dependencies.insert("rs1");
-    operation = new OperationTest(context, results, "C", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "C", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
     dependencies.clear();
     
-    operation = new OperationTest(context, results, "B", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "B", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
     exclusivities.clear();
 
     dependencies.insert("rs1");
-    operation = new OperationTest(context, results, "F", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "F", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
-    operation = new OperationTest(context, results, "G", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "G", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
     dependencies.clear();
 
     dependencies.insert("wow");
     obstructions.insert("rs1");
-    operation = new OperationTest(context, results, "H", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "H", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
     dependencies.clear();
     obstructions.clear();
 
     dependencies.insert("wow");
     obstructions.insert("foo");
-    operation = new OperationTest(context, results, "I", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "I", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
     dependencies.clear();
     obstructions.clear();
 
     obstructions.insert("wow");
     dependencies.insert("unknown");
-    operation = new OperationTest(context, results, "J", dependencies, exclusivities, obstructions);
+    operation = make_shared<OperationTest>(context, results, "J", dependencies, exclusivities, obstructions);
     operations.push_back(operation);
 
     context->op->add_operations(operations);
@@ -322,8 +323,8 @@ int main(int argc, char **argv) {
      *  TEST 3 (test blocked state)
      */
 
-    OperationTestPtr operation_foo = new OperationTest(context, results, "foo", OperationState::STARTED);
-    OperationTestPtr operation_bar = new OperationTest(context, results, "bar", OperationState::STARTED);
+    OperationTestPtr operation_foo = make_shared<OperationTest>(context, results, "foo", OperationState::STARTED);
+    OperationTestPtr operation_bar = make_shared<OperationTest>(context, results, "bar", OperationState::STARTED);
 
     operations.clear();
     operation_foo->block();
@@ -352,9 +353,9 @@ int main(int argc, char **argv) {
      *  TEST 4 (make sure blocked operations hold up their dependencies)
      */
 
-    operation_foo = new OperationTest(context, results, "foo", OperationState::STARTED);
-    operation_bar = new OperationTest(context, results, "bar", OperationState::STARTED);
-    OperationTestPtr operation_baz = new OperationTest(context, results, "baz", OperationState::STARTED);
+    operation_foo = make_shared<OperationTest>(context, results, "foo", OperationState::STARTED);
+    operation_bar = make_shared<OperationTest>(context, results, "bar", OperationState::STARTED);
+    OperationTestPtr operation_baz = make_shared<OperationTest>(context, results, "baz", OperationState::STARTED);
 
     /*
      *  foo -> bar -> baz
@@ -388,9 +389,9 @@ int main(int argc, char **argv) {
 
     // again, this time unblock in forward direction
 
-    operation_foo = new OperationTest(context, results, "foo", OperationState::STARTED);
-    operation_bar = new OperationTest(context, results, "bar", OperationState::STARTED);
-    operation_baz = new OperationTest(context, results, "baz", OperationState::STARTED);
+    operation_foo = make_shared<OperationTest>(context, results, "foo", OperationState::STARTED);
+    operation_bar = make_shared<OperationTest>(context, results, "bar", OperationState::STARTED);
+    operation_baz = make_shared<OperationTest>(context, results, "baz", OperationState::STARTED);
 
     operation_foo->add_dependency("bar");
     operation_bar->add_dependency("baz");
@@ -425,17 +426,18 @@ int main(int argc, char **argv) {
     exclusivities.clear();
     obstructions.clear();
     obstructions.insert("yabadabadoo");
-    OperationTest *operation_perp = new OperationTest(context, results, "perp", dependencies, exclusivities, obstructions);
+    OperationTestPtr operation_perp =
+      make_shared<OperationTest>(context, results, "perp", dependencies,
+                                 exclusivities, obstructions);
     operation_perp->set_is_perpetual(true);
     obstructions.clear();
 
-    operation = operation_perp;
-    context->op->add_operation(operation);
+    context->op->add_operation(operation_perp);
     context->op->wait_for_idle();
 
     dependencies.insert("yabadabadoo");
-    operation_foo = new OperationTest(context, results, "foo", dependencies, exclusivities, obstructions);
-    operation_bar = new OperationTest(context, results, "bar", dependencies, exclusivities, obstructions);
+    operation_foo = make_shared<OperationTest>(context, results, "foo", dependencies, exclusivities, obstructions);
+    operation_bar = make_shared<OperationTest>(context, results, "bar", dependencies, exclusivities, obstructions);
 
     operations.clear();
     operations.push_back(operation_foo);

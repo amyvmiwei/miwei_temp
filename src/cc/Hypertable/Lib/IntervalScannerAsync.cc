@@ -19,22 +19,25 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "IntervalScannerAsync.h"
+
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/Table.h>
+
+#include <Common/Error.h>
+#include <Common/String.h>
+
 #include <cassert>
 #include <vector>
-
-#include "Common/Error.h"
-#include "Common/String.h"
-
-#include "Key.h"
-#include "IntervalScannerAsync.h"
-#include "Table.h"
 
 extern "C" {
 #include <poll.h>
 }
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 
 namespace {
   enum {

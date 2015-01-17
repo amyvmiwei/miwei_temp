@@ -32,41 +32,18 @@
 class ZF
 {
 
-    /**
-     * @var bool
-     */
     protected $_clientLoaded = false;
 
-    /**
-     * @var string
-     */
     protected $_mode = 'runTool';
 
-    /**
-     * @var array of messages
-     */
     protected $_messages = array();
 
-    /**
-     * @var string
-     */
     protected $_homeDirectory = null;
 
-    /**
-     * @var string
-     */
     protected $_storageDirectory = null;
 
-    /**
-     * @var string
-     */
     protected $_configFile = null;
 
-    /**
-     * main()
-     *
-     * @return void
-     */
     public static function main()
     {
         $zf = new self();

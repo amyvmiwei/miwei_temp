@@ -27,7 +27,9 @@
 #include <Common/Compat.h>
 #include "LocationInitializer.h"
 
-#include <Hypertable/Lib/MasterProtocol.h>
+#include <Hypertable/Lib/Master/Protocol.h>
+#include <Hypertable/Lib/Master/Request/Parameters/RegisterServer.h>
+#include <Hypertable/Lib/Master/Response/Parameters/RegisterServer.h>
 #include <Hypertable/Lib/SystemVariable.h>
 
 #include <Hyperspace/Session.h>
@@ -44,6 +46,7 @@
 #include <boost/algorithm/string.hpp>
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace Serialization;
 
 LocationInitializer::LocationInitializer(std::shared_ptr<Context> &context)
@@ -123,9 +126,12 @@ CommBuf *LocationInitializer::create_initialization_request() {
   stats.add_categories(StatsSystem::CPUINFO|StatsSystem::NETINFO|
                        StatsSystem::OSINFO|StatsSystem::PROCINFO, dirs);
 
-  CommBuf *cbuf = 
-    MasterProtocol::create_register_server_request(m_location, port,
-                                                   m_lock_held, stats);
+  
+  CommHeader header(Master::Protocol::COMMAND_REGISTER_SERVER);
+  Master::Request::Parameters::RegisterServer params(m_location, port, m_lock_held,
+                                                     stats);
+  CommBuf *cbuf = new CommBuf(header, params.encoded_length());
+  params.encode(cbuf->get_data_ptr_address());
 
   return cbuf;
 }
@@ -140,32 +146,28 @@ bool LocationInitializer::process_initialization_response(Event *event) {
   }
 
   bool location_persisted = false;
-  const uint8_t *ptr = event->payload + 4;
-  size_t remain = event->payload_len - 4;
-  String location;
-  uint64_t generation;
-  std::vector<SystemVariable::Spec> specs;
 
   // Decode response
-  location = decode_vstr(&ptr, &remain);
-  generation = decode_i64(&ptr, &remain);
-  SystemVariable::decode_specs(specs, &ptr, &remain);
+  const uint8_t *ptr = event->payload + 4;
+  size_t remain = event->payload_len - 4;
+  Master::Response::Parameters::RegisterServer params;
+  params.decode(&ptr, &remain);
 
   // Update server state
-  m_context->server_state->set(generation, specs);
+  m_context->server_state->set(params.generation(), params.variables());
 
   {
     ScopedLock lock(m_mutex);
     if (m_location == "")
-      m_location = location;
+      m_location = params.location();
     else
-      HT_ASSERT(m_location == location);
+      HT_ASSERT(m_location == params.location());
     location_persisted = m_location_persisted;
     m_handshake_complete = true;
   }
 
   if (!location_persisted) {
-    if (FileUtils::write(m_location_file, location) < 0) {
+    if (FileUtils::write(m_location_file, params.location()) < 0) {
       HT_ERRORF("Unable to write location to file '%s'", m_location_file.c_str());
       _exit(1);
     }

@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,17 +25,17 @@
  * range state.
  */
 
-#ifndef HYPERTABLE_RANGESTATE_H
-#define HYPERTABLE_RANGESTATE_H
+#ifndef Hypertable_Lib_RangeState_h
+#define Hypertable_Lib_RangeState_h
 
-#include "Common/PageArenaAllocator.h"
-#include "Common/String.h"
+#include <Common/PageArenaAllocator.h>
+#include <Common/String.h>
+#include <Common/Serializable.h>
 
 namespace Hypertable {
 
-  /** @addtogroup libHypertable
-   * @{
-   */
+  /// @addtogroup libHypertable
+  /// @{
 
   /** %Range state.
    * An object of this class is created for each range in a range server and
@@ -45,7 +45,7 @@ namespace Hypertable {
    * strings point to must be managed outside of this class and must be valid
    * for the lifetime of the object.
    */
-  class RangeState {
+  class RangeState : public Serializable {
   public:
 
     /** Mixed enumeration for range state values and PHANTOM bit mask. */
@@ -88,41 +88,6 @@ namespace Hypertable {
      */
     virtual void clear();
 
-    /** Returns length of serialized state.
-     * @return Length of serialized state.
-     */
-    size_t encoded_length() const;
-
-    /** Writes serialized encoding of object state.
-     * This method writes a serialized encoding of object state to the memory
-     * location pointed to by <code>*bufp</code>.  The encoding has the
-     * following format:
-     * <table>
-     *   <tr><th>Encoding</th><th>Description</th></tr>
-     *   <tr><td>i8</td><td>Encoding version</td></tr>
-     *   <tr><td>i8</td><td>State value</td></tr>
-     *   <tr><td>i64</td><td>%Timestamp</td></tr>
-     *   <tr><td>i64</td><td>Soft limit</td></tr>
-     *   <tr><td>vstr</td><td>Transfer log</td></tr>
-     *   <tr><td>vstr</td><td>Split point</td></tr>
-     *   <tr><td>vstr</td><td>Old boundary row</td></tr>
-     *   <tr><td>vstr</td><td>Source</td></tr>
-     * </table>
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     */
-    void encode(uint8_t **bufp) const;
-
-    /** Reads serialized encoding of object state.
-     * This method restores the state of the object by decoding a serialized
-     * representation of the state from the memory location pointed to by
-     * <code>*bufp</code>.  See encode() for a description of the
-     * serialized format.
-     * @param bufp Address of source buffer pointer (advanced by call)
-     * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-     * (decremented by call)
-     */
-    virtual void decode(const uint8_t **bufp, size_t *remainp);
-
     /** Returns string representation of range state value.
      * This method returns a string representation of <code>state</code>.
      * If the RangeState::PHANTOM bit is set, then the string representation
@@ -153,18 +118,43 @@ namespace Hypertable {
 
     /// Source server where this range previously lived
     const char *source;
+
+  protected:
+
+    /// Returns encoding version.
+    /// @return Encoding version
+    uint8_t encoding_version() const override;
+
+    /// Returns internal serialized length.
+    /// @return Internal serialized length
+
+    /// @see encode_internal() for encoding format
+    size_t encoded_length_internal() const override;
+
+    /// Writes serialized representation of object to a buffer.
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    void encode_internal(uint8_t **bufp) const override;
+
+    /// Reads serialized representation of object from a buffer.
+    /// @param version Encoding version
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of serialized object
+    /// remaining
+    /// @see encode_internal() for encoding format
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
   };
 
   /** ostream shift function for RangeState objects.
    * This method writes a human readable representation of a RangeState
    * object to the given ostream as a single line, formatted as follows:
    * <pre>
-   * {%RangeState: state=<s> timestamp=<t> ... }
-   * <pre>
+   * {%RangeState: state=&lt;s&gt; timestamp=&lt;t&gt; ... }
+   * </pre>
    * @param out ostream on which to print range state
    * @param st RangeState object to print
-   * @return <code>out</code>                                                                                                                               
-   */
+   * @return <code>out</code>                                                                                                                     */
   std::ostream &operator<<(std::ostream &out, const RangeState &st);
 
   /** %Range state with memory management.
@@ -189,7 +179,7 @@ namespace Hypertable {
     /** Constructor initialized with RangeState object.
      * Calls @ref range_state_assignment_operator to initialize
      * state with members of <code>rs</code>
-     * @param Reference to RangeState object to copy
+     * @param rs Reference to RangeState object to copy
      */
     RangeStateManaged(const RangeState &rs) {
       operator=(rs);
@@ -284,7 +274,7 @@ namespace Hypertable {
     /** Sets split point.
      * Copies <code>tl</code> to #m_split_point and sets #split_point pointing
      * to <code>m_split_point.c_str()</code>
-     * @param tl split point
+     * @param sp split point
      */
     void set_split_point(const String &sp) {
       m_split_point = sp;
@@ -335,32 +325,32 @@ namespace Hypertable {
       source = 0;
     }
 
-    /** Decodes serialized state.
-     * Calls RangeState::decode() to deserialize the object and then
-     * calls @ref range_state_assignment_operator to copy the strings to
-     * the C++ string members.
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     * @param remainp Address of integer holding amount of remaining buffer
-     */
-    virtual void decode(const uint8_t **bufp, size_t *remainp);
-
   private:
 
-    /// Holds string data pointed to by #transfer_log
+    /// Reads serialized representation of object from a buffer.
+    /// @param version Encoding version
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of serialized object
+    /// remaining
+    /// @see encode_internal() for encoding format
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
+    /// Transfer log string container
     String m_transfer_log;
 
-    /// Holds string data pointed to by #split_point
+    /// Split point string container
     String m_split_point;
 
-    /// Holds string data pointed to by #old_boundary_row
+    /// Old boundary row string container
     String m_old_boundary_row;
 
-    /// Holds string data pointed to by #source
+    /// Source server string container
     String m_source;
   };
 
-  /** @} */
+  /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_RANGESTATE_H
+#endif // Hypertable_Lib_RangeState_h

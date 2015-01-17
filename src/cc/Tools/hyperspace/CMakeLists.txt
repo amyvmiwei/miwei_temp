@@ -26,9 +26,9 @@ set(hyperspace_SRCS
 hyperspace.cc
 )
 
-# hyperspace - Hyperspace client program
-add_executable(hyperspace ${hyperspace_SRCS})
-target_link_libraries(hyperspace Hyperspace ${READLINE_LIBRARIES} Hypertable)
+# ht_hyperspace - Hyperspace client program
+add_executable(ht_hyperspace ${hyperspace_SRCS})
+target_link_libraries(ht_hyperspace Hyperspace ${READLINE_LIBRARIES} Hypertable)
 
 # hyperspaceTest
 add_executable(hyperspaceTest test/hyperspaceTest.cc)
@@ -45,5 +45,5 @@ configure_file(${SRC_DIR}/test/client3.golden ${DST_DIR}/client3.golden
 add_test(Hyperspace hyperspaceTest)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS hyperspace RUNTIME DESTINATION bin)
+  install(TARGETS ht_hyperspace RUNTIME DESTINATION bin)
 endif ()

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
 
 #include "MetaLogDefinitionMaster.h"
 
@@ -42,22 +43,25 @@
 #include "BalancePlanAuthority.h"
 #include "SystemState.h"
 
+#include <memory>
+
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
+using namespace std;
 
 uint16_t DefinitionMaster::version() {
-  return 3;
+  return 4;
 }
 
 const char *DefinitionMaster::name() {
   return "mml";
 }
 
-Entity *DefinitionMaster::create(const EntityHeader &header) {
-  Operation *operation = 0;
+EntityPtr DefinitionMaster::create(const EntityHeader &header) {
+  OperationPtr operation;
 
   if (header.type == EntityType::RANGE_SERVER_CONNECTION)
-    return new RangeServerConnection(header);
+    return make_shared<RangeServerConnection>(header);
 
   if ((header.type & 0xF0000L) == 0x20000L) {
 
@@ -67,42 +71,42 @@ Entity *DefinitionMaster::create(const EntityHeader &header) {
 
     if (header.type == EntityType::OLD_OPERATION_INITIALIZE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_INITIALIZE;
-      operation = new OperationInitialize(m_context, header);
+      operation = make_shared<OperationInitialize>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_INITIALIZE);
     }
     else if (header.type == EntityType::OLD_OPERATION_ALTER_TABLE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_ALTER_TABLE;
-      operation = new OperationAlterTable(m_context, header);
+      operation = make_shared<OperationAlterTable>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_ALTER_TABLE);
     }
     else if (header.type == EntityType::OLD_OPERATION_CREATE_NAMESPACE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_CREATE_NAMESPACE;
-      operation = new OperationCreateNamespace(m_context, header);
+      operation = make_shared<OperationCreateNamespace>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_CREATE_NAMESPACE);
     }
     else if (header.type == EntityType::OLD_OPERATION_DROP_NAMESPACE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_DROP_NAMESPACE;
-      operation = new OperationDropNamespace(m_context, header);
+      operation = make_shared<OperationDropNamespace>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_DROP_NAMESPACE);
     }
     else if (header.type == EntityType::OLD_OPERATION_CREATE_TABLE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_CREATE_TABLE;
-      operation = new OperationCreateTable(m_context, header);
+      operation = make_shared<OperationCreateTable>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_CREATE_TABLE);
     }
     else if (header.type == EntityType::OLD_OPERATION_DROP_TABLE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_DROP_TABLE;
-      operation = new OperationDropTable(m_context, header);
+      operation = make_shared<OperationDropTable>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_DROP_TABLE);
     }
     else if (header.type == EntityType::OLD_OPERATION_RENAME_TABLE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_RENAME_TABLE;
-      operation = new OperationRenameTable(m_context, header);
+      operation = make_shared<OperationRenameTable>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_RENAME_TABLE);
     }
     else if (header.type == EntityType::OLD_OPERATION_MOVE_RANGE) {
       ((EntityHeader *)&header)->type = EntityType::OPERATION_MOVE_RANGE;
-      operation = new OperationMoveRange(m_context, header);
+      operation = make_shared<OperationMoveRange>(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_MOVE_RANGE);
     }
     else if (header.type == EntityType::OLD_OPERATION_BALANCE) {
@@ -111,43 +115,43 @@ Entity *DefinitionMaster::create(const EntityHeader &header) {
   }
   else if (header.type == EntityType::BALANCE_PLAN_AUTHORITY) {
     MetaLog::WriterPtr mml_writer = m_context ? m_context->mml_writer : 0;
-    return new BalancePlanAuthority(m_context.get(), mml_writer, header);
+    return make_shared<BalancePlanAuthority>(m_context.get(), mml_writer, header);
   }
   else {
     if (header.type == EntityType::OPERATION_INITIALIZE)
-      operation = new OperationInitialize(m_context, header);
+      operation = make_shared<OperationInitialize>(m_context, header);
     else if (header.type == EntityType::OPERATION_ALTER_TABLE)
-      operation = new OperationAlterTable(m_context, header);
+      operation = make_shared<OperationAlterTable>(m_context, header);
     else if (header.type == EntityType::OPERATION_CREATE_NAMESPACE)
-      operation = new OperationCreateNamespace(m_context, header);
+      operation = make_shared<OperationCreateNamespace>(m_context, header);
     else if (header.type == EntityType::OPERATION_DROP_NAMESPACE)
-      operation = new OperationDropNamespace(m_context, header);
+      operation = make_shared<OperationDropNamespace>(m_context, header);
     else if (header.type == EntityType::OPERATION_CREATE_TABLE)
-      operation = new OperationCreateTable(m_context, header);
+      operation = make_shared<OperationCreateTable>(m_context, header);
     else if (header.type == EntityType::OPERATION_DROP_TABLE)
-      operation = new OperationDropTable(m_context, header);
+      operation = make_shared<OperationDropTable>(m_context, header);
     else if (header.type == EntityType::OPERATION_RENAME_TABLE)
-      operation = new OperationRenameTable(m_context, header);
+      operation = make_shared<OperationRenameTable>(m_context, header);
     else if (header.type == EntityType::OPERATION_MOVE_RANGE)
-      operation = new OperationMoveRange(m_context, header);
+      operation = make_shared<OperationMoveRange>(m_context, header);
     else if (header.type == EntityType::OPERATION_BALANCE_RETIRED)
       return 0;
     else if (header.type == EntityType::OPERATION_RECOVER_SERVER)
-      operation = new OperationRecover(m_context, header);
+      operation = make_shared<OperationRecover>(m_context, header);
     else if (header.type == EntityType::OPERATION_RECOVER_SERVER_RANGES)
-      operation = new OperationRecoverRanges(m_context, header);
+      operation = make_shared<OperationRecoverRanges>(m_context, header);
     else if (header.type == EntityType::OPERATION_BALANCE)
-      operation = new OperationBalance(m_context, header);
+      operation = make_shared<OperationBalance>(m_context, header);
     else if (header.type == EntityType::OPERATION_COMPACT)
-      operation = new OperationCompact(m_context, header);
+      operation = make_shared<OperationCompact>(m_context, header);
     else if (header.type == EntityType::OPERATION_SET)
-      operation = new OperationSetState(m_context, header);
+      operation = make_shared<OperationSetState>(m_context, header);
     else if (header.type == EntityType::OPERATION_TOGGLE_TABLE_MAINTENANCE)
-      operation = new OperationToggleTableMaintenance(m_context, header);
+      operation = make_shared<OperationToggleTableMaintenance>(m_context, header);
     else if (header.type == EntityType::OPERATION_RECREATE_INDEX_TABLES)
-      operation = new OperationRecreateIndexTables(m_context, header);
+      operation = make_shared<OperationRecreateIndexTables>(m_context, header);
     else if (header.type == EntityType::SYSTEM_STATE)
-      return new SystemState(header);
+      return make_shared<SystemState>(header);
   }
 
   if (operation)

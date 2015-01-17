@@ -76,6 +76,7 @@ response/ResponseCallbackLock.cc
 response/ResponseCallbackReaddir.cc
 response/ResponseCallbackReaddirAttr.cc
 response/ResponseCallbackReadpathAttr.cc
+response/ResponseCallbackStatus.cc
 ServerConnectionHandler.cc
 ServerKeepaliveHandler.cc
 main.cc

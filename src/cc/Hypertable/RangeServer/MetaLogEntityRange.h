@@ -25,25 +25,24 @@
  * entity class used to persist a range's state to the RSML.
  */
 
-#ifndef HYPERTABLE_METALOGENTITYRANGE_H
-#define HYPERTABLE_METALOGENTITYRANGE_H
+#ifndef Hypertable_RangeServer_MetaLogEntityRange_h
+#define Hypertable_RangeServer_MetaLogEntityRange_h
 
 #include <Hypertable/RangeServer/MetaLogEntityTypes.h>
 
 #include <Hypertable/Lib/MetaLogEntity.h>
+#include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/RangeState.h>
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <boost/thread/condition.hpp>
 
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
-  /** %MetaLog entity for range state persisted in RSML
-   */
+  /// %MetaLog entity for range state persisted in RSML.
   class MetaLogEntityRange : public MetaLog::Entity {
   public:
 
@@ -96,7 +95,7 @@ namespace Hypertable {
 
     /** Sets range state
      * @param state New range state
-     * @param souce Proxy name of server making state change
+     * @param source Proxy name of server making state change
      */
     void set_state(uint8_t state, const String &source);
 
@@ -203,75 +202,10 @@ namespace Hypertable {
      */
     void set_load_acknowledged(bool val);
 
-    /** Gets original transfer log
-     * @return Original transfer log
-     */
-    String get_original_transfer_log();
-    
-    /** Sets original transfer log
-     * @param path Pathname of original transfer log
-     */
-    void set_original_transfer_log(const String &path);
-
-    /** Saves transfer log to #m_original_transfer_log.
-     * If the transfer log is not empty, it is saved to #m_original_transfer_log
-     */
-    void save_original_transfer_log();
-
-    /** Reverts transfer log back to #m_original_transfer_log.
-     * This method can be called to revert the effects of a call to
-     * save_original_transfer_log() by setting transfer log back to
-     * #m_original_transfer_log
-     */
-    void rollback_transfer_log();
-
     /** Gets source server
      * @return Source server
      */
     String get_source();
-
-    /** Gets serialized length
-     * @see encode() for serialization %format
-     * @return Serialized length
-     */
-    virtual size_t encoded_length() const;
-
-    /** Writes serialized encoding of entity.
-     * This method writes a serialized encoding of the range entity state to the
-     * memory location pointed to by <code>*bufp</code>.  The encoding has the
-     * following format:
-     * <table style="font-family:monospace; ">
-     *   <tr>
-     *   <td>[variable]</td>
-     *   <td>- %Table identifier</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[variable]</td>
-     *   <td>- %Range spec</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[variable]</td>
-     *   <td>- %Range state</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[1 byte]</td>
-     *   <td>- Needs compaction flag</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[1 byte]</td>
-     *   <td>- Load acknowledged flag</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[vstring]</td>
-     *   <td>- Original transfer log (only for EntityType::RANGE2)</td>
-     *   </tr>
-     * </table>
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     * @note If entity type is EntityType::RANGE, then there is no original
-     * transfer log in the encoding and the #encountered_upgrade is flag set to
-     * <i>true</i>.
-     */
-    virtual void encode(uint8_t **bufp) const;
 
     /** Reads serialized encoding of the entity.
      * This method restores the state of the object by decoding a serialized
@@ -283,8 +217,8 @@ namespace Hypertable {
      * @param definition_version Version of DefinitionMaster
      * @see encode() for serialization format
      */    
-    virtual void decode(const uint8_t **bufp, size_t *remainp,
-                        uint16_t definition_version);
+    void decode(const uint8_t **bufp, size_t *remainp,
+                uint16_t definition_version) override;
 
     /** Returns the entity name ("Range")
      * @return %Entity name
@@ -301,6 +235,17 @@ namespace Hypertable {
     static bool encountered_upgrade;
 
   private:
+
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
+    void decode_old(const uint8_t **bufp, size_t *remainp);
 
     /// Condition variable for signalling state change
     boost::condition m_cond;
@@ -320,15 +265,13 @@ namespace Hypertable {
     /// Load acknowledged flag
     bool m_load_acknowledged;
 
-    /// Original transfer log
-    String m_original_transfer_log;
   };
 
   /// Smart pointer to MetaLogEntityRange
-  typedef intrusive_ptr<MetaLogEntityRange> MetaLogEntityRangePtr;
+  typedef std::shared_ptr<MetaLogEntityRange> MetaLogEntityRangePtr;
 
-  /* @}*/
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_METALOGENTITYRANGE_H
+#endif // Hypertable_RangeServer_MetaLogEntityRange_h

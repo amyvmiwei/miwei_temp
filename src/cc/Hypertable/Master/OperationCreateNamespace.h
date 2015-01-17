@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,37 +19,42 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONCREATENAMESPACE_H
-#define HYPERTABLE_OPERATIONCREATENAMESPACE_H
+#ifndef Hypertable_Master_OperationCreateNamespace_h
+#define Hypertable_Master_OperationCreateNamespace_h
 
 #include "Operation.h"
+
+#include <Hypertable/Lib/Master/Request/Parameters/CreateNamespace.h>
 
 namespace Hypertable {
 
   class OperationCreateNamespace : public Operation {
   public:
-    OperationCreateNamespace(ContextPtr &context, const String &name, int flags);
+    OperationCreateNamespace(ContextPtr &context, const std::string &name, int32_t flags);
     OperationCreateNamespace(ContextPtr &context, const MetaLog::EntityHeader &header_);
     OperationCreateNamespace(ContextPtr &context, EventPtr &event);
     virtual ~OperationCreateNamespace() { }
 
     virtual void execute();
-    virtual const String name();
-    virtual const String label();
+    virtual const std::string name();
+    virtual const std::string label();
     virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const;
-    virtual void encode_state(uint8_t **bufp) const;
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    uint8_t encoding_version_state() const override;
+    size_t encoded_length_state() const override;
+    void encode_state(uint8_t **bufp) const override;
+    void decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
+    void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
 
   private:
     void initialize_dependencies();
-    String m_name;
-    int m_flags;
-    String m_id;
+
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::CreateNamespace m_params;
+    
+    /// Namespace ID path
+    std::string m_id;
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONCREATENAMESPACE_H
+#endif // Hypertable_Master_OperationCreateNamespace_h

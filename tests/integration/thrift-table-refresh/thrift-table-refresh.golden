@@ -37,5 +37,9 @@ row09	c	thrift_insert.py
 row10	f	hello, world
 [test-10]
 HqlResult(mutator=None, cells=None, results=None, scanner=None)
+
+  Elapsed time:  0.00 s
+
+  Elapsed time:  0.00 s
 Error: foo - HYPERTABLE table does not exist
 HYPERTABLE table does not exist 

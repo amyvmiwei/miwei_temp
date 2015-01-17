@@ -39,7 +39,7 @@ namespace Hypertable {
       virtual bool execute() = 0;
       virtual void work_queue_add_hook() { }
     };
-    typedef intrusive_ptr<EntityTask> EntityTaskPtr;
+    typedef std::shared_ptr<EntityTask> EntityTaskPtr;
 
   } // namespace MetaLog
 } // namespace Hypertable

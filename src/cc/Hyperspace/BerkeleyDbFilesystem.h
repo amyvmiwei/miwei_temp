@@ -224,7 +224,7 @@ namespace Hyperspace {
     /** Constructor.
      * @param props Configruation properties
      * @param basedir Directory of BerkeleyDB database files
-     * @param threads_ids Vector of application thread IDs
+     * @param thread_ids Vector of application thread IDs
      * @param force_recover Force catastrophic recovery logic
      */
     BerkeleyDbFilesystem(PropertiesPtr &props,
@@ -239,7 +239,7 @@ namespace Hyperspace {
 
     /** Checkpoints the BerkeleyDB database.
      * This method calls <code>m_env.txn_checkpoint</code> to checkpoint the
-     * database.  It passes in the value #m_checkpoing_size_kb.  Then if the
+     * database.  It passes in the value #m_checkpoint_size_kb.  Then if the
      * time of the last checkpoint has exceeded #m_log_gc_interval, it will call
      * <code>m_env.log_archive</code> to obtain a list of unused log files and
      * it will remove them.

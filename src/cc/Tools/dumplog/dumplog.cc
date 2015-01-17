@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -20,22 +20,23 @@
  */
 
 #include <Common/Compat.h>
-#include <Common/Error.h>
-#include <Common/InetAddr.h>
-#include <Common/Logger.h>
-#include <Common/Init.h>
-#include <Common/Usage.h>
+
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+
+#include <FsBroker/Lib/Config.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/ConnectionManager.h>
 #include <AsyncComm/ReactorFactory.h>
 
-#include <FsBroker/Lib/Config.h>
-#include <FsBroker/Lib/Client.h>
-
-#include <Hypertable/Lib/CommitLog.h>
-#include <Hypertable/Lib/CommitLogReader.h>
-#include <Hypertable/Lib/Types.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/Init.h>
+#include <Common/Usage.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -70,11 +71,11 @@ struct AppPolicy : Config::Policy {
 
 typedef Meta::list<AppPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
-void display_log(FsBroker::Lib::Client *dfs_client, const String &prefix,
+void display_log(FsBroker::Lib::ClientPtr &dfs_client, const String &prefix,
     CommitLogReader *log_reader, bool display_values);
-void display_log_block_summary(FsBroker::Lib::Client *dfs_client,
+void display_log_block_summary(FsBroker::Lib::ClientPtr &dfs_client,
     const String &prefix, CommitLogReader *log_reader);
-void display_log_valid_links(FsBroker::Lib::Client *dfs_client,
+void display_log_valid_links(FsBroker::Lib::ClientPtr &dfs_client,
     const String &prefix, CommitLogReader *log_reader);
 
 } // local namespace
@@ -95,16 +96,16 @@ int main(int argc, char **argv) {
     /**
      * Check for and connect to commit log DFS broker
      */
-    FsBroker::Lib::Client *dfs_client;
+    FsBroker::Lib::ClientPtr dfs_client;
 
     if (log_host.length()) {
       int log_port = get_i16("log-port");
       InetAddr addr(log_host, log_port);
 
-      dfs_client = new FsBroker::Lib::Client(conn_manager_ptr, addr, timeout);
+      dfs_client = std::make_shared<FsBroker::Lib::Client>(conn_manager_ptr, addr, timeout);
     }
     else {
-      dfs_client = new FsBroker::Lib::Client(conn_manager_ptr, properties);
+      dfs_client = std::make_shared<FsBroker::Lib::Client>(conn_manager_ptr, properties);
     }
 
     if (!dfs_client->wait_for_connection(timeout)) {
@@ -139,7 +140,7 @@ int main(int argc, char **argv) {
 namespace {
 
   void
-  display_log(FsBroker::Lib::Client *dfs_client, const String &prefix,
+  display_log(FsBroker::Lib::ClientPtr &dfs_client, const String &prefix,
               CommitLogReader *log_reader, bool display_values) {
     BlockHeaderCommitLog header;
     const uint8_t *base;
@@ -191,7 +192,7 @@ namespace {
 
 
   void
-  display_log_block_summary(FsBroker::Lib::Client *dfs_client, const String &prefix,
+  display_log_block_summary(FsBroker::Lib::ClientPtr &dfs_client, const String &prefix,
       CommitLogReader *log_reader) {
     CommitLogBlockInfo binfo;
     BlockHeaderCommitLog header;
@@ -228,7 +229,7 @@ namespace {
   }
 
   void
-  display_log_valid_links(FsBroker::Lib::Client *dfs_client, const String &prefix,
+  display_log_valid_links(FsBroker::Lib::ClientPtr &dfs_client, const String &prefix,
                           CommitLogReader *log_reader) {
     BlockHeaderCommitLog header;
     const uint8_t *base;

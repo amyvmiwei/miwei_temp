@@ -40,7 +40,7 @@ namespace Hypertable {
   class ColumnFamilyOptions {
   public:
 
-    /// Enumeration for #m_isset bits
+    /// Enumeration for <i>isset</i> bits
     enum {
       /// <i>max versions</i> bit
       MAX_VERSIONS,

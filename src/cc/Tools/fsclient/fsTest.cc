@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,8 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
+#include <Common/Compat.h>
+
+#include "FsTestThreadFunction.h"
+
+#include <FsBroker/Lib/Client.h>
+
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+#include <Common/Thread.h>
+#include <Common/StaticBuffer.h>
+#include <Common/Config.h>
+
+#include <boost/thread/thread.hpp>
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -34,28 +54,8 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include <boost/thread/thread.hpp>
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-#include "Common/Thread.h"
-#include "Common/StaticBuffer.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/Event.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include <FsBroker/Lib/Client.h>
-
-#include "fsTestThreadFunction.h"
-
 using namespace Hypertable;
+using namespace Hypertable::fsclient;
 using namespace std;
 
 namespace {
@@ -70,11 +70,11 @@ namespace {
     (const char *)0
   };
 
-  void test_copy(FsBroker::Lib::Client *client, const String &testdir) {
-    String outfileA = testdir + "/output.a";
-    String outfileB = testdir + "/output.b";
+  void test_copy(FsBroker::Lib::ClientPtr &client, const string &testdir) {
+    string outfileA = testdir + "/output.a";
+    string outfileB = testdir + "/output.b";
 
-    DfsTestThreadFunction thread_func(client, "words");
+    FsTestThreadFunction thread_func(client, "words");
 
     thread_func.set_dfs_file(outfileA);
     thread_func.set_output_file("output.a");
@@ -94,7 +94,7 @@ namespace {
       exit(1);
   }
 
-  void test_readdir(FsBroker::Lib::Client *client, const String &testdir) {
+  void test_readdir(FsBroker::Lib::ClientPtr &client, const string &testdir) {
     ofstream filestr ("fsTest.out");
     vector<Filesystem::Dirent> listing;
 
@@ -117,11 +117,11 @@ namespace {
       exit(1);
   }
 
-  void test_rename(FsBroker::Lib::Client *client, const String &testdir) {
+  void test_rename(FsBroker::Lib::ClientPtr &client, const string &testdir) {
     const char *magic = "the quick brown fox jumps over a lazy dog";
     char buf[1024];
-    String file_a = testdir +"/filename.a";
-    String file_b = testdir +"/filename.b";
+    string file_a = testdir +"/filename.a";
+    string file_b = testdir +"/filename.b";
     int fd = client->create(file_a, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
     StaticBuffer sbuf((char *)magic, strlen(magic) + 1, false);
     client->append(fd, sbuf);
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     ConnectionManagerPtr conn_mgr;
-    FsBroker::Lib::Client *client;
+    FsBroker::Lib::ClientPtr client;
 
     Config::init(argc, argv);
 
@@ -154,18 +154,18 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
-    client = new FsBroker::Lib::Client(conn_mgr, addr, 15000);
+    client = make_shared<FsBroker::Lib::Client>(conn_mgr, addr, 15000);
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");
       return 1;
     }
-    String testdir = format("/fsTest%d", (int)getpid());
+    string testdir = format("/fsTest%d", (int)getpid());
     client->mkdirs(testdir);
 
     test_copy(client, testdir);
 
-    String subdir = testdir + "/mydir";;
+    string subdir = testdir + "/mydir";;
     client->mkdirs(subdir);
     test_readdir(client, testdir);
 

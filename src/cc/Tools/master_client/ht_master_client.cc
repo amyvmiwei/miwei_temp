@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,22 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/InetAddr.h"
-
-#include <iostream>
-
-#include "AsyncComm/DispatchHandler.h"
-
-#include "Tools/Lib/CommandShell.h"
-
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/HqlCommandInterpreter.h"
-#include "Hypertable/Lib/MasterClient.h"
+#include <Common/Compat.h>
 
 #include "MasterCommandInterpreter.h"
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/HqlCommandInterpreter.h>
+#include <Hypertable/Lib/Master/Client.h>
+
+#include <Tools/Lib/CommandShell.h>
+
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/InetAddr.h>
+#include <Common/Init.h>
+
+#include <iostream>
 
 using namespace Hypertable;
 using namespace Config;
@@ -96,7 +97,7 @@ int main(int argc, char **argv) {
 
     Comm *comm = Comm::instance();
 
-    MasterClientPtr client = new MasterClient(comm, addr, timeout);
+    Lib::Master::ClientPtr client = new Lib::Master::Client(comm, addr, timeout);
 
     DispatchHandlerPtr dispatch_handler_ptr = new MasterDispatchHandler();
     // connect to Master

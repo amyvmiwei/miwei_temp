@@ -64,6 +64,7 @@ Response/Callback/Read.cc
 Response/Callback/Append.cc
 Response/Callback/Length.cc
 Response/Callback/Readdir.cc
+Response/Callback/Status.cc
 Response/Callback/Exists.cc
 Response/Parameters/Append.cc
 Response/Parameters/Exists.cc
@@ -71,6 +72,7 @@ Response/Parameters/Length.cc
 Response/Parameters/Open.cc
 Response/Parameters/Read.cc
 Response/Parameters/Readdir.cc
+Response/Parameters/Status.cc
 )
 
 add_library(HyperFsBroker ${FsBroker_SRCS})

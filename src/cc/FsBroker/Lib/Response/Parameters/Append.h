@@ -59,22 +59,6 @@ namespace Parameters {
     Append(uint64_t offset, uint32_t amount)
       : m_offset(offset), m_amount(amount) {}
 
-    /// Returns encoded length of parameters
-    /// @return Encoded length of parameters
-    size_t encoded_length() const override;
-
-    /// Encodes parameters to buffer
-    /// @param bufp Address of buffer to encode parameters to
-    /// (advanced by call)
-    void encode(uint8_t **bufp) const override;
-
-    /// Decodes parameters from buffer
-    /// @param bufp Address of buffer from which to decode parameters
-    /// (advanced by call)
-    /// @param remainp Address of remaining encoded data in buffer
-    /// (advanced by call)
-    void decode(const uint8_t **bufp, size_t *remainp) override;
-
     /// Gets append offset
     /// @return Append offset
     uint64_t get_offset() { return m_offset; }
@@ -85,8 +69,14 @@ namespace Parameters {
 
   private:
 
-    /// Returns internal encoded length
-    size_t internal_encoded_length() const;
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
 
     /// Offset at which data was appended
     uint64_t m_offset {};

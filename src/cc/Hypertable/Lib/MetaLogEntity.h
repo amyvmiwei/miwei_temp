@@ -25,21 +25,23 @@
  * for persisting an object's state in a %MetaLog
  */
 
-#ifndef HYPERTABLE_METALOGENTITY_H
-#define HYPERTABLE_METALOGENTITY_H
+#ifndef Hypertable_Lib_MetaLogEntity_h
+#define Hypertable_Lib_MetaLogEntity_h
+
+#include "MetaLogEntityHeader.h"
+
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/Serializable.h>
+
+#include <boost/algorithm/string.hpp>
 
 #include <iostream>
+#include <memory>
 
 extern "C" {
 #include <time.h>
 }
-
-#include <boost/algorithm/string.hpp>
-
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-
-#include "MetaLogEntityHeader.h"
 
 namespace Hypertable {
 
@@ -61,7 +63,7 @@ namespace Hypertable {
      * class can also be derived from Entity allowing the application object
      * itself to be passed directly into the %Metalog APIs.
      */
-    class Entity : public ReferenceCount {
+    class Entity : public std::enable_shared_from_this<Entity>, public Serializable {
     public:
 
       /** Constructor from entity type.
@@ -82,15 +84,7 @@ namespace Hypertable {
       /** Destructor. */
       virtual ~Entity() { }
 
-      /** Returns length of serialized entity state (excluding header).
-       * @return Length of serialized entity state.
-       */
-      virtual size_t encoded_length() const = 0;
-
-      /** Writes serialized entity state (excluding header) to a buffer.
-       * @param bufp Address of destination buffer pointer (advanced by call)
-       */
-      virtual void encode(uint8_t **bufp) const = 0;
+      using Serializable::decode;
 
       /** Decodes serialized entity state.
        * @param bufp Address of destination buffer pointer (advanced by call)
@@ -99,7 +93,9 @@ namespace Hypertable {
        * to generate the log.
        */
       virtual void decode(const uint8_t **bufp, size_t *remainp,
-                          uint16_t definition_version) = 0;
+                          uint16_t definition_version) {
+        HT_ASSERT(!"Not Implemented");
+      }
 
       /** Locks the entity's mutex. */
       void lock() { m_mutex.lock(); }
@@ -174,7 +170,7 @@ namespace Hypertable {
     };
 
     /// Smart pointer to Entity
-    typedef intrusive_ptr<Entity> EntityPtr;
+    typedef std::shared_ptr<Entity> EntityPtr;
 
     /** ostream shift function for Entity objects.
      * This method writes a human readable representation of an Entity
@@ -220,42 +216,35 @@ namespace Hypertable {
        */
       EntityRecover() : Entity(EntityType::RECOVER) { }
 
-      /** Returns length of serialized entity state 
-       * Since the EntityRecover is a meta entity used internally to
-       * signal the end of the initially supplied entities, it contains
-       * no state and therefore this method returns 0.
-       * @return 0
-       */
-      virtual size_t encoded_length() const { return 0; }
+      size_t encoded_length() const override { return 0; }
 
-      /** Writes serialized entity state to a buffer.
-       * Since the EntityRecover is a meta entity used internally to
-       * signal the end of the initially supplied entities, it contains
-       * no state and therefore this method is a no-op.
-       * @param bufp Address of destination buffer pointer
-       */
-      virtual void encode(uint8_t **bufp) const { }
+      void encode(uint8_t **bufp) const override { }
 
-      /** Decodes serialized entity state.
-       * Since the EntityRecover is a meta entity used internally to
-       * signal the end of the initially supplied entities, it contains
-       * no state and therefore this method is a no-op.
-       * @param bufp Address of destination buffer pointer
-       * @param remainp Address of integer holding amount of remaining buffer
-       * @param definition_version Version of MetaLog::Definition that was used
-       * to generate the log.
-       */
-      virtual void decode(const uint8_t **bufp, size_t *remainp,
-                          uint16_t definition_version) { }
+      void decode(const uint8_t **bufp, size_t *remainp) override {}
+
+      void decode(const uint8_t **bufp, size_t *remainp,
+		  uint16_t definition_version) override {}
 
       /** Returns the name of the entity.
        * This method returns the name of the entity ("Recover")
        * @return Name of the entity ("Recover")
        */
       virtual const String name() { return "Recover"; }
+
+    private:
+
+      uint8_t encoding_version() const override { return 0; }
+
+      size_t encoded_length_internal() const override { return 0; }
+
+      void encode_internal(uint8_t **bufp) const override { }
+
+      void decode_internal(uint8_t version, const uint8_t **bufp,
+			   size_t *remainp) override { }
+      
     };
     /** @}*/
   }
 }
 
-#endif // HYPERTABLE_METALOGENTITY_H
+#endif // Hypertable_Lib_MetaLogEntity_h

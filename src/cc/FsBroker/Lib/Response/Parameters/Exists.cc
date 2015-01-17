@@ -34,36 +34,19 @@
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib::Response::Parameters;
 
-namespace {
-  uint8_t VERSION {1};
+uint8_t Exists::encoding_version() const {
+  return 1;
 }
 
-size_t Exists::encoded_length() const {
-  size_t length = internal_encoded_length();
-  return 1 + Serialization::encoded_length_vi32(length) + length;
+size_t Exists::encoded_length_internal() const {
+  return 1;
 }
 
-void Exists::encode(uint8_t **bufp) const {
-  Serialization::encode_i8(bufp, VERSION);
-  Serialization::encode_vi32(bufp, internal_encoded_length());
+void Exists::encode_internal(uint8_t **bufp) const {
   Serialization::encode_bool(bufp, m_exists);
 }
 
-void Exists::decode(const uint8_t **bufp, size_t *remainp) {
-  uint8_t version = Serialization::decode_i8(bufp, remainp);
-  if (version != VERSION)
-    HT_THROWF(Error::PROTOCOL_ERROR,
-	      "Exists parameters version mismatch, expected %d, got %d",
-	      (int)VERSION, (int)version);
-  uint32_t encoding_length = Serialization::decode_vi32(bufp, remainp);
-  const uint8_t *end = *bufp + encoding_length;
+void Exists::decode_internal(uint8_t version, const uint8_t **bufp,
+			     size_t *remainp) {
   m_exists = Serialization::decode_bool(bufp, remainp);
-  // If encoding is longer than we expect, that means we're decoding a newer
-  // version, so skip the newer portion that we don't know about
-  if (*bufp < end)
-    *bufp = end;
-}
-
-size_t Exists::internal_encoded_length() const {
-  return 1;
 }

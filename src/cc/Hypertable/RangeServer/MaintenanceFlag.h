@@ -60,99 +60,99 @@ namespace Hypertable {
       RECOMPUTE_MERGE_RUN = 0x00010000
     };
 
-    /** Tests the #RELINQUISH bit of <code>flags</code>
+    /** Tests the RELINQUISH bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #RELINQUISH bit is set, <i>false</i>
+     * @return <i>true</i> if RELINQUISH bit is set, <i>false</i>
      * otherwise.
      */
     inline bool relinquish(int flags) {
       return (flags & RELINQUISH) == RELINQUISH;
     }
 
-    /** Tests the #SPLIT bit of <code>flags</code>
+    /** Tests the SPLIT bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #SPLIT bit is set, <i>false</i>
+     * @return <i>true</i> if SPLIT bit is set, <i>false</i>
      * otherwise.
      */
     inline bool split(int flags) {
       return (flags & SPLIT) == SPLIT;
     }
 
-    /** Tests the #COMPACT bit of <code>flags</code>
+    /** Tests the COMPACT bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #COMPACT bit is set, <i>false</i>
+     * @return <i>true</i> if COMPACT bit is set, <i>false</i>
      * otherwise.
      */
     inline bool compaction(int flags) {
       return (flags & COMPACT) == COMPACT;
     }
 
-    /** Tests the #COMPACT_MINOR bit of <code>flags</code>
+    /** Tests the COMPACT_MINOR bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #COMPACT_MINOR bit is set, <i>false</i>
+     * @return <i>true</i> if COMPACT_MINOR bit is set, <i>false</i>
      * otherwise.
      */
     inline bool minor_compaction(int flags) {
       return (flags & COMPACT_MINOR) == COMPACT_MINOR;
     }
 
-    /** Tests the #COMPACT_MERGING bit of <code>flags</code>
+    /** Tests the COMPACT_MERGING bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #COMPACT_MERGING bit is set, <i>false</i>
+     * @return <i>true</i> if COMPACT_MERGING bit is set, <i>false</i>
      * otherwise.
      */
     inline bool merging_compaction(int flags) {
       return (flags & COMPACT_MERGING) == COMPACT_MERGING;
     }
 
-    /** Tests the #COMPACT_MAJOR bit of <code>flags</code>
+    /** Tests the COMPACT_MAJOR bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #COMPACT_MAJOR bit is set, <i>false</i>
+     * @return <i>true</i> if COMPACT_MAJOR bit is set, <i>false</i>
      * otherwise.
      */
     inline bool major_compaction(int flags) {
       return (flags & COMPACT_MAJOR) == COMPACT_MAJOR;
     }
 
-    /** Tests the #COMPACT_GC bit of <code>flags</code>
+    /** Tests the COMPACT_GC bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #COMPACT_GC bit is set, <i>false</i>
+     * @return <i>true</i> if COMPACT_GC bit is set, <i>false</i>
      * otherwise.
      */
     inline bool gc_compaction(int flags) {
       return (flags & COMPACT_GC) == COMPACT_GC;
     }
 
-    /** Tests the #COMPACT_MOVE bit of <code>flags</code>
+    /** Tests the COMPACT_MOVE bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #COMPACT_MOVE bit is set, <i>false</i>
+     * @return <i>true</i> if COMPACT_MOVE bit is set, <i>false</i>
      * otherwise.
      */
     inline bool move_compaction(int flags) {
       return (flags & COMPACT_MOVE) == COMPACT_MOVE;
     }
 
-    /** Tests the #PURGE_SHADOW_CACHE bit of <code>flags</code>
+    /** Tests the PURGE_SHADOW_CACHE bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #PURGE_SHADOW_CACHE bit is set, <i>false</i>
+     * @return <i>true</i> if PURGE_SHADOW_CACHE bit is set, <i>false</i>
      * otherwise.
      */
     inline bool purge_shadow_cache(int flags) {
       return (flags & MEMORY_PURGE_SHADOW_CACHE) == MEMORY_PURGE_SHADOW_CACHE;
     }
 
-    /** Tests the #PURGE_CELLSTORE bit of <code>flags</code>
+    /** Tests the PURGE_CELLSTORE bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #PURGE_CELLSTORE bit is set, <i>false</i>
+     * @return <i>true</i> if PURGE_CELLSTORE bit is set, <i>false</i>
      * otherwise.
      */
     inline bool purge_cellstore(int flags) {
       return (flags & MEMORY_PURGE_CELLSTORE) == MEMORY_PURGE_CELLSTORE;
     }
 
-    /** Tests the #RECOMPUTE_MERGE_RUN bit of <code>flags</code>
+    /** Tests the RECOMPUTE_MERGE_RUN bit of <code>flags</code>
      * @param flags Bit field of maintenance types
-     * @return <i>true</i> if #RECOMPUTE_MERGE_RUN bit is set, <i>false</i>
+     * @return <i>true</i> if RECOMPUTE_MERGE_RUN bit is set, <i>false</i>
      * otherwise.
      */
     inline bool recompute_merge_run(int flags) {

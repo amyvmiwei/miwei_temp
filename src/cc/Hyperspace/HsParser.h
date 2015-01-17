@@ -84,6 +84,7 @@ namespace Hyperspace {
       COMMAND_READPATHATTR,
       COMMAND_DUMP,
       COMMAND_MKDIRS,
+      COMMAND_STATUS,
       COMMAND_MAX
     };
 
@@ -360,6 +361,7 @@ namespace Hyperspace {
           Token C_ECHO                 = as_lower_d["echo"];
           Token C_HELP                 = as_lower_d["help"];
           Token C_LOCATE               = as_lower_d["locate"];
+          Token C_STATUS               = as_lower_d["status"];
 
           Token ESC_HELP               = as_lower_d["\\h"];
 
@@ -442,6 +444,7 @@ namespace Hyperspace {
             | getseq_statement[set_command(self.state, COMMAND_GETSEQ)]
             | echo_statement[set_command(self.state, COMMAND_ECHO)]
             | locate_statement[set_command(self.state, COMMAND_LOCATE)]
+            | status_statement[set_command(self.state, COMMAND_STATUS)]
             ;
 
           mkdir_statement
@@ -548,6 +551,10 @@ namespace Hyperspace {
             = C_LOCATE >> locate_type
             ;
 
+          status_statement
+            = C_STATUS
+            ;
+
           one_open_flag_value
             = O_READ[set_open_flag(self.state, OPEN_FLAG_READ)]
             | O_WRITE[set_open_flag(self.state, OPEN_FLAG_WRITE)]
@@ -646,6 +653,7 @@ namespace Hyperspace {
           BOOST_SPIRIT_DEBUG_RULE(close_statement);
           BOOST_SPIRIT_DEBUG_RULE(help_statement);
           BOOST_SPIRIT_DEBUG_RULE(locate_statement);
+          BOOST_SPIRIT_DEBUG_RULE(status_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrset_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrget_statement);
           BOOST_SPIRIT_DEBUG_RULE(attrincr_statement);
@@ -695,7 +703,8 @@ namespace Hyperspace {
           one_open_flag_value, open_flag_value, one_open_event_mask_value,
           open_event_mask_value, one_create_flag_value, create_flag_value,
           one_create_event_mask_value, create_event_mask_value,
-          one_create_option, attribute, lock_mode, node_name, locate_type;
+          one_create_option, attribute, lock_mode, node_name, locate_type,
+          status_statement;
         };
 
       ParserState &state;

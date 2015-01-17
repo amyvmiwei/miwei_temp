@@ -25,15 +25,15 @@
  * class used to synchronzie with response messages.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "DispatchHandlerSynchronizer.h"
 #include "Protocol.h"
 
-using namespace Hypertable;
+#include <Common/Error.h>
+#include <Common/Logger.h>
 
+using namespace Hypertable;
 
 DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() {
   return;
@@ -60,4 +60,26 @@ bool DispatchHandlerSynchronizer::wait_for_reply(EventPtr &event_ptr) {
     return true;
 
   return false;
+}
+
+
+bool DispatchHandlerSynchronizer::wait_for_connection() {
+  ScopedLock lock(m_mutex);
+
+  while (m_receive_queue.empty())
+    m_cond.wait(lock);
+
+  EventPtr event = m_receive_queue.front();
+  m_receive_queue.pop();
+
+  if (event->type == Event::ERROR)
+    HT_THROW(event->error, "");
+
+  if (event->type == Event::DISCONNECT)
+    return false;
+
+  HT_ASSERT(event->type == Event::CONNECTION_ESTABLISHED);
+
+  return true;
+
 }

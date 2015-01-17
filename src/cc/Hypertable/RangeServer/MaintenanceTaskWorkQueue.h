@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -35,7 +35,7 @@ namespace Hypertable {
 
   private:
     std::vector<MetaLog::EntityTaskPtr> m_work;
-    std::vector<MetaLog::Entity *> m_completed;
+    std::vector<MetaLog::EntityPtr> m_completed;
   };
 
 }

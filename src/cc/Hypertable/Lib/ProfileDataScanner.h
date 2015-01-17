@@ -43,19 +43,6 @@ namespace Hypertable {
   class ProfileDataScanner : public Serializable {
   public:
 
-    /// Returns serialized object length
-    /// @return Serialized object length
-    size_t encoded_length() const override;
-
-    /// Writes serialized representation of object to a buffer.
-    /// @param bufp Address of destination buffer pointer (advanced by call)
-    void encode(uint8_t **bufp) const override;
-
-    /// Reads serialized representation of object from a buffer.
-    /// @param bufp Address of destination buffer pointer (advanced by call)
-    /// @param remainp Address of integer holding amount of remaining buffer
-    void decode(const uint8_t **bufp, size_t *remainp) override;
-
     /// Adds profile data from another object.
     /// Adds profile data from <code>other</code>.
     /// @param other Other object containing profile data to add
@@ -93,6 +80,18 @@ namespace Hypertable {
 
     /// Set of server proxy names participating in scan
     std::set<std::string> servers;
+
+  private:
+
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+    
   };
 
   /// @}

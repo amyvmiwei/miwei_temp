@@ -19,276 +19,148 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "ScanSpec.h"
+
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <Common/Serialization.h>
 
 #include <boost/algorithm/string.hpp>
 
 #include <cstring>
 #include <iostream>
 
-#include "Common/Serialization.h"
-
-#include "KeySpec.h"
-#include "ScanSpec.h"
-
-using namespace std;
 using namespace Hypertable;
-using namespace Serialization;
+using namespace Hypertable::Lib;
+using namespace std;
 
-size_t ColumnPredicate::encoded_length() const {
-  return sizeof(uint32_t)
-    + encoded_length_vstr(column_family)
-    + encoded_length_vstr(column_qualifier)
-    + encoded_length_vstr(value_len)
-    + encoded_length_vstr(column_qualifier_len);
+uint8_t ScanSpec::encoding_version() const {
+  return 1;
 }
 
-void ColumnPredicate::encode(uint8_t **bufp) const {
-  encode_vstr(bufp, column_family);
-  encode_vstr(bufp, column_qualifier);
-  encode_vstr(bufp, value, value_len);
-  encode_vstr(bufp, column_qualifier, column_qualifier_len);
-  encode_i32(bufp, operation);
-}
-
-void ColumnPredicate::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY("decoding column predicate",
-         column_family = decode_vstr(bufp, remainp);
-         column_qualifier = decode_vstr(bufp, remainp);
-         value = decode_vstr(bufp, remainp, &value_len);
-         column_qualifier = decode_vstr(bufp, remainp, &column_qualifier_len);
-         operation = decode_i32(bufp, remainp));
-}
-
-const string ColumnPredicate::render_hql() const {
-  bool exists = (operation & ColumnPredicate::VALUE_MATCH) == 0;
-  string hql;
-  hql.reserve(strlen(column_family) + column_qualifier_len + value_len + 16);
-  if (exists)
-    hql.append("Exists(");
-  hql.append(column_family);
-  if (column_qualifier_len) {
-    hql.append(":");
-    if (operation & ColumnPredicate::QUALIFIER_EXACT_MATCH)
-      hql.append(column_qualifier);
-    else if (operation & ColumnPredicate::QUALIFIER_PREFIX_MATCH) {
-      hql.append(column_qualifier);
-      hql.append("*");
-    }
-    else if (operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
-      hql.append("/");
-      hql.append(column_qualifier);
-      hql.append("/");
-    }
-  }
-  if (exists) {
-    hql.append(")");
-    return hql;
-  }
-  HT_ASSERT(value);
-  if (operation & ColumnPredicate::EXACT_MATCH)
-    hql.append(" = \"");
-  else if (operation & ColumnPredicate::PREFIX_MATCH)
-    hql.append(" =^ \"");
-  else if (operation & ColumnPredicate::REGEX_MATCH)
-    hql.append(" =~ /");
-  hql.append(value);
-  if (operation & ColumnPredicate::REGEX_MATCH)
-    hql.append("/");
-  else
-    hql.append("\"");
-  return hql;
-}
-
-size_t RowInterval::encoded_length() const {
-  return 2 + encoded_length_vstr(start) + encoded_length_vstr(end);
-}
-
-void RowInterval::encode(uint8_t **bufp) const {
-  encode_vstr(bufp, start);
-  encode_bool(bufp, start_inclusive);
-  encode_vstr(bufp, end);
-  encode_bool(bufp, end_inclusive);
-}
-
-
-void RowInterval::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY("decoding row interval",
-    start = decode_vstr(bufp, remainp);
-    start_inclusive = decode_bool(bufp, remainp);
-    end = decode_vstr(bufp, remainp);
-    end_inclusive = decode_bool(bufp, remainp));
-}
-
-const string RowInterval::render_hql() const {
-  string hql;
-  hql.reserve( (start ? strlen(start) : 0) + (end ? strlen(end) : 0) + 8);
-  if (start && *start) {
-    hql.append("\"");
-    hql.append(start);
-    hql.append("\"");
-    if (start_inclusive)
-      hql.append(" <= ");
-    else
-      hql.append(" < ");
-  }
-  hql.append("ROW");
-  if (end && *end) {
-    if (end_inclusive)
-      hql.append(" <= ");
-    else
-      hql.append(" < ");
-    hql.append("\"");
-    hql.append(end);
-    hql.append("\"");
-  }
-  return hql;
-}
-
-size_t CellInterval::encoded_length() const {
-  return 2 + encoded_length_vstr(start_row) + encoded_length_vstr(start_column)
-      + encoded_length_vstr(end_row) + encoded_length_vstr(end_column);
-}
-
-void CellInterval::encode(uint8_t **bufp) const {
-  encode_vstr(bufp, start_row);
-  encode_vstr(bufp, start_column);
-  encode_bool(bufp, start_inclusive);
-  encode_vstr(bufp, end_row);
-  encode_vstr(bufp, end_column);
-  encode_bool(bufp, end_inclusive);
-}
-
-
-void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY("decoding cell interval",
-    start_row = decode_vstr(bufp, remainp);
-    start_column = decode_vstr(bufp, remainp);
-    start_inclusive = decode_bool(bufp, remainp);
-    end_row = decode_vstr(bufp, remainp);
-    end_column = decode_vstr(bufp, remainp);
-    end_inclusive = decode_bool(bufp, remainp));
-}
-
-const string CellInterval::render_hql() const {
-  string hql;
-  hql.reserve( (start_row ? strlen(start_row) : 0) +
-               (start_column ? strlen(start_column) : 0) +
-               (end_row ? strlen(end_row) : 0) +
-               (end_column ? strlen(end_column) : 0) + 8);
-  if (start_row && *start_row) {
-    hql.append("\"");
-    hql.append(start_row);
-    hql.append("',\"");
-    if (start_column && *start_column)
-      hql.append(start_column);
-    hql.append("',");
-    if (start_inclusive)
-      hql.append(" <= ");
-    else
-      hql.append(" < ");
-  }
-  hql.append("CELL");
-  if (end_row && *end_row) {
-    if (end_inclusive)
-      hql.append(" <= ");
-    else
-      hql.append(" < ");
-    hql.append("\"");
-    hql.append(end_row);
-    hql.append("',\"");
-    if (end_column && *end_column)
-      hql.append(end_column);
-    hql.append("',");
-  }
-  return hql;
-}
-
-size_t ScanSpec::encoded_length() const {
-  size_t len = encoded_length_vi32(row_limit) +
-               encoded_length_vi32(cell_limit) +
-               encoded_length_vi32(cell_limit_per_family) +
-               encoded_length_vi32(max_versions) +
-               encoded_length_vi32(columns.size()) +
-               encoded_length_vi32(row_intervals.size()) +
-               encoded_length_vi32(cell_intervals.size()) +
-               encoded_length_vi32(column_predicates.size()) +
-               encoded_length_vstr(row_regexp) +
-               encoded_length_vstr(value_regexp) +
-               encoded_length_vi32(row_offset) +
-               encoded_length_vi32(cell_offset) +
-               rebuild_indices.encoded_length();
-
-  foreach_ht(const char *c, columns) len += encoded_length_vstr(c);
-  foreach_ht(const RowInterval &ri, row_intervals) len += ri.encoded_length();
-  foreach_ht(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
-  foreach_ht(const ColumnPredicate &cp, column_predicates) len += cp.encoded_length();
-
+size_t ScanSpec::encoded_length_internal() const {
+  size_t len = Serialization::encoded_length_vi32(row_offset) +
+    Serialization::encoded_length_vi32(row_limit) +
+    Serialization::encoded_length_vi32(cell_offset) +
+    Serialization::encoded_length_vi32(cell_limit) +
+    Serialization::encoded_length_vi32(cell_limit_per_family) +
+    Serialization::encoded_length_vi32(max_versions) +
+    Serialization::encoded_length_vi32(columns.size()) +
+    Serialization::encoded_length_vi32(row_intervals.size()) +
+    Serialization::encoded_length_vi32(cell_intervals.size()) +
+    Serialization::encoded_length_vi32(column_predicates.size()) +
+    Serialization::encoded_length_vstr(row_regexp) +
+    Serialization::encoded_length_vstr(value_regexp) +
+    rebuild_indices.encoded_length();
+  for (auto c : columns)
+    len += Serialization::encoded_length_vstr(c);
+  for (auto &ri : row_intervals)
+    len += ri.encoded_length();
+  for (auto &ci : cell_intervals)
+    len += ci.encoded_length();
+  for (auto &cp : column_predicates)
+    len += cp.encoded_length();
   return len + 8 + 8 + 5;
 }
 
-void ScanSpec::encode(uint8_t **bufp) const {
-  encode_vi32(bufp, row_limit);
-  encode_vi32(bufp, cell_limit);
-  encode_vi32(bufp, cell_limit_per_family);
-  encode_vi32(bufp, max_versions);
-  encode_vi32(bufp, columns.size());
-  foreach_ht(const char *c, columns) encode_vstr(bufp, c);
-  encode_vi32(bufp, row_intervals.size());
-  foreach_ht(const RowInterval &ri, row_intervals) ri.encode(bufp);
-  encode_vi32(bufp, cell_intervals.size());
-  foreach_ht(const CellInterval &ci, cell_intervals) ci.encode(bufp);
-  encode_vi32(bufp, column_predicates.size());
-  foreach_ht(const ColumnPredicate &cp, column_predicates) cp.encode(bufp);
-  encode_i64(bufp, time_interval.first);
-  encode_i64(bufp, time_interval.second);
-  encode_bool(bufp, return_deletes);
-  encode_bool(bufp, keys_only);
-  encode_vstr(bufp, row_regexp);
-  encode_vstr(bufp, value_regexp);
-  encode_bool(bufp, scan_and_filter_rows);
-  encode_bool(bufp, do_not_cache);
-  encode_bool(bufp, and_column_predicates);
+/// @details
+/// Encoding is as follows:
+/// <table>
+/// <tr><th>Encoding</th><th>Description</th></tr>
+/// <tr><td>i32</td><td>Row offset</td></tr>
+/// <tr><td>i32</td><td>Row limit</td></tr>
+/// <tr><td>i32</td><td>Cell offset</td></tr>
+/// <tr><td>i32</td><td>Cell limit</td></tr>
+/// <tr><td>i32</td><td>Cell limit per column family</td></tr>
+/// <tr><td>i32</td><td>Max versions</td></tr>
+/// <tr><td>i64</td><td>Start time</td></tr>
+/// <tr><td>i64</td><td>End time</td></tr>
+/// <tr><td>i64</td><td>End time</td></tr>
+/// <tr><td>i32</td><td>Column count</td></tr>
+/// <tr><td>For each column ...</td></tr>
+/// <tr><td>vstr</td><td>Column</td></tr>
+/// <tr><td>i32</td><td>Row interval count</td></tr>
+/// <tr><td>For each row interval ...</td></tr>
+/// <tr><td>RowInterval</td><td>Row interval</td></tr>
+/// <tr><td>i32</td><td>Cell interval count</td></tr>
+/// <tr><td>For each cell interval ...</td></tr>
+/// <tr><td>CellInterval</td><td>Cell interval</td></tr>
+/// <tr><td>i32</td><td>Column predicate count</td></tr>
+/// <tr><td>For each column predicate ...</td></tr>
+/// <tr><td>ColumnPredicate</td><td>Column Preciate</td></tr>
+/// <tr><td>vstr</td><td>Row regex</td></tr>
+/// <tr><td>vstr</td><td>Value regex</td></tr>
+/// <tr><td>bool</td><td><i>return deletes</i> flag</td></tr>
+/// <tr><td>bool</td><td><i>keys only</i> flag</td></tr>
+/// <tr><td>bool</td><td><i>scan and filter rows</i> flag</td></tr>
+/// <tr><td>bool</td><td><i>do not cache</i> flag</td></tr>
+/// <tr><td>bool</td><td><i>and column predicates</i> flag</td></tr>
+/// </table>
+void ScanSpec::encode_internal(uint8_t **bufp) const {
+  Serialization::encode_vi32(bufp, row_offset);
+  Serialization::encode_vi32(bufp, row_limit);
+  Serialization::encode_vi32(bufp, cell_offset);
+  Serialization::encode_vi32(bufp, cell_limit);
+  Serialization::encode_vi32(bufp, cell_limit_per_family);
+  Serialization::encode_vi32(bufp, max_versions);
+  Serialization::encode_i64(bufp, time_interval.first);
+  Serialization::encode_i64(bufp, time_interval.second);
+  Serialization::encode_vi32(bufp, columns.size());
+  for (auto column : columns) Serialization::encode_vstr(bufp, column);
+  Serialization::encode_vi32(bufp, row_intervals.size());
+  for (auto & ri : row_intervals) ri.encode(bufp);
+  Serialization::encode_vi32(bufp, cell_intervals.size());
+  for (auto & ci : cell_intervals) ci.encode(bufp);
+  Serialization::encode_vi32(bufp, column_predicates.size());
+  for (auto & cp : column_predicates) cp.encode(bufp);
+  Serialization::encode_vstr(bufp, row_regexp);
+  Serialization::encode_vstr(bufp, value_regexp);
+  Serialization::encode_bool(bufp, return_deletes);
+  Serialization::encode_bool(bufp, keys_only);
+  Serialization::encode_bool(bufp, scan_and_filter_rows);
+  Serialization::encode_bool(bufp, do_not_cache);
+  Serialization::encode_bool(bufp, and_column_predicates);
   rebuild_indices.encode(bufp);
-  encode_vi32(bufp, row_offset);
-  encode_vi32(bufp, cell_offset);
 }
 
-void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
+void ScanSpec::decode_internal(uint8_t version, const uint8_t **bufp,
+                                      size_t *remainp) {
   RowInterval ri;
   CellInterval ci;
   ColumnPredicate cp;
   HT_TRY("decoding scan spec",
-    row_limit = decode_vi32(bufp, remainp);
-    cell_limit = decode_vi32(bufp, remainp);
-    cell_limit_per_family = decode_vi32(bufp, remainp);
-    max_versions = decode_vi32(bufp, remainp);
-    for (size_t nc = decode_vi32(bufp, remainp); nc--;)
-      columns.push_back(decode_vstr(bufp, remainp));
-    for (size_t nri = decode_vi32(bufp, remainp); nri--;) {
-      ri.decode(bufp, remainp);
-      row_intervals.push_back(ri);
-    }
-    for (size_t nci = decode_vi32(bufp, remainp); nci--;) {
-      ci.decode(bufp, remainp);
-      cell_intervals.push_back(ci);
-    }
-    for (size_t nri = decode_vi32(bufp, remainp); nri--;) {
-      cp.decode(bufp, remainp);
-      column_predicates.push_back(cp);
-    }
-    time_interval.first = decode_i64(bufp, remainp);
-    time_interval.second = decode_i64(bufp, remainp);
-    return_deletes = decode_bool(bufp, remainp);
-    keys_only = decode_bool(bufp, remainp);
-    row_regexp = decode_vstr(bufp, remainp);
-    value_regexp = decode_vstr(bufp, remainp);
-    scan_and_filter_rows = decode_bool(bufp, remainp);
-    do_not_cache = decode_bool(bufp, remainp);
-    and_column_predicates = decode_bool(bufp, remainp);
-    rebuild_indices.decode(bufp, remainp);
-    row_offset = decode_vi32(bufp, remainp);
-    cell_offset = decode_vi32(bufp, remainp));
+         row_offset = Serialization::decode_vi32(bufp, remainp);
+         row_limit = Serialization::decode_vi32(bufp, remainp);
+         cell_offset = Serialization::decode_vi32(bufp, remainp);
+         cell_limit = Serialization::decode_vi32(bufp, remainp);
+         cell_limit_per_family = Serialization::decode_vi32(bufp, remainp);
+         max_versions = Serialization::decode_vi32(bufp, remainp);
+         time_interval.first = Serialization::decode_i64(bufp, remainp);
+         time_interval.second = Serialization::decode_i64(bufp, remainp);
+         for (size_t i = Serialization::decode_vi32(bufp, remainp); i--;)
+           columns.push_back(Serialization::decode_vstr(bufp, remainp));
+         for (size_t i = Serialization::decode_vi32(bufp, remainp); i--;) {
+           ri.decode(bufp, remainp);
+           row_intervals.push_back(ri);
+         }
+         for (size_t i = Serialization::decode_vi32(bufp, remainp); i--;) {
+           ci.decode(bufp, remainp);
+           cell_intervals.push_back(ci);
+         }
+         for (size_t i = Serialization::decode_vi32(bufp, remainp); i--;) {
+           cp.decode(bufp, remainp);
+           column_predicates.push_back(cp);
+         }
+         row_regexp = Serialization::decode_vstr(bufp, remainp);
+         value_regexp = Serialization::decode_vstr(bufp, remainp);
+         return_deletes = Serialization::decode_bool(bufp, remainp);
+         keys_only = Serialization::decode_bool(bufp, remainp);
+         scan_and_filter_rows = Serialization::decode_bool(bufp, remainp);
+         do_not_cache = Serialization::decode_bool(bufp, remainp);
+         and_column_predicates = Serialization::decode_bool(bufp, remainp);
+         rebuild_indices.decode(bufp, remainp));
 }
 
 const string ScanSpec::render_hql(const string &table) const {
@@ -426,68 +298,8 @@ const string ScanSpec::render_hql(const string &table) const {
 }
 
 
-/** @relates RowInterval */
-ostream &Hypertable::operator<<(ostream &os, const RowInterval &ri) {
-  os <<"{RowInterval: ";
-  if (ri.start)
-    os << "\"" << ri.start << "\"";
-  else
-    os << "NULL";
-  if (ri.start_inclusive)
-    os << " <= row ";
-  else
-    os << " < row ";
-  if (ri.end_inclusive)
-    os << "<= ";
-  else
-    os << "< ";
-  if (ri.end)
-    os << "\"" << ri.end << "\"";
-  else
-    os << "0xff 0xff";
-  os << "}";
-  return os;
-}
-
-/** @relates CellInterval */
-ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
-  os <<"{CellInterval: ";
-  if (ci.start_row)
-    os << "\"" << ci.start_row << "\",\"" << ci.start_column << "\"";
-  else
-    os << "NULL";
-  if (ci.start_inclusive)
-    os << " <= cell ";
-  else
-    os << " < cell ";
-  if (ci.end_inclusive)
-    os << "<= ";
-  else
-    os << "< ";
-  if (ci.end_row)
-    os << "\"" << ci.end_row << "\",\"" << ci.end_column << "\"";
-  else
-    os << "0xff 0xff";
-  os << "}";
-  return os;
-}
-
-/** @relates ColumnPredicate */
-std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp) {
-  os << "{ColumnPredicate";
-  if (cp.column_family)
-    os << " column_family=" << cp.column_family;
-  if (cp.column_qualifier)
-    os << " column_qualifier=" << cp.column_qualifier << ",len=" << cp.column_qualifier_len;
-  if (cp.value)
-    os << " value=" << cp.value << ",len=" << cp.value_len;
-  os << " operation=" << cp.operation << "}";
-  return os;
-}
-
-
 /** @relates ScanSpec */
-ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
+ostream &Hypertable::Lib::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"{ScanSpec:";
 
   // columns

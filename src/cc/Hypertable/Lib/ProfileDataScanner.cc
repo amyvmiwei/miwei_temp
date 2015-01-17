@@ -35,10 +35,12 @@ using namespace Hypertable;
 using namespace Hypertable::Serialization;
 using namespace std;
 
-#define VERSION 1
+uint8_t ProfileDataScanner::encoding_version() const {
+  return 1;
+}
 
-size_t ProfileDataScanner::encoded_length() const {
-  size_t length = 53;
+size_t ProfileDataScanner::encoded_length_internal() const {
+  size_t length = 52;
   if (!servers.empty()) {
     for (auto & str : servers)
       length += encoded_length_vstr(str);
@@ -46,8 +48,7 @@ size_t ProfileDataScanner::encoded_length() const {
   return length;
 }
 
-void ProfileDataScanner::encode(uint8_t **bufp) const {
-  encode_i8(bufp, (uint8_t)VERSION);
+void ProfileDataScanner::encode_internal(uint8_t **bufp) const {
   encode_i32(bufp, (uint32_t)subscanners);
   encode_i32(bufp, (uint32_t)scanblocks);
   encode_i64(bufp, (uint64_t)cells_scanned);
@@ -62,8 +63,9 @@ void ProfileDataScanner::encode(uint8_t **bufp) const {
   }
 }
 
-void ProfileDataScanner::decode(const uint8_t **bufp, size_t *remainp) {
-  decode_i8(bufp, remainp);  // skip version for now
+void ProfileDataScanner::decode_internal(uint8_t version, const uint8_t **bufp,
+					 size_t *remainp) {
+  (void)version;
   subscanners = (int32_t)decode_i32(bufp, remainp);
   scanblocks = (int32_t)decode_i32(bufp, remainp);
   cells_scanned = (int64_t)decode_i64(bufp, remainp);
@@ -75,6 +77,7 @@ void ProfileDataScanner::decode(const uint8_t **bufp, size_t *remainp) {
   for (size_t i=0; i<count; i++)
     servers.insert( decode_vstr(bufp, remainp) );
 }
+
 
 ProfileDataScanner &ProfileDataScanner::operator+=(const ProfileDataScanner &other) {
   subscanners += other.subscanners;

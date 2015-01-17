@@ -24,13 +24,14 @@
 /// This file contains declarations for TableMutatorAsyncScatterBuffer, a class
 /// for sending updates to to a set of range servers in parallel.
 
-#ifndef HYPERTABLE_TABLEMUTATORASYNCSCATTERBUFFER_H
-#define HYPERTABLE_TABLEMUTATORASYNCSCATTERBUFFER_H
+#ifndef Hypertable_Lib_TableMutatorAsyncScatterBuffer_h
+#define Hypertable_Lib_TableMutatorAsyncScatterBuffer_h
 
 #include <Hypertable/Lib/Cell.h>
 #include <Hypertable/Lib/Cells.h>
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/TableMutatorAsyncSendBuffer.h>
 #include <Hypertable/Lib/TableMutatorAsyncCompletionCounter.h>
@@ -108,7 +109,7 @@ namespace Hypertable {
     SchemaPtr            m_schema;
     RangeLocatorPtr      m_range_locator;
     LocationCachePtr     m_location_cache;
-    RangeServerClient    m_range_server;
+    Lib::RangeServer::Client  m_range_server;
     TableIdentifierManaged m_table_identifier;
     TableMutatorAsyncSendBufferMap m_buffer_map;
     TableMutatorAsyncCompletionCounter m_completion_counter;
@@ -136,6 +137,6 @@ namespace Hypertable {
 
   typedef intrusive_ptr<TableMutatorAsyncScatterBuffer> TableMutatorAsyncScatterBufferPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLEMUTATORASYNCSCATTERBUFFER_H
+#endif // Hypertable_Lib_TableMutatorAsyncScatterBuffer_h

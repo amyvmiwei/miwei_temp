@@ -53,9 +53,8 @@ using namespace std;
 
 OperationDropTable::OperationDropTable(ContextPtr &context, const String &name,
                                        bool if_exists, TableParts parts)
-  : Operation(context, MetaLog::EntityType::OPERATION_DROP_TABLE), m_name(name),
-    m_if_exists(if_exists), m_parts(parts) {
-  Utility::canonicalize_pathname(m_name);
+  : Operation(context, MetaLog::EntityType::OPERATION_DROP_TABLE),
+    m_params(name, if_exists), m_parts(parts) {
 }
 
 OperationDropTable::OperationDropTable(ContextPtr &context,
@@ -67,57 +66,53 @@ OperationDropTable::OperationDropTable(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_DROP_TABLE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
-  initialize_dependencies();
-}
-
-void OperationDropTable::initialize_dependencies() {
-  Utility::canonicalize_pathname(m_name);
-  m_exclusivities.insert(m_name);
+  m_params.decode(&ptr, &remaining);
+  m_exclusivities.insert(m_params.name());
   m_dependencies.insert(Dependency::INIT);
 }
 
 void OperationDropTable::execute() {
   String index_id;
   String qualifier_index_id;
-  String index_name = Filesystem::dirname(m_name);
+  String index_name = Filesystem::dirname(m_params.name());
   if (index_name == "/")
-    index_name += String("^") + Filesystem::basename(m_name);
+    index_name += String("^") + Filesystem::basename(m_params.name());
   else
-    index_name += String("/^") + Filesystem::basename(m_name);
-  String qualifier_index_name = Filesystem::dirname(m_name);
+    index_name += String("/^") + Filesystem::basename(m_params.name());
+  String qualifier_index_name = Filesystem::dirname(m_params.name());
   if (qualifier_index_name == "/")
-    qualifier_index_name += String("^^") + Filesystem::basename(m_name);
+    qualifier_index_name += String("^^") + Filesystem::basename(m_params.name());
   else
-    qualifier_index_name += String("/^^") + Filesystem::basename(m_name);
+    qualifier_index_name += String("/^^") + Filesystem::basename(m_params.name());
   bool is_namespace;
   DispatchHandlerOperationPtr op_handler;
   TableIdentifier table;
   int32_t state = get_state();
 
   HT_INFOF("Entering DropTable-%lld(%s, if_exists=%s, parts=%s) state=%s",
-           (Lld)header.id, m_name.c_str(), m_if_exists ? "true" : "false",
+           (Lld)header.id, m_params.name().c_str(),
+           m_params.if_exists() ? "true" : "false",
            m_parts.to_string().c_str(), OperationState::get_text(state));
 
   switch (state) {
 
   case OperationState::INITIAL:
     // Check to see if namespace exists
-    if(m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
-      if (is_namespace && !m_if_exists) {
-        complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
+    if(m_context->namemap->name_to_id(m_params.name(), m_id, &is_namespace)) {
+      if (is_namespace && !m_params.if_exists()) {
+        complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_params.name().c_str()));
         break;
       }
     }
     else {
-      if (m_if_exists)
+      if (m_params.if_exists())
         complete_ok();
       else
-        complete_error(Error::TABLE_NOT_FOUND, m_name);
+        complete_error(Error::TABLE_NOT_FOUND, m_params.name());
       break;
     }
     set_state(OperationState::DROP_VALUE_INDEX);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("drop-table-INITIAL");
     // drop through ...
 
@@ -128,10 +123,8 @@ void OperationDropTable::execute() {
         m_context->namemap->name_to_id(index_name, index_id)) {
       HT_INFOF("  Dropping index table %s (id %s)", 
                index_name.c_str(), index_id.c_str());
-      Operation *op =
-        new OperationDropTable(m_context, index_name, false,
-                               TableParts(TableParts::PRIMARY));
-      stage_subop(op);
+      stage_subop(make_shared<OperationDropTable>(m_context, index_name, false,
+                                                  TableParts(TableParts::PRIMARY)));
       set_state(OperationState::DROP_QUALIFIER_INDEX);
       HT_MAYBE_FAIL("drop-table-DROP_VALUE_INDEX-1");
       record_state();
@@ -152,10 +145,8 @@ void OperationDropTable::execute() {
                                        qualifier_index_id)) {
       HT_INFOF("  Dropping qualifier index table %s (id %s)", 
                qualifier_index_name.c_str(), qualifier_index_id.c_str());
-      Operation *op =
-        new OperationDropTable(m_context, qualifier_index_name,
-                               false, TableParts(TableParts::PRIMARY));
-      stage_subop(op);
+      stage_subop(make_shared<OperationDropTable>(m_context, qualifier_index_name,
+                                                  false, TableParts(TableParts::PRIMARY)));
       set_state(OperationState::UPDATE_HYPERSPACE);
       HT_MAYBE_FAIL("drop-table-DROP_QUALIFIER_INDEX-1");
       record_state();
@@ -179,7 +170,7 @@ void OperationDropTable::execute() {
     }
 
     try {
-      m_context->namemap->drop_mapping(m_name);
+      m_context->namemap->drop_mapping(m_params.name());
       string filename = m_context->toplevel_dir + "/tables/" + m_id;
       m_context->hyperspace->unlink(filename.c_str());
     }
@@ -187,7 +178,7 @@ void OperationDropTable::execute() {
       if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND &&
           e.code() != Error::HYPERSPACE_BAD_PATHNAME)
         HT_THROW2F(e.code(), e, "Error executing DropTable %s", 
-                m_name.c_str());
+                m_params.name().c_str());
     }
     {
       ScopedLock lock(m_mutex);
@@ -215,7 +206,7 @@ void OperationDropTable::execute() {
         m_state = OperationState::ISSUE_REQUESTS;
       }
     }
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
     HT_MAYBE_FAIL("drop-table-SCAN_METADATA");
     break;
 
@@ -246,7 +237,7 @@ void OperationDropTable::execute() {
           m_dependencies.insert(m_id + " move range");
           m_state = OperationState::SCAN_METADATA;
         }
-        m_context->mml_writer->record_state(this);
+        m_context->mml_writer->record_state(shared_from_this());
         break;
       }
       m_context->monitoring->invalidate_id_mapping(m_id);
@@ -260,22 +251,20 @@ void OperationDropTable::execute() {
   }
 
   HT_INFOF("Leaving DropTable-%lld(%s) state=%s",
-           (Lld)header.id, m_name.c_str(), OperationState::get_text(m_state));
+           (Lld)header.id, m_params.name().c_str(), OperationState::get_text(m_state));
 }
 
 
 void OperationDropTable::display_state(std::ostream &os) {
-  os << " name=" << m_name << " id=" << m_id << " ";
+  os << " name=" << m_params.name() << " id=" << m_id << " ";
 }
 
-#define OPERATION_DROP_TABLE_VERSION 3
-
-uint16_t OperationDropTable::encoding_version() const {
-  return OPERATION_DROP_TABLE_VERSION;
+uint8_t OperationDropTable::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationDropTable::encoded_state_length() const {
-  size_t length = 1 + Serialization::encoded_length_vstr(m_name) +
+size_t OperationDropTable::encoded_length_state() const {
+  size_t length = m_params.encoded_length() +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
   foreach_ht (const String &location, m_completed)
@@ -288,8 +277,7 @@ size_t OperationDropTable::encoded_state_length() const {
 }
 
 void OperationDropTable::encode_state(uint8_t **bufp) const {
-  Serialization::encode_bool(bufp, m_if_exists);
-  Serialization::encode_vstr(bufp, m_name);
+  m_params.encode(bufp);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
   foreach_ht (const String &location, m_completed)
@@ -300,24 +288,37 @@ void OperationDropTable::encode_state(uint8_t **bufp) const {
   m_parts.encode(bufp);
 }
 
-void OperationDropTable::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
+void OperationDropTable::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  m_params.decode(bufp, remainp);
   m_id = Serialization::decode_vstr(bufp, remainp);
   size_t length = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<length; i++)
     m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
-  if (m_decode_version >= 2) {
+  length = Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<length; i++)
+    m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
+  m_parts.decode(bufp, remainp);
+}
+
+void OperationDropTable::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  {
+    bool if_exists = Serialization::decode_bool(bufp, remainp);
+    string name = Serialization::decode_vstr(bufp, remainp);
+    m_params = Lib::Master::Request::Parameters::DropTable(name, if_exists);
+  }
+  m_id = Serialization::decode_vstr(bufp, remainp);
+  size_t length = Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<length; i++)
+    m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
+  if (version >= 2) {
     length = Serialization::decode_i32(bufp, remainp);
     for (size_t i=0; i<length; i++)
       m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
-    if (m_decode_version >= 3)
-      m_parts.decode(bufp, remainp);
+    if (version >= 3) {
+      int8_t parts = (int8_t)Serialization::decode_byte(bufp, remainp);
+      m_parts = TableParts(parts);
+    }
   }
-}
-
-void OperationDropTable::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_if_exists = Serialization::decode_bool(bufp, remainp);
-  m_name = Serialization::decode_vstr(bufp, remainp);
 }
 
 const String OperationDropTable::name() {
@@ -325,6 +326,6 @@ const String OperationDropTable::name() {
 }
 
 const String OperationDropTable::label() {
-  return String("DropTable ") + m_name;
+  return String("DropTable ") + m_params.name();
 }
 

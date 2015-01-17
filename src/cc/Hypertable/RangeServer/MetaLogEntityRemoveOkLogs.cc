@@ -71,27 +71,40 @@ void MetaLogEntityRemoveOkLogs::get(StringSet &logs) {
   logs = m_log_set;
 }
 
+void MetaLogEntityRemoveOkLogs::decode(const uint8_t **bufp, size_t *remainp,
+                                       uint16_t definition_version) {
+  if (definition_version < 3)
+    decode_old(bufp, remainp);
+  else
+    Entity::decode(bufp, remainp);
+}
 
-size_t MetaLogEntityRemoveOkLogs::encoded_length() const {
-  size_t length = 12;
+uint8_t MetaLogEntityRemoveOkLogs::encoding_version() const {
+  return 1;
+}
+
+size_t MetaLogEntityRemoveOkLogs::encoded_length_internal() const {
+  size_t length = 4;
   foreach_ht (const String &pathname, m_log_set)
     length += Serialization::encoded_length_vstr(pathname);
   return length;
 }
 
-#define REMOVE_OK_LOGS_VERSION 2
-
-void MetaLogEntityRemoveOkLogs::encode(uint8_t **bufp) const {
-  Serialization::encode_i32(bufp, 123456789LL);
-  Serialization::encode_i32(bufp, REMOVE_OK_LOGS_VERSION);
+void MetaLogEntityRemoveOkLogs::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_log_set.size());
   foreach_ht (const String &pathname, m_log_set)
     Serialization::encode_vstr(bufp, pathname);
 }
 
-void
-MetaLogEntityRemoveOkLogs::decode(const uint8_t **bufp, size_t *remainp,
-                                  uint16_t definition_version) {
+void MetaLogEntityRemoveOkLogs::decode_internal(uint8_t version, const uint8_t **bufp,
+                                                size_t *remainp) {
+  int32_t count = Serialization::decode_i32(bufp, remainp);
+  for (int32_t i=0; i<count; i++)
+    m_log_set.insert(Serialization::decode_vstr(bufp, remainp));
+  m_decode_version = 2;
+}
+
+void MetaLogEntityRemoveOkLogs::decode_old(const uint8_t **bufp, size_t *remainp) {
   uint32_t val = (uint32_t)Serialization::decode_i32(bufp, remainp);
   uint32_t count;
   if (val == 123456789LL) {
@@ -105,6 +118,7 @@ MetaLogEntityRemoveOkLogs::decode(const uint8_t **bufp, size_t *remainp,
   for (uint32_t i=0; i<count; i++)
     m_log_set.insert(Serialization::decode_vstr(bufp, remainp));
 }
+
 
 const String MetaLogEntityRemoveOkLogs::name() {
   return "RemoveOkLogs";

@@ -19,11 +19,40 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cstdlib>
-#include <iostream>
+#include <Common/Compat.h>
+
+#ifdef HT_WITH_THRIFT
+#include <ThriftBroker/Config.h>
+#include <ThriftBroker/Client.h>
+#endif
+
+#include <Hyperspace/Session.h>
+
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Master/Client.h>
+#include <Hypertable/Lib/RangeServer/Client.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/Config.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/Init.h>
+#include <Common/Timer.h>
+#include <Common/Usage.h>
 
 #include <boost/algorithm/string.hpp>
+
+#include <cstdlib>
+#include <iostream>
+#include <string>
 
 extern "C" {
 #include <netdb.h>
@@ -31,33 +60,9 @@ extern "C" {
 #include <signal.h>
 }
 
-#include "Common/Config.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
-#include "Common/Timer.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include "FsBroker/Lib/Client.h"
-
-#include "Hyperspace/Session.h"
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/Types.h"
-
-#ifdef HT_WITH_THRIFT
-# include "ThriftBroker/Config.h"
-# include "ThriftBroker/Client.h"
-#endif
 
 using namespace Hypertable;
+using namespace Hypertable::Lib;
 using namespace Config;
 using namespace std;
 
@@ -140,13 +145,19 @@ namespace {
       _exit(0);
     }
 
-    FsBroker::Lib::ClientPtr fs = new FsBroker::Lib::Client(conn_mgr, properties);
+    FsBroker::Lib::ClientPtr fs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
 
     if (!fs->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to fsbroker");
 
-    HT_TRY("getting fsbroker status", fs->status());
-
+    try {
+      string output;
+      fs->status(output);
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Status check: %s - %s", Error::get_text(e.code()), e.what());
+      _exit(1);
+    }
   }
 
   Hyperspace::Session *hyperspace;
@@ -175,8 +186,14 @@ namespace {
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
 
-    if ((error = hyperspace->status(&timer)) != Error::OK &&
-      error != Error::HYPERSPACE_NOT_MASTER_LOCATION) {
+    int32_t code;
+    string output;
+    error = hyperspace->status(&code, output, &timer);
+    if (error == Error::OK) {
+      if (code != 0)
+        HT_THROW(Error::FAILED_EXPECTATION, "getting hyperspace status");
+    }
+    else if (error != Error::HYPERSPACE_NOT_MASTER_LOCATION) {
       HT_THROW(error, "getting hyperspace status");
     }
   }
@@ -204,7 +221,7 @@ namespace {
     boost::trim_if(toplevel_dir, boost::is_any_of("/"));
     toplevel_dir = String("/") + toplevel_dir;
 
-    MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
+    Lib::Master::Client *master = new Lib::Master::Client(conn_mgr, hyperspace_ptr,
                                             toplevel_dir, wait_ms, app_queue);
 
     if (!master->wait_for_connection(wait_ms))
@@ -231,10 +248,10 @@ namespace {
     HT_DEBUG_OUT << "Checking master on " << host << ":" << port << HT_END;
     InetAddr addr(host, port);
 
-    // issue 816: try to connect via MasterClient. If it refuses, and if
+    // issue 816: try to connect via Lib::Master::Client. If it refuses, and if
     // the host name is localhost then check if there's a
     // Hypertable.Master.state file and verify the pid
-    MasterClient *master = new MasterClient(conn_mgr, addr, wait_ms);
+    Lib::Master::Client *master = new Lib::Master::Client(conn_mgr, addr, wait_ms);
 
     if (!master->wait_for_connection(wait_ms)) {
       if (strcmp(host, "localhost") && strcmp(host, "127.0.0.1"))
@@ -275,8 +292,8 @@ namespace {
 
     wait_for_connection("range server", conn_mgr, addr, wait_ms, wait_ms);
 
-    RangeServerClient *range_server =
-      new RangeServerClient(conn_mgr->get_comm(), wait_ms);
+    RangeServer::ClientPtr range_server
+      = make_shared<RangeServer::Client>(conn_mgr->get_comm(), wait_ms);
     Timer timer(wait_ms, true);
     range_server->status(addr, timer);
   }

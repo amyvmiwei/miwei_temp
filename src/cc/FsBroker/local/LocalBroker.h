@@ -44,7 +44,6 @@ namespace FsBroker {
   public:
   OpenFileDataLocal(const String &fname, int _fd, int _flags) : fd(_fd), flags(_flags), filename(fname) { }
     virtual ~OpenFileDataLocal() {
-      HT_INFOF("close( %s , %d )", filename.c_str(), fd);
       close(fd);
     }
     int  fd;
@@ -85,7 +84,7 @@ namespace FsBroker {
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void readdir(Response::Callback::Readdir *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
-    virtual void status(ResponseCallback *cb);
+    virtual void status(Response::Callback::Status *cb);
     virtual void shutdown(ResponseCallback *cb);
     virtual void exists(Response::Callback::Exists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);

@@ -215,13 +215,12 @@ CommandShell::CommandShell(const String &program_name,
 
   m_verbose = m_props->has("verbose") ? m_props->get_bool("verbose") : false;
   m_batch_mode = m_props->has("batch");
-  if (m_batch_mode)
-    m_silent = true;
-  else
-    m_silent = m_props->has("silent") ? m_props->get_bool("silent") : false;
+  m_silent = m_props->has("silent") ? m_props->get_bool("silent") : false;
   m_test_mode = m_props->has("test-mode");
-  if (m_test_mode)
+  if (m_test_mode) {
     Logger::get()->set_test_mode();
+    m_batch_mode = true;
+  }
   m_no_prompt = m_props->has("no-prompt");
 
   m_notify = m_props->has("notification-address");
@@ -275,12 +274,16 @@ CommandShell::CommandShell(const String &program_name,
     m_tokenizer = 0;
   }
 
-  /* initialize prompt string */
+  // Initialize prompt string
   wchar_t buf[64] = {0};
   const char *p = program_name.c_str();
   mbsrtowcs(buf, &p, 63, 0);
   m_prompt_str = buf;
   m_prompt_str += L"> ";
+
+  // Propagate mode flags to interpreter
+  m_interp_ptr->set_interactive_mode(!m_batch_mode);
+  m_interp_ptr->set_silent(m_silent);
 }
 
 CommandShell::~CommandShell() {
@@ -327,11 +330,11 @@ char *CommandShell::rl_gets () {
   }
 
   /* Get a line from the user. */
-  if (m_batch_mode || m_no_prompt || m_silent || m_test_mode) {
+  if (m_batch_mode || m_no_prompt || m_silent) {
     if (!getline(cin, m_input_str))
       return 0;
     boost::trim(m_input_str);
-    if (m_input_str.find("quit", 0) != 0 && !m_silent)
+    if (m_input_str.find("quit", 0) != 0 && m_test_mode)
       cout << m_input_str << endl;
     return (char *)m_input_str.c_str();
   }
@@ -375,7 +378,7 @@ char *CommandShell::rl_gets () {
     m_line_read = buffer;
 
     /* If the line has any text in it, save it on the history. */
-    if (!m_batch_mode && !m_test_mode && m_line_read && *m_line_read)
+    if (!m_batch_mode && m_line_read && *m_line_read)
       history_w(m_history, &m_history_event,
               m_cont ? H_APPEND : H_ENTER, wline);
   }
@@ -415,7 +418,7 @@ int CommandShell::run() {
   if (timestamp_format != "")
     m_interp_ptr->set_timestamp_output_format(timestamp_format);
 
-  if (!m_batch_mode && !m_silent) {
+  if (!m_batch_mode && !m_silent && !m_batch_mode) {
     read_history(ms_history_file.c_str());
 
     cout << endl;
@@ -522,10 +525,6 @@ process_line:
         }
         continue;
       }
-      else if (!strcasecmp(line, "status") || !strcmp(line, "\\s")) {
-        cout << endl << "no status." << endl << endl;
-        continue;
-      }
 
       /**
        * Add commands to queue
@@ -612,12 +611,20 @@ process_line:
       }
       if(m_notify)
         m_notifier_ptr->notify();
-      if (m_batch_mode)
+      if (m_batch_mode && !m_test_mode)
         return 2;
       m_accum = "";
       while (!command_queue.empty())
         command_queue.pop();
       m_cont = false;
+    }
+  }
+
+  if (m_batch_mode) {
+    boost::trim(m_accum);
+    if (!m_accum.empty()) {
+      line = ";";
+      goto process_line;
     }
   }
 

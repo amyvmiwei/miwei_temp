@@ -32,17 +32,18 @@
 
 #include <boost/thread/condition.hpp>
 
-#include "Hypertable/Lib/BalancePlan.h"
-#include "Hypertable/Lib/MetaLogWriter.h"
-#include "Hypertable/Lib/RangeRecoveryPlan.h"
+#include <Hypertable/Lib/BalancePlan.h>
+#include <Hypertable/Lib/MetaLogWriter.h>
+#include <Hypertable/Lib/RangeServerRecovery/Plan.h>
 
 #include "Context.h"
 
 namespace Hypertable {
 
-  /** @addtogroup Master
-   *  @{
-   */
+  using namespace Lib;
+
+  /// @addtogroup Master
+  /// @{
 
   /** Central authority for balance plans.
    * This class maintains all currently active <i>balance plans</i>.  A balance
@@ -139,7 +140,7 @@ namespace Hypertable {
      * number
      */
     void copy_recovery_plan(const String &location, int type,
-                            RangeRecoveryPlan &out, int &plan_generation);
+                            RangeServerRecovery::Plan &out, int &plan_generation);
     
     /** Removes a recovery plan for a failed range server.
      * This method removes the recovery plan associated with server
@@ -233,7 +234,7 @@ namespace Hypertable {
      * if balance plan was not registered due to generation mismatch.
      */
     bool register_balance_plan(BalancePlanPtr &plan, int generation,
-                               std::vector<Entity *> &entities);
+                               std::vector<MetaLog::EntityPtr> &entities);
 
     /** Returns the balance plan destination for a given range.
      * This method looks up the range identified by <code>table</code> and
@@ -279,47 +280,6 @@ namespace Hypertable {
      */
     virtual void display(std::ostream &os);
 
-    /** Returns serialized length.
-     * This method returns the length of the serialized representation of the
-     * object.  See encode() for a description of the serialized format.
-     * @return Serialized length
-     */
-    virtual size_t encoded_length() const;
-
-    /** Writes serialized encoding of object.
-     * This method writes a serialized encoding of the balance plan authority
-     * state to the memory location pointed to by <code>*bufp</code>.  The
-     * encoding has the following format:
-     * <table style="font-family:monospace; ">
-     *   <tr>
-     *   <td>[two-byte integer]</td>
-     *   <td>- Version number</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[four-byte integer]</td>
-     *   <td>- Generation number</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[four-byte integer]</td>
-     *   <td>- Number of failover recovery plans</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[variable-byte]</td>
-     *   <td>- Failover recovery plans</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[four-byte]</td>
-     *   <td>- Size of "current" set</td>
-     *   </tr>
-     *   <tr>
-     *   <td>[variable-byte]</td>
-     *   <td>- RangeMove specs</td>
-     *   </tr>
-     * </table>
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     */
-    virtual void encode(uint8_t **bufp) const;
-
     /** Reads serialized encoding of object.
      * This method restores the state of the object by decoding a serialized
      * representation of the state from the memory location pointed to by
@@ -330,14 +290,25 @@ namespace Hypertable {
      * <code>*bufp</code> (decremented by call).
      * @param definition_version Version of DefinitionMaster
      */
-    virtual void decode(const uint8_t **bufp, size_t *remainp,
-                        uint16_t definition_version);
+    void decode(const uint8_t **bufp, size_t *remainp,
+                uint16_t definition_version) override;
 
   private:
 
+    uint8_t encoding_version() const override;
+
+    size_t encoded_length_internal() const override;
+
+    void encode_internal(uint8_t **bufp) const override;
+
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+
+    void decode_old(const uint8_t **bufp, size_t *remainp);
+
     /** Creates a recovery plan for a failed server.
      * Creates a new recovery plan for a failed server for the ranges
-     * of type <code>type</code>.  It allocates a RangeRecoveryPlan
+     * of type <code>type</code>.  It allocates a RangeServerRecovery::Plan
      * object and adds <code>specs</code> and <code>states</code> to the
      * receiver plan and assigns destinations by walking #m_active in
      * round-robin fashion.  It also populates the replay plan by
@@ -353,9 +324,9 @@ namespace Hypertable {
      * @param states Vector of range states (parallels <code>specs</code>)
      * @return Recovery plan
      */
-    RangeRecoveryPlan *create_range_plan(const String &location, int type,
-                                         const vector<QualifiedRangeSpec> &specs,
-                                         const vector<RangeState> &states);
+    RangeServerRecovery::PlanPtr create_range_plan(const String &location, int type,
+                                                   const vector<QualifiedRangeSpec> &specs,
+                                                   const vector<RangeState> &states);
 
     /** Modifies recovery plan, replacing moves to <code>location</code> with a
      * new destination.
@@ -368,7 +339,7 @@ namespace Hypertable {
      * @param new_specs Vector of QualifiedRangeSpec objects to remove from
      *        receiver plan
      */
-    void update_range_plan(RangeRecoveryPlanPtr &plan, const String &location,
+    void update_range_plan(RangeServerRecovery::PlanPtr &plan, const String &location,
                            const vector<QualifiedRangeSpec> &new_specs);
 
     /// Pointer to master context
@@ -391,7 +362,7 @@ namespace Hypertable {
      * ROOT, METADATA, SYSTEM, and USER (see RangeSpec::Type).
      */
     struct RecoveryPlans {
-      RangeRecoveryPlanPtr plans[4];
+      RangeServerRecovery::PlanPtr plans[4];
     };
 
     /// Server-to-plan map
@@ -425,9 +396,9 @@ namespace Hypertable {
   };
 
   /// Smart pointer to BalancePlanAuthority
-  typedef intrusive_ptr<BalancePlanAuthority> BalancePlanAuthorityPtr;
+  typedef std::shared_ptr<BalancePlanAuthority> BalancePlanAuthorityPtr;
 
-  /* @}*/
+  /// @}
 
 } // namespace Hypertable
 

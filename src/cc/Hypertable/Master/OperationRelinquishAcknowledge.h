@@ -19,10 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONRELINQUISHACKNOWLEDGE_H
-#define HYPERTABLE_OPERATIONRELINQUISHACKNOWLEDGE_H
+#ifndef Hypertable_Master_OperationRelinquishAcknowledge_h
+#define Hypertable_Master_OperationRelinquishAcknowledge_h
 
 #include "OperationEphemeral.h"
+
+#include <Hypertable/Lib/Master/Request/Parameters/RelinquishAcknowledge.h>
 
 namespace Hypertable {
 
@@ -30,7 +32,7 @@ namespace Hypertable {
   public:
     OperationRelinquishAcknowledge(ContextPtr &context, EventPtr &event);
     OperationRelinquishAcknowledge(ContextPtr &context, const String &source,
-                                   TableIdentifier *table, RangeSpec *range);
+                                   TableIdentifier &table, RangeSpec &range);
     virtual ~OperationRelinquishAcknowledge() { }
 
     virtual void execute();
@@ -39,14 +41,14 @@ namespace Hypertable {
     virtual const String graphviz_label();
 
     virtual void display_state(std::ostream &os);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
 
   private:
-    String m_source;
-    TableIdentifierManaged m_table;
-    RangeSpecManaged m_range;
+
+    /// Request parmaeters
+    Lib::Master::Request::Parameters::RelinquishAcknowledge m_params;
+
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONRELINQUISHACKNOWLEDGE_H
+#endif // Hypertable_Master_OperationRelinquishAcknowledge_h

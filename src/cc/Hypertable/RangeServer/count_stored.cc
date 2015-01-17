@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
     ClientPtr hypertable_client = new Hypertable::Client(argv[0]);
     NamespacePtr ns = hypertable_client->open_namespace("/");
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
-    FsBroker::Lib::Client *dfs = new FsBroker::Lib::Client(conn_mgr, properties);
+    FsBroker::Lib::ClientPtr dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
 
     Global::dfs = dfs;
 

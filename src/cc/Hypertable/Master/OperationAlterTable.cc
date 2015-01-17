@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,7 +22,7 @@
 /// @file
 /// Definitions for OperationAlterTable.
 /// This file contains definitions for OperationAlterTable, an Operation class
-/// for carrying out an ALTER TABLE operation.
+/// for carrying out an <i>alter table</i> operation.
 
 #include <Common/Compat.h>
 #include "OperationAlterTable.h"
@@ -51,6 +51,7 @@
 
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace std;
 
 OperationAlterTable::OperationAlterTable(ContextPtr &context,
                                          const MetaLog::EntityHeader &header_)
@@ -61,15 +62,8 @@ OperationAlterTable::OperationAlterTable(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_ALTER_TABLE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
-  m_decode_version = 4;
-  decode_request(&ptr, &remaining);
-  initialize_dependencies();
-}
-
-void OperationAlterTable::initialize_dependencies() {
-  boost::trim_if(m_name, boost::is_any_of("/ "));
-  m_name = String("/") + m_name;
-  m_exclusivities.insert(m_name);
+  m_params.decode(&ptr, &remaining);
+  m_exclusivities.insert(m_params.name());
   add_dependency(Dependency::INIT);
 }
 
@@ -81,27 +75,26 @@ void OperationAlterTable::execute() {
   TableIdentifier table;
   int32_t state = get_state();
   DependencySet dependencies;
-  Operation *op;
   SchemaPtr original_schema;
   SchemaPtr alter_schema;
 
   HT_INFOF("Entering AlterTable-%lld(%s) state=%s",
-           (Lld)header.id, m_name.c_str(), OperationState::get_text(state));
+           (Lld)header.id, m_params.name().c_str(), OperationState::get_text(state));
 
   switch (state) {
 
   case OperationState::INITIAL:
     // Check to see if namespace exists
-    if(m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
+    if(m_context->namemap->name_to_id(m_params.name(), m_id, &is_namespace)) {
       if (is_namespace) {
-        complete_error(Error::INVALID_ARGUMENT, format("%s is a namespace", m_name.c_str()));
+        complete_error(Error::INVALID_ARGUMENT, format("%s is a namespace", m_params.name().c_str()));
         break;
       }
       set_state(OperationState::VALIDATE_SCHEMA);
-      m_context->mml_writer->record_state(this);
+      m_context->mml_writer->record_state(shared_from_this());
     }
     else {
-      complete_error(Error::TABLE_NOT_FOUND, m_name);
+      complete_error(Error::TABLE_NOT_FOUND, m_params.name());
       break;
     }
     HT_MAYBE_FAIL("alter-table-INITIAL");
@@ -109,7 +102,7 @@ void OperationAlterTable::execute() {
   case OperationState::VALIDATE_SCHEMA:
     if (!get_schemas(original_schema, alter_schema))
       break;
-    if (!m_force) {
+    if (!m_params.force()) {
       try {
         if (original_schema->get_generation() != alter_schema->get_generation())
           HT_THROWF(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
@@ -142,13 +135,11 @@ void OperationAlterTable::execute() {
       m_state = OperationState::CREATE_INDICES;
     }
     m_parts = get_create_index_parts(original_schema, alter_schema);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
   case OperationState::CREATE_INDICES:
-    if (m_parts.value_index() || m_parts.qualifier_index()) {
-      op = new OperationCreateTable(m_context, m_name, m_schema, m_parts);
-      stage_subop(op);
-    }
+    if (m_parts.value_index() || m_parts.qualifier_index())
+      stage_subop(make_shared<OperationCreateTable>(m_context, m_params.name(), m_schema, m_parts));
     set_state(OperationState::SCAN_METADATA);
     record_state();
     break;
@@ -198,13 +189,13 @@ void OperationAlterTable::execute() {
         m_dependencies.insert(Dependency::METADATA);
         m_state = OperationState::SCAN_METADATA;
       }
-      m_context->mml_writer->record_state(this);
+      m_context->mml_writer->record_state(shared_from_this());
       // Sleep a little bit to prevent busy wait
       poll(0, 0, 5000);
       return;
     }
     set_state(OperationState::UPDATE_HYPERSPACE);
-    m_context->mml_writer->record_state(this);
+    m_context->mml_writer->record_state(shared_from_this());
 
   case OperationState::UPDATE_HYPERSPACE:
     if (!get_schemas(original_schema, alter_schema))
@@ -217,16 +208,15 @@ void OperationAlterTable::execute() {
     }
     if (m_parts.value_index() || m_parts.qualifier_index()) {
       set_state(OperationState::SUSPEND_TABLE_MAINTENANCE);
-      m_context->mml_writer->record_state(this);
+      m_context->mml_writer->record_state(shared_from_this());
     }
     else
       complete_ok();
     break;
 
   case OperationState::SUSPEND_TABLE_MAINTENANCE:
-    op = new OperationToggleTableMaintenance(m_context, m_name,
-                                             TableMaintenance::OFF);
-    stage_subop(op);
+    stage_subop(make_shared<OperationToggleTableMaintenance>(m_context, m_params.name(),
+                                                             TableMaintenance::OFF));
     set_state(OperationState::DROP_INDICES);
     record_state();
     break;
@@ -234,8 +224,7 @@ void OperationAlterTable::execute() {
   case OperationState::DROP_INDICES:
     if (!validate_subops())
       break;
-    op = new OperationDropTable(m_context, m_name, true, m_parts);
-    stage_subop(op);
+    stage_subop(make_shared<OperationDropTable>(m_context, m_params.name(), true, m_parts));
     set_state(OperationState::RESUME_TABLE_MAINTENANCE);
     record_state();
     break;
@@ -243,9 +232,8 @@ void OperationAlterTable::execute() {
   case OperationState::RESUME_TABLE_MAINTENANCE:
     if (!validate_subops())
       break;
-    op = new OperationToggleTableMaintenance(m_context, m_name,
-                                             TableMaintenance::ON);
-    stage_subop(op);
+    stage_subop(make_shared<OperationToggleTableMaintenance>(m_context, m_params.name(),
+                                                             TableMaintenance::ON));
     set_state(OperationState::FINALIZE);
     record_state();
     break;
@@ -261,23 +249,21 @@ void OperationAlterTable::execute() {
   }
 
   HT_INFOF("Leaving AlterTable-%lld (%s) state=%s", (Lld)header.id,
-           m_name.c_str(), OperationState::get_text(get_state()));
+           m_params.name().c_str(), OperationState::get_text(get_state()));
 }
 
 
 void OperationAlterTable::display_state(std::ostream &os) {
-  os << " name=" << m_name << " id=" << m_id << " ";
+  os << " name=" << m_params.name() << " id=" << m_id << " ";
 }
 
-#define OPERATION_ALTER_TABLE_VERSION 4
-
-uint16_t OperationAlterTable::encoding_version() const {
-  return OPERATION_ALTER_TABLE_VERSION;
+uint8_t OperationAlterTable::encoding_version_state() const {
+  return 1;
 }
 
-size_t OperationAlterTable::encoded_state_length() const {
-  size_t length = Serialization::encoded_length_vstr(m_name) +
-    Serialization::encoded_length_vstr(m_schema) + 1 +
+size_t OperationAlterTable::encoded_length_state() const {
+  size_t length = m_params.encoded_length() +
+    Serialization::encoded_length_vstr(m_schema) +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
   foreach_ht (const String &location, m_completed)
@@ -290,9 +276,8 @@ size_t OperationAlterTable::encoded_state_length() const {
 }
 
 void OperationAlterTable::encode_state(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, m_name);
+  m_params.encode(bufp);
   Serialization::encode_vstr(bufp, m_schema);
-  Serialization::encode_bool(bufp, m_force);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
   foreach_ht (const String &location, m_completed)
@@ -303,26 +288,41 @@ void OperationAlterTable::encode_state(uint8_t **bufp) const {
   m_parts.encode(bufp);
 }
 
-void OperationAlterTable::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
+void OperationAlterTable::decode_state(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  m_params.decode(bufp, remainp);
+  m_schema = Serialization::decode_vstr(bufp, remainp);  
   m_id = Serialization::decode_vstr(bufp, remainp);
   size_t length = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<length; i++)
     m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
-  if (m_decode_version >= 2) {
+  length = Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<length; i++)
+    m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
+  m_parts.decode(bufp, remainp);
+}
+
+void OperationAlterTable::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
+  {
+    string name = Serialization::decode_vstr(bufp, remainp);
+    m_schema = Serialization::decode_vstr(bufp, remainp);
+    bool force {};
+    if (version >= 4)
+      force = Serialization::decode_bool(bufp, remainp);
+    m_params = Lib::Master::Request::Parameters::AlterTable(name, m_schema, force);
+  }
+  m_id = Serialization::decode_vstr(bufp, remainp);
+  size_t length = Serialization::decode_i32(bufp, remainp);
+  for (size_t i=0; i<length; i++)
+    m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
+  if (version >= 2) {
     length = Serialization::decode_i32(bufp, remainp);
     for (size_t i=0; i<length; i++)
       m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
-    if (m_decode_version >= 3)
-      m_parts.decode(bufp, remainp);
+    if (version >= 3) {
+      int8_t parts = (int8_t)Serialization::decode_byte(bufp, remainp);
+      m_parts = TableParts(parts);
+    }
   }
-}
-
-void OperationAlterTable::decode_request(const uint8_t **bufp, size_t *remainp) {
-  m_name = Serialization::decode_vstr(bufp, remainp);
-  m_schema = Serialization::decode_vstr(bufp, remainp);
-  if (m_decode_version >= 4)
-    m_force = Serialization::decode_bool(bufp, remainp);
 }
 
 const String OperationAlterTable::name() {
@@ -330,7 +330,7 @@ const String OperationAlterTable::name() {
 }
 
 const String OperationAlterTable::label() {
-  return String("AlterTable ") + m_name;
+  return String("AlterTable ") + m_params.name();
 }
 
 bool OperationAlterTable::get_schemas(SchemaPtr &original_schema,
@@ -341,7 +341,7 @@ bool OperationAlterTable::get_schemas(SchemaPtr &original_schema,
       string filename = m_context->toplevel_dir + "/tables/" + m_id;
       m_context->hyperspace->attr_get(filename, "schema", value_buf);
       original_schema = Schema::new_instance((const char *)value_buf.base);
-      alter_schema = Schema::new_instance(m_schema);
+      alter_schema = Schema::new_instance(m_params.schema());
     }
     catch (Exception &e) {
       complete_error(e);

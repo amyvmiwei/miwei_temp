@@ -1,0 +1,4 @@
+/// @defgroup RangeServer RangeServer
+/// @ingroup Hypertable
+/// %Range server.
+/// The @ref RangeServer module contains the definition of the RangeServer

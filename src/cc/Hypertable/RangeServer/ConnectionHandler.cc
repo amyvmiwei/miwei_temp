@@ -19,79 +19,64 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "ConnectionHandler.h"
+
+#include <Hypertable/RangeServer/RangeServer.h>
+#include <Hypertable/RangeServer/Request/Handler/AcknowledgeLoad.h>
+#include <Hypertable/RangeServer/Request/Handler/CommitLogSync.h>
+#include <Hypertable/RangeServer/Request/Handler/Compact.h>
+#include <Hypertable/RangeServer/Request/Handler/CreateScanner.h>
+#include <Hypertable/RangeServer/Request/Handler/DestroyScanner.h>
+#include <Hypertable/RangeServer/Request/Handler/DropRange.h>
+#include <Hypertable/RangeServer/Request/Handler/DropTable.h>
+#include <Hypertable/RangeServer/Request/Handler/Dump.h>
+#include <Hypertable/RangeServer/Request/Handler/DumpPseudoTable.h>
+#include <Hypertable/RangeServer/Request/Handler/FetchScanblock.h>
+#include <Hypertable/RangeServer/Request/Handler/GetStatistics.h>
+#include <Hypertable/RangeServer/Request/Handler/Heapcheck.h>
+#include <Hypertable/RangeServer/Request/Handler/LoadRange.h>
+#include <Hypertable/RangeServer/Request/Handler/MetadataSync.h>
+#include <Hypertable/RangeServer/Request/Handler/PhantomCommitRanges.h>
+#include <Hypertable/RangeServer/Request/Handler/PhantomLoad.h>
+#include <Hypertable/RangeServer/Request/Handler/PhantomPrepareRanges.h>
+#include <Hypertable/RangeServer/Request/Handler/PhantomUpdate.h>
+#include <Hypertable/RangeServer/Request/Handler/RelinquishRange.h>
+#include <Hypertable/RangeServer/Request/Handler/ReplayFragments.h>
+#include <Hypertable/RangeServer/Request/Handler/SetState.h>
+#include <Hypertable/RangeServer/Request/Handler/Shutdown.h>
+#include <Hypertable/RangeServer/Request/Handler/Status.h>
+#include <Hypertable/RangeServer/Request/Handler/TableMaintenanceDisable.h>
+#include <Hypertable/RangeServer/Request/Handler/TableMaintenanceEnable.h>
+#include <Hypertable/RangeServer/Request/Handler/Update.h>
+#include <Hypertable/RangeServer/Request/Handler/UpdateSchema.h>
+#include <Hypertable/RangeServer/Request/Handler/WaitForMaintenance.h>
+
+#include <Hypertable/Lib/RangeServer/Protocol.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/ResponseCallback.h>
+
+#include <Common/Error.h>
+#include <Common/StringExt.h>
+
 #include <iostream>
 
 extern "C" {
 #include <poll.h>
 }
 
-#include "Common/Error.h"
-#include "Common/StringExt.h"
-#include "Common/Serialization.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/ResponseCallback.h"
-
-#include "Hypertable/Lib/RangeServerProtocol.h"
-
-#include "RequestHandlerAcknowledgeLoad.h"
-#include "RequestHandlerCompact.h"
-#include "RequestHandlerDestroyScanner.h"
-#include "RequestHandlerDump.h"
-#include "RequestHandlerDumpPseudoTable.h"
-#include "RequestHandlerGetStatistics.h"
-#include "RequestHandlerLoadRange.h"
-#include "RequestHandlerUpdateSchema.h"
-#include "RequestHandlerUpdate.h"
-#include "RequestHandlerCreateScanner.h"
-#include "RequestHandlerFetchScanblock.h"
-#include "RequestHandlerHeapcheck.h"
-#include "RequestHandlerDropTable.h"
-#include "RequestHandlerMetadataSync.h"
-#include "RequestHandlerStatus.h"
-#include "RequestHandlerDropRange.h"
-#include "RequestHandlerRelinquishRange.h"
-#include "RequestHandlerShutdown.h"
-#include "RequestHandlerCommitLogSync.h"
-#include "RequestHandlerWaitForMaintenance.h"
-#include "RequestHandlerReplayFragments.h"
-#include "RequestHandlerPhantomLoad.h"
-#include "RequestHandlerPhantomUpdate.h"
-#include "RequestHandlerPhantomPrepareRanges.h"
-#include "RequestHandlerPhantomCommitRanges.h"
-#include "RequestHandlerSetState.h"
-#include "RequestHandlerTableMaintenanceDisable.h"
-#include "RequestHandlerTableMaintenanceEnable.h"
-
-#include "ConnectionHandler.h"
-#include "RangeServer.h"
-
-
 using namespace Hypertable;
-using namespace Serialization;
-using namespace Error;
+using namespace Hypertable::RangeServer;
 
-/**
- *
- */
-ConnectionHandler::ConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-                                     RangeServerPtr range_server)
-  : m_comm(comm), m_app_queue(app_queue), m_range_server(range_server),
-    m_shutdown(false) {
-}
-
-
-/**
- *
- */
 void ConnectionHandler::handle(EventPtr &event) {
 
   if (m_shutdown &&
-      event->header.command != RangeServerProtocol::COMMAND_SHUTDOWN &&
-      event->header.command != RangeServerProtocol::COMMAND_STATUS) {
+      event->header.command != Lib::RangeServer::Protocol::COMMAND_SHUTDOWN &&
+      event->header.command != Lib::RangeServer::Protocol::COMMAND_STATUS) {
     ResponseCallback cb(m_comm, event);
-    cb.error(RANGESERVER_SHUTTING_DOWN, "");
+    cb.error(Error::RANGESERVER_SHUTTING_DOWN, "");
     return;
   }
 
@@ -103,131 +88,131 @@ void ConnectionHandler::handle(EventPtr &event) {
     try {
 
       // sanity check command code
-      if (event->header.command >= RangeServerProtocol::COMMAND_MAX)
-        HT_THROWF(PROTOCOL_ERROR, "Invalid command (%llu)",
+      if (event->header.command >= Lib::RangeServer::Protocol::COMMAND_MAX)
+        HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
       switch (event->header.command) {
-      case RangeServerProtocol::COMMAND_ACKNOWLEDGE_LOAD:
-        handler = new RequestHandlerAcknowledgeLoad(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_ACKNOWLEDGE_LOAD:
+        handler = new Request::Handler::AcknowledgeLoad(m_comm, m_range_server.get(),
                                                     event);
         break;
-      case RangeServerProtocol::COMMAND_COMPACT:
-        handler = new RequestHandlerCompact(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_COMPACT:
+        handler = new Request::Handler::Compact(m_comm, m_range_server.get(),
                                             event);
         break;
-      case RangeServerProtocol::COMMAND_LOAD_RANGE:
-        handler = new RequestHandlerLoadRange(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_LOAD_RANGE:
+        handler = new Request::Handler::LoadRange(m_comm, m_range_server.get(),
                                               event);
         break;
-      case RangeServerProtocol::COMMAND_UPDATE:
-        handler = new RequestHandlerUpdate(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_UPDATE:
+        handler = new Request::Handler::Update(m_comm, m_range_server.get(),
                                            event);
         break;
-      case RangeServerProtocol::COMMAND_CREATE_SCANNER:
-        handler = new RequestHandlerCreateScanner(m_comm,
+      case Lib::RangeServer::Protocol::COMMAND_CREATE_SCANNER:
+        handler = new Request::Handler::CreateScanner(m_comm,
             m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_DESTROY_SCANNER:
-        handler = new RequestHandlerDestroyScanner(m_comm,
+      case Lib::RangeServer::Protocol::COMMAND_DESTROY_SCANNER:
+        handler = new Request::Handler::DestroyScanner(m_comm,
             m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_FETCH_SCANBLOCK:
-        handler = new RequestHandlerFetchScanblock(m_comm,
+      case Lib::RangeServer::Protocol::COMMAND_FETCH_SCANBLOCK:
+        handler = new Request::Handler::FetchScanblock(m_comm,
             m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_DROP_TABLE:
-        handler = new RequestHandlerDropTable(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_DROP_TABLE:
+        handler = new Request::Handler::DropTable(m_comm, m_range_server.get(),
                                               event);
         break;
-      case RangeServerProtocol::COMMAND_DROP_RANGE:
-        handler = new RequestHandlerDropRange(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_DROP_RANGE:
+        handler = new Request::Handler::DropRange(m_comm, m_range_server.get(),
                                               event);
         break;
 
-      case RangeServerProtocol::COMMAND_RELINQUISH_RANGE:
-        handler = new RequestHandlerRelinquishRange(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_RELINQUISH_RANGE:
+        handler = new Request::Handler::RelinquishRange(m_comm, m_range_server.get(),
                                                     event);
         break;
-      case RangeServerProtocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, event);
+      case Lib::RangeServer::Protocol::COMMAND_STATUS:
+        handler = new Request::Handler::Status(m_comm, event);
         break;
-      case RangeServerProtocol::COMMAND_WAIT_FOR_MAINTENANCE:
-        handler = new RequestHandlerWaitForMaintenance(m_comm, m_range_server.get(), event);
+      case Lib::RangeServer::Protocol::COMMAND_WAIT_FOR_MAINTENANCE:
+        handler = new Request::Handler::WaitForMaintenance(m_comm, m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_SHUTDOWN:
+      case Lib::RangeServer::Protocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");
         m_shutdown = true;
-        handler = new RequestHandlerShutdown(m_comm, m_range_server.get(), event);
+        handler = new Request::Handler::Shutdown(m_comm, m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_DUMP:
-        handler = new RequestHandlerDump(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_DUMP:
+        handler = new Request::Handler::Dump(m_comm, m_range_server.get(),
                                          event);
         break;
-      case RangeServerProtocol::COMMAND_DUMP_PSEUDO_TABLE:
-        handler = new RequestHandlerDumpPseudoTable(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_DUMP_PSEUDO_TABLE:
+        handler = new Request::Handler::DumpPseudoTable(m_comm, m_range_server.get(),
                                                     event);
         break;
-      case RangeServerProtocol::COMMAND_GET_STATISTICS:
-        handler = new RequestHandlerGetStatistics(m_comm,
+      case Lib::RangeServer::Protocol::COMMAND_GET_STATISTICS:
+        handler = new Request::Handler::GetStatistics(m_comm,
             m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_UPDATE_SCHEMA:
-        handler = new RequestHandlerUpdateSchema(m_comm,
+      case Lib::RangeServer::Protocol::COMMAND_UPDATE_SCHEMA:
+        handler = new Request::Handler::UpdateSchema(m_comm,
             m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_HEAPCHECK:
-        handler = new RequestHandlerHeapcheck(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_HEAPCHECK:
+        handler = new Request::Handler::Heapcheck(m_comm, m_range_server.get(),
                                               event);
         break;
-      case RangeServerProtocol::COMMAND_COMMIT_LOG_SYNC:
-        handler = new RequestHandlerCommitLogSync(m_comm, m_range_server.get(), event);
+      case Lib::RangeServer::Protocol::COMMAND_COMMIT_LOG_SYNC:
+        handler = new Request::Handler::CommitLogSync(m_comm, m_range_server.get(), event);
         break;
-      case RangeServerProtocol::COMMAND_METADATA_SYNC:
-        handler = new RequestHandlerMetadataSync(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_METADATA_SYNC:
+        handler = new Request::Handler::MetadataSync(m_comm, m_range_server.get(),
                                                  event);
         break;
 
-      case RangeServerProtocol::COMMAND_REPLAY_FRAGMENTS:
-        handler = new RequestHandlerReplayFragments(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_REPLAY_FRAGMENTS:
+        handler = new Request::Handler::ReplayFragments(m_comm, m_range_server.get(),
                                                     event);
         break;
 
-      case RangeServerProtocol::COMMAND_PHANTOM_RECEIVE:
-        handler = new RequestHandlerPhantomLoad(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_PHANTOM_LOAD:
+        handler = new Request::Handler::PhantomLoad(m_comm, m_range_server.get(),
                                                    event);
         break;
 
-      case RangeServerProtocol::COMMAND_PHANTOM_UPDATE:
-        handler = new RequestHandlerPhantomUpdate(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_PHANTOM_UPDATE:
+        handler = new Request::Handler::PhantomUpdate(m_comm, m_range_server.get(),
                                                   event);
         break;
 
-      case RangeServerProtocol::COMMAND_PHANTOM_PREPARE_RANGES:
-        handler = new RequestHandlerPhantomPrepareRanges(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_PHANTOM_PREPARE_RANGES:
+        handler = new Request::Handler::PhantomPrepareRanges(m_comm, m_range_server.get(),
                                                          event);
         break;
 
-      case RangeServerProtocol::COMMAND_PHANTOM_COMMIT_RANGES:
-        handler = new RequestHandlerPhantomCommitRanges(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_PHANTOM_COMMIT_RANGES:
+        handler = new Request::Handler::PhantomCommitRanges(m_comm, m_range_server.get(),
                                                         event);
         break;
 
-      case RangeServerProtocol::COMMAND_SET_STATE:
-        handler = new RequestHandlerSetState(m_comm, m_range_server.get(),
+      case Lib::RangeServer::Protocol::COMMAND_SET_STATE:
+        handler = new Request::Handler::SetState(m_comm, m_range_server.get(),
                                              event);
         break;
 
-      case RangeServerProtocol::COMMAND_TABLE_MAINTENANCE_ENABLE:
-        handler = new RequestHandlerTableMaintenanceEnable(m_comm, m_range_server.get(), event);
+      case Lib::RangeServer::Protocol::COMMAND_TABLE_MAINTENANCE_ENABLE:
+        handler = new Request::Handler::TableMaintenanceEnable(m_comm, m_range_server.get(), event);
         break;
 
-      case RangeServerProtocol::COMMAND_TABLE_MAINTENANCE_DISABLE:
-        handler = new RequestHandlerTableMaintenanceDisable(m_comm, m_range_server.get(), event);
+      case Lib::RangeServer::Protocol::COMMAND_TABLE_MAINTENANCE_DISABLE:
+        handler = new Request::Handler::TableMaintenanceDisable(m_comm, m_range_server.get(), event);
         break;
 
       default:
-        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
+        HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
       }
       m_app_queue->add(handler);
@@ -235,7 +220,7 @@ void ConnectionHandler::handle(EventPtr &event) {
     catch (Exception &e) {
       ResponseCallback cb(m_comm, event);
       HT_ERROR_OUT << e << HT_END;
-      std::string errmsg = format("%s - %s", e.what(), get_text(e.code()));
+      std::string errmsg = format("%s - %s", e.what(), Error::get_text(e.code()));
       cb.error(Error::PROTOCOL_ERROR, errmsg);
     }
   }
@@ -244,4 +229,3 @@ void ConnectionHandler::handle(EventPtr &event) {
   }
 
 }
-

@@ -67,7 +67,7 @@ void OperationRecoveryBlocker::execute() {
   if (!m_context->quorum_reached) {
     uint32_t millis = 2 * m_context->props->get_i32("Hypertable.Failover.GracePeriod");
     m_context->recovery_barrier_op->advance_into_future(millis);
-    OperationPtr operation = m_context->recovery_barrier_op;
+    OperationPtr operation(m_context->recovery_barrier_op);
     m_context->op->add_operation(operation);
     m_context->quorum_reached = true;
   }

@@ -27,7 +27,8 @@
 #ifndef Hypertable_RangeServer_LogReplayBarrier_h
 #define Hypertable_RangeServer_LogReplayBarrier_h
 
-#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/RangeSpec.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/Mutex.h>
 
@@ -125,8 +126,20 @@ namespace Hypertable {
     /// @return <i>true</i> if commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait(boost::xtime deadline,
-              const TableIdentifier *table, const RangeSpec *range=0);
+    bool wait(boost::xtime deadline, const TableIdentifier &table,
+              const RangeSpec &range);
+
+    /// Waits for commit log replay to complete for log class defined by a
+    /// given table.
+    /// This member function will perform a timed wait on the condition variable
+    /// for the log class to which the given table belongs.
+    /// <code>deadline</code> is passed in as the timeout value.
+    /// @param deadline Absolute time representing wait deadline
+    /// @param table %Table identifier
+    /// @return <i>true</i> if commit log replay completed before
+    /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
+    /// before USER commit log replay completed.
+    bool wait(boost::xtime deadline, const TableIdentifier &table);
 
     /// Checks if replay of USER commit log is complete
     /// @return <i>true</i> if USER commit log replay is complete, <i>false</i>

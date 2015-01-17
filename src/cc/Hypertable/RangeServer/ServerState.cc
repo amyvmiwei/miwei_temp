@@ -45,10 +45,10 @@ bool ServerState::readonly() {
   return m_specs[SystemVariable::READONLY].value;
 }
 
-void ServerState::set(uint64_t generation, std::vector<SystemVariable::Spec> &specs) {
+void ServerState::set(int64_t generation, const std::vector<SystemVariable::Spec> &specs) {
   ScopedLock lock(m_mutex);
   if (generation > m_generation) {
-    foreach_ht (SystemVariable::Spec &spec, specs) {
+    for (auto &spec : specs) {
       if (spec.code < (int)m_specs.size())
         m_specs[spec.code].value = spec.value;
       else

@@ -35,16 +35,16 @@ atomic<int> ScannerMap::ms_next_id {};
 
 /**
  */
-uint32_t ScannerMap::put(MergeScannerRangePtr &scanner, RangePtr &range,
-                         const TableIdentifier *table, ProfileDataScanner &profile_data) {
+int32_t ScannerMap::put(MergeScannerRangePtr &scanner, RangePtr &range,
+                         const TableIdentifier &table, ProfileDataScanner &profile_data) {
   ScopedLock lock(m_mutex);
   ScanInfo scaninfo;
   scaninfo.scanner = scanner;
   scaninfo.range = range;
   scaninfo.last_access_millis = get_timestamp_millis();
-  scaninfo.table= *table;
+  scaninfo.table= table;
   scaninfo.profile_data = profile_data;
-  uint32_t id = ++ms_next_id;
+  int32_t id = ++ms_next_id;
   m_scanner_map[id] = scaninfo;
   return id;
 }
@@ -54,7 +54,7 @@ uint32_t ScannerMap::put(MergeScannerRangePtr &scanner, RangePtr &range,
 /**
  */
 bool
-ScannerMap::get(uint32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
+ScannerMap::get(int32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
                 TableIdentifierManaged &table,ProfileDataScanner *profile_data){
   ScopedLock lock(m_mutex);
   auto iter = m_scanner_map.find(id);
@@ -72,13 +72,13 @@ ScannerMap::get(uint32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
 
 /**
  */
-bool ScannerMap::remove(uint32_t id) {
+bool ScannerMap::remove(int32_t id) {
   ScopedLock lock(m_mutex);
   return (m_scanner_map.erase(id) == 0) ? false : true;
 }
 
 
-void ScannerMap::purge_expired(uint32_t max_idle_millis) {
+void ScannerMap::purge_expired(int32_t max_idle_millis) {
   ScopedLock lock(m_mutex);
   int64_t now_millis = get_timestamp_millis();
   auto iter = m_scanner_map.begin();
@@ -112,7 +112,7 @@ void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count
 
 }
 
-void ScannerMap::update_profile_data(uint32_t id, ProfileDataScanner &profile_data) {
+void ScannerMap::update_profile_data(int32_t id, ProfileDataScanner &profile_data) {
   ScopedLock lock(m_mutex);
   auto iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())

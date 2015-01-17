@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,23 +19,23 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_PHANTOMRANGEMAP_H
-#define HYPERTABLE_PHANTOMRANGEMAP_H
+#ifndef Hypertable_RangeServer_PhantomRangeMap_h
+#define Hypertable_RangeServer_PhantomRangeMap_h
+
+#include "TableInfoMap.h"
+#include "PhantomRange.h"
+
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
+
+#include <Common/Mutex.h>
+#include <Common/PageArenaAllocator.h>
+#include <Common/ReferenceCount.h>
+
+#include <boost/thread/condition.hpp>
 
 #include <map>
 #include <set>
 #include <string>
-
-#include <boost/thread/condition.hpp>
-
-#include "Common/PageArenaAllocator.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Mutex.h"
-
-#include "Hypertable/Lib/Types.h"
-
-#include "TableInfoMap.h"
-#include "PhantomRange.h"
 
 namespace Hypertable {
   using namespace std;
@@ -61,7 +61,7 @@ namespace Hypertable {
      * @param fragments fragments to be played
      */
     void insert(const QualifiedRangeSpec &range, const RangeState &state,
-                SchemaPtr schema, const vector<uint32_t> &fragments);
+                SchemaPtr schema, const vector<int32_t> &fragments);
 
     /**
      * Gets the phantom range if it is in map
@@ -103,4 +103,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_PHANTOMRANGEMAP_H
+#endif // Hypertable_RangeServer_PhantomRangeMap_h

@@ -27,8 +27,8 @@
 #ifndef Hypertable_Lib_ScanBlock_h
 #define Hypertable_Lib_ScanBlock_h
 
+#include <Hypertable/Lib/RangeServer/Response/Parameters/CreateScanner.h>
 #include <Hypertable/Lib/SerializedKey.h>
-#include <Hypertable/Lib/ProfileDataScanner.h>
 
 #include <AsyncComm/Event.h>
 
@@ -56,13 +56,11 @@ namespace Hypertable {
 
     /** Loads scanblock data returned from RangeServer.  Both the
      * CREATE_SCANNER and FETCH_SCANBLOCK methods return a block of key/value
-     * pairs.  If the CommHeader::FLAGS_BIT_PROFILE bit is set in the message
-     * header in <code>event_ptr</code> then profile data is decoded and added
-     * to #m_profile_data.
-     * @param event_ptr smart pointer to response MESSAGE event
+     * pairs.
+     * @param event smart pointer to response MESSAGE event
      * @return Error::OK on success or error code on failure
      */
-    int load(EventPtr &event_ptr);
+    int load(EventPtr &event);
 
     /** Returns the number of key/value pairs in the scanblock.
      * @return number of key/value pairs in the scanblock
@@ -84,7 +82,7 @@ namespace Hypertable {
     /** Returns true if this is the final scanblock returned by the scanner.
      * @return true if this is the final scanblock, or false if more to come
      */
-    bool eos() { return ((m_flags & 0x0001) == 0x0001); }
+    bool eos() { return !m_response.more(); }
 
     /** Indicates whether or not there are more key/value pairs in block
      * @return ture if #next will return more key/value pairs, false otherwise
@@ -108,29 +106,24 @@ namespace Hypertable {
     /** Returns scanner ID associated with this scanblock.
      * @return scanner ID
      */
-    int get_scanner_id() { return m_scanner_id; }
+    int get_scanner_id() { return m_response.id(); }
 
     /** Returns number of skipped rows because of an OFFSET predicate */
-    int get_skipped_rows() { return m_skipped_rows; }
+    int get_skipped_rows() { return m_response.skipped_rows(); }
 
     /** Returns number of skipped rows because of a CELL_OFFSET predicate */
-    int get_skipped_cells() { return m_skipped_cells; }
+    int get_skipped_cells() { return m_response.skipped_cells(); }
 
     /// Returns reference to profile data.
     /// @return Reference to profile data
-    ProfileDataScanner &profile_data() { return m_profile_data; }
+    const ProfileDataScanner &profile_data() { return m_response.profile_data(); }
 
   private:
-    int m_error;
-    uint16_t m_flags;
-    int m_scanner_id;
-    int m_skipped_rows;
-    int m_skipped_cells;
+    int m_error {};
     Vector m_vec;
     Vector::iterator m_iter;
     EventPtr m_event;
-    /// Profile data
-    ProfileDataScanner m_profile_data;
+    Lib::RangeServer::Response::Parameters::CreateScanner m_response;
   };
 
   /// Smart pointer to ScanBlock.

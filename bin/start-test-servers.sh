@@ -39,7 +39,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$clear" ]; then
-  $INSTALL_DIR/bin/start-fsbroker.sh $HT_TEST_FS
+  $INSTALL_DIR/bin/ht-start-fsbroker.sh $HT_TEST_FS
   $INSTALL_DIR/bin/ht clean-database $@
 else
   $INSTALL_DIR/bin/ht stop servers

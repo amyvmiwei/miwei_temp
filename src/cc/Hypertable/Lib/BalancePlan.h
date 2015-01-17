@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,27 +19,28 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_BALANCEPLAN_H
-#define HYPERTABLE_BALANCEPLAN_H
+#ifndef Hypertable_Lib_BalancePlan_h
+#define Hypertable_Lib_BalancePlan_h
 
+#include <Hypertable/Lib/RangeMoveSpec.h>
+
+#include <Common/Serializable.h>
+
+#include <memory>
 #include <vector>
-
-#include "Common/ReferenceCount.h"
-
-#include "RangeMoveSpec.h"
 
 namespace Hypertable {
 
-  /**
-   * Represents a scan predicate.
-   */
-  class BalancePlan : public ReferenceCount {
+  /// @addtogroup libHypertable
+  /// @{
+
+  /// Balance plan
+  class BalancePlan : public Serializable {
   public:
-    BalancePlan(const String &algorithm_ = String())
-      : algorithm(algorithm_), duration_millis(0) { }
-    size_t encoded_length() const;
-    void encode(uint8_t **bufp) const;
-    void decode(const uint8_t **bufp, size_t *remainp);
+    BalancePlan(const String &algorithm_ = String()) : algorithm(algorithm_) { }
+
+    BalancePlan(const BalancePlan &other);
+
     bool empty() { return moves.empty(); }
 
     void clear() {
@@ -49,11 +50,39 @@ namespace Hypertable {
 
     std::vector<RangeMoveSpecPtr> moves;
     String algorithm;
-    uint32_t duration_millis;
+    int32_t duration_millis {};
+
+  private:
+
+    /// Returns encoding version.
+    /// @return Encoding version
+    uint8_t encoding_version() const override;
+
+    /// Returns internal serialized length.
+    /// @return Internal serialized length
+    /// @see encode_internal() for encoding format
+    size_t encoded_length_internal() const override;
+
+    /// Writes serialized representation of object to a buffer.
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    void encode_internal(uint8_t **bufp) const override;
+
+    /// Reads serialized representation of object from a buffer.
+    /// @param version Encoding version
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of serialized object
+    /// remaining
+    /// @see encode_internal() for encoding format
+    void decode_internal(uint8_t version, const uint8_t **bufp,
+			 size_t *remainp) override;
+    
   };
-  typedef intrusive_ptr<BalancePlan> BalancePlanPtr;
+
+  typedef std::shared_ptr<BalancePlan> BalancePlanPtr;
 
   std::ostream &operator<<(std::ostream &os, const BalancePlan &plan);
+
+  /// @}
 
 } // namespace Hypertable
 

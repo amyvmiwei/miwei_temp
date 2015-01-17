@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -24,6 +24,8 @@
 #include "ScanCells.h"
 
 namespace Hypertable {
+
+  using namespace Lib;
 
   class TableMutatorAsync;
   class TableScannerAsync;
