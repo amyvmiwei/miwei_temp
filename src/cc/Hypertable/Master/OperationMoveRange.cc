@@ -118,7 +118,7 @@ void OperationMoveRange::execute() {
 
   HT_INFOF("Entering MoveRange-%lld %s state=%s",
           (Lld)header.id, m_range_name.c_str(),
-          OperationState::get_text(state));
+           OperationState::get_text(state));
 
   switch (state) {
 
@@ -265,8 +265,9 @@ void OperationMoveRange::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving MoveRange-%lld %s -> %s",
-          (Lld)header.id, m_range_name.c_str(), m_destination.c_str());
+  HT_INFOF("Leaving MoveRange-%lld %s -> %s (state=%s)",
+           (Lld)header.id, m_range_name.c_str(), m_destination.c_str(),
+           OperationState::get_text(m_state));
 }
 
 void OperationMoveRange::display_state(std::ostream &os) {

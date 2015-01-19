@@ -82,9 +82,10 @@ void OperationRelinquishAcknowledge::execute() {
 
   complete_ok();
 
-  HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] from %s",
+  HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] from %s (state=%s)",
            (Lld)header.id, m_params.table().id, m_params.range_spec().start_row,
-           m_params.range_spec().end_row, m_params.source().c_str());
+           m_params.range_spec().end_row, m_params.source().c_str(),
+           OperationState::get_text(m_state));
 }
 
 void OperationRelinquishAcknowledge::display_state(std::ostream &os) {
