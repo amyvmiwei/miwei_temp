@@ -283,7 +283,8 @@ bool Context::add_move_operation(OperationPtr operation) {
 void Context::remove_move_operation(OperationPtr operation) {
   ScopedLock lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(operation->hash_code());
-  HT_ASSERT(iter != m_outstanding_move_ops.end());
+  if (iter == m_outstanding_move_ops.end())
+    return;
   m_outstanding_move_ops.erase(iter);
 }
 

@@ -608,20 +608,22 @@ void Master::Client::status(Timer *timer) {
 }
 
 void
-Master::Client::move_range(const String &source, TableIdentifier &table,
-                   RangeSpec &range, const String &transfer_log,
-                   uint64_t soft_limit, bool split, 
-                   DispatchHandler *handler, Timer *timer) {
+Master::Client::move_range(const String &source, int64_t range_id,
+                           TableIdentifier &table,
+                           RangeSpec &range, const String &transfer_log,
+                           uint64_t soft_limit, bool split, 
+                           DispatchHandler *handler, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
-  String label = format("move_range(%s[%s..%s], transfer_log='%s', soft_limit=%llu)",
-                        table.id, range.start_row, range.end_row, transfer_log.c_str(),
-                        (Llu)soft_limit);
+  String label =
+    format("move_range(%s[%s..%s] (%lld), transfer_log='%s', soft_limit=%llu)",
+           table.id, range.start_row, range.end_row, (Lld)range_id,
+           transfer_log.c_str(), (Llu)soft_limit);
 
   initialize(timer, tmp_timer);
 
   CommHeader header(Protocol::COMMAND_MOVE_RANGE);
-  Request::Parameters::MoveRange params(source, table, range, transfer_log,
-                                        soft_limit, split);
+  Request::Parameters::MoveRange params(source, range_id, table, range,
+                                        transfer_log, soft_limit, split);
   CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
   params.encode(cbuf->get_data_ptr_address());
   send_message_async(cbuf, handler, timer, label);
@@ -629,14 +631,16 @@ Master::Client::move_range(const String &source, TableIdentifier &table,
 
 
 void
-Master::Client::move_range(const String &source, TableIdentifier &table,
-			 RangeSpec &range, const String &transfer_log,
-			 uint64_t soft_limit, bool split, Timer *timer) {
+Master::Client::move_range(const String &source, int64_t range_id,
+                           TableIdentifier &table,
+                           RangeSpec &range, const String &transfer_log,
+                           uint64_t soft_limit, bool split, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
-  String label = format("move_range(%s[%s..%s], transfer_log='%s', soft_limit=%llu)",
-                        table.id, range.start_row, range.end_row, transfer_log.c_str(),
-                        (Llu)soft_limit);
+  String label =
+    format("move_range(%s[%s..%s] (%lld), transfer_log='%s', soft_limit=%llu)",
+           table.id, range.start_row, range.end_row, (Lld)range_id,
+           transfer_log.c_str(), (Llu)soft_limit);
 
   initialize(timer, tmp_timer);
 
@@ -645,8 +649,8 @@ Master::Client::move_range(const String &source, TableIdentifier &table,
 
       {
         CommHeader header(Protocol::COMMAND_MOVE_RANGE);
-        Request::Parameters::MoveRange params(source, table, range, transfer_log,
-                                              soft_limit, split);
+        Request::Parameters::MoveRange params(source, range_id, table, range,
+                                              transfer_log, soft_limit, split);
         CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
         params.encode(cbuf->get_data_ptr_address());
         if (!send_message(cbuf, timer, event, label))
@@ -671,12 +675,13 @@ Master::Client::move_range(const String &source, TableIdentifier &table,
 
 
 void
-Master::Client::relinquish_acknowledge(const String &source, TableIdentifier &table,
-                               RangeSpec &range, DispatchHandler *handler, Timer *timer) {
+Master::Client::relinquish_acknowledge(const String &source, int64_t range_id,
+                                       TableIdentifier &table, RangeSpec &range,
+                                       DispatchHandler *handler, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
-  String label = format("relinquish_acknowledge(%s[%s..%s])",
-                        table.id, range.start_row, range.end_row);
+  String label = format("relinquish_acknowledge(%s[%s..%s] id=%lld)",
+                        table.id, range.start_row, range.end_row, range_id);
 
   initialize(timer, tmp_timer);
 
@@ -684,7 +689,7 @@ Master::Client::relinquish_acknowledge(const String &source, TableIdentifier &ta
 
     {
       CommHeader header(Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
-      Request::Parameters::RelinquishAcknowledge params(source, table, range);
+      Request::Parameters::RelinquishAcknowledge params(source, range_id, table, range);
       CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
       params.encode(cbuf->get_data_ptr_address());
       if (!send_message(cbuf, timer, event, label))
@@ -716,13 +721,14 @@ Master::Client::relinquish_acknowledge(const String &source, TableIdentifier &ta
 
 
 void
-Master::Client::relinquish_acknowledge(const String &source, TableIdentifier &table,
-                               RangeSpec &range, Timer *timer) {
+Master::Client::relinquish_acknowledge(const String &source, int64_t range_id,
+                                       TableIdentifier &table,
+                                       RangeSpec &range, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
   int64_t id = 0;
-  String label = format("relinquish_acknowledge(%s[%s..%s])",
-                        table.id, range.start_row, range.end_row);
+  String label = format("relinquish_acknowledge(%s[%s..%s] id=%lld)",
+                        table.id, range.start_row, range.end_row,(Lld)range_id);
 
   initialize(timer, tmp_timer);
 
@@ -730,7 +736,7 @@ Master::Client::relinquish_acknowledge(const String &source, TableIdentifier &ta
 
     {
       CommHeader header(Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
-      Request::Parameters::RelinquishAcknowledge params(source, table, range);
+      Request::Parameters::RelinquishAcknowledge params(source, range_id, table, range);
       CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
       params.encode(cbuf->get_data_ptr_address());
       if (!send_message(cbuf, timer, event, label))

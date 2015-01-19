@@ -789,7 +789,7 @@ void move_range_test(ContextPtr &context) {
   context->get_balance_plan_authority(entity);
   entities.push_back(entity);
 
-  entity = make_shared<OperationMoveRange>(context, "rs1", table, range,
+  entity = make_shared<OperationMoveRange>(context, "rs1", 0, table, range,
 					   transfer_log, soft_limit, true);
   entities.push_back(entity);
 

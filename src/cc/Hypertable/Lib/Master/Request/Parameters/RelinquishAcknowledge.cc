@@ -41,7 +41,7 @@ uint8_t RelinquishAcknowledge::encoding_version() const {
 }
 
 size_t RelinquishAcknowledge::encoded_length_internal() const {
-  return Serialization::encoded_length_vstr(m_source) +
+  return Serialization::encoded_length_vstr(m_source) + 8 +
     m_table.encoded_length() + m_range_spec.encoded_length();
 }
 
@@ -57,6 +57,10 @@ size_t RelinquishAcknowledge::encoded_length_internal() const {
 /// <td>%RangeServer from which range is being moved</td>
 /// </tr>
 /// <tr>
+/// <td>i64</td>
+/// <td>%Range MetaLog entry identifier</td>
+/// </tr>
+/// <tr>
 /// <td>TableIdentifier</td>
 /// <td>%Table identifier of table to which range belongs</td>
 /// </tr>
@@ -67,13 +71,15 @@ size_t RelinquishAcknowledge::encoded_length_internal() const {
 /// </table>
 void RelinquishAcknowledge::encode_internal(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_source);
+  Serialization::encode_i64(bufp, m_range_id);
   m_table.encode(bufp);
   m_range_spec.encode(bufp);
 }
 
 void RelinquishAcknowledge::decode_internal(uint8_t version, const uint8_t **bufp,
-                                size_t *remainp) {
+                                            size_t *remainp) {
   m_source = Serialization::decode_vstr(bufp, remainp);
+  m_range_id = Serialization::decode_i64(bufp, remainp);
   m_table.decode(bufp, remainp);
   m_range_spec.decode(bufp, remainp);
 }

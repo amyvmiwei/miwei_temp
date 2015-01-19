@@ -31,9 +31,9 @@ namespace Hypertable {
   class OperationMoveRange : public Operation {
   public:
     OperationMoveRange(ContextPtr &context, const String &source,
-		       const TableIdentifier &table, const RangeSpec &range,
-		       const String &transfer_log, int64_t soft_limit,
-		       bool is_split);
+                       int64_t range_id, const TableIdentifier &table,
+                       const RangeSpec &range, const String &transfer_log,
+                       int64_t soft_limit, bool is_split);
     OperationMoveRange(ContextPtr &context, const MetaLog::EntityHeader &header_);
     OperationMoveRange(ContextPtr &context, EventPtr &event);
     virtual ~OperationMoveRange() { }
@@ -54,6 +54,9 @@ namespace Hypertable {
 
     String get_location() { return m_destination; }
     void set_destination(const String &new_dest) { m_destination=new_dest; }
+
+    static int64_t hash_code(const TableIdentifier &table, const RangeSpec &range,
+                             const std::string &source, int64_t range_id);
 
   private:
 

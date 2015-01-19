@@ -843,6 +843,7 @@ void Range::relinquish_finalize() {
   HT_MAYBE_FAIL("relinquish-move-range");
 
   m_master_client->move_range(m_metalog_entity->get_source(),
+                              m_metalog_entity->id(),
 			      table_frozen, range_spec,
                               m_metalog_entity->get_transfer_log(),
                               m_metalog_entity->get_soft_limit(), false);
@@ -861,6 +862,7 @@ void Range::relinquish_finalize() {
   // Add acknowledge relinquish task
   MetaLog::EntityTaskPtr acknowledge_relinquish_task =
     make_shared<MetaLog::EntityTaskAcknowledgeRelinquish>(m_metalog_entity->get_source(),
+                                                          m_metalog_entity->id(),
 							  table_frozen, range_spec);
   entities.push_back(acknowledge_relinquish_task);
 
@@ -1373,6 +1375,7 @@ void Range::split_notify_master() {
   }
 
   m_master_client->move_range(m_metalog_entity->get_source(),
+                              m_metalog_entity->id(),
 			      table_frozen, range,
                               m_metalog_entity->get_transfer_log(),
                               soft_limit, true);
@@ -1394,6 +1397,7 @@ void Range::split_notify_master() {
   // Add acknowledge relinquish task
   acknowledge_relinquish_task = 
     make_shared<MetaLog::EntityTaskAcknowledgeRelinquish>(m_metalog_entity->get_source(),
+                                                          m_metalog_entity->id(),
 							  table_frozen, range);
   entities.push_back(acknowledge_relinquish_task);
 

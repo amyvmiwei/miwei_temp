@@ -56,21 +56,26 @@ namespace Parameters {
     /// Constructor.
     /// Initializes with parameters for encoding.
     /// @param source %RangeServer from which range is being moved
+    /// @param range_id %Range MetaLog entry identifier
     /// @param table %Table identifier of table to which range belongs
     /// @param range_spec %Range specification
     /// @param transfer_log Transfer log
     /// @param soft_limit Soft limit
     /// @param is_split Move is due to a split
-    MoveRange(const string &source, const TableIdentifier &table,
-              const RangeSpec &range_spec, const string &transfer_log,
-              int64_t soft_limit, bool is_split)
-      : m_source(source), m_table(table), m_range_spec(range_spec),
-        m_transfer_log(transfer_log), m_soft_limit(soft_limit),
-        m_is_split(is_split) { }
+    MoveRange(const string &source, int64_t range_id,
+              const TableIdentifier &table, const RangeSpec &range_spec,
+              const string &transfer_log, int64_t soft_limit, bool is_split)
+      : m_source(source), m_range_id(range_id), m_table(table),
+        m_range_spec(range_spec), m_transfer_log(transfer_log),
+        m_soft_limit(soft_limit), m_is_split(is_split) { }
 
     /// Gets name of source %RangeServer.
     /// @return Name of source %RangeServer.
     string source() const { return m_source; }
+
+    /// Gets range MetaLog entry identifier
+    /// @return Range MetaLog entry identifier
+    int64_t range_id() const { return m_range_id; }
 
     /// Gets table identifier.
     /// @return Reference to table identifier.
@@ -118,6 +123,9 @@ namespace Parameters {
 
     /// Source %RangeServer
     string m_source;
+
+    /// %Range MetaLog entry identifier
+    int64_t m_range_id;
 
     /// %Table identifier of table to which range belongs
     TableIdentifierManaged m_table;
