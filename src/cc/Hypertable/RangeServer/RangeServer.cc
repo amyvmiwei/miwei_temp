@@ -1537,8 +1537,9 @@ Apps::RangeServer::create_scanner(Response::Callback::CreateScanner *cb,
     int error;
     if (decrement_needed)
       range->decrement_scan_counter();
-    if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-      HT_INFOF("Range not found - %s", e.what());
+    if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND ||
+        e.code() == Error::RANGESERVER_GENERATION_MISMATCH)
+      HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
     else
       HT_ERROR_OUT << e << HT_END;
     if ((error = cb->error(e.code(), e.what())) != Error::OK)
