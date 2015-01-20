@@ -1,16 +1,21 @@
 
 import java.nio.ByteBuffer;
 import org.apache.hadoop.io.Text;
-import org.hypertable.thrift.*;
-import org.hypertable.thriftgen.*;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 import org.hypertable.hadoop.mapred.*;
 import org.hypertable.hadoop.mapreduce.*;
+import org.hypertable.thrift.*;
+import org.hypertable.thriftgen.*;
 
 public class TestInputOutput {
   public static void main(String args[]) {
     // add a few cells 
     try {
-      HypertableRecordWriter hrw = new HypertableRecordWriter("test", "test");
+      ThriftClient client = ThriftClient.create("localhost", 15867);
+      HypertableRecordWriter hrw =
+        new HypertableRecordWriter(client, "test", "test",
+                                   MutatorFlag.NO_LOG_SYNC.getValue(), 0);
       hrw.write(new Text("row1\tcf1"), new Text("value"));
       hrw.write(new Text("row2\tcf1"), new Text("value\nnewline"));
       hrw.write(new Text("row3\tcf1"), new Text("value\nnew\nline"));
@@ -20,6 +25,14 @@ public class TestInputOutput {
     }
     catch (java.io.IOException exception) {
       System.out.println("failure");
+      System.exit(-1);
+    }
+    catch (TTransportException e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
+    catch (TException e) {
+      e.printStackTrace();
       System.exit(-1);
     }
 

@@ -83,48 +83,27 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
   /**
    * Opens a client and a mutator to the specified table
    *
+   * @param client Thrift client
    * @param namespace namespace containing HT table
    * @param table name of HT table
    * @param flags mutator flags
    * @param flush_interval used for periodic flush mutators
-   * @param framesize max thrift framesize
    */
-  public HypertableRecordWriter(String namespace, String table, int flags,
-          int flush_interval, int framesize)
+  public HypertableRecordWriter(ThriftClient client, String namespace,
+                                String table, int flags, int flush_interval)
     throws IOException {
     try {
-      //TODO: read this from HT configs
       this.namespace = namespace;
       this.table = table;
-      if (framesize != 0)
-        mClient = ThriftClient.create("localhost", 15867, 1600000,
-                true, framesize);
-      else
-        mClient = ThriftClient.create("localhost", 15867);
+      this.mClient = client;
       mNamespaceId = mClient.namespace_open(namespace);
       mMutator = mClient.mutator_open(mNamespaceId, table,
-              flags, flush_interval);
+                                      flags, flush_interval);
     }
     catch (Exception e) {
       log.error(e);
       throw new IOException("Unable to open thrift mutator - " + e.toString());
     }
-  }
-
-  /**
-   * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
-   */
-  public HypertableRecordWriter(String namespace, String table)
-      throws IOException {
-    this (namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, 0);
-  }
-
-  /**
-   * Ctor with default flush interval set to 0
-   */
-  public HypertableRecordWriter(String namespace, String table, int flags)
-      throws IOException {
-    this (namespace, table, flags, 0, 0);
   }
 
   /**
@@ -141,6 +120,7 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
       if (mNamespaceId != 0)
         mClient.namespace_close(mNamespaceId);
       mClient.mutator_close(mMutator);
+      mClient.close();
     }
     catch (Exception e) {
       log.error(e);
