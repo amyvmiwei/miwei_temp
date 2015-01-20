@@ -41,7 +41,7 @@ uint8_t MoveRange::encoding_version() const {
 }
 
 size_t MoveRange::encoded_length_internal() const {
-  return Serialization::encoded_length_vstr(m_source) +
+  return Serialization::encoded_length_vstr(m_source) + 8 +
     m_table.encoded_length() + m_range_spec.encoded_length() +
     Serialization::encoded_length_vstr(m_transfer_log) + 9;
 }
@@ -56,6 +56,10 @@ size_t MoveRange::encoded_length_internal() const {
 /// <tr>
 /// <td>vstr</td>
 /// <td>%RangeServer from which range is being moved</td>
+/// </tr>
+/// <tr>
+/// <td>i64</td>
+/// <td>%Range MetaLog entry identifier</td>
 /// </tr>
 /// <tr>
 /// <td>TableIdentifier</td>
@@ -80,6 +84,7 @@ size_t MoveRange::encoded_length_internal() const {
 /// </table>
 void MoveRange::encode_internal(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_source);
+  Serialization::encode_i64(bufp, m_range_id);
   m_table.encode(bufp);
   m_range_spec.encode(bufp);
   Serialization::encode_vstr(bufp, m_transfer_log);
@@ -90,6 +95,7 @@ void MoveRange::encode_internal(uint8_t **bufp) const {
 void MoveRange::decode_internal(uint8_t version, const uint8_t **bufp,
                                 size_t *remainp) {
   m_source = Serialization::decode_vstr(bufp, remainp);
+  m_range_id = Serialization::decode_i64(bufp, remainp);
   m_table.decode(bufp, remainp);
   m_range_spec.decode(bufp, remainp);
   m_transfer_log = Serialization::decode_vstr(bufp, remainp);

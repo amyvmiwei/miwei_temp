@@ -32,7 +32,9 @@ namespace Hypertable {
     class EntityTaskAcknowledgeRelinquish : public EntityTask {
     public:
       EntityTaskAcknowledgeRelinquish(const EntityHeader &header_);
-      EntityTaskAcknowledgeRelinquish(const String &loc, const TableIdentifier &t, const RangeSpec &rs);
+      EntityTaskAcknowledgeRelinquish(const String &loc, int64_t id,
+                                      const TableIdentifier &t,
+                                      const RangeSpec &rs);
       virtual ~EntityTaskAcknowledgeRelinquish() { }
       virtual bool execute();
       virtual void work_queue_add_hook();
@@ -49,6 +51,7 @@ namespace Hypertable {
       virtual void display(std::ostream &os);
 
       String location;
+      int64_t range_id {};
       TableIdentifierManaged table;
       RangeSpecManaged range_spec;
 

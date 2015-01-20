@@ -19,22 +19,27 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/md5.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
+#include <Common/Compat.h>
 
 #include "OperationRecover.h"
-#include "OperationRecoverRanges.h"
-#include "OperationRelinquishAcknowledge.h"
-#include "Hypertable/Lib/MetaLogReader.h"
-#include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
-#include "Hypertable/RangeServer/MetaLogEntityRange.h"
-#include "Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h"
-#include "BalancePlanAuthority.h"
-#include "ReferenceManager.h"
-#include "Utility.h"
+
+#include <Hypertable/Master/BalancePlanAuthority.h>
+#include <Hypertable/Master/OperationMoveRange.h>
+#include <Hypertable/Master/OperationRecoverRanges.h>
+#include <Hypertable/Master/OperationRelinquishAcknowledge.h>
+#include <Hypertable/Master/ReferenceManager.h>
+#include <Hypertable/Master/Utility.h>
+
+#include <Hypertable/RangeServer/MetaLogDefinitionRangeServer.h>
+#include <Hypertable/RangeServer/MetaLogEntityRange.h>
+#include <Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h>
+
+#include <Hypertable/Lib/MetaLogReader.h>
+
+#include <Common/Error.h>
+#include <Common/md5.h>
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
 
 #include <sstream>
 
@@ -408,6 +413,7 @@ void OperationRecover::create_recovery_plan() {
         OperationPtr operation =
           make_shared<OperationRelinquishAcknowledge>(m_context,
                                                       ack_task->location,
+                                                      ack_task->range_id,
                                                       ack_task->table,
                                                       ack_task->range_spec);
         operation->execute();
@@ -442,8 +448,9 @@ void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity,
     range.set_end_row(start_row);
   }
 
-  int64_t hash_code = Utility::range_hash_code(table, range,
-                 String("OperationMoveRange-")+range_entity->get_source());
+  int64_t hash_code
+    = OperationMoveRange::hash_code(table, range, range_entity->get_source(),
+                                    range_entity->id());
 
   OperationPtr operation = m_context->get_move_operation(hash_code);
   if (operation) {

@@ -126,18 +126,21 @@ namespace Master {
 
     void status(Timer *timer=0);
 
-    void move_range(const String &source, TableIdentifier &table,
+    void move_range(const String &source, int64_t range_id,
+                    TableIdentifier &table,
 		    RangeSpec &range, const String &transfer_log,
 		    uint64_t soft_limit, bool split,
 		    DispatchHandler *handler, Timer *timer = 0);
-    void move_range(const String &source, TableIdentifier &table,
+    void move_range(const String &source, int64_t range_id,
+                    TableIdentifier &table,
 		    RangeSpec &range, const String &transfer_log,
 		    uint64_t soft_limit, bool split, Timer *timer=0);
 
-    void relinquish_acknowledge(const String &source, TableIdentifier &table,
-                                RangeSpec &range,
+    void relinquish_acknowledge(const String &source, int64_t range_id,
+                                TableIdentifier &table, RangeSpec &range,
                                 DispatchHandler *handler, Timer *timer = 0);
-    void relinquish_acknowledge(const String &source, TableIdentifier &table,
+    void relinquish_acknowledge(const String &source, int64_t range_id,
+                                TableIdentifier &table,
                                 RangeSpec &range, Timer *timer=0);
 
     void drop_table(const String &name, bool if_exists,

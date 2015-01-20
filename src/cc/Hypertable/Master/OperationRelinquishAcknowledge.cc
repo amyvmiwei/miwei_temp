@@ -37,12 +37,13 @@
 
 using namespace Hypertable;
 
-OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &ctx,
-              const String &source, TableIdentifier &table, RangeSpec &range)
+OperationRelinquishAcknowledge::
+OperationRelinquishAcknowledge(ContextPtr &ctx, const String &source,
+                               int64_t range_id, TableIdentifier &table,
+                               RangeSpec &range)
   : OperationEphemeral(ctx, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE),
-    m_params(source, table, range) {
+    m_params(source, range_id, table, range) {
 }
-
 
 OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &context, EventPtr &event) 
   : OperationEphemeral(context, event,
@@ -55,17 +56,18 @@ OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &conte
 
 void OperationRelinquishAcknowledge::execute() {
 
-  HT_INFOF("Entering RelinquishAcknowledge-%lld %s[%s..%s] source=%s state=%s",
-           (Lld)header.id, m_params.table().id, m_params.range_spec().start_row,
-           m_params.range_spec().end_row, m_params.source().c_str(),
+  HT_INFOF("Entering RelinquishAcknowledge-%lld %s[%s..%s] (id=%lld) "
+           "source=%s state=%s", (Lld)header.id, m_params.table().id,
+           m_params.range_spec().start_row, m_params.range_spec().end_row,
+           (Lld)m_params.range_id(), m_params.source().c_str(),
            OperationState::get_text(m_state));
 
   HT_MAYBE_FAIL("relinquish-acknowledge-INITIAL-a");
   HT_MAYBE_FAIL("relinquish-acknowledge-INITIAL-b");
 
-  int64_t hash_code
-    = Utility::range_hash_code(m_params.table(), m_params.range_spec(),
-                               String("OperationMoveRange-")+m_params.source());
+  int64_t hash_code =
+    OperationMoveRange::hash_code(m_params.table(), m_params.range_spec(),
+                                  m_params.source(), m_params.range_id());
 
   OperationPtr operation = m_context->get_move_operation(hash_code);
   if (operation) {
@@ -82,9 +84,11 @@ void OperationRelinquishAcknowledge::execute() {
 
   complete_ok();
 
-  HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] from %s",
-           (Lld)header.id, m_params.table().id, m_params.range_spec().start_row,
-           m_params.range_spec().end_row, m_params.source().c_str());
+  HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] (id=%lld) "
+           "from %s (state=%s)", (Lld)header.id, m_params.table().id,
+           m_params.range_spec().start_row, m_params.range_spec().end_row,
+           (Lld)m_params.range_id(), m_params.source().c_str(),
+           OperationState::get_text(m_state));
 }
 
 void OperationRelinquishAcknowledge::display_state(std::ostream &os) {

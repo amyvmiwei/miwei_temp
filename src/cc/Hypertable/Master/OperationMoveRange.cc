@@ -49,16 +49,16 @@ using namespace Hypertable::Lib;
 using namespace Hyperspace;
 using namespace std;
 
-OperationMoveRange::OperationMoveRange(ContextPtr &context,const string &source,
-        const TableIdentifier &table, const RangeSpec &range,
-        const string &transfer_log, int64_t soft_limit, bool is_split)
+OperationMoveRange::
+OperationMoveRange(ContextPtr &context,const string &source, int64_t range_id,
+                   const TableIdentifier &table, const RangeSpec &range,
+                   const string &transfer_log, int64_t soft_limit,bool is_split)
   : Operation(context, MetaLog::EntityType::OPERATION_MOVE_RANGE),
-    m_params(source, table, range, transfer_log, soft_limit, is_split) {
+    m_params(source, range_id, table, range, transfer_log, soft_limit, is_split) {
   m_range_name = format("%s[%s..%s]", table.id, range.start_row,
                         range.end_row);
   initialize_dependencies();
-  m_hash_code =
-    Utility::range_hash_code(table, range,string("OperationMoveRange-")+source);
+  m_hash_code = hash_code(table, range, source, range_id);
   set_remove_approval_mask(0x03);
 }
 
@@ -75,9 +75,8 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event)
   m_range_name = format("%s[%s..%s]", m_params.table().id,
                         m_params.range_spec().start_row,
           m_params.range_spec().end_row);
-  m_hash_code = Utility::range_hash_code(m_params.table(),m_params.range_spec(),
-          string("OperationMoveRange-") + m_params.source());
-
+  m_hash_code = hash_code(m_params.table(), m_params.range_spec(),
+                          m_params.source(), m_params.range_id());
   set_remove_approval_mask(0x03);
   initialize_dependencies();
 }
@@ -116,9 +115,9 @@ void OperationMoveRange::execute() {
   BalancePlanAuthorityPtr bpa
     = static_pointer_cast<BalancePlanAuthority>(bpa_entity);
 
-  HT_INFOF("Entering MoveRange-%lld %s state=%s",
-          (Lld)header.id, m_range_name.c_str(),
-          OperationState::get_text(state));
+  HT_INFOF("Entering MoveRange-%lld %s (id=%lld) state=%s",
+           (Lld)header.id, m_range_name.c_str(), (Lld)m_params.range_id(),
+           OperationState::get_text(state));
 
   switch (state) {
 
@@ -265,8 +264,9 @@ void OperationMoveRange::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving MoveRange-%lld %s -> %s",
-          (Lld)header.id, m_range_name.c_str(), m_destination.c_str());
+  HT_INFOF("Leaving MoveRange-%lld %s (id=%lld) -> %s (state=%s)",
+           (Lld)header.id, m_range_name.c_str(), (Lld)m_params.range_id(),
+           m_destination.c_str(), OperationState::get_text(m_state));
 }
 
 void OperationMoveRange::display_state(std::ostream &os) {
@@ -317,7 +317,7 @@ void OperationMoveRange::decode_state_old(uint8_t version, const uint8_t **bufp,
     string transfer_log = Serialization::decode_vstr(bufp, remainp);
     int64_t soft_limit = Serialization::decode_i64(bufp, remainp);
     bool is_split = Serialization::decode_bool(bufp, remainp);
-    m_params = Master::Request::Parameters::MoveRange(source, table, range_spec,
+    m_params = Master::Request::Parameters::MoveRange(source, 0, table, range_spec,
                                                       transfer_log, soft_limit,
                                                       is_split);
   }
@@ -370,4 +370,16 @@ const string OperationMoveRange::graphviz_label() {
 
   return format("MoveRange %s\\n%s\\n%s", m_params.table().id,
                 start_row.c_str(), end_row.c_str());
+}
+
+
+int64_t OperationMoveRange::hash_code(const TableIdentifier &table,
+                                      const RangeSpec &range,
+                                      const std::string &source,
+                                      int64_t range_id) {
+  if (range_id)
+    return Utility::range_hash_code(table, range, string("OperationMoveRange-") +
+                                    source + ":" + range_id);
+  return Utility::range_hash_code(table, range, string("OperationMoveRange-") +
+                                  source);
 }
