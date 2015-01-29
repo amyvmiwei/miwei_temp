@@ -93,13 +93,13 @@ int main(int argc, char **argv) {
 
     Comm *comm = Comm::instance();
 
-    ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
+    ApplicationQueuePtr app_queue = make_shared<ApplicationQueue>(worker_count);
     BrokerPtr broker = new LocalBroker(properties);
-    ConnectionHandlerFactoryPtr chfp =
-      new FsBroker::Lib::ConnectionHandlerFactory(comm, app_queue, broker);
+    ConnectionHandlerFactoryPtr handler_factory =
+      make_shared<FsBroker::Lib::ConnectionHandlerFactory>(comm, app_queue, broker);
     InetAddr listen_addr(INADDR_ANY, port);
 
-    comm->listen(listen_addr, chfp);
+    comm->listen(listen_addr, handler_factory);
     app_queue->join();
   }
   catch (Exception &e) {

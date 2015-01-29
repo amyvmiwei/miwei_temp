@@ -27,6 +27,7 @@
 #ifndef ThriftBroker_MetricsHandler_h
 #define ThriftBroker_MetricsHandler_h
 
+#include <AsyncComm/Comm.h>
 #include <AsyncComm/DispatchHandler.h>
 
 #include <Common/Cronolog.h>
@@ -66,7 +67,13 @@ namespace Hypertable {
 
     /// Destructor.
     /// Cancels the timer.
-    virtual ~MetricsHandler();
+    virtual ~MetricsHandler() {};
+
+    /// Starts metrics collection.
+    void start_collecting();
+
+    /// Stops metrics collection.
+    void stop_collecting();
 
     /// Collects and publishes metrics.
     /// This method computes and updates the requests/s, errors, connections,
@@ -102,6 +109,9 @@ namespace Hypertable {
     }
 
   private:
+
+    /// Comm layer
+    Comm *m_comm {};
 
     /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;

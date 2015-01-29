@@ -71,7 +71,6 @@ namespace {
 int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
-    ConnectionManagerPtr conn_mgr;
     FsBroker::Lib::ClientPtr client;
     CellStorePtr cs;
     DynamicBuffer key_buf;
@@ -95,7 +94,7 @@ int main(int argc, char **argv) {
     InetAddr::initialize(&addr, "localhost",
                          Config::properties->get_i16("FsBroker.Port"));
 
-    conn_mgr = new ConnectionManager();
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>();
     Global::dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager

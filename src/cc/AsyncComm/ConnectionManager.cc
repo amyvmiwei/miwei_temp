@@ -36,6 +36,7 @@
 #include <Common/System.h>
 #include <Common/Time.h>
 
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
 #include <unordered_map>
@@ -96,8 +97,12 @@ ConnectionManager::add_internal(const CommAddress &addr,
           const CommAddress &local_addr, uint32_t timeout_ms,
           const char *service_name, DispatchHandlerPtr &handler,
           ConnectionInitializerPtr &initializer) {
-  ScopedLock lock(m_impl->mutex);
+  unique_lock<mutex> lock(m_impl->mutex);
   ConnectionStatePtr conn_state;
+
+  /// Start retry thread
+  if (!m_impl->thread.joinable())
+    m_impl->thread = std::thread([=](){ this->connect_retry_loop(); });
 
   HT_ASSERT(addr.is_set());
 
@@ -113,7 +118,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
       return;
   }
 
-  conn_state = new ConnectionState();
+  conn_state = make_shared<ConnectionState>();
   conn_state->connected = false;
   conn_state->decomissioned = false;
   conn_state->addr = addr;
@@ -123,7 +128,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
   conn_state->initializer = initializer;
   conn_state->initialized = false;
   conn_state->service_name = (service_name) ? service_name : "";
-  boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
+  conn_state->next_retry = std::chrono::steady_clock::now();
 
   if (addr.is_proxy())
     m_impl->conn_map_proxy[addr.proxy] = conn_state;
@@ -131,7 +136,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
     m_impl->conn_map[addr.inet] = conn_state;
 
   {
-    ScopedLock conn_lock(conn_state->mutex);
+    unique_lock<mutex> conn_lock(conn_state->mutex);
     send_connect_request(conn_state);
   }
 }
@@ -151,7 +156,7 @@ ConnectionManager::wait_for_connection(const CommAddress &addr,
   ConnectionStatePtr conn_state_ptr;
 
   {
-    ScopedLock lock(m_impl->mutex);
+    unique_lock<mutex> lock(m_impl->mutex);
     if (addr.is_inet()) {
       SockAddrMap<ConnectionStatePtr>::iterator iter =
 	m_impl->conn_map.find(addr.inet);
@@ -177,13 +182,11 @@ bool ConnectionManager::wait_for_connection(ConnectionState *conn_state,
   timer.start();
 
   {
-    boost::mutex::scoped_lock conn_lock(conn_state->mutex);
-    boost::xtime drop_time;
+    unique_lock<mutex> conn_lock(conn_state->mutex);
 
     while (!conn_state->connected && !conn_state->decomissioned) {
-      boost::xtime_get(&drop_time, boost::TIME_UTC_);
-      xtime_add_millis(drop_time, timer.remaining());
-      if (!conn_state->cond.timed_wait(conn_lock, drop_time))
+      auto duration = std::chrono::milliseconds(timer.remaining());
+      if (conn_state->cond.wait_for(conn_lock, duration) == std::cv_status::timeout)
         return false;
     }
 
@@ -207,13 +210,12 @@ bool ConnectionManager::wait_for_connection(ConnectionState *conn_state,
 void
 ConnectionManager::send_connect_request(ConnectionStatePtr &conn_state) {
   int error;
-  DispatchHandlerPtr handler(this);
 
   if (!conn_state->local_addr.is_set())
-    error = m_impl->comm->connect(conn_state->addr, handler);
+    error = m_impl->comm->connect(conn_state->addr, shared_from_this());
   else
     error = m_impl->comm->connect(conn_state->addr, conn_state->local_addr,
-                                  handler);
+                                  shared_from_this());
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     conn_state->connected = true;
@@ -238,14 +240,14 @@ ConnectionManager::send_connect_request(ConnectionStatePtr &conn_state) {
                  Error::get_text(error), (int)conn_state->timeout_ms);
     }
     // reschedule (throw in a little randomness)
-    boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
-    xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
+    conn_state->next_retry = std::chrono::steady_clock::now() +
+      std::chrono::milliseconds(conn_state->timeout_ms);
 
     int32_t milli_adjust = System::rand32() % 2000;
     if (System::rand32() & 1)
-      xtime_sub_millis(conn_state->next_retry, milli_adjust);
+      conn_state->next_retry -= std::chrono::milliseconds(milli_adjust);
     else
-      xtime_add_millis(conn_state->next_retry, milli_adjust);
+      conn_state->next_retry += std::chrono::milliseconds(milli_adjust);
 
     // add to retry heap
     m_impl->retry_queue.push(conn_state);
@@ -264,13 +266,13 @@ int ConnectionManager::remove(const CommAddress &addr) {
   HT_ASSERT(addr.is_set());
 
   {
-    ScopedLock lock(m_impl->mutex);
+    unique_lock<mutex> lock(m_impl->mutex);
 
     if (addr.is_proxy()) {
       auto iter = m_impl->conn_map_proxy.find(addr.proxy);
       if (iter != m_impl->conn_map_proxy.end()) {
 	{
-	  ScopedLock conn_lock((*iter).second->mutex);
+	  unique_lock<mutex> conn_lock((*iter).second->mutex);
 	  check_inet_addr = true;
 	  inet_addr = (*iter).second->inet_addr;
 	  (*iter).second->decomissioned = true;
@@ -293,7 +295,7 @@ int ConnectionManager::remove(const CommAddress &addr) {
         m_impl->conn_map.find(inet_addr);
       if (iter != m_impl->conn_map.end()) {
 	{
-	  ScopedLock conn_lock((*iter).second->mutex);
+	  unique_lock<mutex> conn_lock((*iter).second->mutex);
 	  (*iter).second->decomissioned = true;
           (*iter).second->cond.notify_all();
 	  if ((*iter).second->connected)
@@ -327,7 +329,7 @@ int ConnectionManager::remove(const CommAddress &addr) {
  */
 void
 ConnectionManager::handle(EventPtr &event) {
-  ScopedLock lock(m_impl->mutex);
+  unique_lock<mutex> lock(m_impl->mutex);
   ConnectionStatePtr conn_state;
 
   {
@@ -349,7 +351,7 @@ ConnectionManager::handle(EventPtr &event) {
 
   if (conn_state) {
     bool dont_forward = false;
-    ScopedLock conn_lock(conn_state->mutex);
+    unique_lock<mutex> conn_lock(conn_state->mutex);
 
     if (event->type == Event::CONNECTION_ESTABLISHED) {
       if (conn_state->initializer) {
@@ -360,7 +362,7 @@ ConnectionManager::handle(EventPtr &event) {
             error == Error::COMM_INVALID_PROXY) {
           if (!m_impl->quiet_mode)
             HT_INFOF("Received error %d", error);
-          set_retry_state(conn_state.get(), event);
+          set_retry_state(conn_state, event);
           dont_forward = true;
         }
         else if (error != Error::OK)
@@ -383,7 +385,7 @@ ConnectionManager::handle(EventPtr &event) {
       else {
         if (!m_impl->quiet_mode)
           HT_INFOF("Received event %s", event->to_str().c_str());
-        set_retry_state(conn_state.get(), event);
+        set_retry_state(conn_state, event);
       }
     }
     else if (event->type == Event::MESSAGE) {
@@ -418,7 +420,7 @@ ConnectionManager::handle(EventPtr &event) {
   }
 }
 
-void ConnectionManager::set_retry_state(ConnectionState *conn_state, EventPtr &event) {
+void ConnectionManager::set_retry_state(ConnectionStatePtr &conn_state, EventPtr &event) {
   if (!m_impl->quiet_mode) {
     HT_INFOF("%s; Problem connecting to %s, will retry in %d "
              "milliseconds...", event->to_str().c_str(),
@@ -430,8 +432,8 @@ void ConnectionManager::set_retry_state(ConnectionState *conn_state, EventPtr &e
   // connection attempt was a long time ago, then schedule immediately
   // otherwise, if this event is the result of an immediately prior connect
   // attempt, then do the following
-  boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
-  xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
+  conn_state->next_retry = std::chrono::steady_clock::now() +
+    std::chrono::milliseconds(conn_state->timeout_ms);
 
   // add to retry heap
   m_impl->retry_queue.push(conn_state);
@@ -442,8 +444,8 @@ void ConnectionManager::set_retry_state(ConnectionState *conn_state, EventPtr &e
 /**
  * This is the boost::thread run method.
  */
-void ConnectionManager::operator()() {
-  ScopedLock lock(m_impl->mutex);
+void ConnectionManager::connect_retry_loop() {
+  unique_lock<mutex> lock(m_impl->mutex);
   ConnectionStatePtr conn_state;
 
   while (!m_impl->shutdown) {
@@ -466,17 +468,14 @@ void ConnectionManager::operator()() {
 
     if (!conn_state->connected) {
       {
-        ScopedLock conn_lock(conn_state->mutex);
-        boost::xtime now;
-        boost::xtime_get(&now, boost::TIME_UTC_);
-
-        if (xtime_cmp(conn_state->next_retry, now) <= 0) {
+        unique_lock<mutex> conn_lock(conn_state->mutex);
+        if (conn_state->next_retry <= std::chrono::steady_clock::now()) {
           m_impl->retry_queue.pop();
           send_connect_request(conn_state);
           continue;
         }
       }
-      m_impl->retry_cond.timed_wait(lock, conn_state->next_retry);
+      m_impl->retry_cond.wait_until(lock, conn_state->next_retry);
     }
     else
       m_impl->retry_queue.pop();

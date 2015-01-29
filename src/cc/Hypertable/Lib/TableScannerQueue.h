@@ -122,7 +122,7 @@ namespace Hypertable {
     bool                   m_error_shown;
   };
 
-  typedef boost::intrusive_ptr<TableScannerQueue> TableScannerQueuePtr;
+  typedef std::shared_ptr<TableScannerQueue> TableScannerQueuePtr;
 
 } // namespace Hypertable
 

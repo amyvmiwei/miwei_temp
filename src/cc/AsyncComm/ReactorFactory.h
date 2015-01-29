@@ -26,8 +26,8 @@
  */
 
 
-#ifndef HYPERTABLE_REACTORFACTORY_H
-#define HYPERTABLE_REACTORFACTORY_H
+#ifndef AsyncComm_REACTORFACTORY_H
+#define AsyncComm_REACTORFACTORY_H
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
@@ -116,5 +116,5 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_REACTORFACTORY_H
+#endif // AsyncComm_REACTORFACTORY_H
 

@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
     bool tsv_format = has("tsv-format");
     char *column_id_map[256];
 
-    ConnectionManagerPtr conn_mgr = new ConnectionManager();
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>();
 
     FsBroker::Lib::ClientPtr dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
 

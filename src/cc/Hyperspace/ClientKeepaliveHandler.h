@@ -51,6 +51,9 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *, PropertiesPtr &, Session *);
+
+    void start();
+
     virtual void handle(Hypertable::EventPtr &event);
 
     void register_handle(ClientHandleStatePtr &handle_state) {
@@ -113,7 +116,7 @@ namespace Hyperspace {
     std::vector<String> m_hyperspace_replicas;
   };
 
-  typedef intrusive_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
+  typedef std::shared_ptr<ClientKeepaliveHandler> ClientKeepaliveHandlerPtr;
 
 } // namespace Hypertable
 

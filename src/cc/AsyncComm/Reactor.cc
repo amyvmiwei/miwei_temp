@@ -25,7 +25,17 @@
  * to manage state for a polling thread.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "IOHandlerData.h"
+#include "Reactor.h"
+#include "ReactorFactory.h"
+#include "ReactorRunner.h"
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/Time.h>
 
 #include <cassert>
 #include <cstdio>
@@ -46,16 +56,6 @@ extern "C" {
 #include <sys/event.h>
 #endif
 }
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/Time.h"
-
-#include "IOHandlerData.h"
-#include "Reactor.h"
-#include "ReactorFactory.h"
-#include "ReactorRunner.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -172,21 +172,21 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
 
 void Reactor::handle_timeouts(PollTimeout &next_timeout) {
   vector<ExpireTimer> expired_timers;
-  EventPtr event_ptr;
-  boost::xtime     now, next_req_timeout;
+  EventPtr event;
+  boost::xtime now, next_req_timeout;
   ExpireTimer timer;
 
   while(true) {
     {
       ScopedLock lock(m_mutex);
-      IOHandler       *handler;
+      IOHandler *handler;
       DispatchHandler *dh;
 
       boost::xtime_get(&now, boost::TIME_UTC_);
 
-      while ((dh = m_request_cache.get_next_timeout(now, handler,
-                                                    &next_req_timeout)) != 0) {
-        Event *event = new Event(Event::ERROR, ((IOHandlerData *)handler)->get_address(), Error::REQUEST_TIMEOUT);
+      while (m_request_cache.get_next_timeout(now, handler, dh,
+                                              &next_req_timeout)) {
+        event = make_shared<Event>(Event::ERROR, ((IOHandlerData *)handler)->get_address(), Error::REQUEST_TIMEOUT);
         event->set_proxy(((IOHandlerData *)handler)->get_proxy());
         handler->deliver_event(event, dh);
       }
@@ -224,9 +224,9 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
      * Deliver timer events
      */
     for (size_t i=0; i<expired_timers.size(); i++) {
-      event_ptr = new Event(Event::TIMER, Error::OK);
+      event = make_shared<Event>(Event::TIMER, Error::OK);
       if (expired_timers[i].handler)
-        expired_timers[i].handler->handle(event_ptr);
+        expired_timers[i].handler->handle(event);
     }
 
     {

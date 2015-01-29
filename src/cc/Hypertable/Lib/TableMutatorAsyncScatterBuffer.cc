@@ -293,8 +293,9 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
       }
       HT_ASSERT((size_t)(ptr-send_buffer->pending_updates.base)==len);
       send_buffer->dispatch_handler =
-        new TableMutatorAsyncDispatchHandler(m_app_queue, m_mutator, m_id, send_buffer.get(),
-                                             m_auto_refresh);
+        make_shared<TableMutatorAsyncDispatchHandler>(m_app_queue, m_mutator,
+                                                      m_id, send_buffer.get(),
+                                                      m_auto_refresh);
       send_buffer->send_count = send_buffer->key_offsets.size();
     }
 

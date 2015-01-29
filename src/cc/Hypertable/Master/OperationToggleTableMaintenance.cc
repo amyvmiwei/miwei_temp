@@ -47,6 +47,7 @@
 using namespace Hypertable;
 using namespace Hypertable::Lib;
 using namespace Hyperspace;
+using namespace std;
 
 OperationToggleTableMaintenance::OperationToggleTableMaintenance(ContextPtr &context,
                                                                  const std::string &table_name,
@@ -158,7 +159,7 @@ void OperationToggleTableMaintenance::execute() {
       table.id = m_id.c_str();
       table.generation = 0;
       DispatchHandlerOperationPtr op_handler =
-        new DispatchHandlerOperationToggleTableMaintenance(m_context, table, m_toggle_on);
+        make_shared<DispatchHandlerOperationToggleTableMaintenance>(m_context, table, m_toggle_on);
       op_handler->start(m_servers);
       if (!op_handler->wait_for_completion()) {
         std::set<DispatchHandlerOperation::Result> results;

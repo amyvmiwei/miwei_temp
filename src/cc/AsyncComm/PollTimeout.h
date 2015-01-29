@@ -25,8 +25,8 @@
  * the next polling loop timeout.
  */
 
-#ifndef HYPERTABLE_POLLTIMEOUT_H
-#define HYPERTABLE_POLLTIMEOUT_H
+#ifndef AsyncComm_POLLTIMEOUT_H
+#define AsyncComm_POLLTIMEOUT_H
 
 
 #include <boost/thread/xtime.hpp>
@@ -104,4 +104,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_POLLTIMEOUT_H
+#endif // AsyncComm_POLLTIMEOUT_H

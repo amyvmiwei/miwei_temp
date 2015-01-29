@@ -127,7 +127,7 @@ int Comm::register_socket(int sd, const CommAddress &addr,
 
 
 int
-Comm::connect(const CommAddress &addr, DispatchHandlerPtr &default_handler) {
+Comm::connect(const CommAddress &addr, const DispatchHandlerPtr &default_handler) {
   int sd;
   int error = m_handler_map->contains_data_handler(addr);
   uint16_t port;
@@ -167,7 +167,7 @@ Comm::connect(const CommAddress &addr, DispatchHandlerPtr &default_handler) {
 
 int
 Comm::connect(const CommAddress &addr, const CommAddress &local_addr,
-              DispatchHandlerPtr &default_handler) {
+              const DispatchHandlerPtr &default_handler) {
   int sd;
   int error = m_handler_map->contains_data_handler(addr);
 
@@ -231,7 +231,7 @@ bool Comm::wait_for_proxy_load(Timer &timer) {
 
 void
 Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
-             DispatchHandlerPtr &default_handler) {
+             const DispatchHandlerPtr &default_handler) {
   IOHandlerAccept *handler;
   int one = 1;
   int sd;
@@ -354,7 +354,7 @@ int Comm::send_response(const CommAddress &addr, CommBufPtr &cbuf) {
 
 void
 Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
-                                     DispatchHandlerPtr &dhp) {
+                                     const DispatchHandlerPtr &dhp) {
   IOHandlerDatagram *handler;
   int sd;
 
@@ -444,7 +444,7 @@ Comm::send_datagram(const CommAddress &addr, const CommAddress &send_addr,
 }
 
 
-int Comm::set_timer(uint32_t duration_millis, DispatchHandler *handler) {
+int Comm::set_timer(uint32_t duration_millis, const DispatchHandlerPtr &handler) {
   ExpireTimer timer;
   boost::xtime_get(&timer.expire_time, boost::TIME_UTC_);
   xtime_add_millis(timer.expire_time, duration_millis);
@@ -455,7 +455,7 @@ int Comm::set_timer(uint32_t duration_millis, DispatchHandler *handler) {
 
 
 int
-Comm::set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler) {
+Comm::set_timer_absolute(boost::xtime expire_time, const DispatchHandlerPtr &handler) {
   ExpireTimer timer;
   memcpy(&timer.expire_time, &expire_time, sizeof(boost::xtime));
   timer.handler = handler;
@@ -463,7 +463,7 @@ Comm::set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler) {
   return Error::OK;
 }
 
-void Comm::cancel_timer(DispatchHandler *handler) {
+void Comm::cancel_timer(const DispatchHandlerPtr &handler) {
   m_timer_reactor->cancel_timer(handler);
 }
 
@@ -570,7 +570,7 @@ void Comm::find_available_udp_port(InetAddr &addr) {
 
 int
 Comm::connect_socket(int sd, const CommAddress &addr,
-                     DispatchHandlerPtr &default_handler) {
+                     const DispatchHandlerPtr &default_handler) {
   IOHandlerData *handler;
   int32_t error;
   int one = 1;

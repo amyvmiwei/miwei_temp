@@ -220,7 +220,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   }
 #endif
 
-  app_queue_ptr = new ApplicationQueue( get_i32("workers"), false );
+  app_queue_ptr = make_shared<ApplicationQueue>(get_i32("workers"), false);
   vector<Thread::id> thread_ids = app_queue_ptr->get_thread_ids();
   thread_ids.push_back(ThisThread::get_id());
 
@@ -238,16 +238,18 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
   m_metrics_handler = std::make_shared<MetricsHandler>(props);
+  m_metrics_handler->start_collecting();
 
   boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
 
-  m_keepalive_handler_ptr.reset(
-   new ServerKeepaliveHandler(conn_mgr->get_comm(), this, app_queue_ptr));
+  m_keepalive_handler_ptr = make_shared<ServerKeepaliveHandler>(conn_mgr->get_comm(), this, app_queue_ptr);
+  m_keepalive_handler_ptr->start();
   keepalive_handler = m_keepalive_handler_ptr;
 }
 
 
 Master::~Master() {
+  m_metrics_handler->stop_collecting();
   delete m_bdb_fs;
   ::close(m_lock_fd);
 }

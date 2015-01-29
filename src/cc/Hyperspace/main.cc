@@ -62,7 +62,7 @@ public:
     : m_app_queue(app_queue), m_master(master) { }
 
   virtual void get_instance(DispatchHandlerPtr &dhp) {
-    dhp = new ServerConnectionHandler(m_app_queue, m_master);
+    dhp = make_shared<ServerConnectionHandler>(m_app_queue, m_master);
   }
 
 private:
@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     init_with_policy<AppPolicy>(argc, argv);
 
     Comm *comm = Comm::instance();
-    ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>(comm);
     ServerKeepaliveHandlerPtr keepalive_handler;
     ApplicationQueuePtr app_queue;
     MasterPtr master = new Master(conn_mgr, properties,
@@ -91,9 +91,8 @@ int main(int argc, char **argv) {
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(app_queue, master));
     comm->listen(local_addr, hf);
 
-    DispatchHandlerPtr dhp(keepalive_handler.get());
     // give hyperspace message higher priority if possible
-    comm->create_datagram_receive_socket(local_addr, 0x10, dhp);
+    comm->create_datagram_receive_socket(local_addr, 0x10, keepalive_handler);
 
     // set up maintenance timer
     uint32_t maintenance_interval = get_i32("Hyperspace.Maintenance.Interval");
@@ -101,7 +100,7 @@ int main(int argc, char **argv) {
     int error;
 
     hf->get_instance(maintenance_dhp);
-    if ((error = comm->set_timer(maintenance_interval, maintenance_dhp.get())) != Error::OK)
+    if ((error = comm->set_timer(maintenance_interval, maintenance_dhp)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
     app_queue->join();

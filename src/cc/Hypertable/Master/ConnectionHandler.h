@@ -71,6 +71,8 @@ namespace Hypertable {
      */
     ConnectionHandler(ContextPtr &context);
 
+    void start_timer();
+
     /** Responds to Master request events.
      * @param event AsyncComm event corresponding to Master request
      */

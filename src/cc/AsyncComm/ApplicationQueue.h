@@ -25,15 +25,14 @@
  * an application queue.
  */
 
-#ifndef HYPERTABLE_APPLICATIONQUEUE_H
-#define HYPERTABLE_APPLICATIONQUEUE_H
+#ifndef Hypertable_AyncComm_ApplicationQueue_h
+#define Hypertable_AyncComm_ApplicationQueue_h
 
 #include <AsyncComm/ApplicationQueueInterface.h>
 #include <AsyncComm/ApplicationHandler.h>
 
 #include <Common/Logger.h>
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 #include <Common/Thread.h>
 
@@ -43,6 +42,7 @@
 #include <cassert>
 #include <list>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -488,8 +488,8 @@ namespace Hypertable {
   };
 
   /// Smart pointer to ApplicationQueue object
-  typedef boost::intrusive_ptr<ApplicationQueue> ApplicationQueuePtr;
+  typedef std::shared_ptr<ApplicationQueue> ApplicationQueuePtr;
   /** @}*/
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_APPLICATIONQUEUE_H
+#endif // Hypertable_AyncComm_ApplicationQueue_h

@@ -37,7 +37,7 @@ namespace RangeServer {
   class ConnectionHandler : public DispatchHandler {
   public:
 
-    ConnectionHandler(Comm *comm, ApplicationQueuePtr &aq, Apps::RangeServerPtr rs)
+    ConnectionHandler(Comm *comm, ApplicationQueuePtr &aq, Apps::RangeServer *rs)
       : m_comm(comm), m_app_queue(aq), m_range_server(rs) {
     }
 
@@ -46,9 +46,12 @@ namespace RangeServer {
   private:
     Comm *m_comm {};
     ApplicationQueuePtr m_app_queue;
-    Apps::RangeServerPtr m_range_server;
+    Apps::RangeServer *m_range_server;
     bool m_shutdown {};
   };
+
+  /// Smart pointer to ConnectionHandler
+  typedef std::shared_ptr<ConnectionHandler> ConnectionHandlerPtr;
 
   /// @}
 

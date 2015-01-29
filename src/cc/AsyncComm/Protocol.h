@@ -26,8 +26,8 @@
  */
 
 
-#ifndef HYPERTABLE_PROTOCOL_H
-#define HYPERTABLE_PROTOCOL_H
+#ifndef AsyncComm_PROTOCOL_H
+#define AsyncComm_PROTOCOL_H
 
 #include "Event.h"
 #include "CommHeader.h"
@@ -142,4 +142,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_PROTOCOL_H
+#endif // AsyncComm_PROTOCOL_H

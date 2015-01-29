@@ -56,9 +56,8 @@ namespace Hyperspace {
 
     int initiate_connection(struct sockaddr_in &addr) {
       ScopedRecLock lock(m_mutex);
-      DispatchHandlerPtr dhp(this);
       m_state = CONNECTING;
-      int error = m_comm->connect(addr, dhp);
+      int error = m_comm->connect(addr, shared_from_this());
 
       if (error == Error::COMM_ALREADY_CONNECTED) {
         HT_WARNF("Connection attempt to Hyperspace.Master "
@@ -97,7 +96,7 @@ namespace Hyperspace {
     bool m_callbacks_enabled;
   };
 
-  typedef intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
+  typedef std::shared_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
 
 } // namespace Hypertable
 

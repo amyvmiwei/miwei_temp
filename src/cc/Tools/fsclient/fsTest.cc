@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 
     InetAddr::initialize(&addr, "localhost", port);
 
-    conn_mgr = new ConnectionManager();
+    conn_mgr = make_shared<ConnectionManager>();
     client = make_shared<FsBroker::Lib::Client>(conn_mgr, addr, 15000);
 
     if (!client->wait_for_connection(15000)) {

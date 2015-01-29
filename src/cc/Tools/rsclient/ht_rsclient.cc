@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     // Create Range Server client object
     RangeServer::ClientPtr client = make_shared<RangeServer::Client>(comm, timeout);
 
-    DispatchHandlerPtr dispatch_handler_ptr = new RangeServerDispatchHandler();
+    DispatchHandlerPtr dispatch_handler_ptr = make_shared<RangeServerDispatchHandler>();
     // connect to RangeServer
     if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
       cerr << "error: unable to connect to RangeServer "<< addr << endl;

@@ -41,18 +41,21 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
                                                ApplicationQueuePtr &app_queue)
   : m_comm(comm), m_master(master),
     m_app_queue_ptr(app_queue), m_shutdown(false) {
-  int error;
 
   m_master->get_datagram_send_address(&m_send_addr);
 
-  if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, this))
+}
+
+void ServerKeepaliveHandler::start() {
+  int error;
+
+  if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, shared_from_this()))
       != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
     exit(1);
   }
 
   m_master->tick();
-
 }
 
 
@@ -111,7 +114,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       HT_ERROR_OUT << e << HT_END;
     }
 
-    if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, this))
+    if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, shared_from_this()))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);

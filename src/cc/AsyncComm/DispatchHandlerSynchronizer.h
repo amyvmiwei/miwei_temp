@@ -25,16 +25,18 @@
  * used to synchronzie with response messages.
  */
 
-#ifndef DISPATCHHANDLERSYNCHRONIZER_H
-#define DISPATCHHANDLERSYNCHRONIZER_H
-
-#include <queue>
-
-#include <boost/thread/condition.hpp>
-#include "Common/Mutex.h"
+#ifndef AsyncComm_DispatchHandlerSynchronizer_h
+#define AsyncComm_DispatchHandlerSynchronizer_h
 
 #include "DispatchHandler.h"
 #include "Event.h"
+
+#include <Common/Mutex.h>
+
+#include <boost/thread/condition.hpp>
+
+#include <memory>
+#include <queue>
 
 namespace Hypertable {
 
@@ -125,8 +127,12 @@ namespace Hypertable {
     bool m_connected {};
 
   };
+
+  /// Smart pointer to DispatchHandlerSynchronizer
+  typedef std::shared_ptr<DispatchHandlerSynchronizer> DispatchHandlerSynchronizerPtr;
+
   /** @}*/
-} // namespace Hypertable
+}
 
 
-#endif // DISPATCHHANDLERSYNCHRONIZER_H
+#endif // AsyncComm_DispatchHandlerSynchronizer_h

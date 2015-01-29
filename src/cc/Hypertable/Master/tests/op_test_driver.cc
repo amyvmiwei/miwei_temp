@@ -382,7 +382,7 @@ int main(int argc, char **argv) {
     context->props->set("Hyperspace.Replica.Host", replicas);
 
     context->comm = Comm::instance();
-    context->conn_manager = new ConnectionManager(context->comm);
+    context->conn_manager = make_shared<ConnectionManager>(context->comm);
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
     context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
     context->rsc_manager = new RangeServerConnectionManager();

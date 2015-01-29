@@ -45,7 +45,7 @@ namespace Hypertable {
     std::vector<SystemVariable::Spec> m_specs;
     uint64_t m_generation;
   };
-  typedef intrusive_ptr<DispatchHandlerOperationGetStatistics> DispatchHandlerOperationGetStatisticsPtr;
+  typedef std::shared_ptr<DispatchHandlerOperationGetStatistics> DispatchHandlerOperationGetStatisticsPtr;
 
 }
 

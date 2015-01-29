@@ -85,7 +85,8 @@ namespace {
   class HandlerFactory : public ConnectionHandlerFactory {
   public:
     HandlerFactory(ContextPtr &context) : m_context(context) {
-      m_handler = new ConnectionHandler(m_context);
+      m_handler = make_shared<ConnectionHandler>(m_context);
+      static_cast<ConnectionHandler *>(m_handler.get())->start_timer();
     }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
@@ -170,7 +171,7 @@ int main(int argc, char **argv) {
     }
 
     context->comm = Comm::instance();
-    context->conn_manager = new ConnectionManager(context->comm);
+    context->conn_manager = make_shared<ConnectionManager>(context->comm);
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
     context->rsc_manager = new RangeServerConnectionManager();
     context->metrics_handler = std::make_shared<MetricsHandler>(properties);

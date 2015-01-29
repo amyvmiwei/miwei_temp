@@ -74,8 +74,12 @@ using namespace std;
 
 
 ConnectionHandler::ConnectionHandler(ContextPtr &context) : m_context(context), m_shutdown(false) {
+}
+
+
+void ConnectionHandler::start_timer() {
   int error;
-  if ((error = m_context->comm->set_timer(context->timer_interval, this)) != Error::OK)
+  if ((error = m_context->comm->set_timer(m_context->timer_interval, shared_from_this())) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 }
 
@@ -258,7 +262,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         HT_ERROR_OUT << e << HT_END;
     }
 
-    if ((error = m_context->comm->set_timer(m_context->timer_interval, this)) != Error::OK)
+    if ((error = m_context->comm->set_timer(m_context->timer_interval, shared_from_this())) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
   }

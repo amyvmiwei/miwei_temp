@@ -249,7 +249,6 @@ int main(int argc, char **argv) {
   const char *in_file = 0;
   int error;
   EventPtr event_ptr;
-  ConnectionHandlerFactoryPtr chfp;
   DispatchHandlerPtr dhp;
   ResponseHandler *resp_handler;
   bool udp_mode = false;
@@ -314,16 +313,16 @@ int main(int argc, char **argv) {
 
   if (udp_mode) {
     assert(inet_addr.sin_port == 0);
-    resp_handler = new ResponseHandlerUDP();
-    dhp = resp_handler;
+    dhp = make_shared<ResponseHandlerUDP>();
+    resp_handler = static_cast<ResponseHandler *>(dhp.get());
     port++;
     InetAddr::initialize(&inet_addr, INADDR_ANY, port);
     udp_send_addr.set_inet(inet_addr);
     comm->create_datagram_receive_socket(udp_send_addr, 0, dhp);
   }
   else {
-    resp_handler = new ResponseHandlerTCP();
-    dhp = resp_handler;
+    dhp = make_shared<ResponseHandlerTCP>();
+    resp_handler = static_cast<ResponseHandler *>(dhp.get());
 
     if (inet_addr.sin_port == 0) {
       if ((error = comm->connect(addr, dhp)) != Error::OK) {
@@ -332,8 +331,8 @@ int main(int argc, char **argv) {
       }
     }
     else {
-      chfp = new HandlerFactory(dhp);
-      comm->listen(inet_addr, chfp, dhp);
+      ConnectionHandlerFactoryPtr handler_factory = make_shared<HandlerFactory>(dhp);
+      comm->listen(inet_addr, handler_factory, dhp);
     }
     if (!((ResponseHandlerTCP *)resp_handler)->wait_for_connection())
       exit(1);

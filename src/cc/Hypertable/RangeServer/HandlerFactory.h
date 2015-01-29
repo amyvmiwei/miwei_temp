@@ -40,7 +40,7 @@ namespace Hypertable {
         m_range_server(range_server) { }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
-      dhp = new ConnectionHandler(m_comm, m_app_queue, m_range_server);
+      dhp = std::make_shared<ConnectionHandler>(m_comm, m_app_queue, m_range_server.get());
     }
   private:
     Comm *m_comm;

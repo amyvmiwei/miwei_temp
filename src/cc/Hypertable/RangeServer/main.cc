@@ -79,11 +79,11 @@ int main(int argc, char **argv) {
               System::install_dir.c_str());
 
     Comm *comm = Comm::instance();
-    ConnectionManagerPtr conn_manager = new ConnectionManager(comm);
+    ConnectionManagerPtr conn_manager = make_shared<ConnectionManager>(comm);
     Global::conn_manager = conn_manager;
 
     int worker_count = get_i32("Hypertable.RangeServer.Workers");
-    ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
+    ApplicationQueuePtr app_queue = make_shared<ApplicationQueue>(worker_count);
 
     /**
      * Connect to Hyperspace

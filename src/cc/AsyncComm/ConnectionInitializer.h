@@ -25,10 +25,8 @@
  * base class for classes that handle connection initialization handshake.
  */
 
-#ifndef HYPERTABLE_CONNECTIONINITIALIZER_H
-#define HYPERTABLE_CONNECTIONINITIALIZER_H
-
-#include "Common/ReferenceCount.h"
+#ifndef AsyncComm_ConnectionInitializer_h
+#define AsyncComm_ConnectionInitializer_h
 
 #include "CommBuf.h"
 
@@ -42,7 +40,7 @@ namespace Hypertable {
 
   /** Driver interface for connection initialization handshake in ConnectionManager.
    */
-  class ConnectionInitializer : public ReferenceCount {
+  class ConnectionInitializer {
   public:
 
     /** Creates a connection initialization message.
@@ -66,8 +64,8 @@ namespace Hypertable {
   };
 
   /// Smart pointer to ConnectionInitializer
-  typedef boost::intrusive_ptr<ConnectionInitializer> ConnectionInitializerPtr;
+  typedef std::shared_ptr<ConnectionInitializer> ConnectionInitializerPtr;
   /** @}*/
 }
 
-#endif // HYPERTABLE_CONNECTIONINITIALIZER_H
+#endif // AsyncComm_ConnectionInitializer_h

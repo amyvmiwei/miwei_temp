@@ -26,12 +26,12 @@
  * events to an application.
  */
 
-#ifndef HYPERTABLE_DISPATCHHANDLER_H
-#define HYPERTABLE_DISPATCHHANDLER_H
-
-#include "Common/ReferenceCount.h"
+#ifndef AsyncComm_DispatchHandler_h
+#define AsyncComm_DispatchHandler_h
 
 #include "Event.h"
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -43,7 +43,7 @@ namespace Hypertable {
    * AsyncComm.  Dispatch handlers are the mechanism by which an application
    * is notified of communication events.
    */
-  class DispatchHandler : public ReferenceCount {
+  class DispatchHandler : public std::enable_shared_from_this<DispatchHandler> {
   public:
 
     /** Destructor
@@ -61,8 +61,8 @@ namespace Hypertable {
   };
 
   /// Smart pointer to DispatchHandler
-  typedef intrusive_ptr<DispatchHandler> DispatchHandlerPtr;
+  typedef std::shared_ptr<DispatchHandler> DispatchHandlerPtr;
   /** @}*/
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_DISPATCHHANDLER_H
+#endif // AsyncComm_DispatchHandler_h

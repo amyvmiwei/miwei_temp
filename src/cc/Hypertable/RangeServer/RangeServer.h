@@ -60,6 +60,7 @@
 
 #include <AsyncComm/ApplicationQueue.h>
 #include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionInitializer.h>
 #include <AsyncComm/Event.h>
 #include <AsyncComm/ResponseCallback.h>
 
@@ -268,7 +269,7 @@ namespace Apps {
     ApplicationQueuePtr    m_app_queue;
     uint64_t               m_existence_file_handle;
     LockSequencer          m_existence_file_sequencer;
-    ConnectionHandler     *m_master_connection_handler;
+    std::shared_ptr<ConnectionHandler> m_master_connection_handler;
     Lib::Master::ClientPtr        m_master_client;
     Hyperspace::SessionPtr m_hyperspace;
 

@@ -41,26 +41,19 @@ namespace Hypertable {
 
   public:
     GroupCommitTimerHandler(Comm *comm, Apps::RangeServer *range_server, ApplicationQueuePtr &app_queue);
+    void start();
     virtual void handle(Hypertable::EventPtr &event_ptr);
     void shutdown();
 
-    void wait_for_shutdown() {
-      ScopedLock lock(m_mutex);
-      while (!m_shutdown_complete)
-        m_shutdown_cond.wait(lock);
-    }
-
   private:
-    Mutex         m_mutex;
-    Comm         *m_comm;
-    Apps::RangeServer  *m_range_server;
+    Mutex m_mutex;
+    Comm *m_comm {};
+    Apps::RangeServer *m_range_server {};
     ApplicationQueuePtr m_app_queue;
-    int32_t       m_commit_interval;
-    boost::condition m_shutdown_cond;
-    bool          m_shutdown;
-    bool          m_shutdown_complete;
+    int32_t m_commit_interval {};
+    bool m_shutdown {};
   };
-  typedef boost::intrusive_ptr<GroupCommitTimerHandler> GroupCommitTimerHandlerPtr;
+  typedef std::shared_ptr<GroupCommitTimerHandler> GroupCommitTimerHandlerPtr;
 }
 
 #endif // Hypertable_RangeServer_GroupCommitTimerHandler_h

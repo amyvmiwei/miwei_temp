@@ -25,7 +25,19 @@
  * processing I/O events for accept (listen) sockets.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#define HT_DISABLE_LOG_DEBUG 1
+
+#include "HandlerMap.h"
+#include "IOHandlerAccept.h"
+#include "IOHandlerData.h"
+#include "ReactorFactory.h"
+#include "ReactorRunner.h"
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
 
 #include <iostream>
 
@@ -39,17 +51,6 @@ extern "C" {
 #include <fcntl.h>
 }
 
-#define HT_DISABLE_LOG_DEBUG 1
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-
-#include "HandlerMap.h"
-#include "IOHandlerAccept.h"
-#include "IOHandlerData.h"
-#include "ReactorFactory.h"
-#include "ReactorRunner.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -165,7 +166,8 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     ReactorRunner::handler_map->decrement_reference_count(handler);
 
-    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
+    EventPtr event = make_shared<Event>(Event::CONNECTION_ESTABLISHED, addr, Error::OK);
+    deliver_event(event);
   }
 
   return false;

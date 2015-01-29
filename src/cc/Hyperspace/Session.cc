@@ -74,7 +74,8 @@ Session::Session(Comm *comm, PropertiesPtr &cfg)
   boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
   xtime_add_millis(m_expire_time, m_grace_period);
 
-  m_keepalive_handler_ptr = new ClientKeepaliveHandler(m_comm, m_cfg, this);
+  m_keepalive_handler_ptr = std::make_shared<ClientKeepaliveHandler>(m_comm, m_cfg, this);
+  m_keepalive_handler_ptr->start();
 
   function<void()> sleep_callback = [this]() -> void {this->handle_sleep();};
   function<void()> wakeup_callback = [this]() -> void {this->handle_wakeup();};

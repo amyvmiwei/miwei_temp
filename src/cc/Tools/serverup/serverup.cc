@@ -60,7 +60,6 @@ extern "C" {
 #include <signal.h>
 }
 
-
 using namespace Hypertable;
 using namespace Hypertable::Lib;
 using namespace Config;
@@ -214,15 +213,17 @@ namespace {
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
     }
 
-    ApplicationQueueInterfacePtr app_queue = new ApplicationQueue(1);
+    ApplicationQueueInterfacePtr app_queue = make_shared<ApplicationQueue>(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
 
     String toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(toplevel_dir, boost::is_any_of("/"));
     toplevel_dir = String("/") + toplevel_dir;
 
-    Lib::Master::Client *master = new Lib::Master::Client(conn_mgr, hyperspace_ptr,
-                                            toplevel_dir, wait_ms, app_queue);
+    Lib::Master::Client *master =
+      new Lib::Master::Client(conn_mgr, hyperspace_ptr,
+                              toplevel_dir, wait_ms, app_queue,
+                              DispatchHandlerPtr(), ConnectionInitializerPtr());
 
     if (!master->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
@@ -356,7 +357,7 @@ int main(int argc, char **argv) {
     String server_name = get("server-name", String());
     bool verbose = get_bool("verbose");
 
-    ConnectionManagerPtr conn_mgr = new ConnectionManager();
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>();
     conn_mgr->set_quiet_mode(silent);
 
     properties->set("FsBroker.Timeout", (int32_t)wait_ms);

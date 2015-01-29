@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     Lib::Master::ClientPtr client = new Lib::Master::Client(comm, addr, timeout);
 
-    DispatchHandlerPtr dispatch_handler_ptr = new MasterDispatchHandler();
+    DispatchHandlerPtr dispatch_handler_ptr = make_shared<MasterDispatchHandler>();
     // connect to Master
     if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
       cerr << "ERROR: unable to connect to Master "<< addr << endl;

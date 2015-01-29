@@ -28,19 +28,8 @@
 #ifndef AsyncComm_HandlerMap_h
 #define AsyncComm_HandlerMap_h
 
-#include <cassert>
 
 //#define HT_DISABLE_LOG_DEBUG
-
-#include <boost/thread/condition.hpp>
-
-#include "Common/Mutex.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/ReferenceCount.h"
-#include "Common/SockAddrMap.h"
-#include "Common/Time.h"
-#include "Common/Timer.h"
 
 #include "CommAddress.h"
 #include "CommBuf.h"
@@ -48,6 +37,18 @@
 #include "IOHandlerDatagram.h"
 #include "IOHandlerRaw.h"
 #include "ProxyMap.h"
+
+#include <Common/Mutex.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/SockAddrMap.h>
+#include <Common/Time.h>
+#include <Common/Timer.h>
+
+#include <boost/thread/condition.hpp>
+
+#include <cassert>
+#include <memory>
 
 namespace Hypertable {
 
@@ -66,7 +67,7 @@ namespace Hypertable {
    * accept sockets.  The Comm methods use this map to locate the I/O
    * handler for a given address.
    */
-  class HandlerMap : public ReferenceCount {
+  class HandlerMap {
 
   public:
 
@@ -434,7 +435,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to HandlerMap
-  typedef boost::intrusive_ptr<HandlerMap> HandlerMapPtr;
+  typedef std::shared_ptr<HandlerMap> HandlerMapPtr;
 
   /** @}*/
 }

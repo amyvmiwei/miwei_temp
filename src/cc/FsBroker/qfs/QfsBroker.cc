@@ -57,9 +57,11 @@ QfsBroker::QfsBroker(PropertiesPtr &cfg)
     m_port(cfg->get_i16("port")),
     m_client(KFS::Connect(m_host, m_port)) {
   m_metrics_handler = std::make_shared<MetricsHandler>(cfg, "qfs");
+  m_metrics_handler->start_collecting();
 }
 
 QfsBroker::~QfsBroker() {
+  m_metrics_handler->stop_collecting();
   delete m_client;
 }
 

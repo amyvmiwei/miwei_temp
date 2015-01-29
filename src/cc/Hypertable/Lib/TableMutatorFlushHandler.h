@@ -27,7 +27,7 @@
 namespace Hypertable {
 
 struct TableMutatorFlushHandler: ApplicationHandler {
-  TableMutatorFlushHandler(TableMutatorIntervalHandler *interval_handler,
+  TableMutatorFlushHandler(TableMutatorIntervalHandlerPtr &interval_handler,
                            EventPtr &event)
     : ApplicationHandler(event), interval_handler(interval_handler) { }
 

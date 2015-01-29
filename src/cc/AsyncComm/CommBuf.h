@@ -26,8 +26,8 @@
  */
 
 
-#ifndef HYPERTABLE_COMMBUF_H
-#define HYPERTABLE_COMMBUF_H
+#ifndef AsyncComm_COMMBUF_H
+#define AsyncComm_COMMBUF_H
 
 #include <string>
 
@@ -307,4 +307,4 @@ namespace Hypertable {
 } // namespace Hypertable
 
 
-#endif // HYPERTABLE_COMMBUF_H
+#endif // AsyncComm_COMMBUF_H

@@ -25,8 +25,8 @@
  * processing I/O events for accept (listen) sockets.
  */
 
-#ifndef HYPERTABLE_IOHANDLERACCEPT_H
-#define HYPERTABLE_IOHANDLERACCEPT_H
+#ifndef AsyncComm_IOHandlerAccept_h
+#define AsyncComm_IOHandlerAccept_h
 
 #include "HandlerMap.h"
 #include "IOHandler.h"
@@ -51,7 +51,7 @@ namespace Hypertable {
      * @param hmap Reference to Handler map
      * @param chfp Reference to connection handler factory
      */
-    IOHandlerAccept(int sd, DispatchHandlerPtr &dhp,
+    IOHandlerAccept(int sd, const DispatchHandlerPtr &dhp,
                     HandlerMapPtr &hmap, ConnectionHandlerFactoryPtr &chfp)
       : IOHandler(sd, dhp), m_handler_map(hmap), m_handler_factory(chfp) {
       memcpy(&m_addr, &m_local_addr, sizeof(InetAddr));
@@ -142,5 +142,5 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_IOHANDLERACCEPT_H
+#endif // AsyncComm_IOHandlerAccept_h
 

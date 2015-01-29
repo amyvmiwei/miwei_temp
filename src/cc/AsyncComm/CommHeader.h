@@ -26,8 +26,8 @@
  * header.
  */
 
-#ifndef HYPERTABLE_COMMHEADER_H
-#define HYPERTABLE_COMMHEADER_H
+#ifndef AsyncComm_COMMHEADER_H
+#define AsyncComm_COMMHEADER_H
 
 namespace Hypertable {
 
@@ -148,4 +148,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_COMMHEADER_H
+#endif // AsyncComm_COMMHEADER_H

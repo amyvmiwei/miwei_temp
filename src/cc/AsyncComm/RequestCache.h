@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -25,8 +25,8 @@
  * that is used to hold pending request data.
  */
 
-#ifndef HYPERTABLE_REQUESTCACHE_H
-#define HYPERTABLE_REQUESTCACHE_H
+#ifndef AsyncComm_RequestCache_h
+#define AsyncComm_RequestCache_h
 
 #include <AsyncComm/DispatchHandler.h>
 
@@ -52,14 +52,17 @@ namespace Hypertable {
 
     /** Internal cache node structure.
      */
-    struct CacheNode {
+    class CacheNode {
+    public:
+      CacheNode(uint32_t id, IOHandler *handler, DispatchHandler *dh)
+        : id(id), handler(handler), dh(dh) {}
       struct CacheNode  *prev, *next;  //!< Doubly-linked list pointers
       boost::xtime       expire;  //!< Absolute expiration time
       uint32_t           id;      //!< Request ID
       IOHandler         *handler; //!< IOHandler associated with this request
       /// Callback handler to which MESSAGE, TIMEOUT, ERROR, and DISCONNECT
       /// events are delivered
-      DispatchHandler   *dh;
+      DispatchHandler *dh;
     };
 
     /// RequestID-to-CacheNode map
@@ -82,9 +85,10 @@ namespace Hypertable {
 
     /** Removes a request from the cache.
      * @param id Request ID
-     * @return Pointer to request's dispatch handler
+     * @param handler Removed dispatch handler
+     * @return <i>true</i> if removed, <i>false</i> if not found
      */
-    DispatchHandler *remove(uint32_t id);
+    bool remove(uint32_t id, DispatchHandler *&handler);
 
     /** Removes next request that has timed out.  This method finds the first
      * request starting from the head of the list and removes it and returns
@@ -94,12 +98,15 @@ namespace Hypertable {
      * @param now Current time
      * @param handlerp Return parameter to hold pointer to associated IOHandler
      *                 of timed out request
+     * @param dh Removed dispatch handler
      * @param next_timeout Pointer to xtime variable to hold expiration time
      * of next request <b>after</b> timed out request, set to 0 if cache is empty
-     * @return Pointer to timed out dispatch handler, or 0 if none
+     * @return <i>true</i> if pointer to timed out dispatch handler was removed,
+     * <i>false</i> otherwise
      */
-    DispatchHandler *get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
-                                      boost::xtime *next_timeout);
+    bool get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
+                          DispatchHandler *&dh,
+                          boost::xtime *next_timeout);
 
     /** Purges all requests assocated with <code>handler</code>.  This
      * method walks the entire cache and purges all requests whose
@@ -118,4 +125,4 @@ namespace Hypertable {
   };
 }
 
-#endif // HYPERTABLE_REQUESTCACHE_H
+#endif // AsyncComm_RequestCache_h

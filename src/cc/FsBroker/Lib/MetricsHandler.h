@@ -27,6 +27,7 @@
 #ifndef FsBroker_Lib_MetricsHandler_h
 #define FsBroker_Lib_MetricsHandler_h
 
+#include <AsyncComm/Comm.h>
 #include <AsyncComm/DispatchHandler.h>
 
 #include <Common/MetricsCollectorGanglia.h>
@@ -64,7 +65,13 @@ namespace Lib {
 
     /// Destructor.
     /// Cancels the timer.
-    virtual ~MetricsHandler();
+    virtual ~MetricsHandler() {};
+
+    /// Starts metrics collection.
+    void start_collecting();
+
+    /// Stops metrics collection.
+    void stop_collecting();
 
     /// Collects and publishes metrics.
     /// This method updates the <code>requests/s</code> and general process
@@ -110,6 +117,9 @@ namespace Lib {
   private:
     /// %Mutex for serializing access to members
     std::mutex m_mutex;
+
+    /// Comm layer pointer
+    Comm *m_comm;
 
     /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;

@@ -39,6 +39,7 @@
 
 using namespace Hypertable;
 using namespace Config;
+using namespace std;
 
 namespace {
   struct MyPolicy : Config::Policy {
@@ -66,7 +67,7 @@ int main(int argc, char **argv) {
     init_with_policies<Policies>(argc, argv);
 
     Comm *comm = Comm::instance();
-    ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>(comm);
     int timeout = has("fs-timeout") ? get_i32("fs-timeout") : 180000;
 
     /**

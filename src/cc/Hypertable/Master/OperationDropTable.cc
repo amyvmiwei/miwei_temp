@@ -214,7 +214,7 @@ void OperationDropTable::execute() {
     if (!m_context->test_mode) {
       table.id = m_id.c_str();
       table.generation = 0;
-      op_handler = new DispatchHandlerOperationDropTable(m_context, table);
+      op_handler = make_shared<DispatchHandlerOperationDropTable>(m_context, table);
       op_handler->start(m_servers);
       if (!op_handler->wait_for_completion()) {
         std::set<DispatchHandlerOperation::Result> results;

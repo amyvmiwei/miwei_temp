@@ -25,8 +25,8 @@
  * processing I/O events for datagram sockets.
  */
 
-#ifndef HYPERTABLE_IOHANDLERDATAGRAM_H
-#define HYPERTABLE_IOHANDLERDATAGRAM_H
+#ifndef AsyncComm_IOHandlerDatagram_h
+#define AsyncComm_IOHandlerDatagram_h
 
 #include <list>
 #include <utility>
@@ -58,7 +58,7 @@ namespace Hypertable {
      * @param sd Socket descriptor bound to an address
      * @param dhp Default dispatch handler
      */
-    IOHandlerDatagram(int sd, DispatchHandlerPtr &dhp) : IOHandler(sd, dhp) {
+    IOHandlerDatagram(int sd, const DispatchHandlerPtr &dhp) : IOHandler(sd, dhp) {
       m_message = new uint8_t [65536];
       memcpy(&m_addr, &m_local_addr, sizeof(InetAddr));
     }
@@ -202,4 +202,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_IOHANDLERDATAGRAM_H
+#endif // AsyncComm_IOHandlerDatagram_h

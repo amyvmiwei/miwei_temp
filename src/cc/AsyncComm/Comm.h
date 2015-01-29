@@ -121,7 +121,7 @@ namespace Hypertable {
      * Error::COMM_SOCKET_ERROR, Error::COMM_BIND_ERROR, or one of the
      * errors returned by #connect_socket on error.
      */
-    int connect(const CommAddress &addr, DispatchHandlerPtr &default_handler);
+    int connect(const CommAddress &addr, const DispatchHandlerPtr &default_handler);
 
     /** Establishes a locally bound TCP connection and attaches a default
      * dispatch handler.  Establishes a TCP connection to
@@ -150,7 +150,7 @@ namespace Hypertable {
      * errors returned by #connect_socket on error.
      */
     int connect(const CommAddress &addr, const CommAddress &local_addr,
-                DispatchHandlerPtr &default_handler);
+                const DispatchHandlerPtr &default_handler);
 
     /** Sets an alias for a TCP connection.
      * RangeServers listen on a well-known port defined by the
@@ -256,7 +256,7 @@ namespace Hypertable {
      * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR
      */
     void listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
-                DispatchHandlerPtr &default_handler);
+                const DispatchHandlerPtr &default_handler);
 
     /** Sends a request message over a connection, expecting a response.  The
      * connection is specified by <code>addr</code> which is the remote end of
@@ -353,7 +353,7 @@ namespace Hypertable {
      * Error::COMM_BIND_ERROR.
      */
     void create_datagram_receive_socket(CommAddress &addr, int tos,
-                                        DispatchHandlerPtr &handler);
+                                        const DispatchHandlerPtr &handler);
 
     /** Sends a datagram to a remote address.  The remote address is specified
      * by <code>addr</code> and the local socket address to send it from is
@@ -387,7 +387,7 @@ namespace Hypertable {
      *        expiration
      * @return Error::OK
      */
-    int set_timer(uint32_t duration_millis, DispatchHandler *handler);
+    int set_timer(uint32_t duration_millis, const DispatchHandlerPtr &handler);
 
     /** Sets a timer for absolute time <code>expire_time</code>.
      * This method will cause a Event::TIMER event to be generated at the
@@ -406,7 +406,7 @@ namespace Hypertable {
      *        expiration
      * @return Error::OK
      */
-    int set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler);
+    int set_timer_absolute(boost::xtime expire_time, const DispatchHandlerPtr &handler);
 
     /** Cancels all scheduled timers registered with the dispatch handler
      * <code>handler</code>.
@@ -414,7 +414,7 @@ namespace Hypertable {
      * @param handler Dispatch handler for which all scheduled timer should
      *        be cancelled
      */
-    void cancel_timer(DispatchHandler *handler);
+    void cancel_timer(const DispatchHandlerPtr &handler);
 
     /** Closes the socket specified by the addr argument.  This has
      * the effect of closing the connection and removing it from the event
@@ -494,7 +494,7 @@ namespace Hypertable {
      * Error::COMM_SEND_ERROR, Error::COMM_RECEIVE_ERROR on error.
      */
     int connect_socket(int sd, const CommAddress &addr,
-                       DispatchHandlerPtr &default_handler);
+                       const DispatchHandlerPtr &default_handler);
 
     /// Pointer to singleton instance of this class
     static Comm *ms_instance;

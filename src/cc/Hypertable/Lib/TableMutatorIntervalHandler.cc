@@ -40,6 +40,9 @@ TableMutatorIntervalHandler::TableMutatorIntervalHandler(Comm *comm,
 					 ApplicationQueueInterface *app_queue,
 					 TableMutatorShared *shared_mutator)
   : active(true), complete(false), comm(comm), app_queue(app_queue), shared_mutator(shared_mutator) {
+}
+
+void TableMutatorIntervalHandler::start() {
   char unique_hash[33];
   uint32_t first_interval;
   String str = HyperAppHelper::generate_guid();
@@ -50,15 +53,16 @@ TableMutatorIntervalHandler::TableMutatorIntervalHandler(Comm *comm,
 
   first_interval %= shared_mutator->flush_interval();
 
-  HT_ASSERT(comm->set_timer(first_interval, this) == Error::OK);
+  HT_ASSERT(comm->set_timer(first_interval, shared_from_this()) == Error::OK);
 }
 
 
 void TableMutatorIntervalHandler::handle(EventPtr &event) {
 
   if (active) {
-    app_queue->add(new TableMutatorFlushHandler(this, event));
-    HT_ASSERT(comm->set_timer(shared_mutator->flush_interval(), this) == Error::OK);
+    TableMutatorIntervalHandlerPtr handler = static_pointer_cast<TableMutatorIntervalHandler>(shared_from_this());
+    app_queue->add(new TableMutatorFlushHandler(handler, event));
+    HT_ASSERT(comm->set_timer(shared_mutator->flush_interval(), shared_from_this()) == Error::OK);
   }
   else {
     ScopedLock lock(mutex);

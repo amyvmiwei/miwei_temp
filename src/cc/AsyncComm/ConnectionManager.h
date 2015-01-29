@@ -25,26 +25,25 @@
  * establishing and maintaining TCP connections.
  */
 
-#ifndef HYPERTABLE_CONNECTIONMANAGER_H
-#define HYPERTABLE_CONNECTIONMANAGER_H
+#ifndef AsyncComm_ConnectionManager_h
+#define AsyncComm_ConnectionManager_h
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/CommAddress.h>
 #include <AsyncComm/ConnectionInitializer.h>
 #include <AsyncComm/DispatchHandler.h>
 
-#include <Common/ReferenceCount.h>
 #include <Common/SockAddrMap.h>
 #include <Common/Timer.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/thread/xtime.hpp>
 
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <queue>
 #include <string>
+#include <thread>
 #include <unordered_map>
 
 extern "C" {
@@ -71,7 +70,7 @@ namespace Hypertable {
 
     /** Per-connection state.
      */
-    class ConnectionState : public ReferenceCount {
+    class ConnectionState {
     public:
       /// Connection address supplied to the #add methods
       CommAddress addr;
@@ -92,29 +91,29 @@ namespace Hypertable {
       /// Set when connection is removed, prevents connect retry attempts
       bool decomissioned;
       /// Mutex to serialize concurrent access
-      Mutex mutex;
+      std::mutex mutex;
       /// Condition variable used to signal connection state change
-      boost::condition cond;
+      std::condition_variable cond;
       /// Absolute time of next connect attempt
-      boost::xtime next_retry;
+      std::chrono::steady_clock::time_point next_retry;
       /// Service name of connection for log messages
       std::string service_name;
     };
     /// Smart pointer to ConnectionState
-    typedef intrusive_ptr<ConnectionState> ConnectionStatePtr;
+    typedef std::shared_ptr<ConnectionState> ConnectionStatePtr;
 
     /** StringWeakOrdering for connection retry heap
      */
     struct LtConnectionState {
       bool operator()(const ConnectionStatePtr &cs1,
                       const ConnectionStatePtr &cs2) const {
-        return xtime_cmp(cs1->next_retry, cs2->next_retry) > 0;
+        return cs1->next_retry > cs2->next_retry;
       }
     };
 
     /** Connection manager state shared between Connection manager objects.
      */
-    class SharedImpl : public ReferenceCount {
+    class SharedImpl {
     public:
 
       /** Destructor.
@@ -122,17 +121,18 @@ namespace Hypertable {
       ~SharedImpl() {
         shutdown = true;
         retry_cond.notify_one();
-        thread->join();
+        if (thread.joinable())
+          thread.join();
       }
 
       /// Pointer to Comm layer
       Comm *comm;
       /// Mutex to serialize concurrent access
-      Mutex mutex;
+      std::mutex mutex;
       /// Condition variable to signal if anything is on the retry heap
-      boost::condition retry_cond;
+      std::condition_variable retry_cond;
       /// Pointer to connection manager thread object
-      boost::thread *thread;
+      std::thread thread;
       /// InetAddr-to-ConnectionState map
       SockAddrMap<ConnectionStatePtr> conn_map;
       /// Proxy-to-ConnectionState map
@@ -147,7 +147,7 @@ namespace Hypertable {
     };
 
     /// Smart pointer to SharedImpl object
-    typedef boost::intrusive_ptr<SharedImpl> SharedImplPtr;
+    typedef std::shared_ptr<SharedImpl> SharedImplPtr;
 
     /**
      * Constructor.  Creates a thread to do connection retry attempts.
@@ -155,19 +155,13 @@ namespace Hypertable {
      * @param comm Pointer to the comm object
      */
     ConnectionManager(Comm *comm = 0) {
-      m_impl = new SharedImpl;
+      m_impl = std::make_shared<SharedImpl>();
       m_impl->comm = comm ? comm : Comm::instance();
       m_impl->quiet_mode = false;
       m_impl->shutdown = false;
-      m_impl->thread = new boost::thread(*this);
     }
 
-    /** Copy Constructor.  Shares the implementation with object being copied.
-     */
-    ConnectionManager(const ConnectionManager &cm) {
-      m_impl = cm.m_impl;
-      intrusive_ptr_add_ref(this);
-    }
+    ConnectionManager(const ConnectionManager &cm) = delete;
 
     /** Destructor.
      */
@@ -348,10 +342,10 @@ namespace Hypertable {
      */
     virtual void handle(EventPtr &event);
 
-    /** Boost thread <i>run</i> method.  It is called by the manager
-     * thread when it starts up.
+    /** Connect retry loop.
+     * This method is called as the retry thread function.
      */
-    void operator()();
+    void connect_retry_loop();
 
   private:
 
@@ -404,16 +398,16 @@ namespace Hypertable {
      * connection
      * @param event Event object that triggered the disconnect
      */
-    void set_retry_state(ConnectionState *conn_state, EventPtr &event);
+    void set_retry_state(ConnectionStatePtr &conn_state, EventPtr &event);
 
     /// Smart pointer to connection manager state
     SharedImplPtr m_impl;
 
   };
   /// Smart pointer to ConnectionManager
-  typedef boost::intrusive_ptr<ConnectionManager> ConnectionManagerPtr;
+  typedef std::shared_ptr<ConnectionManager> ConnectionManagerPtr;
 
   /** @}*/
 }
 
-#endif // HYPERTABLE_CONNECTIONMANAGER_H
+#endif // AsyncComm_ConnectionManager_h

@@ -25,8 +25,8 @@
  * types are used to define AsyncComm specific properties.
  */
 
-#ifndef HYPERTABLE_COMM_CONFIG_H
-#define HYPERTABLE_COMM_CONFIG_H
+#ifndef AsyncComm_COMM_CONFIG_H
+#define AsyncComm_COMM_CONFIG_H
 
 #include "Common/Config.h"
 
@@ -90,4 +90,4 @@ namespace Hypertable { namespace Config {
 
 }} // namespace Hypertable::Config
 
-#endif // HYPERTABLE_COMM_CONFIG_H
+#endif // AsyncComm_COMM_CONFIG_H

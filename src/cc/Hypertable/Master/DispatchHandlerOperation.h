@@ -174,7 +174,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to DispatchHandlerOperation
-  typedef intrusive_ptr<DispatchHandlerOperation> DispatchHandlerOperationPtr;
+  typedef std::shared_ptr<DispatchHandlerOperation> DispatchHandlerOperationPtr;
 
   /** @}*/
 }

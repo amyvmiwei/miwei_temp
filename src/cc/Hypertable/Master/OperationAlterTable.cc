@@ -167,7 +167,7 @@ void OperationAlterTable::execute() {
   case OperationState::ISSUE_REQUESTS:
     table.id = m_id.c_str();
     table.generation = 0;
-    op_handler = new DispatchHandlerOperationAlterTable(m_context, table, m_schema);
+    op_handler = make_shared<DispatchHandlerOperationAlterTable>(m_context, table, m_schema);
     op_handler->start(m_servers);
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;

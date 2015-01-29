@@ -99,12 +99,9 @@ Master::Client::Client(ConnectionManagerPtr &conn_mgr,
   reload_master();
 }
 
-
 Master::Client::Client(ConnectionManagerPtr &conn_mgr, InetAddr &addr, 
-                           uint32_t timeout_ms,
-                           DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
-  : m_conn_manager(conn_mgr), m_master_addr(addr), m_dispatcher_handler(dhp),
-    m_connection_initializer(init), m_timeout_ms(timeout_ms) {
+                           uint32_t timeout_ms)
+  : m_conn_manager(conn_mgr), m_master_addr(addr), m_timeout_ms(timeout_ms) {
   m_comm = m_conn_manager->get_comm();
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
   m_verbose = Config::get_bool("verbose");
@@ -114,10 +111,8 @@ Master::Client::Client(ConnectionManagerPtr &conn_mgr, InetAddr &addr,
 }
 
 
-Master::Client::Client(Comm *comm, InetAddr &addr, uint32_t timeout_ms,
-                           DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
-  : m_comm(comm), m_master_addr(addr), m_dispatcher_handler(dhp),
-    m_connection_initializer(init), m_timeout_ms(timeout_ms) {
+Master::Client::Client(Comm *comm, InetAddr &addr, uint32_t timeout_ms)
+  : m_comm(comm), m_master_addr(addr), m_timeout_ms(timeout_ms) {
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
   m_verbose = Config::get_bool("verbose");
 }

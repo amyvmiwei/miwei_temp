@@ -25,10 +25,8 @@
  * base class for an application queue.
  */
 
-#ifndef HYPERTABLE_APPLICATIONQUEUEINTERFACE_H
-#define HYPERTABLE_APPLICATIONQUEUEINTERFACE_H
-
-#include "Common/ReferenceCount.h"
+#ifndef AsyncComm_ApplicationQueueInterface_h
+#define AsyncComm_ApplicationQueueInterface_h
 
 #include "ApplicationHandler.h"
 
@@ -41,7 +39,7 @@ namespace Hypertable {
   /**
    * Abstract interface for application queue.
    */
-  class ApplicationQueueInterface : public ReferenceCount {
+  class ApplicationQueueInterface {
 
   public:
 
@@ -59,8 +57,8 @@ namespace Hypertable {
   };
 
   /// Smart pointer to ApplicationQueueInterface
-  typedef boost::intrusive_ptr<ApplicationQueueInterface> ApplicationQueueInterfacePtr;
+  typedef std::shared_ptr<ApplicationQueueInterface> ApplicationQueueInterfacePtr;
   /** @}*/
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_APPLICATIONQUEUEINTERFACE_H
+#endif // AsyncComm_ApplicationQueueInterface_h

@@ -204,7 +204,7 @@ void Client::initialize() {
   m_toplevel_dir = String("/") + m_toplevel_dir;
 
   m_comm = Comm::instance();
-  m_conn_manager = new ConnectionManager(m_comm);
+  m_conn_manager = make_shared<ConnectionManager>(m_comm);
 
   if (m_timeout_ms == 0)
     m_timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
@@ -234,10 +234,12 @@ void Client::initialize() {
 
   m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 
-  m_app_queue = new ApplicationQueue(m_props->
-                                     get_i32("Hypertable.Client.Workers"));
-  m_master_client = new Lib::Master::Client(m_conn_manager, m_hyperspace, m_toplevel_dir,
-                                            m_timeout_ms, m_app_queue);
+  m_app_queue =
+    make_shared<ApplicationQueue>(m_props->get_i32("Hypertable.Client.Workers"));
+  m_master_client =
+    new Lib::Master::Client(m_conn_manager, m_hyperspace, m_toplevel_dir,
+                            m_timeout_ms, m_app_queue,
+                            DispatchHandlerPtr(), ConnectionInitializerPtr());
 
   if (!m_master_client->wait_for_connection(timer))
     HT_THROW(Error::REQUEST_TIMEOUT, "Waiting for Master connection");

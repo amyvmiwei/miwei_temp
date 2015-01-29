@@ -24,6 +24,8 @@
 
 #include "TableMutator.h"
 
+#include <memory>
+
 namespace Hypertable {
 
 class TableMutatorIntervalHandler;
@@ -138,7 +140,7 @@ private:
   RecMutex      m_mutex;
   uint32_t      m_flush_interval;
   HiResTime     m_last_flush_ts;
-  intrusive_ptr<TableMutatorIntervalHandler> m_tick_handler;
+  std::shared_ptr<TableMutatorIntervalHandler> m_tick_handler;
 };
 
 } // namespace Hypertable

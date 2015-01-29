@@ -25,19 +25,20 @@
  * a network communication event.
  */
 
-#ifndef HYPERTABLE_EVENT_H
-#define HYPERTABLE_EVENT_H
-
-#include <iostream>
-#include <time.h>
-
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/String.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
+#ifndef AsyncComm_Event_h
+#define AsyncComm_Event_h
 
 #include "CommHeader.h"
+
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/String.h>
+#include <Common/Time.h>
+
+#include <iostream>
+#include <memory>
+
+#include <time.h>
 
 namespace Hypertable {
 
@@ -50,7 +51,7 @@ namespace Hypertable {
    * Objects of this type get passed up to the application through dispatch
    * handlers (see DispatchHandler).
    */
-  class Event : public ReferenceCount {
+  class Event {
 
   public:
 
@@ -230,8 +231,8 @@ namespace Hypertable {
   };
 
   /// Smart pointer to Event
-  typedef boost::intrusive_ptr<Event> EventPtr;
+  typedef std::shared_ptr<Event> EventPtr;
   /** @}*/
 } // namespace Hypertable
 
-#endif // HYPERTABLE_EVENT_H
+#endif // AsyncComm_Event_h

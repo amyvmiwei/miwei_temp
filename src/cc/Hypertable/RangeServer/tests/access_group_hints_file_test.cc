@@ -85,7 +85,6 @@ namespace {
 int main(int argc, char **argv) {
   try {
     InetAddr addr;
-    ConnectionManagerPtr conn_mgr;
     FsBroker::Lib::ClientPtr client;
 
     Config::init(argc, argv);
@@ -97,7 +96,7 @@ int main(int argc, char **argv) {
 
     InetAddr::initialize(&addr, "localhost", port);
 
-    conn_mgr = new ConnectionManager();
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>();
     client = std::make_shared<FsBroker::Lib::Client>(conn_mgr, addr, 15000);
 
     Global::dfs = client;

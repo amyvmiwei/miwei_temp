@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
     std::vector<MetaLog::EntityPtr> entities;
 
     context->comm = Comm::instance();
-    context->conn_manager = new ConnectionManager(context->comm);
+    context->conn_manager = make_shared<ConnectionManager>(context->comm);
     context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     String log_dir = context->toplevel_dir + "/servers/master/log";

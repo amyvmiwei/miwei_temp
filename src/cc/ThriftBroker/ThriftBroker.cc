@@ -3071,6 +3071,7 @@ int main(int argc, char **argv) {
     }
 
     g_metrics_handler = std::make_shared<MetricsHandler>(properties, g_slow_query_log);
+    g_metrics_handler->start_collecting();
 
     boost::shared_ptr<ThriftBroker::Context> context(new ThriftBroker::Context());
 
@@ -3099,6 +3100,7 @@ int main(int argc, char **argv) {
 
     server.serve();
 
+    g_metrics_handler->start_collecting();
     g_metrics_handler.reset();
 
     HT_INFO("Exiting.\n");

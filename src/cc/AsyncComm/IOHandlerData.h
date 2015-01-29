@@ -25,8 +25,8 @@
  * processing I/O events for data (TCP) sockets.
  */
 
-#ifndef HYPERTABLE_IOHANDLERDATA_H
-#define HYPERTABLE_IOHANDLERDATA_H
+#ifndef AsyncComm_IOHandlerData_h
+#define AsyncComm_IOHandlerData_h
 
 #include <list>
 
@@ -61,31 +61,29 @@ namespace Hypertable {
      * @param connected Initial connection state for handler
      */
     IOHandlerData(int sd, const InetAddr &addr,
-                  DispatchHandlerPtr &dhp, bool connected=false)
-      : IOHandler(sd, dhp), m_message_aligned(false), m_event(0),
-      m_send_queue() {
+                  const DispatchHandlerPtr &dhp, bool connected=false)
+      : IOHandler(sd, dhp) {
       memcpy(&m_addr, &addr, sizeof(InetAddr));
       m_connected = connected;
       reset_incoming_message_state();
     }
 
     /** Destructor */
-    virtual ~IOHandlerData() {
-      delete m_event;
-    }
+    virtual ~IOHandlerData() { }
 
     /** Disconnects handler by delivering Event::DISCONNECT via default dispatch
      * handler.
      */
     virtual void disconnect() { 
-      deliver_event(new Event(Event::DISCONNECT, m_addr, m_proxy, m_error));
+      EventPtr event = std::make_shared<Event>(Event::DISCONNECT, m_addr, m_proxy, m_error);
+      deliver_event(event);
     }
 
     /** Resets incoming message buffer state in preparation for next message.
      */
     void reset_incoming_message_state() {
       m_got_header = false;
-      m_event = 0;
+      m_event.reset();
       m_message_header_ptr = m_message_header;
       m_message_header_remaining = CommHeader::FIXED_LENGTH;
       m_message = 0;
@@ -120,8 +118,8 @@ namespace Hypertable {
      * been decomissioned, or Error::COMM_BROKEN_CONNECTION if a write error
      * was encountered.
      */
-    int send_message(CommBufPtr &cbp, uint32_t timeout_ms = 0,
-                     DispatchHandler *disp_handler = 0);
+    int send_message(CommBufPtr &cbp, uint32_t timeout_ms=0,
+                     DispatchHandler *disp_handler=nullptr);
 
     /** Flushes send queue.  When messages are sent, they are first added to a
      * send queue (#m_send_queue) and then the messages in the send queue are
@@ -296,34 +294,34 @@ namespace Hypertable {
     void handle_disconnect();
 
     /// Flag indicating if socket connection has been completed
-    bool m_connected;
+    bool m_connected {};
 
     /// Flag indicating if message header has been completely received
-    bool m_got_header;
+    bool m_got_header {};
 
     /// Flag indicating if message buffer was allocated with posix_memalign()
-    bool m_message_aligned;
+    bool m_message_aligned {};
 
     /// Pointer to Event object holding message to deliver to application
-    Event *m_event;
+    EventPtr m_event;
 
     /// Message header buffer
     uint8_t m_message_header[64];
 
     /// Pointer to next write position in #m_message_header
-    uint8_t *m_message_header_ptr;
+    uint8_t *m_message_header_ptr {};
 
     /// Amount of header remaining to be read
     size_t m_message_header_remaining;
 
     /// Poiner to message payload buffer
-    uint8_t *m_message;
+    uint8_t *m_message {};
 
     /// Pointer to next write position in #m_message
-    uint8_t *m_message_ptr;
+    uint8_t *m_message_ptr {};
 
     /// Amount of message payload remaining to be read
-    size_t m_message_remaining;
+    size_t m_message_remaining {};
 
     /// Send queue
     std::list<CommBufPtr> m_send_queue;
@@ -331,4 +329,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_IOHANDLERDATA_H
+#endif // AsyncComm_IOHandlerData_h

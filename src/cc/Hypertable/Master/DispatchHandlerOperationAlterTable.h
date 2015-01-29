@@ -41,7 +41,7 @@ namespace Hypertable {
     TableIdentifierManaged m_table;
     String m_schema;
   };
-  typedef intrusive_ptr<DispatchHandlerOperationAlterTable> DispatchHandlerOperationAlterTablePtr;
+  typedef std::shared_ptr<DispatchHandlerOperationAlterTable> DispatchHandlerOperationAlterTablePtr;
 
 }
 

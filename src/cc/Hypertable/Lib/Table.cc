@@ -57,7 +57,7 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
   m_range_locator = new RangeLocator(props, m_conn_manager, m_hyperspace,
                                      m_timeout_ms);
 
-  m_app_queue = new ApplicationQueue(props->get_i32("Hypertable.Client.Workers"));
+  m_app_queue = make_shared<ApplicationQueue>(props->get_i32("Hypertable.Client.Workers"));
 }
 
 

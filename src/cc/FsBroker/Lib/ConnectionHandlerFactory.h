@@ -65,7 +65,7 @@ namespace Lib {
      * Returns a newly constructed FsBroker::connection_handler object
      */
     virtual void get_instance(DispatchHandlerPtr &dhp) {
-      dhp = new ConnectionHandler(m_comm, m_app_queue, m_broker);
+      dhp = make_shared<ConnectionHandler>(m_comm, m_app_queue, m_broker);
     }
 
   private:

@@ -84,14 +84,12 @@ namespace Master {
            Hyperspace::SessionPtr &hyperspace,
            const String &toplevel_dir, uint32_t timeout_ms,
            ApplicationQueueInterfacePtr &app_queue,
-           DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
+           DispatchHandlerPtr dhp, ConnectionInitializerPtr init);
 
     Client(ConnectionManagerPtr &conn_mgr, InetAddr &addr,
-           uint32_t timeout_ms, DispatchHandlerPtr dhp=0,
-           ConnectionInitializerPtr init=0);
+           uint32_t timeout_ms);
 
-    Client(Comm *comm, InetAddr &addr, uint32_t timeout_ms,
-           DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
+    Client(Comm *comm, InetAddr &addr, uint32_t timeout_ms);
 
     ~Client();
 

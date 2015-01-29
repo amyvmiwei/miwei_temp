@@ -25,7 +25,15 @@
  * processing I/O events for data (TCP) sockets.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "IOHandlerData.h"
+#include "ReactorRunner.h"
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/Time.h>
 
 #include <cassert>
 #include <iostream>
@@ -41,14 +49,6 @@ extern "C" {
 #endif
 #include <sys/uio.h>
 }
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/Time.h"
-
-#include "IOHandlerData.h"
-#include "ReactorRunner.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -554,7 +554,7 @@ void IOHandlerData::handle_message_header(time_t arrival_time) {
     return;
   }
 
-  m_event = new Event(Event::MESSAGE, m_addr);
+  m_event = make_shared<Event>(Event::MESSAGE, m_addr);
   m_event->load_message_header(m_message_header, header_len);
   m_event->arrival_time = arrival_time;
 
@@ -581,25 +581,25 @@ void IOHandlerData::handle_message_header(time_t arrival_time) {
 
 
 void IOHandlerData::handle_message_body() {
-  DispatchHandler *dh = 0;
+  DispatchHandler *dh {};
 
   if (m_event->header.flags & CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE) {
     ReactorRunner::handler_map->update_proxy_map((const char *)m_message,
                   m_event->header.total_len - m_event->header.header_len);
     free_message_buffer();
-    delete m_event;
+    m_event.reset();
     //HT_INFO("proxy map update");
   }
   else if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&
-      (m_event->header.id == 0
-      || (dh = m_reactor->remove_request(m_event->header.id)) == 0)) {
+           (m_event->header.id == 0
+            || !m_reactor->remove_request(m_event->header.id, dh))) {
     if ((m_event->header.flags & CommHeader::FLAGS_BIT_IGNORE_RESPONSE) == 0) {
       HT_WARNF("Received response for non-pending event (id=%d,version"
                "=%d,total_len=%d)", m_event->header.id, m_event->header.version,
                m_event->header.total_len);
     }
     free_message_buffer();
-    delete m_event;
+    m_event.reset();
   }
   else {
     m_event->payload = m_message;
@@ -611,7 +611,7 @@ void IOHandlerData::handle_message_body() {
       m_event->set_proxy(m_proxy);
     }
     //HT_INFOF("Just received messaage of size %d", m_event->header.total_len);
-    deliver_event( m_event, dh );
+    deliver_event(m_event, dh);
   }
 
   reset_incoming_message_state();
@@ -696,8 +696,9 @@ bool IOHandlerData::handle_write_readiness() {
         return true;
       }
     }
-    deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
-			    m_proxy, Error::OK));
+    EventPtr event = make_shared<Event>(Event::CONNECTION_ESTABLISHED, m_addr,
+                                        m_proxy, Error::OK);
+    deliver_event(event);
   }
 
   return rval;

@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
-    ConnectionManagerPtr conn_manager_ptr = new ConnectionManager();
+    ConnectionManagerPtr conn_manager_ptr = make_shared<ConnectionManager>();
 
     String log_path = get_str("log-path");
     String log_host = get("log-host", String());

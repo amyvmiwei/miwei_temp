@@ -106,7 +106,7 @@ Client::Client(const String &host, int port, uint32_t timeout_ms)
     : m_timeout_ms(timeout_ms) {
   InetAddr::initialize(&m_addr, host.c_str(), port);
   m_comm = Comm::instance();
-  m_conn_mgr = new ConnectionManager(m_comm);
+  m_conn_mgr = make_shared<ConnectionManager>(m_comm);
   m_conn_mgr->add(m_addr, timeout_ms, "FS Broker");
   if (!m_conn_mgr->wait_for_connection(m_addr, timeout_ms))
     HT_THROW(Error::REQUEST_TIMEOUT,

@@ -66,6 +66,7 @@ LocalBroker::LocalBroker(PropertiesPtr &cfg) {
     m_directio = cfg->get_bool("FsBroker.Local.DirectIO");
 
   m_metrics_handler = std::make_shared<MetricsHandler>(cfg, "local");
+  m_metrics_handler->start_collecting();
 
 #if defined(__linux__)
   // disable direct i/o for kernels < 2.6
@@ -100,6 +101,7 @@ LocalBroker::LocalBroker(PropertiesPtr &cfg) {
 
 
 LocalBroker::~LocalBroker() {
+  m_metrics_handler->stop_collecting();
 }
 
 

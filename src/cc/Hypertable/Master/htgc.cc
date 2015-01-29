@@ -60,7 +60,7 @@ main(int ac, char *av[]) {
     init_with_policy<AppPolicy>(ac, av);
 
     context->comm = Comm::instance();
-    context->conn_manager = new ConnectionManager(context->comm);
+    context->conn_manager = make_shared<ConnectionManager>(context->comm);
     context->props = properties;
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));

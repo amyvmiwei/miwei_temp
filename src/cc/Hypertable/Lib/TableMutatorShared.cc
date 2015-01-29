@@ -23,7 +23,7 @@
 #include "TableMutatorIntervalHandler.h"
 
 using namespace Hypertable;
-
+using namespace std;
 
 TableMutatorShared::TableMutatorShared(PropertiesPtr &props, Comm *comm,
     Table *table, RangeLocatorPtr &range_locator,
@@ -32,8 +32,10 @@ TableMutatorShared::TableMutatorShared(PropertiesPtr &props, Comm *comm,
   : Parent(props, comm, table, range_locator, timeout_ms, flags),
     m_flush_interval(flush_interval_ms) {
 
-  if (m_flush_interval)
-    m_tick_handler = new TableMutatorIntervalHandler(comm, app_queue.get(), this);
+  if (m_flush_interval) {
+    m_tick_handler = make_shared<TableMutatorIntervalHandler>(comm, app_queue.get(), this);
+    m_tick_handler->start();
+  }
 }
 
 

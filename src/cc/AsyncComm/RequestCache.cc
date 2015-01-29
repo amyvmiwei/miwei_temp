@@ -42,7 +42,6 @@ using namespace std;
 void
 RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
                      boost::xtime &expire) {
-  CacheNode *node = new CacheNode;
 
   HT_DEBUGF("Adding id %d", id);
 
@@ -50,9 +49,7 @@ RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
 
   HT_ASSERT(iter == m_id_map.end());
 
-  node->id = id;
-  node->handler = handler;
-  node->dh = dh;
+  CacheNode *node = new CacheNode(id, handler, dh);
   memcpy(&node->expire, &expire, sizeof(expire));
 
   if (m_head == 0) {
@@ -70,7 +67,7 @@ RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
 }
 
 
-DispatchHandler *RequestCache::remove(uint32_t id) {
+bool RequestCache::remove(uint32_t id, DispatchHandler *&handler) {
 
   HT_DEBUGF("Removing id %d", id);
 
@@ -78,7 +75,7 @@ DispatchHandler *RequestCache::remove(uint32_t id) {
 
   if (iter == m_id_map.end()) {
     HT_DEBUGF("ID %d not found in request cache", id);
-    return 0;
+    return false;
   }
 
   CacheNode *node = (*iter).second;
@@ -95,16 +92,17 @@ DispatchHandler *RequestCache::remove(uint32_t id) {
 
   m_id_map.erase(iter);
 
-  DispatchHandler *dh = node->dh;
+  handler = node->dh;
   delete node;
-  return dh;
+  return true;
 }
 
 
 
-DispatchHandler *
-RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
-                               boost::xtime *next_timeout) {
+
+bool RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
+                                    DispatchHandler *&dh,
+                                    boost::xtime *next_timeout) {
 
   while (m_head && xtime_cmp(m_head->expire, now) <= 0) {
 
@@ -122,9 +120,9 @@ RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
 
     if (node->handler != 0) {
       handlerp = node->handler;
-      DispatchHandler *dh = node->dh;
+      dh = node->dh;
       delete node;
-      return dh;
+      return true;
     }
     delete node;
   }
@@ -134,7 +132,7 @@ RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
   else
     memset(next_timeout, 0, sizeof(boost::xtime));
 
-  return 0;
+  return false;
 }
 
 
@@ -143,12 +141,12 @@ void RequestCache::purge_requests(IOHandler *handler, int32_t error) {
   for (CacheNode *node = m_tail; node != 0; node = node->next) {
     if (node->handler == handler) {
       String proxy = handler->get_proxy();
-      Event *event;
+      EventPtr event;
       HT_DEBUGF("Purging request id %d", node->id);
       if (proxy.empty())
-        event = new Event(Event::ERROR, handler->get_address(), error);
+        event = make_shared<Event>(Event::ERROR, handler->get_address(), error);
       else
-        event = new Event(Event::ERROR, handler->get_address(), proxy, error);
+        event = make_shared<Event>(Event::ERROR, handler->get_address(), proxy, error);
       handler->deliver_event(event, node->dh);
       node->handler = 0;  // mark for deletion
     }

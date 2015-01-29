@@ -27,6 +27,7 @@
 #ifndef Hyperspace_MetricsHandler_h
 #define Hyperspace_MetricsHandler_h
 
+#include <AsyncComm/Comm.h>
 #include <AsyncComm/DispatchHandler.h>
 
 #include <Common/MetricsCollectorGanglia.h>
@@ -65,6 +66,12 @@ namespace Hyperspace {
     /// Cancels the timer.
     virtual ~MetricsHandler();
 
+    /// Starts metrics collection.
+    void start_collecting();
+
+    /// Stops metrics collection.
+    void stop_collecting();
+
     /// Collects and publishes metrics.
     /// This method updates the <code>requests/s</code> and general process
     /// metrics and publishes them via #m_ganglia_collector.  After metrics have
@@ -80,6 +87,9 @@ namespace Hyperspace {
     }
 
   private:
+
+    /// Comm layer
+    Comm *m_comm;
 
     /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;

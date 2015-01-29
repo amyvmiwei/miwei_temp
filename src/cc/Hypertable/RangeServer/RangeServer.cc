@@ -294,7 +294,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
    * Listen for incoming connections
    */
   ConnectionHandlerFactoryPtr chfp =
-    new HandlerFactory(m_context->comm, m_app_queue, RangeServerPtr(this));
+    make_shared<HandlerFactory>(m_context->comm, m_app_queue, RangeServerPtr(this));
 
   InetAddr listen_addr(INADDR_ANY, port);
   try {
@@ -306,7 +306,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
     _exit(0);
   }
 
-  Global::location_initializer = new LocationInitializer(m_context);
+  Global::location_initializer = make_shared<LocationInitializer>(m_context);
 
   if(Global::location_initializer->is_removed(Global::toplevel_dir+"/servers", m_hyperspace)) {
     HT_ERROR_OUT << "location " << Global::location_initializer->get()
@@ -318,7 +318,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
   int timeout = props->get_i32("Hypertable.Request.Timeout");
   ApplicationQueueInterfacePtr aq = m_app_queue;
   m_master_connection_handler
-    = new ConnectionHandler(m_context->comm, m_app_queue, RangeServerPtr(this));
+    = make_shared<ConnectionHandler>(m_context->comm, m_app_queue, this);
   m_master_client = new Lib::Master::Client(m_conn_manager, m_hyperspace,
                                             Global::toplevel_dir, timeout, aq,
                                             m_master_connection_handler,
@@ -348,7 +348,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
                                            m_context->live_map);
 
   // Install maintenance timer
-  m_timer_handler = new TimerHandler(m_context->comm, this);
+  m_timer_handler = make_shared<TimerHandler>(m_context->comm, this);
 
   m_update_pipeline = make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler);
 
@@ -368,10 +368,8 @@ void Apps::RangeServer::shutdown() {
     m_shutdown = true;
 
     // stop maintenance timer
-    if (m_timer_handler) {
+    if (m_timer_handler)
       m_timer_handler->shutdown();
-      m_timer_handler->wait_for_shutdown();
-    }
 
     // stop maintenance queue
     Global::maintenance_queue->shutdown();
@@ -3630,7 +3628,8 @@ Apps::RangeServer::group_commit_add(EventPtr &event, uint64_t cluster_id,
   if (!m_group_commit) {
     m_group_commit = std::make_shared<GroupCommit>(this);
     HT_ASSERT(!m_group_commit_timer_handler);
-    m_group_commit_timer_handler = new GroupCommitTimerHandler(m_context->comm, this, m_app_queue);
+    m_group_commit_timer_handler = make_shared<GroupCommitTimerHandler>(m_context->comm, this, m_app_queue);
+    m_group_commit_timer_handler->start();
   }
   m_group_commit->add(event, cluster_id, schema, table, count, buffer, flags);
 }

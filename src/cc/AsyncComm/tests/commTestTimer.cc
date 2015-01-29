@@ -97,7 +97,6 @@ int main(int argc, char **argv) {
   int error;
   TestHarness harness("commTestTimer");
   bool golden = false;
-  TimerHandler *timer_handler;
   uint32_t wait_time = 0;
 
   Config::init(argc, argv);
@@ -116,8 +115,8 @@ int main(int argc, char **argv) {
   comm = Comm::instance();
 
   for (int i=0; history[i].msg; i++) {
-    timer_handler = new TimerHandler(history[i].msg);
-    if ((error = comm->set_timer(history[i].delay*1000, timer_handler))
+    DispatchHandlerPtr handler = std::make_shared<TimerHandler>(history[i].msg);
+    if ((error = comm->set_timer(history[i].delay*1000, handler))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
       exit(1);

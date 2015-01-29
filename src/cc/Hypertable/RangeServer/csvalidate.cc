@@ -435,7 +435,7 @@ int main(int argc, char **argv) {
 
     cout << "Checking " << state.fname << " ... " << flush;
 
-    ConnectionManagerPtr conn_mgr = new ConnectionManager();
+    ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>();
 
     FsBroker::Lib::ClientPtr dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
 

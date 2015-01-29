@@ -80,7 +80,7 @@ namespace Hypertable {
     WorkQueue              m_work_queue;
   };
 
-  typedef boost::intrusive_ptr<TableMutatorQueue> TableMutatorQueuePtr;
+  typedef std::shared_ptr<TableMutatorQueue> TableMutatorQueuePtr;
 
 } // namespace Hypertable
 

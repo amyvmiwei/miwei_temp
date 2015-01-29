@@ -40,6 +40,7 @@ namespace Hyperspace {
   public:
     ServerKeepaliveHandler(Comm *comm, Master *master,
                            ApplicationQueuePtr &app_queue_ptr);
+    void start();
     virtual void handle(Hypertable::EventPtr &event_ptr);
     void deliver_event_notifications(uint64_t session_id);
     void shutdown();
@@ -52,7 +53,7 @@ namespace Hyperspace {
     Mutex              m_mutex;
     bool               m_shutdown;
   };
-  typedef boost::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
+  typedef std::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
 }
 
 #endif // HYPERSPACE_SERVERKEEPALIVEHANDLER_H

@@ -25,8 +25,8 @@
  * for holding an arbitrary address type.
  */
 
-#ifndef HYPERTABLE_COMMADDRESS_H
-#define HYPERTABLE_COMMADDRESS_H
+#ifndef AsyncComm_COMMADDRESS_H
+#define AsyncComm_COMMADDRESS_H
 
 #include <Common/InetAddr.h>
 #include <Common/Logger.h>
@@ -213,4 +213,4 @@ namespace Hypertable {
   /** @}*/
 } // namespace Hypertable
 
-#endif // HYPERTABLE_COMMADDRESS_H
+#endif // AsyncComm_COMMADDRESS_H

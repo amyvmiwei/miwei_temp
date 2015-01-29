@@ -68,6 +68,7 @@ MaprBroker::MaprBroker(PropertiesPtr &cfg) {
   m_namenode_port = cfg->get_i16("DfsBroker.Hdfs.NameNode.Port");
 
   m_metrics_handler = std::make_shared<MetricsHandler>(cfg, "mapr");
+  m_metrics_handler->start_collecting();
 
   m_filesystem = hdfsConnectNewInstance(m_namenode_host.c_str(), m_namenode_port);
 
@@ -76,6 +77,7 @@ MaprBroker::MaprBroker(PropertiesPtr &cfg) {
 
 
 MaprBroker::~MaprBroker() {
+  m_metrics_handler->stop_collecting();
   hdfsDisconnect(m_filesystem);
 }
 

@@ -50,6 +50,7 @@ extern "C" {
 
 
 using namespace Hypertable;
+using namespace std;
 
 namespace {
   const char *usage[] = {
@@ -90,6 +91,7 @@ namespace {
     boost::condition  m_cond;
     bool m_pending;
   };
+  typedef std::shared_ptr<NotificationHandler> NotificationHandlerPtr;
 
   NotificationHandler *g_notify_handler = 0;
 
@@ -184,7 +186,6 @@ int main(int argc, char **argv) {
   Comm *comm;
   CommAddress addr;
   InetAddr inet_addr;
-  DispatchHandlerPtr dhp;
   String notification_address_arg;
   String hyperspace_replica_port_arg;
 
@@ -193,9 +194,8 @@ int main(int argc, char **argv) {
   if (argc > 1 && (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--help")))
     Usage::dump_and_exit(usage);
 
-  g_notify_handler = new NotificationHandler();
-
-  dhp = g_notify_handler;
+  DispatchHandlerPtr dhp = make_shared<NotificationHandler>();
+  g_notify_handler = static_cast<NotificationHandler *>(dhp.get());
 
   System::initialize(argv[0]);
   ReactorFactory::initialize(1);

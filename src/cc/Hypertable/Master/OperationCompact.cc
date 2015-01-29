@@ -123,7 +123,7 @@ void OperationCompact::execute() {
   case OperationState::ISSUE_REQUESTS:
     table.id = m_id.c_str();
     table.generation = 0;
-    op_handler = new DispatchHandlerOperationCompact(m_context, table, m_params.row(), m_params.range_types());
+    op_handler = make_shared<DispatchHandlerOperationCompact>(m_context, table, m_params.row(), m_params.range_types());
     op_handler->start(m_servers);
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;

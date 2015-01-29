@@ -61,8 +61,8 @@ TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table, Range
   : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_flush_delay(0),
     m_last_error(Error::OK), m_last_op(0), m_unflushed_updates(false) {
   HT_ASSERT(timeout_ms);
-  m_queue = new TableMutatorQueue(m_queue_mutex, m_cond);
-  ApplicationQueueInterfacePtr app_queue = (ApplicationQueueInterface *)m_queue.get();
+  m_queue = make_shared<TableMutatorQueue>(m_queue_mutex, m_cond);
+  ApplicationQueueInterfacePtr app_queue = m_queue;
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
   m_mutator = new TableMutatorAsync(m_queue_mutex, m_cond, props, comm, 

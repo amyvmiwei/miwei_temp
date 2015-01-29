@@ -25,10 +25,8 @@
  * for creating default application dispatch handlers.
  */
 
-#ifndef HYPERTABLE_CONNECTIONHANDLERFACTORY_H
-#define HYPERTABLE_CONNECTIONHANDLERFACTORY_H
-
-#include "Common/ReferenceCount.h"
+#ifndef AsyncComm_ConnectionHandlerFactory_h
+#define AsyncComm_ConnectionHandlerFactory_h
 
 #include "DispatchHandler.h"
 
@@ -40,7 +38,7 @@ namespace Hypertable {
 
   /** Abstract class for creating default application dispatch handlers.
    */
-  class ConnectionHandlerFactory : public ReferenceCount {
+  class ConnectionHandlerFactory {
   public:
     /** Destructor */
     virtual ~ConnectionHandlerFactory() { }
@@ -52,9 +50,9 @@ namespace Hypertable {
   };
 
   /// Smart pointer to ConnectionHandlerFactory
-  typedef intrusive_ptr<ConnectionHandlerFactory> ConnectionHandlerFactoryPtr;
+  typedef std::shared_ptr<ConnectionHandlerFactory> ConnectionHandlerFactoryPtr;
   /** @}*/
 }
 
-#endif // HYPERTABLE_CONNECTIONHANDLERFACTORY_H
+#endif // AsyncComm_ConnectionHandlerFactory_h
 

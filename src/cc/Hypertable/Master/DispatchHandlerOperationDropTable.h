@@ -40,7 +40,7 @@ namespace Hypertable {
   private:
     TableIdentifierManaged m_table;
   };
-  typedef intrusive_ptr<DispatchHandlerOperationDropTable> DispatchHandlerOperationDropTablePtr;
+  typedef std::shared_ptr<DispatchHandlerOperationDropTable> DispatchHandlerOperationDropTablePtr;
 
 }
 
