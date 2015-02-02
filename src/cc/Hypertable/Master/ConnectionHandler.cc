@@ -53,6 +53,7 @@
 #include "ReferenceManager.h"
 
 #include <Hypertable/Lib/Master/Protocol.h>
+#include <Hypertable/Lib/Master/Request/Parameters/FetchResult.h>
 
 #include <AsyncComm/ResponseCallback.h>
 
@@ -73,66 +74,65 @@ using namespace Error;
 using namespace std;
 
 
-ConnectionHandler::ConnectionHandler(ContextPtr &context) : m_context(context), m_shutdown(false) {
-}
-
-
 void ConnectionHandler::start_timer() {
   int error;
   if ((error = m_context->comm->set_timer(m_context->timer_interval, shared_from_this())) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 }
 
-
-/**
- *
- */
 void ConnectionHandler::handle(EventPtr &event) {
   OperationPtr operation;
-  boost::xtime expire_time;
-
-  if (m_shutdown &&
-      event->header.command != Master::Protocol::COMMAND_SHUTDOWN &&
-      event->header.command != Master::Protocol::COMMAND_STATUS) {
-    ResponseCallback cb(m_context->comm, event);
-    cb.error(Error::SERVER_SHUTTING_DOWN, "");
-    return;
-  }
 
   if (event->type == Event::MESSAGE) {
 
-    //event->display()
+    //event->display();
+
+    if (event->header.command != Lib::Master::Protocol::COMMAND_STATUS) {
+      if (m_context->shutdown_in_progress()) {
+        ResponseCallback cb(m_context->comm, event);
+        cb.error(Error::SERVER_SHUTTING_DOWN, "");
+        return;
+      }
+      else if (m_context->startup_in_progress() ||
+               !m_context->master_file->lock_acquired()) {
+        ResponseCallback cb(m_context->comm, event);
+        cb.error(Error::SERVER_NOT_READY, "");
+        return;
+      }
+    }
 
     try {
       // sanity check command code
-      if (event->header.command >= Master::Protocol::COMMAND_MAX)
+      if (event->header.command >= Lib::Master::Protocol::COMMAND_MAX)
         HT_THROWF(PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
       switch (event->header.command) {
-      case Master::Protocol::COMMAND_COMPACT:
+      case Lib::Master::Protocol::COMMAND_COMPACT:
         operation = make_shared<OperationCompact>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_CREATE_TABLE:
+      case Lib::Master::Protocol::COMMAND_CREATE_TABLE:
         operation = make_shared<OperationCreateTable>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_DROP_TABLE:
+      case Lib::Master::Protocol::COMMAND_DROP_TABLE:
         operation = make_shared<OperationDropTable>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_ALTER_TABLE:
+      case Lib::Master::Protocol::COMMAND_ALTER_TABLE:
         operation = make_shared<OperationAlterTable>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_RENAME_TABLE:
+      case Lib::Master::Protocol::COMMAND_RENAME_TABLE:
         operation = make_shared<OperationRenameTable>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_STATUS:
+      case Lib::Master::Protocol::COMMAND_STATUS:
         operation = make_shared<OperationStatus>(m_context, event);
-        break;
-      case Master::Protocol::COMMAND_REGISTER_SERVER:
+        m_context->response_manager->add_delivery_info(operation->id(), event);
+        m_context->op->add_operation(operation);
+        return;
+      case Lib::Master::Protocol::COMMAND_REGISTER_SERVER:
         operation = make_shared<OperationRegisterServer>(m_context, event);
         m_context->op->add_operation(operation);
         return;
-      case Master::Protocol::COMMAND_MOVE_RANGE:
+      case Lib::Master::Protocol::COMMAND_MOVE_RANGE:
         operation = make_shared<OperationMoveRange>(m_context, event);
         if (!m_context->add_move_operation(operation)) {
           HT_INFOF("Skipping %s because already in progress",
@@ -145,54 +145,55 @@ void ConnectionHandler::handle(EventPtr &event) {
         HT_MAYBE_FAIL("connection-handler-move-range");
         m_context->op->add_operation(operation);
         return;
-      case Master::Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
+      case Lib::Master::Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
         operation = make_shared<OperationRelinquishAcknowledge>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_BALANCE:
+      case Lib::Master::Protocol::COMMAND_BALANCE:
         operation = make_shared<OperationBalance>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_SET_STATE:
+      case Lib::Master::Protocol::COMMAND_SET_STATE:
         operation = make_shared<OperationSetState>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_STOP:
+      case Lib::Master::Protocol::COMMAND_STOP:
         operation = make_shared<OperationStop>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_SHUTDOWN:
+      case Lib::Master::Protocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");
-        m_shutdown = true;
-        if (m_context->recovery_barrier_op)
-          m_context->recovery_barrier_op->shutdown();
-        boost::xtime_get(&expire_time, boost::TIME_UTC_);
-        expire_time.sec += 15;
-        m_context->op->timed_wait_for_idle(expire_time);
-        m_context->op->shutdown();
+        m_context->start_shutdown();
+        send_ok_response(event, true);
         return;
-      case Master::Protocol::COMMAND_CREATE_NAMESPACE:
+      case Lib::Master::Protocol::COMMAND_CREATE_NAMESPACE:
         operation = make_shared<OperationCreateNamespace>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_DROP_NAMESPACE:
+      case Lib::Master::Protocol::COMMAND_DROP_NAMESPACE:
         operation = make_shared<OperationDropNamespace>(m_context, event);
         break;
-      case Master::Protocol::COMMAND_RECREATE_INDEX_TABLES:
+      case Lib::Master::Protocol::COMMAND_RECREATE_INDEX_TABLES:
         operation = make_shared<OperationRecreateIndexTables>(m_context, event);
         break;
 
-      case Master::Protocol::COMMAND_FETCH_RESULT:
-        m_context->response_manager->add_delivery_info(event);
+      case Lib::Master::Protocol::COMMAND_FETCH_RESULT:
+        {
+          const uint8_t *ptr = event->payload;
+          size_t remain = event->payload_len;
+          Lib::Master::Request::Parameters::FetchResult params;
+          params.decode(&ptr, &remain);
+          m_context->response_manager->add_delivery_info(params.get_id(), event);
+        }
         return;
-      case Master::Protocol::COMMAND_REPLAY_STATUS:
+      case Lib::Master::Protocol::COMMAND_REPLAY_STATUS:
         m_context->replay_status(event);
         send_ok_response(event);
         return;
-      case Master::Protocol::COMMAND_REPLAY_COMPLETE:
+      case Lib::Master::Protocol::COMMAND_REPLAY_COMPLETE:
         m_context->replay_complete(event);
         send_ok_response(event);
         return;
-      case Master::Protocol::COMMAND_PHANTOM_PREPARE_COMPLETE:
+      case Lib::Master::Protocol::COMMAND_PHANTOM_PREPARE_COMPLETE:
         m_context->prepare_complete(event);
         send_ok_response(event);
         return;
-      case Master::Protocol::COMMAND_PHANTOM_COMMIT_COMPLETE:
+      case Lib::Master::Protocol::COMMAND_PHANTOM_COMMIT_COMPLETE:
         m_context->commit_complete(event);
         send_ok_response(event);
         return;
@@ -202,8 +203,8 @@ void ConnectionHandler::handle(EventPtr &event) {
       }
       if (operation) {
         HT_MAYBE_FAIL_X("connection-handler-before-id-response",
-                event->header.command != Master::Protocol::COMMAND_STATUS &&
-                event->header.command != Master::Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
+                event->header.command != Lib::Master::Protocol::COMMAND_STATUS &&
+                event->header.command != Lib::Master::Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
         if (send_id_response(event, operation) != Error::OK)
           return;
         m_context->op->add_operation(operation);
@@ -227,10 +228,13 @@ void ConnectionHandler::handle(EventPtr &event) {
       }
     }
   }
-  else if (event->type == Hypertable::Event::TIMER && !m_shutdown) {
+  else if (event->type == Hypertable::Event::TIMER) {
     OperationPtr operation;
     int error;
     time_t now = time(0);
+
+    if (m_context->shutdown_in_progress())
+      return;
 
     try {
 
@@ -286,13 +290,13 @@ int32_t ConnectionHandler::send_id_response(EventPtr &event, OperationPtr &opera
   return error;
 }
 
-int32_t ConnectionHandler::send_ok_response(EventPtr &event) {
+int32_t ConnectionHandler::send_ok_response(EventPtr &event, bool silent) {
   CommHeader header;
   header.initialize_from_request_header(event->header);
   CommBufPtr cbp(new CommBuf(header, 4));
   cbp->append_i32(Error::OK);
   int ret = m_context->comm->send_response(event->addr, cbp);
-  if (ret != Error::OK)
+  if (!silent && ret != Error::OK)
     HT_ERRORF("Problem sending error response back to %s - %s",
               event->addr.format().c_str(), Error::get_text(ret));
   return ret;

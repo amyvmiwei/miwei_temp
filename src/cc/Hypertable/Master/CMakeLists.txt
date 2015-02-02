@@ -28,6 +28,7 @@ GcWorker.cc
 DispatchHandlerOperation.cc
 DispatchHandlerOperationGetStatistics.cc
 DispatchHandlerOperationSetState.cc
+HyperspaceMasterFile.cc
 LoadBalancer.cc
 MetaLogDefinitionMaster.cc
 MetricsHandler.cc
@@ -158,7 +159,7 @@ if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/Master)
-  install(TARGETS HyperMaster Hypertable.Master htgc op_test_driver op_dependency_test
+  install(TARGETS HyperMaster Hypertable.Master htgc
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

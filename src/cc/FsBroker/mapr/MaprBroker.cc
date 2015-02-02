@@ -542,7 +542,7 @@ void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
 
 void MaprBroker::status(Response::Callback::Status *cb) {
-  cb->response(0, "OK");
+  cb->response(m_status);
 }
 
 

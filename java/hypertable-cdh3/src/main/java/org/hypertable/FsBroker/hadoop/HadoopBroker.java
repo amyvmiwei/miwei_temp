@@ -43,6 +43,7 @@ import org.hypertable.AsyncComm.ResponseCallback;
 
 import org.hypertable.Common.Error;
 import org.hypertable.Common.Filesystem;
+import org.hypertable.Common.Status;
 import org.hypertable.FsBroker.Lib.Broker;
 import org.hypertable.FsBroker.Lib.OpenFileData;
 import org.hypertable.FsBroker.Lib.OpenFileMap;
@@ -940,7 +941,7 @@ public class HadoopBroker implements Broker {
     }
 
     public void Status(ResponseCallbackStatus cb) {
-      int error = cb.response(0, "OK");
+      int error = cb.response(mStatus);
       if (error != 0)
         log.severe("Problem sending status response - " + Error.GetText(error));
     }
@@ -955,9 +956,18 @@ public class HadoopBroker implements Broker {
                  + command);
     }
 
-    private Configuration mConf = new Configuration();
-    private FileSystem    mFilesystem;
-    private FileSystem    mFilesystem_noverify;
-    private boolean       mVerbose = false;
-    public  OpenFileMap   mOpenFileMap = new OpenFileMap();
+  public void Shutdown() {
+    synchronized (this) {
+      mShutdown = true;
+      notifyAll();
+    }
+  }
+
+  private Configuration mConf = new Configuration();
+  private FileSystem mFilesystem;
+  private FileSystem mFilesystem_noverify;
+  private Status mStatus = new Status();
+  private boolean mVerbose;
+  private boolean mShutdown;
+  public OpenFileMap mOpenFileMap = new OpenFileMap();
 }

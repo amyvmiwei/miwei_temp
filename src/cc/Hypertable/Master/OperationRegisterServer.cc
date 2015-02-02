@@ -44,7 +44,6 @@
 #include <cmath>
 
 using namespace Hypertable;
-using namespace Hypertable::Lib;
 using namespace std;
 
 OperationRegisterServer::OperationRegisterServer(ContextPtr &context,
@@ -115,8 +114,7 @@ void OperationRegisterServer::execute() {
   }
 
   if (m_location == "") {
-    uint64_t id =m_context->hyperspace->attr_incr(m_context->master_file_handle,
-                                                   "next_server_id");
+    uint64_t id = m_context->master_file->next_server_id();
     if (m_context->location_hash.empty())
       m_location = format("rs%llu", (Llu)id);
     else
@@ -322,7 +320,7 @@ size_t OperationRegisterServer::encoded_response_length(uint64_t generation,
                              std::vector<SystemVariable::Spec> &specs) const {
   size_t length = 4;
   if (m_error == Error::OK) {
-    Master::Response::Parameters::RegisterServer params(m_location, generation, specs);
+    Lib::Master::Response::Parameters::RegisterServer params(m_location, generation, specs);
     length += params.encoded_length();
   }
   else
@@ -335,7 +333,7 @@ void OperationRegisterServer::encode_response(uint64_t generation,
                                               uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_error);
   if (m_error == Error::OK) {
-    Master::Response::Parameters::RegisterServer params(m_location, generation, specs);
+    Lib::Master::Response::Parameters::RegisterServer params(m_location, generation, specs);
     params.encode(bufp);
   }
   else

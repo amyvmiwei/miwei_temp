@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,7 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
+
+#include <Hypertable/Master/BalanceAlgorithmLoad.h>
+
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/BalancePlan.h>
+
+#include <Hyperspace/Session.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/System.h>
 
 #include <iostream>
 #include <fstream>
@@ -31,15 +44,6 @@ extern "C" {
 #include <stdio.h>
 #include <time.h>
 }
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/System.h"
-
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/BalancePlan.h"
-#include "Hypertable/Master/BalanceAlgorithmLoad.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -121,6 +125,7 @@ int main(int argc, char **argv) {
     TablePtr rs_metrics = ns->open_table(table_str);
     BalancePlanPtr plan = make_shared<BalancePlan>();
     ContextPtr context = new Context(properties);
+    context->rsc_manager.reset();
     context->rs_metrics_table = rs_metrics;
     generate_balance_plan(context->props, load_balancer, context, plan);
     ostream *oo;

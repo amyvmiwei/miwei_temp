@@ -31,6 +31,8 @@
 
 #include <string>
 
+#include <Common/Status.h>
+
 using namespace std;
 
 namespace Hypertable {
@@ -51,20 +53,14 @@ namespace Parameters {
     Status() {}
 
     /// Constructor.
-    /// Initializes with parameters for encoding.  Sets #m_code to
-    /// <code>code</code> and #m_output to <code>output</code>.
-    /// @param code Status code
-    /// @param output Output text
-    Status(int32_t code, const string &output)
-      : m_code(code), m_output(output) {}
+    /// Initializes with parameters for encoding.  Initializes #m_status with
+    /// <code>status</code>.
+    /// @param status Status information
+    Status(const Hypertable::Status &status) : m_status(status) {}
 
-    /// Gets status code
-    /// @return Status code
-    int32_t get_code() const { return m_code; }
-
-    /// Gets output text
-    /// @return Output text
-    const string get_output() const { return m_output; }
+    /// Gets status information
+    /// @return Status information
+    const Hypertable::Status &status() const { return m_status; }
 
   private:
 
@@ -77,11 +73,8 @@ namespace Parameters {
     void decode_internal(uint8_t version, const uint8_t **bufp,
 			 size_t *remainp) override;
 
-    /// Status code
-    int32_t m_code;
-
-    /// Output text
-    string m_output;
+    /// Status information
+    Hypertable::Status m_status;
 
   };
 

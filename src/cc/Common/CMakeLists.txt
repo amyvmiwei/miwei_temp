@@ -51,6 +51,7 @@ Random.cc
 Regex.cc
 Serializable.cc
 SleepWakeNotifier.cc
+Status.cc
 String.cc
 System.cc
 SystemInfo.cc

@@ -19,25 +19,44 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONSTATUS_H
-#define HYPERTABLE_OPERATIONSTATUS_H
+#ifndef Hypertable_Master_OperationStatus_h
+#define Hypertable_Master_OperationStatus_h
 
 #include "OperationEphemeral.h"
 #include "RangeServerConnection.h"
 
+#include <Hypertable/Lib/Master/Response/Parameters/Status.h>
+
 namespace Hypertable {
+
+  using namespace Lib::Master;
 
   class OperationStatus : public OperationEphemeral {
   public:
     OperationStatus(ContextPtr &context, EventPtr &event);
     virtual ~OperationStatus() { }
 
-    virtual void execute();
-    virtual const String name();
-    virtual const String label();
-    virtual void display_state(std::ostream &os) { }
+    void execute() override;
+    const String name() override;
+    const String label() override;
+    void display_state(std::ostream &os) override { }
+
+    /// Length of encoded operation result.
+    /// This method returns the length of the encoded result
+    /// @return length of encoded result
+    /// @see encode_result() for encoding format.
+    size_t encoded_result_length() const override;
+
+    /// Encode operation result.
+    /// This method is called to encode the result of the status operation.
+    /// @param bufp Address of pointer to destination buffer
+    void encode_result(uint8_t **bufp) const override;
+
+  private:
+    Response::Parameters::Status m_params;
+
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONSTATUS_H
+#endif // Hypertable_Master_OperationStatus_h

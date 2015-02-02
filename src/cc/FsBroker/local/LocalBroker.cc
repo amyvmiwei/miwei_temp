@@ -253,14 +253,19 @@ void LocalBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amoun
   }
 
   if ((offset = (uint64_t)lseek(fdata->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
+    int error = errno;
     report_error(cb);
+    if (error != EINVAL)
+      m_status_manager.set_read_error(error);
     HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd,
               strerror(errno));
     return;
   }
 
   if ((nread = FileUtils::read(fdata->fd, buf.base, amount)) == -1) {
+    int error = errno;
     report_error(cb);
+    m_status_manager.set_read_error(error);
     HT_ERRORF("read failed: fd=%d offset=%llu amount=%d - %s",
 	      fdata->fd, (Llu)offset, amount, strerror(errno));
     return;
@@ -268,6 +273,8 @@ void LocalBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amoun
 
   buf.size = nread;
   m_metrics_handler->add_bytes_read(buf.size);
+
+  m_status_manager.clear_status();
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for read(%u, %u) - %s",
@@ -295,14 +302,19 @@ void LocalBroker::append(Response::Callback::Append *cb, uint32_t fd,
   }
 
   if ((offset = (uint64_t)lseek(fdata->fd, 0, SEEK_CUR)) == (uint64_t)-1) {
+    int error = errno;
     report_error(cb);
+    if (error != EINVAL)
+      m_status_manager.set_write_error(error);
     HT_ERRORF("lseek failed: fd=%d offset=0 SEEK_CUR - %s", fdata->fd,
               strerror(errno));
     return;
   }
 
   if ((nwritten = FileUtils::write(fdata->fd, data, amount)) == -1) {
+    int error = errno;
     report_error(cb);
+    m_status_manager.set_write_error(error);
     HT_ERRORF("write failed: fd=%d offset=%llu amount=%d data=%p- %s",
 	      fdata->fd, (Llu)offset, amount, data, strerror(errno));
     return;
@@ -310,13 +322,16 @@ void LocalBroker::append(Response::Callback::Append *cb, uint32_t fd,
 
   int64_t start_time = get_ts64();
   if (sync && fsync(fdata->fd) != 0) {
+    int error = errno;
     report_error(cb);
+    m_status_manager.set_write_error(error);
     HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
     return;
   }
-  m_metrics_handler->add_sync(get_ts64() - start_time);
 
+  m_metrics_handler->add_sync(get_ts64() - start_time);
   m_metrics_handler->add_bytes_written(nwritten);
+  m_status_manager.clear_status();
 
   if ((error = cb->response(offset, nwritten)) != Error::OK)
     HT_ERRORF("Problem sending response for append(%u, localfd=%u, %u) - %s",
@@ -434,7 +449,9 @@ LocalBroker::pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
 
   nread = FileUtils::pread(fdata->fd, buf.base, buf.aligned_size(), (off_t)offset);
   if (nread != (ssize_t)buf.aligned_size()) {
+    int error = errno;
     report_error(cb);
+    m_status_manager.set_read_error(error);
     HT_ERRORF("pread failed: fd=%d amount=%d aligned_size=%d offset=%llu - %s",
               fdata->fd, (int)amount, (int)buf.aligned_size(), (Llu)offset,
               strerror(errno));
@@ -442,6 +459,7 @@ LocalBroker::pread(Response::Callback::Read *cb, uint32_t fd, uint64_t offset,
   }
 
   m_metrics_handler->add_bytes_read(nread);
+  m_status_manager.clear_status();
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for pread(%u, %llu, %u) - %s",
@@ -631,18 +649,22 @@ void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
   int64_t start_time = get_ts64();
   if (fsync(fdata->fd) != 0) {
+    int error = errno;
     report_error(cb);
+    m_status_manager.set_write_error(error);
     HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
     return;
   }
+
   m_metrics_handler->add_sync(get_ts64() - start_time);
+  m_status_manager.clear_status();
 
   cb->response_ok();
 }
 
 
 void LocalBroker::status(Response::Callback::Status *cb) {
-  cb->response(0, "OK");
+  cb->response(m_status_manager.get());
 }
 
 

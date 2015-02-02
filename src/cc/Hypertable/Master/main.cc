@@ -32,6 +32,7 @@
 #include <Hypertable/Master/Context.h>
 #include <Hypertable/Master/LoadBalancer.h>
 #include <Hypertable/Master/MetaLogDefinitionMaster.h>
+#include <Hypertable/Master/Monitoring.h>
 #include <Hypertable/Master/OperationInitialize.h>
 #include <Hypertable/Master/OperationMoveRange.h>
 #include <Hypertable/Master/OperationProcessor.h>
@@ -48,16 +49,11 @@
 #include <Hypertable/Lib/Config.h>
 #include <Hypertable/Lib/MetaLogReader.h>
 
-#include <FsBroker/Lib/Client.h>
-
 #include <AsyncComm/Comm.h>
 
 #include <Common/FailureInducer.h>
 #include <Common/Init.h>
-#include <Common/ScopeGuard.h>
 #include <Common/System.h>
-#include <Common/Thread.h>
-#include <Common/md5.h>
 
 #include <sstream>
 
@@ -86,11 +82,14 @@ namespace {
   public:
     HandlerFactory(ContextPtr &context) : m_context(context) {
       m_handler = make_shared<ConnectionHandler>(m_context);
-      static_cast<ConnectionHandler *>(m_handler.get())->start_timer();
     }
 
     virtual void get_instance(DispatchHandlerPtr &dhp) {
       dhp = m_handler;
+    }
+
+    void start_timer() {
+      static_cast<ConnectionHandler*>(m_handler.get())->start_timer();
     }
 
   private:
@@ -120,38 +119,6 @@ namespace {
  * @{
  */
 
-/** Acquires lock on <code>/hypertable/master</code> file in hyperspace.
- * Attempts to acquire an exclusive lock on the file
- * <code>/hypertable/master</code> in Hyperspace.  The file is opened and the
- * handle is stored in the Context::master_file_handle member of
- * <code>context</code>.  If the lock is successfully acquired, the
- * <i>next_server_id</i> attribute is created and initialized to "1" if it
- * doesn't already exist.  It also creates the following directories in
- * Hyperspace if they do not already exist:
- * 
- *   - <code>/hypertable/servers</code>
- *   - <code>/hypertable/tables</code>
- *   - <code>/hypertable/root</code>
- * 
- * If the the lock is not successfully acquired, it will go into a retry loop
- * in which the function will sleep for 
- * <code>Hypertable.Connection.Retry.Interval</code> milliseconds and then
- * re-attempt to acquire the lock.
- * @param context Reference to context object
- * @note The top-level directory <code>/hypertable</code> may be different
- * depending on the <code>Hypertable.Directory</code> property.
- */
-void obtain_master_lock(ContextPtr &context);
-
-/** Writes Master's listen address to Hyperspace.
- * This method writes the address on which the Master is listening to
- * the <i>address</i> attribute of the <code>/hypertable/master</code>
- * in Hyperspace (format is IP:port).
- * @param context Reference to context object
- * @note The top-level directory <code>/hypertable</code> may be different
- * depending on the <code>Hypertable.Directory</code> property.
- */
-void write_master_address(ContextPtr &context);
 
 int main(int argc, char **argv) {
   ContextPtr context;
@@ -162,64 +129,32 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
     uint16_t port = get_i16("port");
+    Hyperspace::SessionPtr hyperspace = new Hyperspace::Session(Comm::instance(), properties);
 
-    context = new Context(properties);
+    context = new Context(properties, hyperspace);
+    context->monitoring = new Monitoring(context.get());
+    context->op = make_unique<OperationProcessor>(context, get_i32("workers"));
 
-    if (properties->has("Hypertable.Cluster.Name")) {
-      context->cluster_name = properties->get_str("Hypertable.Cluster.Name");
-      boost::trim_if(context->cluster_name, boost::is_any_of(" '\""));
+    ConnectionHandlerFactoryPtr connection_handler_factory(new HandlerFactory(context));
+    InetAddr listen_addr(INADDR_ANY, port);
+    context->comm->listen(listen_addr, connection_handler_factory);
+
+    auto func = [&context](bool status){context->set_startup_status(status);};
+    if (!context->master_file->obtain_master_lock(context->toplevel_dir, func)){
+      context->start_shutdown();
+      context->op->join();
+      context->comm->close_socket(listen_addr);
+      context.reset();
+      return 0;
     }
-
-    context->comm = Comm::instance();
-    context->conn_manager = make_shared<ConnectionManager>(context->comm);
-    context->hyperspace = new Hyperspace::Session(context->comm, context->props);
-    context->rsc_manager = new RangeServerConnectionManager();
-    context->metrics_handler = std::make_shared<MetricsHandler>(properties);
-
-    context->toplevel_dir = properties->get_str("Hypertable.Directory");
-    boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
-    context->toplevel_dir = String("/") + context->toplevel_dir;
-
-    // the "state-file" signals that we're currently acquiring the hyperspace
-    // lock; it is required for the serverup tool (issue 816)
-    String state_file = System::install_dir + "/run/Hypertable.Master.state";
-    String state_text = "acquiring";
-
-    if (FileUtils::write(state_file, state_text) < 0)
-      HT_INFOF("Unable to write state file %s", state_file.c_str());
-
-    obtain_master_lock(context);
-
+    
     // Load (and possibly generate) the cluster ID
     ClusterId cluster_id(context->hyperspace, ClusterId::GENERATE_IF_NOT_FOUND);
     HT_INFOF("Cluster id is %llu", (Llu)ClusterId::get());
 
-    if (!FileUtils::unlink(state_file))
-      HT_INFOF("Unable to delete state file %s", state_file.c_str());
-
-    context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
     context->mml_definition =
         new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
     context->monitoring = new Monitoring(context.get());
-    context->request_timeout = (time_t)(context->props->get_i32("Hypertable.Request.Timeout") / 1000);
-
-    if (get_bool("Hypertable.Master.Locations.IncludeMasterHash")) {
-      char location_hash[33];
-      md5_string(format("%s:%u", System::net_info().host_name.c_str(), port).c_str(), location_hash);
-      context->location_hash = String(location_hash).substr(0, 8);
-    }
-    context->max_allowable_skew = context->props->get_i32("Hypertable.RangeServer.ClockSkew.Max");
-    context->monitoring_interval = context->props->get_i32("Hypertable.Monitoring.Interval");
-    context->gc_interval = context->props->get_i32("Hypertable.Master.Gc.Interval");
-    context->timer_interval = std::min(context->monitoring_interval, context->gc_interval);
-
-    HT_ASSERT(context->monitoring_interval > 1000);
-    HT_ASSERT(context->gc_interval > 1000);
-
-    time_t now = time(0);
-    context->next_monitoring_time = now + (context->monitoring_interval/1000) - 1;
-    context->next_gc_time = now + (context->gc_interval/1000) - 1;
 
     if (has("induce-failure")) {
       if (FailureInducer::instance == 0)
@@ -286,16 +221,7 @@ int main(int argc, char **argv) {
       HT_INFOF("%s", sout.str().c_str());
     }
 
-    context->reference_manager = new ReferenceManager();
-
-    /** Response Manager */
-    ResponseManagerContext *rmctx = 
-        new ResponseManagerContext(context->mml_writer);
-    context->response_manager = new ResponseManager(rmctx);
-    Thread response_manager_thread(*context->response_manager);
-
-    int worker_count  = get_i32("workers");
-    context->op = new OperationProcessor(context, worker_count);
+    context->response_manager->set_mml_writer(context->mml_writer);
 
     // First do System Upgrade
     operation = make_shared<OperationSystemUpgrade>(context);
@@ -371,26 +297,23 @@ int main(int argc, char **argv) {
 
     context->op->add_operations(operations);
 
-    ConnectionHandlerFactoryPtr hf(new HandlerFactory(context));
-    InetAddr listen_addr(INADDR_ANY, port);
+    context->master_file->write_master_address();
 
-    context->comm->listen(listen_addr, hf);
+    /// Start timer loop
+    static_cast<HandlerFactory*>(connection_handler_factory.get())->start_timer();
 
-    write_master_address(context);
+    if (!context->set_startup_status(false))
+      context->start_shutdown();
 
     context->op->join();
     context->mml_writer->close();
     context->comm->close_socket(listen_addr);
 
-    context->response_manager->shutdown();
-    response_manager_thread.join();
-    delete rmctx;
-    delete context->response_manager;
-
     if (has("pidfile"))
       FileUtils::unlink(get_str("pidfile"));
 
-    context = 0;
+    context.reset();
+    Comm::destroy();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -399,77 +322,5 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
-using namespace Hyperspace;
-
-void obtain_master_lock(ContextPtr &context) {
-
-  try {
-    uint64_t handle = 0;
-    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
-
-    // Create TOPLEVEL directory if not exist
-    context->hyperspace->mkdirs(context->toplevel_dir);
-
-    // Create /hypertable/master if not exist
-    if (!context->hyperspace->exists( context->toplevel_dir + "/master" )) {
-      handle = context->hyperspace->open( context->toplevel_dir + "/master",
-                                   OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
-      context->hyperspace->close(handle);
-      handle = 0;
-    }
-
-    {
-      LockStatus lock_status = LOCK_STATUS_BUSY;
-      uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
-      LockSequencer sequencer;
-      bool reported = false;
-      uint32_t retry_interval = context->props->get_i32("Hypertable.Connection.Retry.Interval");
-
-      context->master_file_handle = context->hyperspace->open(context->toplevel_dir + "/master", oflags);
-
-      while (lock_status != LOCK_STATUS_GRANTED) {
-
-        context->hyperspace->try_lock(context->master_file_handle, LOCK_MODE_EXCLUSIVE,
-                                      &lock_status, &sequencer);
-
-        if (lock_status != LOCK_STATUS_GRANTED) {
-          if (!reported) {
-            HT_INFOF("Couldn't obtain lock on '%s/master' due to conflict, entering retry loop ...",
-                     context->toplevel_dir.c_str());
-            reported = true;
-          }
-          poll(0, 0, retry_interval);
-        }
-      }
-
-      HT_INFOF("Obtained lock on '%s/master'", context->toplevel_dir.c_str());
-
-      if (!context->hyperspace->attr_exists(context->master_file_handle, "next_server_id"))
-        context->hyperspace->attr_set(context->master_file_handle, "next_server_id", "1", 2);
-    }
-
-    context->hyperspace->mkdirs(context->toplevel_dir + "/servers");
-    context->hyperspace->mkdirs(context->toplevel_dir + "/tables");
-
-    // Create /hypertable/root
-    handle = context->hyperspace->open(context->toplevel_dir + "/root",
-        OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
-
-  }
-  catch (Exception &e) {
-    HT_FATAL_OUT << e << HT_END;
-  }
-}
-
-void write_master_address(ContextPtr &context) {
-  uint16_t port = context->props->get_i16("Hypertable.Master.Port");
-  InetAddr addr(System::net_info().primary_addr, port);
-  String addr_s = addr.format();
-  context->hyperspace->attr_set(context->master_file_handle, "address",
-                                addr_s.c_str(), addr_s.length());
-  HT_INFO("Successfully Initialized.");
-}
-
 
 /** @}*/

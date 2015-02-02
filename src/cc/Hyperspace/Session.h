@@ -38,6 +38,7 @@
 #include <Common/DynamicBuffer.h>
 #include <Common/Properties.h>
 #include <Common/ReferenceCount.h>
+#include <Common/Status.h>
 #include <Common/String.h>
 #include <Common/Timer.h>
 
@@ -615,12 +616,11 @@ namespace Hyperspace {
 
     /** Check the status of the Hyperspace master server
      *
-     * @param code Address of variable to hold status code
-     * @param output Reference to string to hold status output text
+     * @param status Reference to status object
      * @param timer maximum wait timer
      * @return Error::OK on if server is up and ok or error code on failure
      */
-    int status(int32_t *code, std::string &output, Timer *timer=0);
+    int status(Status &status, Timer *timer=0);
 
     /** Waits for session state to change to STATE_SAFE.
      *

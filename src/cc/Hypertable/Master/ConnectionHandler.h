@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -25,13 +25,13 @@
  * incoming Master requests.
  */
 
-#ifndef HYPERTABLE_CONNECTIONHANDLER_H
-#define HYPERTABLE_CONNECTIONHANDLER_H
-
-#include "AsyncComm/DispatchHandler.h"
+#ifndef Hypertable_Master_ConnectionHandler_h
+#define Hypertable_Master_ConnectionHandler_h
 
 #include "Operation.h"
 #include "Context.h"
+
+#include <AsyncComm/DispatchHandler.h>
 
 namespace Hypertable {
 
@@ -69,7 +69,7 @@ namespace Hypertable {
      * interval timer.
      * @param context %Master context object
      */
-    ConnectionHandler(ContextPtr &context);
+    ConnectionHandler(ContextPtr &context) : m_context(context) {}
 
     void start_timer();
 
@@ -99,10 +99,11 @@ namespace Hypertable {
 
     /** Sends OK response message back to client.
      * @param event AsyncComm event corresponding to Master request
+     * @param silent Don't log if errors encountered
      * @return Error::OK if response send back successfully, otherwise error code
      * returned by Comm::send_response
      */
-    int32_t send_ok_response(EventPtr &event);
+    int32_t send_ok_response(EventPtr &event, bool silent=false);
 
     /** Maybe dumps OperationProcessor statistics.
      * This method check for the existance of the file
@@ -116,12 +117,10 @@ namespace Hypertable {
     /// Pointer to %Master context 
     ContextPtr m_context;
 
-    /// Flag indicating that shutdown is in progress
-    bool m_shutdown;
   };
 
   /** @}*/
 }
 
-#endif // HYPERTABLE_CONNECTIONHANDLER_H
+#endif // Hypertable_Master_ConnectionHandler_h
 

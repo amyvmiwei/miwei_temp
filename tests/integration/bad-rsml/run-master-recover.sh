@@ -68,15 +68,15 @@ fi
 kill `cat $HT_HOME/run/Hypertable.RangeServer.rs2.pid`
 
 ## Wait for "Problem reading RSML" to appear in Master log
-grep "Problem reading RSML" $HT_HOME/log/Hypertable.Master.log
+grep "Problem reading RSML" $HT_HOME/log/Master.log
 while [ $? -ne 0 ]; do
     echo "Waiting for \"Problem reading RSML\" to appear in master log ..."
     sleep 5
-    grep "Problem reading RSML" $HT_HOME/log/Hypertable.Master.log    
+    grep "Problem reading RSML" $HT_HOME/log/Master.log    
 done
 
 ## Restart Master
-kill `cat $HT_HOME/run/Hypertable.Master.pid`
+kill `cat $HT_HOME/run/Master.pid`
 $HT_HOME/bin/start-master.sh --config=${SCRIPT_DIR}/test.cfg
 
 # dump keys

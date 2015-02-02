@@ -15,12 +15,12 @@ RUN_DIR=`pwd`
 
 wait_for_recovery() {
   grep "Leaving RecoverServer rs1 state=COMPLETE" \
-      $HT_HOME/log/Hypertable.Master.log
+      $HT_HOME/log/Master.log
   while [ $? -ne "0" ]
   do
     sleep 2
     grep "Leaving RecoverServer rs1 state=COMPLETE" \
-        $HT_HOME/log/Hypertable.Master.log
+        $HT_HOME/log/Master.log
   done
 }
 

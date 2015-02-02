@@ -76,7 +76,7 @@ save_failure_state() {
   mkdir $ARCHIVE_DIR
   mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output* error* failed* running* $ARCHIVE_DIR
   mv Hypertable.Master.*.log $ARCHIVE_DIR
-  cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
+  cp $HT_HOME/log/Master.log $ARCHIVE_DIR
   if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
     ln Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
   elif [ -e ../../../Testing/Temporary/LastTest.log.tmp ] ; then

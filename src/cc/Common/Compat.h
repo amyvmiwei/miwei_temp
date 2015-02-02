@@ -36,6 +36,7 @@
 #include "compat-c.h"
 
 #include <cstddef> // for std::size_t and std::ptrdiff_t
+#include <memory>
 
 // C++ specific stuff
 #ifndef BOOST_SPIRIT_THREADSAFE
@@ -49,6 +50,11 @@
 #include "Sweetener.h"
 
 #define HT_UNUSED(x) static_cast<void>(x)
+
+template<typename T, typename... Ts>
+std::unique_ptr<T> make_unique(Ts&&... params) {
+  return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+}
 
 /** @}*/
 

@@ -37,6 +37,7 @@
 #include <Common/Serializable.h>
 #include <Common/String.h>
 #include <Common/StaticBuffer.h>
+#include <Common/Status.h>
 #include <Common/Timer.h>
 
 #include <memory>
@@ -487,13 +488,13 @@ namespace Hypertable {
     /// @param output Nagios-style status output text
     /// @param timer Deadline timer
     /// @return Nagios-style status code
-    virtual int32_t status(string &output, Timer *timer=0) = 0;
+    virtual Status::Code status(string &output, Timer *timer=0) = 0;
 
     /// Decodes the response from an status request.
     /// @param event reference to response event
     /// @param code Address of variable to hold status code
     /// @param output Reference to string to hold status text
-    virtual void decode_response_status(EventPtr &event, int32_t *code,
+    virtual void decode_response_status(EventPtr &event, Status::Code *code,
                                         string &output) = 0;
 
     /** Decodes the response from an request that only returns an error code

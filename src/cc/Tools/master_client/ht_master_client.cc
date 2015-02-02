@@ -68,25 +68,28 @@ namespace {
 
   class MasterDispatchHandler : public DispatchHandler {
   public:
-    MasterDispatchHandler() : m_connected(false) { return; }
+    MasterDispatchHandler(bool silent) : m_silent(silent) { }
     virtual void handle(EventPtr &event_ptr) {
       if (event_ptr->type == Event::DISCONNECT) {
         if (!m_connected) {
-          cout << "Unable to establish connection to master" << endl;
-          _exit(0);
+          if (!m_silent)
+            cout << "Master CRITICAL - connect error" << endl;
+          _exit(2);
         }
       }
       else if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
         m_connected = true;
     }
   private:
-    bool m_connected;
+    bool m_connected {};
+    bool m_silent {};
   };
 
 } // local namespace
 
 
 int main(int argc, char **argv) {
+  bool silent {};
   int error = 1;
 
   try {
@@ -94,16 +97,19 @@ int main(int argc, char **argv) {
 
     int timeout = get_i32("timeout");
     InetAddr addr(get_str("master-host"), get_i16("master-port"));
+    silent = has("silent") && get_bool("silent");
 
     Comm *comm = Comm::instance();
 
     Lib::Master::ClientPtr client = new Lib::Master::Client(comm, addr, timeout);
 
-    DispatchHandlerPtr dispatch_handler_ptr = make_shared<MasterDispatchHandler>();
+    DispatchHandlerPtr dispatch_handler_ptr = make_shared<MasterDispatchHandler>(silent);
+
     // connect to Master
     if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
-      cerr << "ERROR: unable to connect to Master "<< addr << endl;
-      _exit(1);
+      if (!silent)
+        cout << "Master CRITICAL - connect error" << endl;
+      _exit(2);
     }
 
     poll(0, 0, 100);
@@ -116,8 +122,14 @@ int main(int argc, char **argv) {
     error = shell->run();
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    _exit( e.code() );
+    if (!silent) {
+      cout << "Master CRITICAL - " << Error::get_text(e.code());
+      const char *msg = e.what();
+      if (msg && *msg)
+        cout << " - " << msg;
+      cout << endl;
+    }
+    _exit(2);
   }
   _exit(error);
 }

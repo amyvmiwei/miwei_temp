@@ -31,7 +31,9 @@
 #include "Context.h"
 #include "LoadBalancer.h"
 #include "Operation.h"
+#include "OperationProcessor.h"
 #include "OperationRecover.h"
+#include "OperationTimedBarrier.h"
 #include "ReferenceManager.h"
 
 #include <Hypertable/Lib/Master/Request/Parameters/PhantomCommitComplete.h>
@@ -39,7 +41,11 @@
 #include <Hypertable/Lib/Master/Request/Parameters/ReplayComplete.h>
 #include <Hypertable/Lib/Master/Request/Parameters/ReplayStatus.h>
 
+#include <FsBroker/Lib/Client.h>
+
 #include <Common/FailureInducer.h>
+#include <Common/SystemInfo.h>
+#include <Common/md5.h>
 
 #include <memory>
 
@@ -47,28 +53,96 @@ using namespace Hypertable;
 using namespace Hypertable::Lib;
 using namespace std;
 
-Context::Context(PropertiesPtr &p) 
-  : props(p), timer_interval(0), monitoring_interval(0), gc_interval(0),
-    next_monitoring_time(0), next_gc_time(0), test_mode(false),
-    quorum_reached(false) {
-  master_file_handle = 0;
-  balancer = 0;
-  response_manager = 0;
-  reference_manager = 0;
-  op = 0;
-  recovery_barrier_op = 0;
+Context::Context(PropertiesPtr &p, Hyperspace::SessionPtr hs) : props(p), hyperspace(hs), op(nullptr) {
+
+  if (props->has("Hypertable.Cluster.Name")) {
+    cluster_name = props->get_str("Hypertable.Cluster.Name");
+    boost::trim_if(cluster_name, boost::is_any_of(" '\""));
+  }
+
   disk_threshold = props->get_i32("Hypertable.Master.DiskThreshold.Percentage");
+
+  toplevel_dir = props->get_str("Hypertable.Directory");
+  boost::trim_if(toplevel_dir, boost::is_any_of("/"));
+  toplevel_dir = String("/") + toplevel_dir;
+
+  comm = Comm::instance();
+  conn_manager = make_shared<ConnectionManager>(comm);
+  reference_manager = make_unique<ReferenceManager>();
+  response_manager = make_unique<ResponseManager>();
+  response_manager_thread = make_unique<Thread>(*response_manager);
+  if (hyperspace)
+    namemap = new NameIdMapper(hyperspace, toplevel_dir);
+  dfs = std::make_shared<FsBroker::Lib::Client>(conn_manager, props);
+  rsc_manager = new RangeServerConnectionManager();
+  metrics_handler = std::make_shared<MetricsHandler>(props);
+  metrics_handler->start_collecting();
+  master_file = make_unique<HyperspaceMasterFile>(props, hyperspace);
+
+  request_timeout = (time_t)(props->get_i32("Hypertable.Request.Timeout") / 1000);
+  if (props->get_bool("Hypertable.Master.Locations.IncludeMasterHash")) {
+    char hash[33];
+    uint16_t port = props->get_i16("port");
+    md5_string(format("%s:%u", System::net_info().host_name.c_str(), port).c_str(), hash);
+    location_hash = String(hash).substr(0, 8);
+  }
+  max_allowable_skew = props->get_i32("Hypertable.RangeServer.ClockSkew.Max");
+  monitoring_interval = props->get_i32("Hypertable.Monitoring.Interval");
+  gc_interval = props->get_i32("Hypertable.Master.Gc.Interval");
+  timer_interval = std::min(monitoring_interval, gc_interval);
+
+  HT_ASSERT(monitoring_interval > 1000);
+  HT_ASSERT(gc_interval > 1000);
+
+  time_t now = time(0);
+  next_monitoring_time = now + (monitoring_interval/1000) - 1;
+  next_gc_time = now + (gc_interval/1000) - 1;
 }
 
 
 Context::~Context() {
-  if (hyperspace && master_file_handle > 0) {
-    hyperspace->close(master_file_handle);
-    master_file_handle = 0;
-  }
+  metrics_handler->stop_collecting();
   delete balancer;
-  delete reference_manager;
 }
+
+bool Context::set_startup_status(bool status) {
+  {
+    ScopedLock lock(mutex);
+    m_startup = status;
+    if (status == false && m_shutdown)
+      return false;
+  }
+  return true;
+}
+
+bool Context::startup_in_progress() {
+  return m_startup;
+}
+
+void Context::start_shutdown() {
+  {
+    ScopedLock lock(mutex);
+    m_shutdown = true;
+    if (m_startup)
+      return;
+  }
+  master_file->shutdown();
+  if (recovery_barrier_op)
+    recovery_barrier_op->shutdown();
+  boost::xtime expire_time;
+  boost::xtime_get(&expire_time, boost::TIME_UTC_);
+  expire_time.sec += 15;
+  op->timed_wait_for_idle(expire_time);
+  op->shutdown();
+  response_manager->shutdown();
+  response_manager_thread->join();
+}
+
+bool Context::shutdown_in_progress() {
+  return m_shutdown;
+}
+
+
 
 
 void Context::notification_hook(const String &subject, const String &message) {
@@ -113,7 +187,7 @@ void Context::get_balance_plan_authority(MetaLog::EntityPtr &entity) {
 }
 
 void Context::replay_status(EventPtr &event) {
-  Master::Request::Parameters::ReplayStatus params;
+  Lib::Master::Request::Parameters::ReplayStatus params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
@@ -148,7 +222,7 @@ void Context::replay_status(EventPtr &event) {
 }
 
 void Context::replay_complete(EventPtr &event) {
-  Master::Request::Parameters::ReplayComplete params;
+  Lib::Master::Request::Parameters::ReplayComplete params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
@@ -190,7 +264,7 @@ void Context::replay_complete(EventPtr &event) {
 }
 
 void Context::prepare_complete(EventPtr &event) {
-  Master::Request::Parameters::PhantomPrepareComplete params;
+  Lib::Master::Request::Parameters::PhantomPrepareComplete params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 
@@ -231,7 +305,7 @@ void Context::prepare_complete(EventPtr &event) {
 }
 
 void Context::commit_complete(EventPtr &event) {
-  Master::Request::Parameters::PhantomPrepareComplete params;
+  Lib::Master::Request::Parameters::PhantomPrepareComplete params;
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;
 

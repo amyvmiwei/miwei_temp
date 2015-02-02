@@ -36,7 +36,7 @@ server_pidfile() {
     hyperspace)         echo $RUNTIME_ROOT/run/Hyperspace.pid;;
     dfsbroker)          echo $RUNTIME_ROOT/run/DfsBroker.*.pid | grep -v "*";;
     fsbroker)           echo $RUNTIME_ROOT/run/FsBroker.*.pid | grep -v "*";;
-    master)             echo $RUNTIME_ROOT/run/Hypertable.Master.pid;;
+    master)             echo $RUNTIME_ROOT/run/Master.pid;;
     rangeserver)        echo $RUNTIME_ROOT/run/Hypertable.RangeServer.pid;;
     thriftbroker)       echo $RUNTIME_ROOT/run/ThriftBroker*.pid | grep -v "*";;
     testclient)         echo $RUNTIME_ROOT/run/Hypertable.TestClient*.pid | grep -v "*";;
@@ -157,12 +157,7 @@ wait_for_ok() {
   server_desc=$1; shift
   max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
-  address=`$HYPERTABLE_HOME/bin/serverup --display-address=true $server`
   local silent="--silent"
-
-  if [ "$address" ]; then
-    address=" ($address)";
-  fi
 
   retries=0
   $HYPERTABLE_HOME/bin/ht-check-${server}.sh $silent "$@"
@@ -191,11 +186,6 @@ wait_for_critical() {
   server_desc=$1; shift
   max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
-  address=`$HYPERTABLE_HOME/bin/serverup --display-address=true $server`
-
-  if [ "$address" ]; then
-    address=" ($address)";
-  fi
 
   retries=0
   $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
@@ -203,7 +193,7 @@ wait_for_critical() {
   while [ $ret -ne 2 ] && [ $retries -lt $max_retries ]; do
     let retries=retries+1
     let report=retries%$report_interval
-    [ $report == 0 ] && echo "Waiting for $server_desc$address to shutdown..."
+    [ $report == 0 ] && echo "Waiting for $server_desc to shutdown..."
     sleep 1
     $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
     ret=$?

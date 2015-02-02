@@ -22,10 +22,11 @@
 #ifndef Hyperspace_response_ResponseCallbackStatus_h
 #define Hyperspace_response_ResponseCallbackStatus_h
 
-#include "Common/Error.h"
+#include <AsyncComm/CommBuf.h>
+#include <AsyncComm/ResponseCallback.h>
 
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
+#include <Common/Error.h>
+#include <Common/Status.h>
 
 #include <string>
 
@@ -37,7 +38,7 @@ namespace Hyperspace {
                            Hypertable::EventPtr &event_ptr)
       : Hypertable::ResponseCallback(comm, event_ptr) { }
 
-    int response(int32_t code, const std::string &output);
+    int response(const Hypertable::Status &status);
   };
 
 }

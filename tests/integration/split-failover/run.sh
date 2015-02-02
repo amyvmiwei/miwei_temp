@@ -41,7 +41,7 @@ start_master() {
   check_server --config=${SCRIPT_DIR}/test.cfg master
   if [ $? != 0 ] ; then
       $HT_HOME/bin/Hypertable.Master --verbose \
-        --pidfile=$HT_HOME/run/Hypertable.Master.pid \
+        --pidfile=$HT_HOME/run/Master.pid \
         --Hypertable.Master.Gc.Interval=30000 \
         --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.Master.Split.SoftLimitEnabled=false \
@@ -238,8 +238,8 @@ run_test() {
     done
 
     # shut down all servers
-    kill -9 `cat $HT_HOME/run/Hypertable.Master.pid`
-    \rm -f $HT_HOME/run/Hypertable.Master.pid
+    kill -9 `cat $HT_HOME/run/Master.pid`
+    \rm -f $HT_HOME/run/Master.pid
     kill_range_servers $RS_COUNT
     $HT_HOME/bin/stop-servers.sh --no-master --no-rangeserver
 

@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
-PIDFILE=$HT_HOME/run/Hypertable.Master.pid
+PIDFILE=$HT_HOME/run/Master.pid
 LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.MasterLauncher.pid
 DUMP_METALOG=$HT_HOME/bin/metalog_dump
 METALOG="/hypertable/servers/master/log/mml"

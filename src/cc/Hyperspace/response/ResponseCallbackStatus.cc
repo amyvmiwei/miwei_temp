@@ -30,12 +30,11 @@
 using namespace Hyperspace;
 using namespace Hypertable;
 
-int ResponseCallbackStatus::response(int32_t code, const std::string &output) {
+int ResponseCallbackStatus::response(const Status &status) {
   CommHeader header;
   header.initialize_from_request_header(m_event->header);
-  CommBufPtr cbp(new CommBuf(header, 8 + Serialization::encoded_length_vstr(output)));
+  CommBufPtr cbp(new CommBuf(header, 4 + status.encoded_length()));
   cbp->append_i32(Error::OK);
-  cbp->append_i32(code);
-  cbp->append_vstr(output);
+  status.encode(cbp->get_data_ptr_address());
   return m_comm->send_response(m_event->addr, cbp);
 }

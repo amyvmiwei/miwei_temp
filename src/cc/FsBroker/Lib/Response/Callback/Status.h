@@ -31,6 +31,7 @@
 #include <AsyncComm/ResponseCallback.h>
 
 #include <Common/Error.h>
+#include <Common/Status.h>
 
 #include <string>
 
@@ -57,10 +58,9 @@ namespace Callback {
     Status(Comm *comm, EventPtr &event) : ResponseCallback(comm, event) { }
 
     /// Sends response parameters back to client.
-    /// @param code Status code
-    /// @param output Output text
+    /// @param status Status information
     /// @return Error code returned by Comm::send_result
-    int response(int32_t code, const string &output);
+    int response(Hypertable::Status &status);
   };
 
   /// @}

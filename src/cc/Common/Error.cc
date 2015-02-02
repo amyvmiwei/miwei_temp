@@ -121,6 +121,7 @@ namespace {
     { Error::BAD_VALUE,                     "HYPERTABLE bad value" },
     { Error::SCHEMA_GENERATION_MISMATCH,    "HYPERTABLE schema generation mismatch" },
     { Error::INVALID_METHOD_IDENTIFIER,     "HYPERTABLE invalid method identifier" },
+    { Error::SERVER_NOT_READY,              "HYPERTABLE server not ready" },
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},

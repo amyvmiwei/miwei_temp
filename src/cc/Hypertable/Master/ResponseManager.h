@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -25,11 +25,19 @@
  * the sending operation results back to requesting clients.
  */
 
-#ifndef HYPERTABLE_RESPONSEMANAGER_H
-#define HYPERTABLE_RESPONSEMANAGER_H
+#ifndef Hypertable_Master_ResponseManager_h
+#define Hypertable_Master_ResponseManager_h
 
-#include <list>
-#include <map>
+#include "Context.h"
+#include "Operation.h"
+
+#include <Hypertable/Lib/MetaLogWriter.h>
+
+#include <AsyncComm/Comm.h>
+
+#include <Common/Mutex.h>
+#include <Common/Time.h>
+#include <Common/Thread.h>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/properties.hpp>
@@ -39,16 +47,11 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/thread/condition.hpp>
 
-#include "AsyncComm/Comm.h"
-
-#include "Common/Mutex.h"
-#include "Common/Thread.h"
-#include "Common/Time.h"
-
-#include "Hypertable/Lib/MetaLogWriter.h"
-
-#include "Context.h"
-#include "Operation.h"
+#include <condition_variable>
+#include <list>
+#include <map>
+#include <memory>
+#include <thread>
 
 namespace Hypertable {
 
@@ -71,10 +74,8 @@ namespace Hypertable {
   class ResponseManagerContext {
   public:
 
-    /** Constructor.
-     * @param mmlw Smart pointer to MML writer
-     */
-    ResponseManagerContext(MetaLog::WriterPtr &mmlw) : mml_writer(mmlw), shutdown(false) {
+    /** Constructor. */
+    ResponseManagerContext() {
       comm = Comm::instance();
     }
 
@@ -165,7 +166,7 @@ namespace Hypertable {
     MetaLog::WriterPtr mml_writer;
 
     /// Flag signalling shutdown in progress
-    bool shutdown;
+    bool shutdown {};
 
     /// List of completed operations
     OperationList expirable_ops;
@@ -217,7 +218,7 @@ namespace Hypertable {
     /** Constructor.
      * @param context Pointer to shared context object
      */
-    ResponseManager(ResponseManagerContext *context) : m_context(context) { }
+    ResponseManager() : m_context(std::make_shared<ResponseManagerContext>()) { }
 
     /** Worker thread run method.
      * This method is called by the worker thread to handle the removal of
@@ -254,8 +255,8 @@ namespace Hypertable {
     void add_operation(OperationPtr &operation);
 
     /** Adds response delivery information and/or delivers response.
-     * This method first decodes the payload of <code>event</code> for the
-     * operation ID and then checks to see if that operation has been added
+     * This method first checks to see if the operation specified by
+     * <code>operation_id</cod> has been added
      * to <code>m_context->expirable_ops</code>.  If it has been added, then a
      * response is immediately sent back to the client, the operation is
      * removed from <code>m_context->expirable_ops</code> and added to
@@ -268,9 +269,17 @@ namespace Hypertable {
      * the corresponding operation is added via add_operation(), the operation
      * result can be sent back to the client at the delivery address contained
      * within <code>event</code>.
+     * @param operation_id ID of operation whose delivery info is being added
      * @param event Event representing a %COMMAND_FETCH_RESULT request
      */
-    void add_delivery_info(EventPtr &event);
+    void add_delivery_info(int64_t operation_id, EventPtr &event);
+
+    /// Sets MML writer
+    /// @param mml_writer MML writer object
+    void set_mml_writer(MetaLog::WriterPtr &mml_writer) {
+      ScopedLock lock(m_context->mutex);
+      m_context->mml_writer = mml_writer;
+    }
 
     /** Initiates shutdown sequence.
      * Sets <code>m_context->shutdown</code> to <i>true</i> and singals
@@ -280,11 +289,12 @@ namespace Hypertable {
 
   private:
     /// Pointer to shared context object
-    ResponseManagerContext *m_context;
+    std::shared_ptr<ResponseManagerContext> m_context;
+
   };
 
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_RESPONSEMANAGER_H
+#endif // Hypertable_Master_ResponseManager_h

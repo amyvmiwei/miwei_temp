@@ -104,6 +104,9 @@ namespace Hypertable {
     /// Set to <i>true</i> if this process is acting as "Proxy Master"
     static bool proxy_master;
 
+    /// Enable silent mode
+    static bool silent;
+
   private:
 
     /// Mutex to serialize calls to #initialize

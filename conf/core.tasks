@@ -133,7 +133,7 @@ task: stop_slaves roles: slave {
 # Stops Masters and monitoring servers in the current installation.
 task: stop_masters roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh master
+    ${INSTALL_PREFIX}/current/bin/ht-stop-master.sh ${CONFIG}
     ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
   }
 }
@@ -269,7 +269,7 @@ task: start_hyperspace roles: hyperspace {
 task: start_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/start-master.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-start-master.sh ${CONFIG} || exit $?
     ${INSTALL_PREFIX}/current/bin/start-monitoring.sh || exit $?
   }
 }

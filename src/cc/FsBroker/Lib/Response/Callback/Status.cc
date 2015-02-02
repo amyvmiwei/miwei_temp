@@ -37,10 +37,10 @@
 using namespace Hypertable;
 using namespace FsBroker::Lib::Response;
 
-int Callback::Status::response(int32_t code, const string &output) {
+int Callback::Status::response(Hypertable::Status &status) {
   CommHeader header;
   header.initialize_from_request_header(m_event->header);
-  Parameters::Status params(code, output);
+  Parameters::Status params(status);
   CommBufPtr cbuf( new CommBuf(header, 4 + params.encoded_length()) );
   cbuf->append_i32(Error::OK);
   params.encode(cbuf->get_data_ptr_address());

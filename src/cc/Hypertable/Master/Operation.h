@@ -481,10 +481,16 @@ namespace Hypertable {
     int32_t get_original_type() { return m_original_type; }
     void set_original_type(int32_t original_type) { m_original_type = original_type; }
 
-    /// Sets the #m_ephemeral flag to <i>true</i>.
+    /// Sets the <i>ephemeral</i> flag to <i>true</i>.
     void set_ephemeral() {
       ScopedLock lock(m_mutex);
       m_ephemeral = true;
+    }
+
+    /// Gets the <i>ephemeral</i> flag
+    bool ephemeral() {
+      ScopedLock lock(m_mutex);
+      return m_ephemeral;
     }
 
     /// Get error code

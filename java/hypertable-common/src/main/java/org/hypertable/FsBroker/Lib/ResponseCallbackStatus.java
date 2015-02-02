@@ -28,6 +28,7 @@ import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 import org.hypertable.Common.Serialization;
+import org.hypertable.Common.Status;
 
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Logger;
@@ -42,19 +43,15 @@ public class ResponseCallbackStatus extends ResponseCallback {
 
   static final byte VERSION = 1;
 
-  public int response(int code, String output) {
+  public int response(Status status) {
     try {
+      org.hypertable.FsBroker.Lib.Response.Parameters.Status params =
+        new org.hypertable.FsBroker.Lib.Response.Parameters.Status(status);
       CommHeader header = new CommHeader();
       header.initialize_from_request_header(mEvent.header);
-      int internal_length = 4 + Serialization.EncodedLengthVStr(output);
-      CommBuf cbuf =
-        new CommBuf(header, 5 + Serialization.EncodedLengthVInt32(internal_length)
-                    + internal_length);
+      CommBuf cbuf = new CommBuf(header, 4 + params.encodedLength());
       cbuf.AppendInt(Error.OK);
-      cbuf.AppendByte(VERSION);
-      Serialization.EncodeVInt32(cbuf.data, internal_length);
-      cbuf.AppendInt(code);
-      Serialization.EncodeVStr(cbuf.data, output);
+      params.encode(cbuf.data);
       return mComm.SendResponse(mEvent.addr, cbuf);
     }
     catch (UnsupportedEncodingException e) {

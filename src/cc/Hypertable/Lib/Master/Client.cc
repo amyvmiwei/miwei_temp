@@ -50,6 +50,7 @@
 #include "Request/Parameters/ReplayStatus.h"
 #include "Request/Parameters/SetState.h"
 #include "Request/Parameters/Stop.h"
+#include "Response/Parameters/Status.h"
 
 #include <Hyperspace/Session.h>
 
@@ -63,6 +64,8 @@
 #include <Common/Serialization.h>
 #include <Common/Time.h>
 #include <Common/Timer.h>
+
+#include <poll.h>
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
@@ -88,7 +91,6 @@ Master::Client::Client(ConnectionManagerPtr &conn_mgr,
    * Open toplevel_dir + /master Hyperspace file to discover the master.
    */
   m_master_file_callback = new HyperspaceCallback(this, m_app_queue);
-  m_master_file_handle = 0;
 
   // register hyperspace session callback
   m_hyperspace_session_callback.m_client = this;
@@ -158,9 +160,23 @@ void Master::Client::initialize_hyperspace() {
   HT_ASSERT(m_hyperspace_connected);
 
   Timer timer(m_timeout_ms, true);
-  m_master_file_handle = m_hyperspace->open(m_toplevel_dir + "/master",
-           OPEN_FLAG_READ|OPEN_FLAG_CREATE, m_master_file_callback, &timer);
-  m_hyperspace_init=true;
+  while (timer.remaining()) {
+    try {
+      m_master_file_handle =
+        m_hyperspace->open(m_toplevel_dir + "/master",
+                           OPEN_FLAG_READ|OPEN_FLAG_CREATE,
+                           m_master_file_callback, &timer);
+      break;
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND)
+        throw;
+      poll(0, 0, 3000);
+    }
+  }
+  if (m_master_file_handle == 0)
+    HT_THROW(Error::REQUEST_TIMEOUT, "Opening hyperspace master file");
+  m_hyperspace_init = true;
 }
 
 void Master::Client::initialize(Timer *&timer, Timer &tmp_timer) {
@@ -570,36 +586,32 @@ Master::Client::alter_table(const String &name, const String &schema,
   }
 }
 
-void Master::Client::status(Timer *timer) {
+Status::Code Master::Client::status(string &text, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
-  int64_t id = 0;
 
   initialize(timer, tmp_timer);
 
   while (!timer->expired()) {
 
-    {
-      CommHeader header(Protocol::COMMAND_STATUS);
-      CommBufPtr cbuf( new CommBuf(header, 0) );
-      if (!send_message(cbuf, timer, event, "status"))
-        continue;
-    }
+    CommHeader header(Protocol::COMMAND_STATUS);
+    CommBufPtr cbuf( new CommBuf(header, 0) );
+    if (!send_message(cbuf, timer, event, "status"))
+      continue;
 
     const uint8_t *ptr = event->payload + 4;
     size_t remain = event->payload_len - 4;
-    id = decode_i64(&ptr, &remain);
-    fetch_result(id, timer, event, "status");
-    return;
+    Response::Parameters::Status params;
+    params.decode(&ptr, &remain);
+    Status::Code code;
+    params.status().get(&code, text);
+    return code;
   }
 
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation 'status' to master %s failed",
-              m_master_addr.format().c_str());
-  }
-
+  ScopedLock lock(m_mutex);
+  HT_THROWF(Error::REQUEST_TIMEOUT,
+            "Client operation 'status' to master %s failed",
+            m_master_addr.format().c_str());
 }
 
 void

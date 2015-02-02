@@ -37,6 +37,7 @@
 #include <Common/InetAddr.h>
 #include <Common/Mutex.h>
 #include <Common/Properties.h>
+#include <Common/Status.h>
 
 #include <memory>
 #include <unordered_map>
@@ -180,8 +181,8 @@ namespace Lib {
                 DispatchHandler *handler) override;
     void rename(const String &src, const String &dst) override;
 
-    int32_t status(string &output, Timer *timer=0) override;
-    void decode_response_status(EventPtr &event, int32_t *code,
+    Status::Code status(string &output, Timer *timer=0) override;
+    void decode_response_status(EventPtr &event, Status::Code *code,
                                 string &output) override;
 
     void debug(int32_t command, StaticBuffer &serialized_parameters) override;

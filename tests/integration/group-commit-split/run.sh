@@ -15,7 +15,7 @@ save_failure_state() {
   mkdir $ARCHIVE_DIR
   \ps auxww | fgrep -i hyper | fgrep -v java > $ARCHIVE_DIR/ps-listing.txt
   mv dbdump.* rangeserver.output* error* report.* $ARCHIVE_DIR
-  cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
+  cp $HT_HOME/log/Master.log $ARCHIVE_DIR
   cp $HT_HOME/log/Hyperspace.log $ARCHIVE_DIR
   if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
     ln Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp

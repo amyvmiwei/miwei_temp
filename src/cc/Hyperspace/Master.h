@@ -47,6 +47,7 @@
 #include <Common/Properties.h>
 #include <Common/ReferenceCount.h>
 #include <Common/SockAddrMap.h>
+#include <Common/Status.h>
 #include <Common/StringExt.h>
 #include <Common/Time.h>
 #include <Common/atomic.h>
@@ -351,6 +352,9 @@ namespace Hyperspace {
 
     // BerkeleyDB state
     BerkeleyDbFilesystem *m_bdb_fs;
+
+    /// Program status tracker
+    Status m_status;
 
   };
 

@@ -29,7 +29,7 @@ start_master() {
 
     check_server --config=${SCRIPT_DIR}/test.cfg master
     if [ $? != 0 ] ; then
-        $HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$HT_HOME/run/Hypertable.Master.pid \
+        $HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$HT_HOME/run/Master.pid \
             --config=${SCRIPT_DIR}/test.cfg $INDUCER_ARG 2>&1 > master.output.$TEST&
         wait_for_server_up master "$pidname" --config=${SCRIPT_DIR}/test.cfg
     else

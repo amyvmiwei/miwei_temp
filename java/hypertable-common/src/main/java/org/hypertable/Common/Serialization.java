@@ -292,7 +292,7 @@ public class Serialization {
    */
   public static int EncodedLengthVStr(String str) throws UnsupportedEncodingException {
     if (str == null)
-      return 1;
+      return EncodedLengthVInt64(0) + 1;
     return EncodedLengthVInt64(str.getBytes("UTF-8").length) + str.getBytes("UTF-8").length + 1;
   }
 

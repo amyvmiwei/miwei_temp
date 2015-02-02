@@ -101,14 +101,14 @@ FS=$1
 shift
 
 #
-# Start FsBroker
-#
-$HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $FS $@ &
-
-#
 # Start Hyperspace
 #
 $HYPERTABLE_HOME/bin/ht-start-hyperspace.sh $HYPERSPACE_OPTS $@ &
+
+#
+# Start FsBroker
+#
+$HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $FS $@ &
 
 wait
 
@@ -116,7 +116,7 @@ wait
 # Start Hypertable.Master
 #
 if [ $START_MASTER == "true" ] ; then
-  $HYPERTABLE_HOME/bin/start-master.sh $MASTER_OPTS $@
+  $HYPERTABLE_HOME/bin/ht-start-master.sh $MASTER_OPTS $@
 fi
 
 #

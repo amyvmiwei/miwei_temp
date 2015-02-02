@@ -37,8 +37,7 @@ using namespace std;
 
 void Canonicalize::table_name(std::string &name) {
   boost::trim_right_if(name, boost::is_any_of("/ "));
-  HT_ASSERT(!name.empty());
-  if (name[0] != '/')
+  if (!name.empty() && name[0] != '/')
     name = string("/") + name;
 }
 

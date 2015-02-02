@@ -45,6 +45,7 @@
 #include <Common/InetAddr.h>
 #include <Common/Logger.h>
 #include <Common/Init.h>
+#include <Common/Status.h>
 #include <Common/Timer.h>
 #include <Common/Usage.h>
 
@@ -185,11 +186,10 @@ namespace {
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
 
-    int32_t code;
-    string output;
-    error = hyperspace->status(&code, output, &timer);
+    Status status;
+    error = hyperspace->status(status, &timer);
     if (error == Error::OK) {
-      if (code != 0)
+      if (status.get() != Status::Code::OK)
         HT_THROW(Error::FAILED_EXPECTATION, "getting hyperspace status");
     }
     else if (error != Error::HYPERSPACE_NOT_MASTER_LOCATION) {
@@ -228,7 +228,11 @@ namespace {
     if (!master->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
 
-    master->status(&timer);
+    Status::Code code;
+    string text;
+    code = master->status(text, &timer);
+    if (code != Status::Code::OK)
+      HT_THROW(Error::FAILED_EXPECTATION, text);
   }
 
   void check_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
@@ -273,8 +277,13 @@ namespace {
       if (::kill(pid, 0) < 0)
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
     }
-    else
-      master->status(&timer);
+    else {
+      Status::Code code;
+      string text;
+      code = master->status(text, &timer);
+      if (code != Status::Code::OK)
+        HT_THROW(Error::FAILED_EXPECTATION, text);
+    }
   }
 
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {

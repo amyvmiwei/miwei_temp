@@ -68,4 +68,6 @@ public interface Broker {
 
   void Debug(ResponseCallback cb, int command, byte [] parmas);
 
+  void Shutdown();
+
 }

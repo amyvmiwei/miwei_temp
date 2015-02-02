@@ -38,8 +38,8 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.output&
 
 # start a standby-master
-$HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$HT_HOME/run/Hypertable.Master.pid \
-   --port=37011 --config=${SCRIPT_DIR}/test.cfg 2>&1 > $HT_HOME/log/Hypertable.Master.log&
+$HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$HT_HOME/run/Master.pid \
+   --port=37011 --config=${SCRIPT_DIR}/test.cfg 2>&1 > $HT_HOME/log/Master.log&
 
 # create table
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
@@ -58,8 +58,8 @@ sleep 2
 
 # kill rs1 and the master
 stop_rs 1
-kill -9 `cat $HT_HOME/run/Hypertable.Master.pid`
-\rm -f $HT_HOME/run/Hypertable.Master.pid
+kill -9 `cat $HT_HOME/run/Master.pid`
+\rm -f $HT_HOME/run/Master.pid
 
 # wait for recovery to complete 
 wait_for_recovery rs1

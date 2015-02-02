@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -66,7 +66,12 @@ namespace Hypertable {
    */
   class ConnectionManager : public DispatchHandler {
 
-  public:
+    enum class State {
+      DISCONNECTED = 0,
+      CONNECTED,
+      READY,
+      DECOMMISSIONED
+    };
 
     /** Per-connection state.
      */
@@ -84,12 +89,8 @@ namespace Hypertable {
       DispatchHandlerPtr handler;
       /// Connection initializer
       ConnectionInitializerPtr initializer;
-      /// Set to <i>true</i> if initialization handshake is complete
-      bool initialized;
-      /// Set to <i>true</i> if connected
-      bool connected;
-      /// Set when connection is removed, prevents connect retry attempts
-      bool decomissioned;
+      /// Connection state
+      State state {};
       /// Mutex to serialize concurrent access
       std::mutex mutex;
       /// Condition variable used to signal connection state change
@@ -148,6 +149,8 @@ namespace Hypertable {
 
     /// Smart pointer to SharedImpl object
     typedef std::shared_ptr<SharedImpl> SharedImplPtr;
+
+  public:
 
     /**
      * Constructor.  Creates a thread to do connection retry attempts.
@@ -380,7 +383,7 @@ namespace Hypertable {
      * @return <i>true</i> if connected, <i>false</i> if <code>timer</code>
      * expired before connection was established.
      */
-    bool wait_for_connection(ConnectionState *conn_state, Timer &timer);
+    bool wait_for_connection(ConnectionStatePtr &conn_state, Timer &timer);
 
     /** Calls Comm::connect to establish a connection.  If the connection
      * attempt results in an error, an error message is logged indicating
@@ -392,13 +395,19 @@ namespace Hypertable {
      */
     void send_connect_request(ConnectionStatePtr &conn_state);
 
-    /** Sets <code>conn_state</code> to <i>disconnected</i> and schedules
-     * another connection attempt in the future.
+    /// Sends an initialization request.
+    /// @param conn_state Pointer to connection state object representing
+    /// connection
+    void send_initialization_request(ConnectionStatePtr &conn_state);
+
+    /** Schedules a connection retry attempt.  Sets <code>conn_state</code> to
+     * <i>disconnected</i> and schedules another connection attempt in the
+     * future.
      * @param conn_state Pointer to connection state object representing
      * connection
-     * @param event Event object that triggered the disconnect
+     * @param message Message indicating why retry is being attempted
      */
-    void set_retry_state(ConnectionStatePtr &conn_state, EventPtr &event);
+    void schedule_retry(ConnectionStatePtr &conn_state, const std::string &message);
 
     /// Smart pointer to connection manager state
     SharedImplPtr m_impl;

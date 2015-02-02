@@ -59,7 +59,7 @@ fi
 sleep 10
 
 ## Kill servers
-kill `cat $HT_HOME/run/Hypertable.Master.pid`
+kill `cat $HT_HOME/run/Master.pid`
 kill `cat $HT_HOME/run/Hypertable.RangeServer.rs*.pid`
 $HT_HOME/bin/stop-servers.sh
 

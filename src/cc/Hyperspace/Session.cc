@@ -1159,7 +1159,7 @@ String Session::locate(int type) {
 
 /*
  */
-int Session::status(int32_t *code, std::string &output, Timer *timer) {
+int Session::status(Status &status, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
   CommBufPtr cbuf_ptr(Protocol::create_status_request());
@@ -1170,9 +1170,7 @@ int Session::status(int32_t *code, std::string &output, Timer *timer) {
     else {
       const uint8_t *ptr = event_ptr->payload + 4;
       size_t remain = event_ptr->payload_len - 4;
-      *code = decode_i32(&ptr, &remain);
-      output.clear();
-      output.append(decode_vstr(&ptr, &remain));
+      status.decode(&ptr, &remain);
       error = Error::OK;
     }
   }

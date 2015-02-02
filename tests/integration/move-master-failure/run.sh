@@ -96,8 +96,8 @@ if [ $j -eq 6 ]; then
   cp $HT_HOME/run/op.output .
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
   \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
-  pstack `cat $HT_HOME/run/Hypertable.Master.pid` > master.stack
-  cp $HT_HOME/log/Hypertable.Master.log .
+  pstack `cat $HT_HOME/run/Master.pid` > master.stack
+  cp $HT_HOME/log/Master.log .
   cp $HT_HOME/run/monitoring/mop.dot .
   $HT_HOME/bin/stop-servers.sh
   exit 1

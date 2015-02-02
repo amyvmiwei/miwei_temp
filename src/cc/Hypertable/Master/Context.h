@@ -25,8 +25,32 @@
  * context for the Master.
  */
 
-#ifndef HYPERTABLE_CONTEXT_H
-#define HYPERTABLE_CONTEXT_H
+#ifndef Hypertable_Master_Context_h
+#define Hypertable_Master_Context_h
+
+#include "HyperspaceMasterFile.h"
+#include "MetricsHandler.h"
+#include "Monitoring.h"
+#include "RangeServerConnection.h"
+#include "RangeServerConnectionManager.h"
+#include "RecoveryStepFuture.h"
+#include "SystemState.h"
+
+#include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/MetaLogDefinition.h>
+#include <Hypertable/Lib/MetaLogWriter.h>
+#include <Hypertable/Lib/Table.h>
+
+#include <Hyperspace/Session.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Filesystem.h>
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
+#include <Common/Thread.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -35,31 +59,11 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/thread/condition.hpp>
 
-#include "Common/Filesystem.h"
-#include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Hypertable/Lib/NameIdMapper.h"
-#include "Hypertable/Lib/MetaLogDefinition.h"
-#include "Hypertable/Lib/MetaLogWriter.h"
-#include "Hypertable/Lib/Table.h"
-
-#include "MetricsHandler.h"
-#include "Monitoring.h"
-#include "RangeServerConnection.h"
-#include "RangeServerConnectionManager.h"
-#include "RecoveryStepFuture.h"
-#include "SystemState.h"
-
 #include <memory>
 #include <set>
 #include <unordered_map>
+
+using namespace Hypertable::Master;
 
 namespace Hypertable {
 
@@ -107,47 +111,67 @@ namespace Hypertable {
     /** Context.
      * @param p Reference to properties object
      */
-    Context(PropertiesPtr &p);
+    Context(PropertiesPtr &p, Hyperspace::SessionPtr hs);
+
+    Context(PropertiesPtr &p) : Context(p, Hyperspace::SessionPtr()) {}
 
     /** Destructor. */
     ~Context();
 
+    /// Set startup flag to <i>false</i>.
+    /// @return <i>false</i> if shutdown was received prior to completion of
+    /// startup, <i>true</i> otherwise.
+    bool set_startup_status(bool status);
+
+    /// Gets flag indicating if server is starting up.
+    /// @return <i>true</i> if server is starting up, <i>false</i> otherwise
+    bool startup_in_progress();
+
+    /// Start shutdown sequence.
+    void start_shutdown();
+
+    /// Gets flag indicating if server is shutting down.
+    /// @return <i>true</i> if server is shutting down, <i>false</i> otherwise
+    bool shutdown_in_progress();
+
     Mutex mutex;
     boost::condition cond;
-    Comm *comm;
-    SystemStatePtr system_state;       //!< System state entity
+    /// %Hyperspace master file handle
+    std::unique_ptr<HyperspaceMasterFile> master_file;
+    Comm *comm {};
+    SystemStatePtr system_state; //!< System state entity
     RangeServerConnectionManagerPtr rsc_manager;
     StringSet available_servers;
     PropertiesPtr props;
     ConnectionManagerPtr conn_manager;
     MetricsHandlerPtr metrics_handler;
     Hyperspace::SessionPtr hyperspace;
-    uint64_t master_file_handle;
-    FilesystemPtr dfs;
     String toplevel_dir;
     NameIdMapperPtr namemap;
-    MetaLog::DefinitionPtr mml_definition;
-    MetaLog::WriterPtr mml_writer;
-    LoadBalancer *balancer;
+    LoadBalancer *balancer {};
     MonitoringPtr monitoring;
-    ResponseManager *response_manager;
-    ReferenceManager *reference_manager;
+    std::unique_ptr<ReferenceManager> reference_manager;
+    std::unique_ptr<Thread> response_manager_thread;
+    std::unique_ptr<ResponseManager> response_manager;
+    MetaLog::WriterPtr mml_writer;
+    MetaLog::DefinitionPtr mml_definition;
+    FilesystemPtr dfs;
     TablePtr metadata_table;
     TablePtr rs_metrics_table;
-    time_t request_timeout;
-    uint32_t timer_interval;
-    uint32_t monitoring_interval;
-    uint32_t gc_interval;
-    time_t next_monitoring_time;
-    time_t next_gc_time;
-    OperationProcessor *op;
+    time_t request_timeout {};
+    uint32_t timer_interval {};
+    uint32_t monitoring_interval {};
+    uint32_t gc_interval {};
+    time_t next_monitoring_time {};
+    time_t next_gc_time {};
+    std::unique_ptr<OperationProcessor> op;
     std::shared_ptr<OperationTimedBarrier> recovery_barrier_op;
     String cluster_name;               //!< Name of cluster
     String location_hash;
-    int32_t disk_threshold;            //!< Disk use threshold percentage
-    int32_t max_allowable_skew;
-    bool test_mode;
-    bool quorum_reached;
+    int32_t disk_threshold {};            //!< Disk use threshold percentage
+    int32_t max_allowable_skew {};
+    bool test_mode {};
+    bool quorum_reached {};
 
     /// Adds operation to active <i>move range</i> operation map.
     /// This method adds a mapping for <code>operation</code> to the
@@ -216,8 +240,15 @@ namespace Hypertable {
 
     /// %Mutex for serializing access to #m_outstanding_move_ops
     Mutex m_outstanding_move_ops_mutex;
+
     /// Map of outstanding <i>move range</i> operations
     std::unordered_map<int64_t, int64_t> m_outstanding_move_ops;
+
+    /// Flag indicating that server is starting up
+    bool m_startup {true};
+
+    /// Flag indicating that server is shutting down
+    bool m_shutdown {};
   };
 
   /// Smart pointer to Context
@@ -225,6 +256,6 @@ namespace Hypertable {
 
   /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_CONTEXT_H
+#endif // Hypertable_Master_Context_h

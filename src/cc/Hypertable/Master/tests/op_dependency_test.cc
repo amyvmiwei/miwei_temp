@@ -129,10 +129,6 @@ int main(int argc, char **argv) {
     String str;
     std::vector<MetaLog::EntityPtr> entities;
 
-    context->comm = Comm::instance();
-    context->conn_manager = make_shared<ConnectionManager>(context->comm);
-    context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
-    context->toplevel_dir = properties->get_str("Hypertable.Directory");
     String log_dir = context->toplevel_dir + "/servers/master/log";
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
@@ -141,13 +137,9 @@ int main(int argc, char **argv) {
                                               log_dir + "/" + context->mml_definition->name(),
                                               entities);
 
-    ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
-    context->response_manager = new ResponseManager(rmctx);
-    Thread response_manager_thread(*context->response_manager);
+    context->response_manager->set_mml_writer(context->mml_writer);
 
-    context->reference_manager = new ReferenceManager();
-
-    context->op = new OperationProcessor(context, 4);
+    context->op = make_unique<OperationProcessor>(context, 4);
 
     /**
      *  TEST 1
@@ -445,15 +437,7 @@ int main(int argc, char **argv) {
     context->op->add_operations(operations);
     context->op->wait_for_idle();
 
-    context->op->shutdown();
-    context->op->join();
-
-    context->response_manager->shutdown();
-    response_manager_thread.join();
-    delete rmctx;
-    delete context->response_manager;
-    delete context->reference_manager;
-
+    context->start_shutdown();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

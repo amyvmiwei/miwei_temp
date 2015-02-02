@@ -80,7 +80,7 @@ else
         let i++
     done
     mv ${HT_HOME}/run/op.output .
-    cp ${HT_HOME}/log/Hypertable.Master.log .
+    cp ${HT_HOME}/log/Master.log .
     echo "Test failed"
     RETVAL=1
 fi

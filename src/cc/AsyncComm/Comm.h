@@ -513,6 +513,9 @@ namespace Hypertable {
 
     /// Local address initialized to primary interface and empty port
     InetAddr m_local_addr;
+
+    /// Verbose flag
+    bool m_verbose {};
   };
 
   /** @}*/

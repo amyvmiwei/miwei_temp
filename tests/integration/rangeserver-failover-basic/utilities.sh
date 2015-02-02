@@ -1,6 +1,6 @@
 DIGEST="openssl dgst -md5"
-MASTER_LOG=$HT_HOME/log/Hypertable.Master.log
-MASTER_PIDFILE=$HT_HOME/run/Hypertable.Master.pid
+MASTER_LOG=$HT_HOME/log/Master.log
+MASTER_PIDFILE=$HT_HOME/run/Master.pid
 ROW_SEED=1
 
 save_failure_state() {
@@ -10,7 +10,7 @@ save_failure_state() {
   touch $HT_HOME/run/debug-op
   ps auxww | fgrep -i hyper | fgrep -v java > $ARCHIVE_DIR/ps-output.txt
   cp $HT_HOME/log/* $ARCHIVE_DIR
-  pstack `cat $HT_HOME/run/Hypertable.Master.pid` > $ARCHIVE_DIR/master-stack.txt
+  pstack `cat $HT_HOME/run/Master.pid` > $ARCHIVE_DIR/master-stack.txt
   sleep 60
   cp $HT_HOME/run/op.output $ARCHIVE_DIR
   cp rangeserver.* $ARCHIVE_DIR
@@ -38,10 +38,10 @@ start_master() {
 }
 
 wait_for_server_connect() {
-    grep RS_METRICS $HT_HOME/log/Hypertable.Master.log
+    grep RS_METRICS $HT_HOME/log/Master.log
     while [ $? -ne 0 ] ; do
         sleep 3
-        grep RS_METRICS $HT_HOME/log/Hypertable.Master.log
+        grep RS_METRICS $HT_HOME/log/Master.log
     done
 }
 
@@ -53,7 +53,7 @@ wait_for_recovery() {
   else
       s="Leaving RecoverServer [a-zA-Z0-9]+ state=COMPLETE"
   fi
-  egrep "$s" $HT_HOME/log/Hypertable.Master.log
+  egrep "$s" $HT_HOME/log/Master.log
   while [ $? -ne "0" ]
   do
     (( n += 1 ))
@@ -63,7 +63,7 @@ wait_for_recovery() {
       exit 1
     fi
     sleep 2
-    egrep "$s" $HT_HOME/log/Hypertable.Master.log
+    egrep "$s" $HT_HOME/log/Master.log
   done
 }
 

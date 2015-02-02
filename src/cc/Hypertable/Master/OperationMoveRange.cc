@@ -45,7 +45,6 @@ extern "C" {
 }
 
 using namespace Hypertable;
-using namespace Hypertable::Lib;
 using namespace Hyperspace;
 using namespace std;
 
@@ -317,9 +316,9 @@ void OperationMoveRange::decode_state_old(uint8_t version, const uint8_t **bufp,
     string transfer_log = Serialization::decode_vstr(bufp, remainp);
     int64_t soft_limit = Serialization::decode_i64(bufp, remainp);
     bool is_split = Serialization::decode_bool(bufp, remainp);
-    m_params = Master::Request::Parameters::MoveRange(source, 0, table, range_spec,
-                                                      transfer_log, soft_limit,
-                                                      is_split);
+    m_params = Lib::Master::Request::Parameters::MoveRange(source, 0, table, range_spec,
+                                                           transfer_log, soft_limit,
+                                                           is_split);
   }
   m_destination = Serialization::decode_vstr(bufp, remainp);
   m_range_name = format("%s[%s..%s]", m_params.table().id,

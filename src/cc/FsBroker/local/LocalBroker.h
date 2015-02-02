@@ -24,6 +24,7 @@
 
 #include <FsBroker/Lib/Broker.h>
 #include <FsBroker/Lib/MetricsHandler.h>
+#include <FsBroker/Lib/StatusManager.h>
 
 #include <Common/Properties.h>
 #include <Common/String.h>
@@ -99,6 +100,9 @@ namespace FsBroker {
 
     /// Metrics collection handler
     MetricsHandlerPtr m_metrics_handler;
+
+    /// Server status manager
+    StatusManager m_status_manager;
 
     String m_rootdir;
     bool m_verbose;

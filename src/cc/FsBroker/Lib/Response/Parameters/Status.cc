@@ -28,29 +28,23 @@
 
 #include "Status.h"
 
-#include <Common/Logger.h>
-#include <Common/Serialization.h>
-
 using namespace Hypertable;
-using namespace Hypertable::FsBroker::Lib::Response::Parameters;
+using namespace Hypertable::FsBroker::Lib;
 
-uint8_t Status::encoding_version() const {
+uint8_t Response::Parameters::Status::encoding_version() const {
   return 1;
 }
 
-size_t Status::encoded_length_internal() const {
-  return 4 + Serialization::encoded_length_vstr(m_output);
+size_t Response::Parameters::Status::encoded_length_internal() const {
+  return m_status.encoded_length();
 }
 
-void Status::encode_internal(uint8_t **bufp) const {
-  Serialization::encode_i32(bufp, m_code);
-  Serialization::encode_vstr(bufp, m_output);
+void Response::Parameters::Status::encode_internal(uint8_t **bufp) const {
+  m_status.encode(bufp);
 }
 
-void Status::decode_internal(uint8_t version, const uint8_t **bufp,
-			     size_t *remainp) {
-  (void)version;
-  m_code = (int32_t)Serialization::decode_i32(bufp, remainp);
-  m_output.clear();
-  m_output.append(Serialization::decode_vstr(bufp, remainp));
+void Response::Parameters::Status::decode_internal(uint8_t version,
+                                                   const uint8_t **bufp,
+                                                   size_t *remainp) {
+  m_status.decode(bufp, remainp);
 }

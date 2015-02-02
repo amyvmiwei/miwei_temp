@@ -181,7 +181,7 @@ namespace {
                        std::vector<MetaLog::EntityPtr> &entities) {
     OperationPtr operation;
 
-    context->op = new OperationProcessor(context, 4);
+    context->op = make_unique<OperationProcessor>(context, 4);
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               g_mml_dir, entities);
     for (auto &entity : entities) {
@@ -204,7 +204,7 @@ namespace {
     std::vector<OperationPtr> operations;
     std::vector<MetaLog::EntityPtr> tmp_entities;
 
-    context->op = new OperationProcessor(context, 4);
+    context->op = make_unique<OperationProcessor>(context, 4);
 
     FailureInducer::instance->clear();
     if (failure_point != "")
@@ -373,24 +373,18 @@ int main(int argc, char **argv) {
 
     g_rs_port = get_i16("Hypertable.RangeServer.Port");
 
-    context = new Context(properties);
-    context->test_mode = true;
-
     // Default Hyperspace replicat host
     std::vector<String> replicas;
     replicas.push_back("localhost");
-    context->props->set("Hyperspace.Replica.Host", replicas);
+    properties->set("Hyperspace.Replica.Host", replicas);
 
-    context->comm = Comm::instance();
-    context->conn_manager = make_shared<ConnectionManager>(context->comm);
-    context->hyperspace = new Hyperspace::Session(context->comm, context->props);
-    context->dfs = std::make_shared<FsBroker::Lib::Client>(context->conn_manager, context->props);
-    context->rsc_manager = new RangeServerConnectionManager();
+    Hyperspace::SessionPtr hyperspace = new Hyperspace::Session(Comm::instance(), properties);
 
-    context->toplevel_dir = properties->get_str("Hypertable.Directory");
+    context = new Context(properties, hyperspace);
+    context->test_mode = true;
+
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
-    context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
     context->monitoring = new Monitoring(context.get());
 
     context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
@@ -407,11 +401,7 @@ int main(int argc, char **argv) {
 
     context->balancer = new LoadBalancer(context);
 
-    ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
-    context->response_manager = new ResponseManager(rmctx);
-    Thread response_manager_thread(*context->response_manager);
-
-    context->reference_manager = new ReferenceManager();
+    context->response_manager->set_mml_writer(context->mml_writer);
 
     String testname = get_str("test");
 

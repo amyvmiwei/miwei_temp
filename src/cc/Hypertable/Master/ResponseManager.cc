@@ -29,8 +29,6 @@
 
 #include "ResponseManager.h"
 
-#include <Hypertable/Lib/Master/Request/Parameters/FetchResult.h>
-
 using namespace Hypertable;
 
 void ResponseManager::operator()() {
@@ -96,8 +94,11 @@ void ResponseManager::operator()() {
         entities.clear();
         if (!m_context->removal_queue.empty()) {
           for (auto & operation : m_context->removal_queue) {
-            operations.push_back(operation);
-            entities.push_back(operation);
+            if (!operation->ephemeral()) {
+              HT_ASSERT(m_context->mml_writer);
+              operations.push_back(operation);
+              entities.push_back(operation);
+            }
           }
           m_context->removal_queue.clear();
         }
@@ -115,18 +116,13 @@ void ResponseManager::operator()() {
 }
 
 
-void ResponseManager::add_delivery_info(EventPtr &event) {
+void ResponseManager::add_delivery_info(int64_t operation_id, EventPtr &event) {
   ScopedLock lock(m_context->mutex);
   ResponseManagerContext::OperationIdentifierIndex &operation_identifier_index = m_context->expirable_ops.get<2>();
   ResponseManagerContext::OperationIdentifierIndex::iterator iter;
   ResponseManagerContext::DeliveryRec delivery_rec;
-  const uint8_t *ptr = event->payload;
-  size_t remain = event->payload_len;
 
-  Lib::Master::Request::Parameters::FetchResult params;
-  params.decode(&ptr, &remain);
-  delivery_rec.id = params.get_id();
-
+  delivery_rec.id = operation_id;
   if ((iter = operation_identifier_index.find(delivery_rec.id)) == operation_identifier_index.end()) {
     delivery_rec.event = event;
     delivery_rec.expiration_time.reset();

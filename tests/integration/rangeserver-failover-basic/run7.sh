@@ -8,7 +8,7 @@ MAX_KEYS=${MAX_KEYS:-"500000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
 RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
 RS3_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs3.pid
-MASTER_LOG=$HT_HOME/log/Hypertable.Master.log
+MASTER_LOG=$HT_HOME/log/Master.log
 RUN_DIR=`pwd`
 
 . $HT_HOME/bin/ht-env.sh

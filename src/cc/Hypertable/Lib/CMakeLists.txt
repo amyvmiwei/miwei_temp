@@ -85,6 +85,7 @@ Master/Request/Parameters/ReplayStatus.cc
 Master/Request/Parameters/SetState.cc
 Master/Request/Parameters/Stop.cc
 Master/Response/Parameters/RegisterServer.cc
+Master/Response/Parameters/Status.cc
 MetaLog.cc
 MetaLogEntity.cc
 MetaLogEntityHeader.cc

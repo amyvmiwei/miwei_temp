@@ -132,10 +132,14 @@ int fsclient::CommandInterpreter::execute_line(const String &line) {
   case COMMAND_STATUS:
     {
       string output;
-      int32_t code = m_client->status(output);
-      if (!m_silent)
-        cout << "FsBroker " << output << endl;
-      return code;
+      Status::Code code = m_client->status(output);
+      if (!m_silent) {
+        cout << "FsBroker " << Status::code_to_string(code);
+        if (!output.empty())
+          cout << " - " << output;
+        cout << endl;
+      }
+      return static_cast<int>(code);
     }
 
   default:

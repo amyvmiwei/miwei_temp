@@ -34,9 +34,9 @@
 #include <Common/Logger.h>
 
 using namespace Hypertable;
-using namespace Hypertable::FsBroker::Lib::Request::Handler;
+using namespace Hypertable::FsBroker::Lib;
 
-void Status::run() {
+void Request::Handler::Status::run() {
   Response::Callback::Status cb(m_comm, m_event);
   m_broker->status(&cb);
 }

@@ -605,7 +605,7 @@ process_line:
       else {
         if (m_verbose)
           cerr << e << endl;
-        else
+        else if (!m_silent)
           cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
               << endl;
       }

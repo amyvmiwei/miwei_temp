@@ -44,6 +44,7 @@
 
 #include <Common/ReferenceCount.h>
 #include <Common/StatsSystem.h>
+#include <Common/Status.h>
 #include <Common/Timer.h>
 
 #include <boost/thread/mutex.hpp>
@@ -122,7 +123,7 @@ namespace Master {
     void rename_table(const String &from, const String &to,
                       Timer *timer = 0);
 
-    void status(Timer *timer=0);
+    Status::Code status(std::string &text, Timer *timer=0);
 
     void move_range(const String &source, int64_t range_id,
                     TableIdentifier &table,
@@ -214,7 +215,7 @@ namespace Master {
     ConnectionManagerPtr   m_conn_manager;
     Hyperspace::SessionPtr m_hyperspace;
     ApplicationQueueInterfacePtr    m_app_queue;
-    uint64_t               m_master_file_handle;
+    uint64_t m_master_file_handle {};
     Hyperspace::HandleCallbackPtr m_master_file_callback;
     InetAddr               m_master_addr;
     String                 m_master_addr_string;

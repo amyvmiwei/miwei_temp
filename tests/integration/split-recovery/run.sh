@@ -39,7 +39,7 @@ save_failure_state() {
     local TEST_ID=$1
     shift
     mkdir failed-run-$TEST_ID
-    pstack `cat $HT_HOME/run/Hypertable.Master.pid` > failed-run-$TEST_ID/master.stack
+    pstack `cat $HT_HOME/run/Master.pid` > failed-run-$TEST_ID/master.stack
     cp rangeserver.output.$TEST_ID $HT_HOME/log/* failed-run-$TEST_ID
     touch $HT_HOME/run/debug-op
     sleep 60

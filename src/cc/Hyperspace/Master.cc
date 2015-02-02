@@ -1194,7 +1194,7 @@ void Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
 
 void Master::status(ResponseCallbackStatus *cb) {
   HT_INFO("status");
-  cb->response(0, "OK");
+  cb->response(m_status);
 }
 
 /*

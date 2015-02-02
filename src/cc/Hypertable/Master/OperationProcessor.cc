@@ -63,6 +63,11 @@ OperationProcessor::OperationProcessor(ContextPtr &context, size_t thread_count)
     m_threads.create_thread(worker);
 }
 
+OperationProcessor::~OperationProcessor() {
+  shutdown();
+  join();
+}
+
 
 void OperationProcessor::add_operation(OperationPtr operation) {
   ScopedLock lock(m_context.mutex);

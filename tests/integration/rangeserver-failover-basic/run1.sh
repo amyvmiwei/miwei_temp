@@ -114,7 +114,7 @@ if [ "$RS2_RANGES" -lt "$ORIGINAL_RANGES" ]
 then
   echo "Test failed, expected at least ${ORIGINAL_RANGES} on rs2, found ${RS2_RANGES}"
   mkdir failed-run-basic-1
-  cp $HT_HOME/log/Hypertable.Master.log rangeserver.rs1.output rangeserver.rs2.output \
+  cp $HT_HOME/log/Master.log rangeserver.rs1.output rangeserver.rs2.output \
       metadata.pre metadata.post failed-run-basic-1
   cp $HT_HOME/fs/local/hypertable/servers/rs1 failed-run-basic-1
   cp $HT_HOME/fs/local/hypertable/servers/rs2 failed-run-basic-1

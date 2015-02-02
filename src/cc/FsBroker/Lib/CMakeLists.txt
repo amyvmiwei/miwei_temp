@@ -73,6 +73,7 @@ Response/Parameters/Open.cc
 Response/Parameters/Read.cc
 Response/Parameters/Readdir.cc
 Response/Parameters/Status.cc
+StatusManager.cc
 )
 
 add_library(HyperFsBroker ${FsBroker_SRCS})

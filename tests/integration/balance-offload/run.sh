@@ -94,7 +94,7 @@ ${HT_HOME}/bin/ht shell --no-prompt --Hypertable.Request.Timeout=30000 --exec "u
 ${HT_HOME}/bin/ht shell --no-prompt --Hypertable.Request.Timeout=30000 --exec "use sys; select Location from METADATA MAX_VERSIONS=1 into file '${RUN_DIR}/metadata_post.out';"
 
 #shut everything down
-cp ${HT_HOME}/log/Hypertable.Master.log ${RUN_DIR}/master.out
+cp ${HT_HOME}/log/Master.log ${RUN_DIR}/master.out
 stop_rs2
 $HT_HOME/bin/clean-database.sh
 

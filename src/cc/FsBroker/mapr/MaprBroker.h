@@ -26,6 +26,7 @@
 #include <FsBroker/Lib/MetricsHandler.h>
 
 #include <Common/Properties.h>
+#include <Common/Status.h>
 #include <Common/String.h>
 #include <Common/atomic.h>
 
@@ -106,6 +107,9 @@ namespace FsBroker {
 
     /// Metrics collection handler
     MetricsHandlerPtr m_metrics_handler;
+
+    /// Server status information
+    Hypertable::Status m_status;
 
     bool         m_verbose;
     hdfsFS       m_filesystem;

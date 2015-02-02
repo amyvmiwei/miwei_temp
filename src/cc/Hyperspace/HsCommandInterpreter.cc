@@ -508,19 +508,25 @@ int HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_STATUS) {
-      int32_t code;
-      string output;
-      int32_t error = m_session->status(&code, output);
+      Status status;
+      Status::Code code;
+      int32_t error = m_session->status(status);
       if (error == Error::OK) {
-        if (!m_silent)
-          cout << "Hyperspace " << output << endl;
+        string text;
+        status.get(&code, text);
+        if (!m_silent) {
+          cout << "Hyperspace " << Status::code_to_string(code);
+          if (!text.empty())
+            cout << " - " << text;
+          cout << endl;
+        }
       }
       else {
         if (!m_silent)
           cout << "Hyperspace CRITICAL - " << Error::get_text(error) << endl;
-        code = 2;
+        code = Status::Code::CRITICAL;
       }
-      return code;
+      return static_cast<int>(code);
     }
 
     else if (state.command == COMMAND_HELP) {

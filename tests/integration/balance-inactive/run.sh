@@ -6,7 +6,7 @@ NUM_POLLS=${NUM_POLLS:-"10"}
 WRITE_SIZE=${WRITE_SIZE:-"40000000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
 RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
-MASTER_PIDFILE=$HT_HOME/run/Hypertable.Master.pid
+MASTER_PIDFILE=$HT_HOME/run/Master.pid
 
 kill_servers() {
   echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871

@@ -62,6 +62,8 @@ public class RequestHandlerShutdown extends ApplicationHandler {
       int encoding_length = Serialization.DecodeVInt32(mEvent.payload);
       int start_position = mEvent.payload.position();
 
+      mBroker.Shutdown();
+
       mAppQueue.Shutdown();
 
       mBroker.GetOpenFileMap().RemoveAll();

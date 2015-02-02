@@ -48,6 +48,17 @@ int MasterCommandInterpreter::execute_line(const String &line) {
     if (state.command == COMMAND_SHUTDOWN) {
       m_master->shutdown();
     }
+    else if (state.command == COMMAND_STATUS) {
+      string output;
+      Status::Code code = m_master->status(output);
+      if (!m_silent) {
+        cout << "Master " << Status::code_to_string(code);
+        if (!output.empty())
+          cout << " - " << output;
+        cout << endl;
+      }
+      return static_cast<int>(code);
+    }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::get(state.str);
       if (text) {

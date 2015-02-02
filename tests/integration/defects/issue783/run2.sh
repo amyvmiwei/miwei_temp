@@ -92,12 +92,12 @@ ${HT_HOME}/bin/ht shell --no-prompt --exec "BALANCE ALGORITHM='OFFLOAD rs1';"
 sleep 15
 
 # make sure that no range was moved to rs2
-grep_or_exit_if_found "dest_location=rs2" $HT_HOME/log/Hypertable.Master.log
-grep_or_exit_if_found "dest_location=rs3" $HT_HOME/log/Hypertable.Master.log
+grep_or_exit_if_found "dest_location=rs2" $HT_HOME/log/Master.log
+grep_or_exit_if_found "dest_location=rs3" $HT_HOME/log/Master.log
 grep_or_exit_if_not_found "RangeServer rs2: disk use 100% exceeds threshold" \
-    $HT_HOME/log/Hypertable.Master.log
+    $HT_HOME/log/Master.log
 grep_or_exit_if_not_found "RangeServer rs3: disk use 100% exceeds threshold" \
-    $HT_HOME/log/Hypertable.Master.log
+    $HT_HOME/log/Master.log
 
 # once more dump all keys
 ${HT_HOME}/bin/ht shell --no-prompt --Hypertable.Request.Timeout=30000 --exec "USE '/'; SELECT * FROM BalanceTest KEYS_ONLY INTO FILE 'dump.post';"

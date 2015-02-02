@@ -574,7 +574,7 @@ Client::shutdown(uint16_t flags, DispatchHandler *handler) {
 }
 
 
-int32_t Client::status(string &output, Timer *timer) {
+Status::Code Client::status(string &output, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommHeader header(Request::Handler::Factory::FUNCTION_STATUS);
@@ -587,7 +587,7 @@ int32_t Client::status(string &output, Timer *timer) {
       HT_THROW(Protocol::response_code(event.get()),
                Protocol::string_format_message(event).c_str());
 
-    int32_t code;
+    Status::Code code;
     decode_response_status(event, &code, output);
     return code;
   }
@@ -596,7 +596,7 @@ int32_t Client::status(string &output, Timer *timer) {
   }
 }
 
-void Client::decode_response_status(EventPtr &event, int32_t *code,
+void Client::decode_response_status(EventPtr &event, Status::Code *code,
                                     string &output) {
   int error = Protocol::response_code(event);
   if (error != Error::OK)
@@ -607,8 +607,7 @@ void Client::decode_response_status(EventPtr &event, int32_t *code,
 
   Response::Parameters::Status params;
   params.decode(&ptr, &remain);
-  *code = params.get_code();
-  output = params.get_output();
+  params.status().get(code, output);
 }
 
 

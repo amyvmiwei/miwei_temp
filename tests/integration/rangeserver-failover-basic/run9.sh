@@ -7,7 +7,7 @@ SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"200000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
 RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
-MASTER_LOG=$HT_HOME/log/Hypertable.Master.log
+MASTER_LOG=$HT_HOME/log/Master.log
 RUN_DIR=`pwd`
 
 . $HT_HOME/bin/ht-env.sh
