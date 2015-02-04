@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2007-2014 Hypertable, Inc.
+# Copyright (C) 2007-2015 Hypertable, Inc.
 #
 # This file is part of Hypertable.
 #

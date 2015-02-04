@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file and its generated files are licensed under the Apache License,
  * Version 2.0 (the "License"); You may not use this file and its generated
