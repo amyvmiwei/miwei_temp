@@ -28,7 +28,7 @@ rm -f report.txt
 echo "=============" >> report.txt
 echo "== LOADING ==" >> report.txt
 echo "=============" >> report.txt
-fgrep "Memory Allocation" $HT_HOME/log/Hypertable.RangeServer.log | fgrep -v Usage | tail -10 | cut -b123- >> report.txt
+fgrep "Memory Allocation" $HT_HOME/log/RangeServer.log | fgrep -v Usage | tail -10 | cut -b123- >> report.txt
 
 
 $HT_HOME/bin/ht ht_load_generator query --spec-file=./data.spec --max-keys=20000
@@ -36,7 +36,7 @@ $HT_HOME/bin/ht ht_load_generator query --spec-file=./data.spec --max-keys=20000
 echo "==============" >> report.txt
 echo "== QUERYING ==" >> report.txt
 echo "==============" >> report.txt
-fgrep "Memory Allocation" $HT_HOME/log/Hypertable.RangeServer.log | fgrep -v Usage | tail -20 | cut -b123- >> report.txt
+fgrep "Memory Allocation" $HT_HOME/log/RangeServer.log | fgrep -v Usage | tail -20 | cut -b123- >> report.txt
 
 cat report.txt
 

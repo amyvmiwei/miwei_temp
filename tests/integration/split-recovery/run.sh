@@ -21,7 +21,7 @@ gen_test_data() {
 
 stop_range_server() {
   # stop any existing range server if necessary
-  pidfile=$HT_HOME/run/Hypertable.RangeServer.pid
+  pidfile=$HT_HOME/run/RangeServer.pid
   if [ -f $pidfile ]; then
     kill -9 `cat $pidfile`
     \rm -f $pidfile
@@ -59,7 +59,7 @@ run_test() {
 
   if [ -z "$SKIP_START_SERVERS" ]; then
       stop_range_server
-      \rm -f $HT_HOME/run/Hypertable.RangeServer.pid
+      \rm -f $HT_HOME/run/RangeServer.pid
       $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
   fi
 

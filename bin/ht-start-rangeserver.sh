@@ -21,18 +21,18 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-master.sh [OPTIONS] [<server-options>]"
+  echo "usage: start-rangeserver.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run master with valgrind"
-  echo "  --heapcheck run master with google-perf-tools Heapcheck"
+  echo "  --valgrind  run rangeserver with valgrind"
+  echo "  --heapcheck run rangeserver with google-perf-tools Heapcheck"
   echo ""
 }
 
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.master.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.rangeserver.%p --leak-check=full --num-callers=20 "
       shift
       ;;
     --heapcheck)
@@ -45,5 +45,16 @@ while [ "$1" != "${1##[-+]}" ]; do
   esac
 done
 
+set_start_vars RangeServer
+check_pidfile $pidfile && exit 0
 
-start_server master Hypertable.Master Hypertable.Master "$@"
+$HYPERTABLE_HOME/bin/ht-check-rangeserver.sh --silent "$@"
+if [ $? != 0 ] ; then
+  exec_server Hypertable.RangeServer --verbose "$@"
+  max_retries=3600
+  report_interval=30
+  retries=20
+  wait_for_ok rangeserver "RangeServer" "$@"
+else
+  echo "WARNING: RangeServer already running."
+fi

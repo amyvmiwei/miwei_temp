@@ -96,8 +96,8 @@ task: stop_thriftbrokers_primary roles: master, slave {
 # Stops the FSBroker and ThriftBroker from the current installation.
 task: stop_thriftbrokers_only roles: thriftbroker {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker || exit $?
-    ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit \$?
   }
 }
 
@@ -115,7 +115,7 @@ task: stop_thriftbrokers {
 # Stops FSBrokers in the current installation.
 task: stop_fsbrokers roles: master, slave {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit \$?
   }
 }
 
@@ -124,7 +124,7 @@ task: stop_fsbrokers roles: master, slave {
 # Stops RangeServers in the current installation.
 task: stop_slaves roles: slave {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh rangeserver
+    ${INSTALL_PREFIX}/current/bin/ht-stop-rangeserver.sh
   }
 }
 
@@ -199,9 +199,9 @@ task: kill {
 # installation.
 task: clean_masters roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh || exit \$?
   }
 }
 
@@ -259,7 +259,7 @@ task: start_monitoring roles: master {
 # from the current installation.
 task: start_hyperspace roles: hyperspace {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-start-hyperspace.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-start-hyperspace.sh ${CONFIG} || exit \$?
   }
 }
 
@@ -268,9 +268,9 @@ task: start_hyperspace roles: hyperspace {
 # monitoring server from the current installation.
 task: start_masters roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/ht-start-master.sh ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-start-master.sh ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh || exit \$?
   }
 }
 
@@ -280,8 +280,8 @@ task: start_masters roles: master {
 # random start delay of 5000 milliseconds.
 task: start_slaves roles: slave {
   ssh: random-start-delay=5000 {
-    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/start-rangeserver.sh ${CONFIG} || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-start-rangeserver.sh ${CONFIG} || exit \$?
   }
 }
 
@@ -297,8 +297,8 @@ task: start_thriftbrokers_primary roles: master, slave {
 # Start ThriftBrokers on ThriftBroker-only servers.
 task: start_thriftbrokers_only roles: thriftbroker {
   ssh: random-start-delay=5000 {
-    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit $?
-    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS} || exit $?
+    ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS} || exit \$?
   }
 }
 

@@ -56,6 +56,7 @@
 #include "Response/Parameters/AcknowledgeLoad.h"
 #include "Response/Parameters/CreateScanner.h"
 #include "Response/Parameters/GetStatistics.h"
+#include "Response/Parameters/Status.h"
 
 #include <Hypertable/Lib/ScanBlock.h>
 
@@ -488,15 +489,15 @@ void Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
   send_message(addr, cbuf, handler, timer.remaining());
 }
 
-void Client::status(const CommAddress &addr) {
-  do_status(addr, m_default_timeout_ms);
+void Client::status(const CommAddress &addr, Status &status) {
+  do_status(addr, status, m_default_timeout_ms);
 }
 
-void Client::status(const CommAddress &addr, Timer &timer) {
-  do_status(addr, timer.remaining());
+void Client::status(const CommAddress &addr, Status &status, Timer &timer) {
+  do_status(addr, status, timer.remaining());
 }
 
-void Client::do_status(const CommAddress &addr, int32_t timeout_ms) {
+void Client::do_status(const CommAddress &addr, Status &status, int32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_STATUS);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
@@ -508,6 +509,15 @@ void Client::do_status(const CommAddress &addr, int32_t timeout_ms) {
     HT_THROW(Hypertable::Protocol::response_code(event),
              String("RangeServer status() failure : ")
              + Hypertable::Protocol::string_format_message(event));
+
+  {
+    size_t remaining = event->payload_len - 4;
+    const uint8_t *ptr = event->payload + 4;
+    Response::Parameters::Status params;
+    params.decode(&ptr, &remaining);
+    status = params.status();
+  }
+
 }
 
 void Client::wait_for_maintenance(const CommAddress &addr) {

@@ -485,17 +485,16 @@ namespace Hypertable {
     virtual void rename(const String &src, const String &dst) = 0;
 
     /// Check status of filesystem
-    /// @param output Nagios-style status output text
+    /// @param status %Status output
     /// @param timer Deadline timer
     /// @return Nagios-style status code
-    virtual Status::Code status(string &output, Timer *timer=0) = 0;
+    virtual void status(Status &status, Timer *timer=0) = 0;
 
     /// Decodes the response from an status request.
     /// @param event reference to response event
     /// @param code Address of variable to hold status code
     /// @param output Reference to string to hold status text
-    virtual void decode_response_status(EventPtr &event, Status::Code *code,
-                                        string &output) = 0;
+    virtual void decode_response_status(EventPtr &event, Status &status) = 0;
 
     /** Decodes the response from an request that only returns an error code
      *

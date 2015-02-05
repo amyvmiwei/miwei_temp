@@ -24,7 +24,6 @@ set(TEST_DEPENDENCIES ${DST_DIR}/words)
 
 set(fsclient_SRCS
 CommandInterpreter.cc
-Utility.cc
 )
 
 # fsclient - command interpreter
@@ -32,7 +31,7 @@ add_executable(fsclient fsclient.cc ${fsclient_SRCS})
 target_link_libraries(fsclient HyperCommon HyperComm HyperFsBroker Hypertable ${EDITLINE_LIBRARIES})
 
 # fsTest
-add_executable(fsTest fsTest.cc FsTestThreadFunction.cc Utility.cc ${TEST_DEPENDENCIES})
+add_executable(fsTest fsTest.cc FsTestThreadFunction.cc ${TEST_DEPENDENCIES})
 target_link_libraries(fsTest HyperCommon HyperComm HyperFsBroker)
 
 configure_file(${SRC_DIR}/fsTest.golden ${DST_DIR}/fsTest.golden COPYONLY)

@@ -123,7 +123,7 @@ fi
 # Start Hypertable.RangeServer
 #
 if [ $START_RANGESERVER == "true" ] ; then
-  $HYPERTABLE_HOME/bin/start-rangeserver.sh $RANGESERVER_OPTS $@
+  $HYPERTABLE_HOME/bin/ht-start-rangeserver.sh $RANGESERVER_OPTS $@
 fi
 
 #

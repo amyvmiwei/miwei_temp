@@ -123,7 +123,7 @@ namespace Master {
     void rename_table(const String &from, const String &to,
                       Timer *timer = 0);
 
-    Status::Code status(std::string &text, Timer *timer=0);
+    void status(Status &status, Timer *timer=0);
 
     void move_range(const String &source, int64_t range_id,
                     TableIdentifier &table,

@@ -198,10 +198,9 @@ fi
 if [ $STOP_RANGESERVER == "true" ] ; then
   echo "Sending shutdown command"
   echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht rsclient --batch --no-hyperspace
-  # wait for rangeserver shutdown
-  wait_for_server_shutdown rangeserver "range server" "$@"
-  if [ $? != 0 ] ; then
-      stop_server master
+  wait_for_critical rangeserver "RangeServer" "$@"
+  if [ $? -ne 0 ]; then
+    $HYPERTABLE_HOME/bin/ht-stop-rangeserver.sh "$@"
   fi
 fi
 

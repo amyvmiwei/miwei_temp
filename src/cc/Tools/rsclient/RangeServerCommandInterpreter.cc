@@ -30,6 +30,7 @@
 #include <Hypertable/Lib/HqlHelpText.h>
 #include <Hypertable/Lib/HqlParser.h>
 #include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/RangeServer/Protocol.h>
 #include <Hypertable/Lib/RangeState.h>
 #include <Hypertable/Lib/ScanBlock.h>
 #include <Hypertable/Lib/ScanSpec.h>
@@ -145,7 +146,27 @@ int RangeServerCommandInterpreter::execute_line(const String &line) {
     if (state.range_end_row == "??")
       state.range_end_row = Key::END_ROW_MARKER;
 
-    if (state.command == COMMAND_LOAD_RANGE) {
+    if (state.command == COMMAND_STATUS) {
+      Status status;
+      try {
+        m_range_server->status(m_addr, status);
+      }
+      catch (Exception &e) {
+        status.set(Status::Code::CRITICAL,
+                   format("%s (%s)", Error::get_text(e.code()), e.what()));
+      }
+      string output;
+      Status::Code code;
+      status.get(&code, output);
+      if (!m_silent) {
+        cout << "RangeServer " << Status::code_to_string(code);
+        if (!output.empty())
+          cout << " - " << output;
+        cout << endl;
+      }
+      return static_cast<int>(code);
+    }
+    else if (state.command == COMMAND_LOAD_RANGE) {
       RangeState range_state;
 
       cout << "TableName  = " << state.table_name << endl;

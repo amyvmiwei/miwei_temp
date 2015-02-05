@@ -40,6 +40,7 @@
 #include <Hypertable/RangeServer/Response/Callback/CreateScanner.h>
 #include <Hypertable/RangeServer/Response/Callback/GetStatistics.h>
 #include <Hypertable/RangeServer/Response/Callback/PhantomUpdate.h>
+#include <Hypertable/RangeServer/Response/Callback/Status.h>
 #include <Hypertable/RangeServer/Response/Callback/Update.h>
 #include <Hypertable/RangeServer/ScannerMap.h>
 #include <Hypertable/RangeServer/TableInfo.h>
@@ -208,6 +209,8 @@ namespace Apps {
       return m_log_replay_barrier->user_complete();
     }
 
+    void status(Response::Callback::Status *cb);
+
     void shutdown();
 
     void write_profile_data(const String &line) {
@@ -259,8 +262,12 @@ namespace Apps {
     /// Flag indicating if verbose logging is enabled
     bool m_verbose {};
 
+    /// Flag indicating if server is starting up
+    bool m_startup {true};
+
     /// Flag indicating if server is shutting down
     bool m_shutdown {};
+
     typedef map<String, PhantomRangeMapPtr> FailoverPhantomRangeMap;
     FailoverPhantomRangeMap m_failover_map;
     Mutex                  m_failover_mutex;

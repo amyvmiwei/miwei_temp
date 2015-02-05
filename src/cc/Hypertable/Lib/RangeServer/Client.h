@@ -30,7 +30,7 @@
 
 #include <Common/InetAddr.h>
 #include <Common/StaticBuffer.h>
-#include <Common/ReferenceCount.h>
+#include <Common/Status.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/CommBuf.h>
@@ -344,15 +344,17 @@ namespace RangeServer {
     /** Issues a "status" request.  This call blocks until it receives a
      * response from the server.
      * @param addr address of RangeServer
+     * @param status Output variable to hold status
      */
-    void status(const CommAddress &addr);
+    void status(const CommAddress &addr, Status &status);
 
     /** Issues a "status" request with timer.  This call blocks until it
      * receives a response from the server.
      * @param addr address of RangeServer
+     * @param status Output variable to hold status
      * @param timer timer
      */
-    void status(const CommAddress &addr, Timer &timer);
+    void status(const CommAddress &addr, Status &status, Timer &timer);
 
     /** Issues a "wait_for_maintenance" request.  This call blocks until it receives a
      * response from the server or times out.
@@ -567,7 +569,7 @@ namespace RangeServer {
     void do_drop_table(const CommAddress &addr,
                        const TableIdentifier &table,
                        int32_t timeout_ms);
-    void do_status(const CommAddress &addr, int32_t timeout_ms);
+    void do_status(const CommAddress &addr, Status &status, int32_t timeout_ms);
     void do_get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
                            int64_t generation, StatsRangeServer &stats,
                            int32_t timeout_ms);

@@ -52,6 +52,7 @@ Regex.cc
 Serializable.cc
 SleepWakeNotifier.cc
 Status.cc
+StatusPersister.cc
 String.cc
 System.cc
 SystemInfo.cc

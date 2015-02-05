@@ -27,10 +27,11 @@
 #include <Common/Compat.h>
 
 #include "CommandInterpreter.h"
-#include "Utility.h"
 
 #include <Hypertable/Lib/HqlHelpText.h>
 #include <Hypertable/Lib/HqlParser.h>
+
+#include <FsBroker/Lib/Utility.h>
 
 #include <Common/Error.h>
 
@@ -78,11 +79,11 @@ int fsclient::CommandInterpreter::execute_line(const String &line) {
     break;
 
   case COMMAND_COPYFROMLOCAL:
-    fsclient::copy_from_local(m_client, parse.args[0], parse.args[1], parse.offset);
+    FsBroker::Lib::copy_from_local(m_client, parse.args[0], parse.args[1], parse.offset);
     break;
 
   case COMMAND_COPYTOLOCAL:
-    fsclient::copy_to_local(m_client, parse.args[0], parse.args[1], parse.offset);
+    FsBroker::Lib::copy_to_local(m_client, parse.args[0], parse.args[1], parse.offset);
     break;
 
   case COMMAND_EXISTS:
@@ -131,8 +132,11 @@ int fsclient::CommandInterpreter::execute_line(const String &line) {
 
   case COMMAND_STATUS:
     {
+      Status status;
+      m_client->status(status);
       string output;
-      Status::Code code = m_client->status(output);
+      Status::Code code;
+      status.get(&code, output);
       if (!m_silent) {
         cout << "FsBroker " << Status::code_to_string(code);
         if (!output.empty())

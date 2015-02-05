@@ -111,6 +111,6 @@ kill_rs() {
 kill_all_rs() {
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs*.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.rs*.pid
-    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.pid`
-    \rm -f $HT_HOME/run/Hypertable.RangeServer.pid
+    kill -9 `cat $HT_HOME/run/RangeServer.pid`
+    \rm -f $HT_HOME/run/RangeServer.pid
 }

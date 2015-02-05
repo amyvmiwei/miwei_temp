@@ -181,9 +181,8 @@ namespace Lib {
                 DispatchHandler *handler) override;
     void rename(const String &src, const String &dst) override;
 
-    Status::Code status(string &output, Timer *timer=0) override;
-    void decode_response_status(EventPtr &event, Status::Code *code,
-                                string &output) override;
+    void status(Status &status, Timer *timer=0) override;
+    void decode_response_status(EventPtr &event, Status &status) override;
 
     void debug(int32_t command, StaticBuffer &serialized_parameters) override;
     void debug(int32_t command, StaticBuffer &serialized_parameters,

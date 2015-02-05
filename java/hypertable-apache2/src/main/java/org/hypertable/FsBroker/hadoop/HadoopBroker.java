@@ -156,7 +156,7 @@ public class HadoopBroker implements Broker {
             mFilesystem_noverify = newInstanceFileSystem();
             mFilesystem_noverify.setVerifyChecksum(false);
             if (inSafemode()) {
-              mStatusManager.setWriteStatus(Status.Code.WARNING, "HDFS is in safemode");
+              mStatusManager.setWriteStatus(Status.Code.CRITICAL, "HDFS is in safemode");
               log.warning("HDFS is in safemode");
             }
         }
@@ -228,7 +228,7 @@ public class HadoopBroker implements Broker {
     long timeout = (long)rng.nextInt(10000);
     try {
       while (inSafemode()) {
-        mStatusManager.setWriteStatus(Status.Code.WARNING, "HDFS is in safemode");
+        mStatusManager.setWriteStatus(Status.Code.CRITICAL, "HDFS is in safemode");
         synchronized (this) {
           try {
             wait(timeout);
@@ -252,7 +252,7 @@ public class HadoopBroker implements Broker {
     }
     if (!firstLoop)
       log.info("HDFS has exited safemode");      
-    mStatusManager.clearStatus();
+    mStatusManager.clearStatusImmediately();
   }
 
     /**

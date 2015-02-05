@@ -104,7 +104,7 @@ if [ $j -eq 6 ]; then
 fi
 
 # Restart master
-$HT_HOME/bin/start-master.sh
+$HT_HOME/bin/ht-start-master.sh
 
 sleep 2
 

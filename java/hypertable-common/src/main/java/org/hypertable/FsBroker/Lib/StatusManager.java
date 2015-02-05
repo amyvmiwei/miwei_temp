@@ -91,14 +91,22 @@ public class StatusManager {
     }
   }
 
+  public void clearStatusImmediately() {
+    if (mCurrentStatus == Status.Code.OK)
+      return;
+    synchronized (this) {
+      mStatus.set(Status.Code.OK, null);
+      mCurrentStatus = Status.Code.OK;
+    }
+  }
+
   public void clearStatus() {
     if (mCurrentStatus == Status.Code.OK)
       return;
     long now = System.currentTimeMillis();
     synchronized (this) {
-      if (mCurrentStatus == Status.Code.WARNING ||
-          (now - mLastReadError > CLEAR_CHANGE_INTERVAL &&
-           now - mLastWriteError > CLEAR_CHANGE_INTERVAL)) {
+      if (now - mLastReadError > CLEAR_CHANGE_INTERVAL &&
+          now - mLastWriteError > CLEAR_CHANGE_INTERVAL) {
         mStatus.set(Status.Code.OK, null);
         mCurrentStatus = Status.Code.OK;
       }

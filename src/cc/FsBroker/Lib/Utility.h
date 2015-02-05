@@ -21,27 +21,28 @@
 
 /// @file
 /// Declarations of utility functions.
-/// This file contains declarations for utility functions used by fsclient and
-/// test programs.
+/// This file contains declarations for utility functions for manipulating files
+/// in the brokered filesystem.
 
-#ifndef Tools_fsclient_Utility_h
-#define Tools_fsclient_Utility_h
+#ifndef FsBroker_Lib_Utility_h
+#define FsBroker_Lib_Utility_h
 
-#include <FsBroker/Lib/Client.h>
+#include "Client.h"
 
 #include <string>
 
-using namespace std;
-
 namespace Hypertable {
-namespace fsclient {
+namespace FsBroker {
+namespace Lib {
+  
+  extern void copy(ClientPtr &client, const std::string &from,
+                   const std::string &to, int64_t offset=0);
 
-  void copy_from_local(FsBroker::Lib::ClientPtr &client,
-                       const string &from, const string &to, int64_t offset=0);
+  extern void copy_from_local(ClientPtr &client, const std::string &from,
+                              const std::string &to, int64_t offset=0);
 
-  void copy_to_local(FsBroker::Lib::ClientPtr &client,
-                     const string &from, const string &to, int64_t offset=0);
+  extern void copy_to_local(ClientPtr &client, const std::string &from,
+                            const std::string &to, int64_t offset=0);
+}}}
 
-}}
-
-#endif // Tools_fsclient_Utility_h
+#endif // FsBroker_Lib_Utility_h

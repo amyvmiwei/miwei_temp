@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
+PIDFILE=$HT_HOME/run/RangeServer.pid
 HT_SHELL=$HT_HOME/bin/hypertable
 SCRIPT_DIR=`dirname $0`
 TTL=10

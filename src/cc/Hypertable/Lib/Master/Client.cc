@@ -586,7 +586,7 @@ Master::Client::alter_table(const String &name, const String &schema,
   }
 }
 
-Status::Code Master::Client::status(string &text, Timer *timer) {
+void Master::Client::status(Status &status, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
 
@@ -603,9 +603,8 @@ Status::Code Master::Client::status(string &text, Timer *timer) {
     size_t remain = event->payload_len - 4;
     Response::Parameters::Status params;
     params.decode(&ptr, &remain);
-    Status::Code code;
-    params.status().get(&code, text);
-    return code;
+    status = params.status();
+    return;
   }
 
   ScopedLock lock(m_mutex);

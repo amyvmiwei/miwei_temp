@@ -24,14 +24,15 @@
 /// This file contains declarations for CommitLogBlockStream, a class abstraction
 /// for reading a stream of blocks from a commit log.
 
-#ifndef HYPERTABLE_COMMITLOGBLOCKSTREAM_H
-#define HYPERTABLE_COMMITLOGBLOCKSTREAM_H
+#ifndef Hypertable_Lib_CommitLogBlockStream_h
+#define Hypertable_Lib_CommitLogBlockStream_h
 
 #include <Hypertable/Lib/BlockHeaderCommitLog.h>
 
 #include <Common/DynamicBuffer.h>
 #include <Common/String.h>
 #include <Common/Filesystem.h>
+#include <Common/Status.h>
 
 namespace Hypertable {
 
@@ -123,6 +124,9 @@ namespace Hypertable {
 
     int load_next_valid_header(BlockHeaderCommitLog *header);
 
+    bool archive_bad_fragment(const std::string &fname,
+                              std::string &archive_fname);
+
     /// Pointer to filesystem
     FilesystemPtr m_fs;
 
@@ -154,5 +158,4 @@ namespace Hypertable {
   /// @}
 }
 
-#endif // HYPERTABLE_COMMITLOGBLOCKSTREAM_H
-
+#endif // Hypertable_Lib_CommitLogBlockStream_h

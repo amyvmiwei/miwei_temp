@@ -39,11 +39,11 @@ void OperationStatus::execute() {
   Status status;
 
   if (m_context->startup_in_progress())
-    status.set(Status::Code::WARNING, "server is coming up");
+    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_COMING_UP);
   else if (m_context->shutdown_in_progress())
-    status.set(Status::Code::WARNING, "server is shutting down");
+    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_SHUTTING_DOWN);
   else if (!m_context->master_file->lock_acquired())
-    status.set(Status::Code::OK, "standby");
+    status.set(Status::Code::OK, Status::Text::STANDBY);
   else if (m_context->quorum_reached) {
     size_t connected_servers = m_context->available_server_count();
     size_t total_servers = m_context->rsc_manager->server_count();

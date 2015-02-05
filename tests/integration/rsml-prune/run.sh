@@ -3,7 +3,7 @@
 HYPERTABLE_HOME=/opt/hypertable/current
 HT_TEST_DFS=${HT_TEST_DFS:-local}
 
-PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
+PIDFILE=$HYPERTABLE_HOME/run/RangeServer.pid
 
 $HYPERTABLE_HOME/bin/start-test-servers.sh --clean --no-thriftbroker
 

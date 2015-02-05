@@ -77,7 +77,7 @@ done
 
 ## Restart Master
 kill `cat $HT_HOME/run/Master.pid`
-$HT_HOME/bin/start-master.sh --config=${SCRIPT_DIR}/test.cfg
+$HT_HOME/bin/ht-start-master.sh --config=${SCRIPT_DIR}/test.cfg
 
 # dump keys
 $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql \

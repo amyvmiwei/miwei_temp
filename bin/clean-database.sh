@@ -70,6 +70,7 @@ case $confirm in
     /bin/rm -rf $RUNTIME_ROOT/run/log_backup/mml/*
     /bin/rm -rf $RUNTIME_ROOT/run/location
     /bin/rm -rf $RUNTIME_ROOT/run/last-fs
+    /bin/rm -rf $RUNTIME_ROOT/run/STATUS.*
     echo "Cleared hyperspace"
     #/bin/rm -rf $RUNTIME_ROOT/run/monitoring/*
     #echo "Cleared monitoring data"

@@ -1,5 +1,0 @@
-/// @defgroup RangeServerResponseParameters Parameters
-/// @ingroup RangeServerResponse
-/// %Response parameters.
-/// This module contains encode/decode classes for response parameters to range
-/// server functions.

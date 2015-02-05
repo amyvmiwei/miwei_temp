@@ -27,7 +27,8 @@
 #include <Common/Compat.h>
 
 #include "FsTestThreadFunction.h"
-#include "Utility.h"
+
+#include <FsBroker/Lib/Utility.h>
 
 #include <Common/Error.h>
 #include <Common/Logger.h>
@@ -48,9 +49,9 @@ void fsclient::FsTestThreadFunction::operator()() {
 
   try {
 
-    copy_from_local(m_client, m_input_file, m_dfs_file);
+    FsBroker::Lib::copy_from_local(m_client, m_input_file, m_dfs_file);
 
-    copy_to_local(m_client, m_dfs_file, m_output_file);
+    FsBroker::Lib::copy_to_local(m_client, m_dfs_file, m_output_file);
 
     // Determine original file size
     struct stat statbuf;

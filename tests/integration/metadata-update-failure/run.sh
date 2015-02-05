@@ -22,7 +22,7 @@ gen_test_data() {
 
 stop_range_server() {
   # stop any existing range server if necessary
-  pidfile=$HT_HOME/run/Hypertable.RangeServer.pid
+  pidfile=$HT_HOME/run/RangeServer.pid
   if [ -f $pidfile ]; then
     kill -9 `cat $pidfile`
     rm -f $pidfile

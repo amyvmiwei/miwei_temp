@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2015 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,15 +22,15 @@
 /// @file
 /// Definitions for Status response parameters.
 /// This file contains definitions for Status, a class for encoding and
-/// decoding response paramters from the <i>status</i> file system broker
-/// function.
+/// decoding response paramters from the <i>status</i>
+/// %RangeServer function.
 
 #include <Common/Compat.h>
 
 #include "Status.h"
 
 using namespace Hypertable;
-using namespace Hypertable::FsBroker::Lib;
+using namespace Hypertable::Lib::RangeServer;
 
 uint8_t Response::Parameters::Status::encoding_version() const {
   return 1;
@@ -40,6 +40,18 @@ size_t Response::Parameters::Status::encoded_length_internal() const {
   return m_status.encoded_length();
 }
 
+/// @details
+/// Encoding is as follows:
+/// <table>
+/// <tr>
+/// <th>Encoding</th>
+/// <th>Description</th>
+/// </tr>
+/// <tr>
+/// <td>Hypertable::Status</td>
+/// <td>%Status information</td>
+/// </tr>
+/// </table>
 void Response::Parameters::Status::encode_internal(uint8_t **bufp) const {
   m_status.encode(bufp);
 }

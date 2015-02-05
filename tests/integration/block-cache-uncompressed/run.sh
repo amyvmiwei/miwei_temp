@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 WRITE_SIZE=${WRITE_SIZE:-"20000000"}
-RS_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
+RS_PIDFILE=$HT_HOME/run/RangeServer.pid
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver
 
@@ -43,8 +43,8 @@ if [ $? != 0 ] ; then
   exit 1
 fi
 
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.pid`
-\rm -f $HT_HOME/run/Hypertable.RangeServer.pid
+kill -9 `cat $HT_HOME/run/RangeServer.pid`
+\rm -f $HT_HOME/run/RangeServer.pid
 $HT_HOME/bin/clean-database.sh
 
 exit 0

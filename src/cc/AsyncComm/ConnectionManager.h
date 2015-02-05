@@ -108,7 +108,7 @@ namespace Hypertable {
     struct LtConnectionState {
       bool operator()(const ConnectionStatePtr &cs1,
                       const ConnectionStatePtr &cs2) const {
-        return cs1->next_retry > cs2->next_retry;
+        return std::chrono::operator>(cs1->next_retry, cs2->next_retry);
       }
     };
 

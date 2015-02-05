@@ -2,7 +2,7 @@
 
 SCRIPT_DIR=`dirname $0`
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
-RS_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
+RS_PIDFILE=$HT_HOME/run/RangeServer.pid
 
 set -v
 

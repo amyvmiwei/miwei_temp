@@ -37,13 +37,14 @@ namespace Handler {
 
   class Status : public ApplicationHandler {
   public:
-    Status(Comm *comm, EventPtr &event)
-      : ApplicationHandler(event), m_comm(comm) { }
+    Status(Comm *comm, Apps::RangeServer *rs, EventPtr &event)
+      : ApplicationHandler(event), m_comm(comm), m_range_server(rs) { }
 
     virtual void run();
 
   private:
     Comm *m_comm;
+    Apps::RangeServer *m_range_server;
   };
 
   /// @}

@@ -132,6 +132,7 @@ Response/Callback/AcknowledgeLoad.cc
 Response/Callback/CreateScanner.cc
 Response/Callback/GetStatistics.cc
 Response/Callback/PhantomUpdate.cc
+Response/Callback/Status.cc
 Response/Callback/Update.cc
 ScanContext.cc
 ScannerMap.cc

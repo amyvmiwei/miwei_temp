@@ -73,25 +73,28 @@ namespace {
 
   class RangeServerDispatchHandler : public DispatchHandler {
   public:
-    RangeServerDispatchHandler() : m_connected(false) { return; }
+    RangeServerDispatchHandler(bool silent) : m_silent(silent) { }
     virtual void handle(EventPtr &event_ptr) {
       if (event_ptr->type == Event::DISCONNECT) {
         if (!m_connected) {
-          cout << "Unable to establish connection to range server" << endl;
-          _exit(0);
+          if (!m_silent)
+            cout << "RangeServer CRITICAL - connect error" << endl;
+          _exit(2);
         }
       }
       else if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
         m_connected = true;
     }
   private:
-    bool m_connected;
+    bool m_silent {};
+    bool m_connected {};
   };
 
 } // local namespace
 
 
 int main(int argc, char **argv) {
+  bool silent {};
   int error = 1;
   bool no_hyperspace = false;
 
@@ -100,6 +103,7 @@ int main(int argc, char **argv) {
 
     int timeout = get_i32("timeout");
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
+    silent = has("silent") && get_bool("silent");
 
     if (has("no-hyperspace"))
       no_hyperspace = true;
@@ -109,11 +113,12 @@ int main(int argc, char **argv) {
     // Create Range Server client object
     RangeServer::ClientPtr client = make_shared<RangeServer::Client>(comm, timeout);
 
-    DispatchHandlerPtr dispatch_handler_ptr = make_shared<RangeServerDispatchHandler>();
+    DispatchHandlerPtr dispatch_handler_ptr = make_shared<RangeServerDispatchHandler>(silent);
     // connect to RangeServer
     if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
-      cerr << "error: unable to connect to RangeServer "<< addr << endl;
-      _exit(1);
+      if (!silent)
+        cout << "RangeServer CRITICAL - connect error" << endl;
+      _exit(2);
     }
 
     poll(0, 0, 100);
@@ -122,8 +127,11 @@ int main(int argc, char **argv) {
     Hyperspace::SessionPtr hyperspace;
     if (!no_hyperspace) {
       hyperspace = new Hyperspace::Session(comm, properties);
-      if (!hyperspace->wait_for_connection(timeout))
-        _exit(1);
+      if (!hyperspace->wait_for_connection(timeout)) {
+        if (!silent)
+          cout << "RangeServer CRITICAL - Unable to connecto to Hyperspace" << endl;
+        _exit(2);
+      }
     }
 
     CommandInterpreterPtr interp =
@@ -134,8 +142,14 @@ int main(int argc, char **argv) {
     error = shell->run();
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    _exit( e.code() );
+    if (!silent) {
+      cout << "RangeServer CRITICAL - " << Error::get_text(e.code());
+      const char *msg = e.what();
+      if (msg && *msg)
+        cout << " - " << msg;
+      cout << endl;
+    }
+    _exit(2);
   }
   _exit(error);
 }

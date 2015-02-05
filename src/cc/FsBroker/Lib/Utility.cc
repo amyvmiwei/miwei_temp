@@ -21,12 +21,14 @@
 
 /// @file
 /// Definitions of utility functions.
-/// This file contains definitions for utility functions used by fsclient and
-/// test programs.
+/// This file contains definitions for utility functions for manipulating files
+/// in the brokered filesystem.
 
 #include <Common/Compat.h>
 
 #include "Utility.h"
+
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
 
 #include <Common/Error.h>
 #include <Common/Logger.h>
@@ -40,9 +42,63 @@ namespace {
   const int BUFFER_SIZE = 32768;
 }
 
-void fsclient::copy_from_local(FsBroker::Lib::ClientPtr &client,
-                               const string &from, const string &to,
-                               int64_t offset) {
+void FsBroker::Lib::copy(ClientPtr &client, const std::string &from,
+                         const std::string &to, int64_t offset) {
+  DispatchHandlerSynchronizer sync_handler;
+  int32_t from_fd {};
+  int32_t to_fd {};
+
+  try {
+
+    from_fd = client->open(from, 0);
+    if (offset > 0)
+      client->seek(from_fd, offset);
+
+    to_fd = client->create(to, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);    
+
+    client->read(from_fd, BUFFER_SIZE, &sync_handler);
+    client->read(from_fd, BUFFER_SIZE, &sync_handler);
+    client->read(from_fd, BUFFER_SIZE, &sync_handler);
+
+    EventPtr event;
+    uint8_t *dst;
+    uint32_t amount;
+
+    while (sync_handler.wait_for_reply(event)) {
+
+      client->decode_response_pread(event, (const void **)&dst, (uint64_t *)&offset, &amount);
+
+      StaticBuffer send_buf;
+      if (amount > 0) {
+        send_buf.set(dst, amount, false);
+        client->append(to_fd, send_buf, 0);
+      }
+
+      if (amount < (uint32_t)BUFFER_SIZE) {
+        sync_handler.wait_for_reply(event);
+        break;
+      }
+
+      client->read(from_fd, BUFFER_SIZE, &sync_handler);
+    }
+
+    client->close(from_fd);
+    client->close(to_fd);
+
+  }
+  catch (Exception &e) {
+    if (from_fd)
+      client->close(from_fd);
+    if (to_fd)
+      client->close(to_fd);
+    throw;
+  }
+
+}
+
+
+void FsBroker::Lib::copy_from_local(ClientPtr &client, const string &from, const string &to,
+                                    int64_t offset) {
   DispatchHandlerSynchronizer sync_handler;
   int32_t fd = 0;
   FILE *fp = 0;
@@ -91,9 +147,8 @@ void fsclient::copy_from_local(FsBroker::Lib::ClientPtr &client,
 }
 
 
-void fsclient::copy_to_local(FsBroker::Lib::ClientPtr &client,
-                             const string &from, const string &to,
-                             int64_t offset) {
+void FsBroker::Lib::copy_to_local(ClientPtr &client, const string &from, const string &to,
+                                  int64_t offset) {
   DispatchHandlerSynchronizer sync_handler;
   FILE *fp = 0;
 

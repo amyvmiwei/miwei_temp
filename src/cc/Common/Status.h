@@ -55,10 +55,23 @@ namespace Hypertable {
       UNKNOWN = 3
     };
 
+    /// Status text string constants.
+    class Text {
+    public:
+      static constexpr const char *SERVER_IS_COMING_UP = "Server is coming up";
+      static constexpr const char *SERVER_IS_SHUTTING_DOWN = "Server is shutting down";
+      static constexpr const char *STANDBY = "Standby";
+    };
+
     static const char *code_to_string(Code code);
 
     /// Constructor.
     Status() { }
+
+    /// Constructor with initial values.
+    /// @param code %Status code
+    /// @param text %Status text
+    Status(Code code, const std::string &text) : m_code(code), m_text(text) {}
 
     /// Copy constructor.
     /// @param other Other status object from which to copy

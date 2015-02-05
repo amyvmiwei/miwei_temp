@@ -22,6 +22,7 @@ $HT_HOME/bin/stop-servers.sh
 
 # Copy previous RSML file which contains the deleted table LoadTest
 \cp -f $HT_HOME/fs/local/hypertable/servers/rs1/log/rsml/0 $HT_HOME/fs/local/hypertable/servers/rs1/log/rsml/1
+\cp -f $HT_HOME/fs/local/hypertable/servers/rs1/log/rsml/0 $HT_HOME/run/log_backup/rsml/rs1/1
 
 $HT_HOME/bin/start-test-servers.sh --no-thriftbroker
 

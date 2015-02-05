@@ -49,8 +49,11 @@ int MasterCommandInterpreter::execute_line(const String &line) {
       m_master->shutdown();
     }
     else if (state.command == COMMAND_STATUS) {
+      Status status;
       string output;
-      Status::Code code = m_master->status(output);
+      Status::Code code;
+      m_master->status(status);
+      status.get(&code, output);
       if (!m_silent) {
         cout << "Master " << Status::code_to_string(code);
         if (!output.empty())

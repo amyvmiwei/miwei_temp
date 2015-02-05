@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 HT_SHELL=$HT_HOME/bin/hypertable
-PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
+PIDFILE=$HT_HOME/run/RangeServer.pid
 SCRIPT_DIR=`dirname $0`
 startlog=/tmp/start-metadata-split$$.log
 

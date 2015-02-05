@@ -40,6 +40,13 @@ public class Status extends Serializable {
     }
   };
 
+  /// Status text string constants.
+  public class Text {
+    static public final String SERVER_IS_COMING_UP = "Server is coming up";
+    static public final String SERVER_IS_SHUTTING_DOWN = "Server is shutting down";
+    static public final String STANDBY = "Standby";
+  };
+
   /** Constructor.
    */
   public Status() { }

@@ -23,7 +23,7 @@ start_master_and_rangeservers() {
     local CONFIG=$1
     shift
 
-    $HT_HOME/bin/start-master.sh $CONFIG
+    $HT_HOME/bin/ht-start-master.sh $CONFIG
 
     $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
         --Hypertable.RangeServer.ProxyName=rs1 \

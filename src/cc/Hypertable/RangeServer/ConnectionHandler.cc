@@ -135,7 +135,7 @@ void ConnectionHandler::handle(EventPtr &event) {
                                                     event);
         break;
       case Lib::RangeServer::Protocol::COMMAND_STATUS:
-        handler = new Request::Handler::Status(m_comm, event);
+        handler = new Request::Handler::Status(m_comm, m_range_server, event);
         break;
       case Lib::RangeServer::Protocol::COMMAND_WAIT_FOR_MAINTENANCE:
         handler = new Request::Handler::WaitForMaintenance(m_comm, m_range_server, event);

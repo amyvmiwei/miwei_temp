@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2015 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,27 +19,31 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Definitions for Status response callback.
+/// This file contains definitions for Status, a response callback class used
+/// to deliver results of the <i>status</i> function call back to the client.
+
 #include <Common/Compat.h>
 
 #include "Status.h"
 
-#include <Hypertable/RangeServer/RangeServer.h>
-#include <Hypertable/RangeServer/Response/Callback/Status.h>
+#include <Hypertable/Lib/RangeServer/Response/Parameters/Status.h>
 
-#include <AsyncComm/ResponseCallback.h>
+#include <AsyncComm/CommBuf.h>
+#include <AsyncComm/CommHeader.h>
+
+#include <Common/Error.h>
 
 using namespace Hypertable;
 using namespace Hypertable::RangeServer;
 
-void Request::Handler::Status::run() {
-  Response::Callback::Status cb(m_comm, m_event);
-
-  try {
-    m_range_server->status(&cb);
-  }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    cb.error(e.code(), e.what());
-    return;
-  }
+int Response::Callback::Status::response(Hypertable::Status &status) {
+  CommHeader header;
+  header.initialize_from_request_header(m_event->header);
+  Lib::RangeServer::Response::Parameters::Status params(status);
+  CommBufPtr cbuf(new CommBuf(header, 4+params.encoded_length()));
+  cbuf->append_i32(Error::OK);
+  params.encode(cbuf->get_data_ptr_address());
+  return m_comm->send_response(m_event->addr, cbuf);
 }

@@ -61,11 +61,13 @@
 
 #include <Common/FailureInducer.h>
 #include <Common/FileUtils.h>
-#include <Common/md5.h>
 #include <Common/Random.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Status.h>
+#include <Common/StatusPersister.h>
 #include <Common/StringExt.h>
 #include <Common/SystemInfo.h>
-#include <Common/ScopeGuard.h>
+#include <Common/md5.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -81,11 +83,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <unordered_map>
 
 extern "C" {
@@ -359,6 +363,28 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
   HT_INFOF("Prune thresholds - min=%lld, max=%lld", (Lld)Global::log_prune_threshold_min,
            (Lld)Global::log_prune_threshold_max);
 
+  m_startup = false;
+
+}
+
+void Apps::RangeServer::status(Response::Callback::Status *cb) {
+  Hypertable::Status status;
+  if (m_startup)
+    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_COMING_UP);
+  else if (m_shutdown)
+    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_SHUTTING_DOWN);
+  else {
+    Timer timer(cb->event()->header.timeout_ms, true);
+    Global::dfs->status(status, &timer);
+    Status::Code code;
+    string text;
+    status.get(&code, text);
+    if (code != Status::Code::OK)
+      status.set(code, format("[fsbroker] %s", text.c_str()));
+    else
+      StatusPersister::get(status);
+  }
+  cb->response(status);
 }
 
 void Apps::RangeServer::shutdown() {
@@ -481,7 +507,7 @@ void Apps::RangeServer::initialize(PropertiesPtr &props) {
 
     HT_INFOF("Waiting for exclusive lock on hyperspace:/%s ...",
              top_dir.c_str());
-    poll(0, 0, 5000);
+    this_thread::sleep_for(chrono::milliseconds(5000));
   }
 
   Global::log_dir = top_dir + "/log";
@@ -591,11 +617,8 @@ void Apps::RangeServer::local_recover() {
       new MetaLog::Reader(Global::log_dfs, rsml_definition, rsml_dir);
   }
   catch (Exception &e) {
-    while (true) {
-      HT_ERRORF("Problem reading RSML %s:  %s - %s", rsml_dir.c_str(),
-                Error::get_text(e.code()), e.what());
-      poll(0, 0, 30000);
-    }
+    HT_FATALF("Problem reading RSML %s:  %s - %s", rsml_dir.c_str(),
+              Error::get_text(e.code()), e.what());
   }
 
   try {
@@ -1834,7 +1857,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
       int64_t diff = (revision - now) / 1000000;
       HT_WARNF("Clock skew detected when loading range; waiting for %lld "
                "millisec", (long long int)diff);
-      poll(0, 0, diff);
+      this_thread::sleep_for(chrono::milliseconds(diff));
     }
 
     m_context->live_map->promote_staged_range(table, range, range_state.transfer_log);

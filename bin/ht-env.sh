@@ -37,7 +37,7 @@ server_pidfile() {
     dfsbroker)          echo $RUNTIME_ROOT/run/DfsBroker.*.pid | grep -v "*";;
     fsbroker)           echo $RUNTIME_ROOT/run/FsBroker.*.pid | grep -v "*";;
     master)             echo $RUNTIME_ROOT/run/Master.pid;;
-    rangeserver)        echo $RUNTIME_ROOT/run/Hypertable.RangeServer.pid;;
+    rangeserver)        echo $RUNTIME_ROOT/run/RangeServer.pid;;
     thriftbroker)       echo $RUNTIME_ROOT/run/ThriftBroker*.pid | grep -v "*";;
     testclient)         echo $RUNTIME_ROOT/run/Hypertable.TestClient*.pid | grep -v "*";;
     testdispatcher)     echo $RUNTIME_ROOT/run/Hypertable.TestDispatcher.pid;;
@@ -157,27 +157,28 @@ wait_for_ok() {
   server_desc=$1; shift
   max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
-  local silent="--silent"
+  retries=${retries:-0}
 
-  retries=0
-  $HYPERTABLE_HOME/bin/ht-check-${server}.sh $silent "$@"
+  $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
   ret=$?
-  while [ $ret -ne 0 ] && [ $retries -lt $max_retries ]; do
+  while [ $ret -ge 2 ] && [ $retries -lt $max_retries ]; do
+    sleep 1
     let retries=retries+1
     let report=retries%$report_interval
-    silent="--silent"
     if [ $report == 0 ]; then
-        silent=
+        STATUS_TEXT=`$HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"`
+        ret=$?
+        if [ $ret -ge 2 ] && [[ $STATUS_TEXT == *"Server is coming up" ]] ; then
+           echo "Waiting for $server_desc to come up ..."
+        else
+           echo "$STATUS_TEXT"
+        fi
+    else
+        $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
+        ret=$?
     fi
-    sleep 1
-    $HYPERTABLE_HOME/bin/ht-check-${server}.sh $silent "$@"
-    ret=$?
   done
-  if [ -n "$silent" ]; then
-    $HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"
-    ret=$?
-  fi
-  return $ret
+  $HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"
 }
 
 
@@ -193,7 +194,7 @@ wait_for_critical() {
   while [ $ret -ne 2 ] && [ $retries -lt $max_retries ]; do
     let retries=retries+1
     let report=retries%$report_interval
-    [ $report == 0 ] && echo "Waiting for $server_desc to shutdown..."
+    [ $report == 0 ] && echo "Waiting for $server_desc to shutdown ..."
     sleep 1
     $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
     ret=$?

@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2015 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,11 +22,11 @@
 /// @file
 /// Declarations for Status response parameters.
 /// This file contains declarations for Status, a class for encoding and
-/// decoding response paramters from the <i>status</i> file system broker
-/// function.
+/// decoding response paramters from the <i>status</i>
+/// %RangeServer function.
 
-#ifndef FsBroker_Lib_Response_Parameters_Status_h
-#define FsBroker_Lib_Response_Parameters_Status_h
+#ifndef Hypertable_Lib_RangeServer_Response_Parameters_Status_h
+#define Hypertable_Lib_RangeServer_Response_Parameters_Status_h
 
 #include <Common/Serializable.h>
 
@@ -37,12 +37,12 @@
 using namespace std;
 
 namespace Hypertable {
-namespace FsBroker {
 namespace Lib {
+namespace RangeServer {
 namespace Response {
 namespace Parameters {
 
-  /// @addtogroup FsBrokerLibResponseParameters
+  /// @addtogroup libHypertableRangeServerResponseParameters
   /// @{
 
   /// %Response parameters for <i>open</i> requests.
@@ -56,25 +56,38 @@ namespace Parameters {
     /// Constructor.
     /// Initializes with parameters for encoding.  Initializes #m_status with
     /// <code>status</code>.
-    /// @param status Status information
+    /// @param status %Status information
     Status(const Hypertable::Status &status) : m_status(status) {}
 
     /// Gets status information
-    /// @return Status information
+    /// @return %Status information
     const Hypertable::Status &status() const { return m_status; }
 
   private:
 
+    /// Returns encoding version.
+    /// @return Encoding version
     uint8_t encoding_version() const override;
 
+    /// Returns internal serialized length.
+    /// @return Internal serialized length
+    /// @see encode_internal() for encoding format
     size_t encoded_length_internal() const override;
 
+    /// Writes serialized representation of object to a buffer.
+    /// @param bufp Address of destination buffer pointer (advanced by call)
     void encode_internal(uint8_t **bufp) const override;
 
+    /// Reads serialized representation of object from a buffer.
+    /// @param version Encoding version
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of serialized object
+    /// remaining
+    /// @see encode_internal() for encoding format
     void decode_internal(uint8_t version, const uint8_t **bufp,
 			 size_t *remainp) override;
 
-    /// Status information
+    /// %Status information
     Hypertable::Status m_status;
 
   };
@@ -83,4 +96,4 @@ namespace Parameters {
 
 }}}}}
 
-#endif // FsBroker_Lib_Response_Parameters_Status_h
+#endif // Hypertable_Lib_RangeServer_Response_Parameters_Status_h

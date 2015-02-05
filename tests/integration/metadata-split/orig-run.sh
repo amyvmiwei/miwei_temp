@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
-PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
+PIDFILE=$HT_HOME/run/RangeServer.pid
 SCRIPT_DIR=`dirname $0`
 
 ulimit -n 1024

@@ -131,6 +131,7 @@ RangeServer/Request/Parameters/UpdateSchema.cc
 RangeServer/Response/Parameters/AcknowledgeLoad.cc
 RangeServer/Response/Parameters/CreateScanner.cc
 RangeServer/Response/Parameters/GetStatistics.cc
+RangeServer/Response/Parameters/Status.cc
 RangeServerRecovery/FragmentReplayPlan.cc
 RangeServerRecovery/Plan.cc
 RangeServerRecovery/ReceiverPlan.cc
