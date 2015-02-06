@@ -47,17 +47,26 @@ MetricsHandler::MetricsHandler(PropertiesPtr &props) {
 }
 
 void MetricsHandler::start_collecting() {
+  if (m_started)
+    return;
   int error;
   if ((error = m_comm->set_timer(m_collection_interval, shared_from_this())) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+  m_started = true;
 }
 
 void MetricsHandler::stop_collecting() {
+  if (!m_started)
+    return;
   m_comm->cancel_timer(shared_from_this());
+  m_started = false;
 }
 
 void MetricsHandler::handle(Hypertable::EventPtr &event) {
   int error;
+
+  if (!m_started)
+    return;
 
   if (event->type == Hypertable::Event::TIMER) {
 

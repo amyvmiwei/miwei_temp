@@ -513,6 +513,8 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.ProxyName", str()->default_value(""),
         "Use this value for the proxy name (if set) instead of reading from run dir.")
     ("ThriftBroker.Timeout", i32(), "Timeout (ms) for thrift broker")
+    ("ThriftBroker.Host", str()->default_value("localhost"),
+     "Host on which the ThriftBroker is running (read by clients only)")
     ("ThriftBroker.Port", i16()->default_value(15867), "Port number for "
         "thrift broker")
     ("ThriftBroker.Future.Capacity", i32()->default_value(50*M), "Capacity "

@@ -619,6 +619,30 @@ struct Schema {
 }
 
 
+/** Status codes.
+ */
+enum StatusCode {
+  OK = 0,
+  WARNING = 1,
+  CRITICAL = 2,
+  UNKNOWN = 3
+}
+
+/** Status information.
+ *
+ * <dl>
+ *   <dt>code</dt>
+ *   <dd>Status code</dd>
+ *
+ *   <dt>text</dt>
+ *   <dd>Status text</dd>
+ * </dl>
+ */
+struct Status {
+  1: required i32 code = StatusCode.OK
+  2: required string text
+}
+
 
 /**
  * Exception for thrift clients.
@@ -1382,5 +1406,14 @@ service ClientService {
    * @return the descriptive string, or "ERROR NOT REGISTERED" if the error
    *    code is unknown
    */
-  string error_get_text(1:i32 error_code);
+  string error_get_text(1:i32 error_code),
+
+  /** Status check.
+   * @return Status information
+   */
+  Status status() throws (1:ClientException e),
+
+  /** Shutdown broker. */         
+  void shutdown() throws (1:ClientException e);
+
 }

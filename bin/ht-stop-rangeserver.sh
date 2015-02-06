@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2007-2014 Hypertable, Inc.
+# Copyright (C) 2007-2015 Hypertable, Inc.
 #
 # This file is part of Hypertable.
 #
@@ -24,6 +24,8 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-stop_server rangeserver
+echo 'shutdown' | $HYPERTABLE_HOME/bin/ht rsclient --batch --silent --no-hyperspace $@
 wait_for_critical rangeserver "RangeServer" "$@"
-
+if [ $? -ne 0 ]; then
+  stop_server rangeserver
+fi

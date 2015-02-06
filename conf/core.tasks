@@ -87,7 +87,7 @@ task: push_config {
 # Stops the ThriftBroker from the current installation.
 task: stop_thriftbrokers_primary roles: master, slave {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker
+    ${INSTALL_PREFIX}/current/bin/ht-stop-thriftbroker.sh ${CONFIG}
   }
 }
 
@@ -96,7 +96,7 @@ task: stop_thriftbrokers_primary roles: master, slave {
 # Stops the FSBroker and ThriftBroker from the current installation.
 task: stop_thriftbrokers_only roles: thriftbroker {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-stop-thriftbroker.sh ${CONFIG} || exit \$?
     ${INSTALL_PREFIX}/current/bin/ht-stop-fsbroker.sh ${CONFIG} || exit \$?
   }
 }
@@ -124,7 +124,7 @@ task: stop_fsbrokers roles: master, slave {
 # Stops RangeServers in the current installation.
 task: stop_slaves roles: slave {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-stop-rangeserver.sh
+    ${INSTALL_PREFIX}/current/bin/ht-stop-rangeserver.sh ${CONFIG}
   }
 }
 
@@ -289,7 +289,7 @@ task: start_slaves roles: slave {
 # Start ThriftBrokers on primary servers.
 task: start_thriftbrokers_primary roles: master, slave {
   ssh: random-start-delay=5000 {
-    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS}
+    ${INSTALL_PREFIX}/current/bin/ht-start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS}
   }
 }
 
@@ -298,7 +298,7 @@ task: start_thriftbrokers_primary roles: master, slave {
 task: start_thriftbrokers_only roles: thriftbroker {
   ssh: random-start-delay=5000 {
     ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
-    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS} || exit \$?
   }
 }
 

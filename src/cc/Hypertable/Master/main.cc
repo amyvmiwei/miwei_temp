@@ -121,206 +121,210 @@ namespace {
 
 
 int main(int argc, char **argv) {
+  int exit_status {};
+  InetAddr listen_addr;
   ContextPtr context;
 
   // Register ourselves as the Comm-layer proxy master
   ReactorFactory::proxy_master = true;
 
-  try {
-    init_with_policies<Policies>(argc, argv);
-    uint16_t port = get_i16("port");
-    Hyperspace::SessionPtr hyperspace = new Hyperspace::Session(Comm::instance(), properties);
+  while (true) {
 
-    context = new Context(properties, hyperspace);
-    context->monitoring = new Monitoring(context.get());
-    context->op = make_unique<OperationProcessor>(context, get_i32("workers"));
+    try {
+      init_with_policies<Policies>(argc, argv);
+      uint16_t port = get_i16("port");
+      listen_addr = InetAddr(INADDR_ANY, port);
 
-    ConnectionHandlerFactoryPtr connection_handler_factory(new HandlerFactory(context));
-    InetAddr listen_addr(INADDR_ANY, port);
-    context->comm->listen(listen_addr, connection_handler_factory);
+      Hyperspace::SessionPtr hyperspace = new Hyperspace::Session(Comm::instance(), properties);
+      context = new Context(properties, hyperspace);
+      context->monitoring = new Monitoring(context.get());
+      context->op = make_unique<OperationProcessor>(context, get_i32("workers"));
 
-    auto func = [&context](bool status){context->set_startup_status(status);};
-    if (!context->master_file->obtain_master_lock(context->toplevel_dir, func)){
-      context->start_shutdown();
-      context->op->join();
-      context->comm->close_socket(listen_addr);
-      context.reset();
-      return 0;
-    }
-    
-    // Load (and possibly generate) the cluster ID
-    ClusterId cluster_id(context->hyperspace, ClusterId::GENERATE_IF_NOT_FOUND);
-    HT_INFOF("Cluster id is %llu", (Llu)ClusterId::get());
+      ConnectionHandlerFactoryPtr connection_handler_factory(new HandlerFactory(context));
+      context->comm->listen(listen_addr, connection_handler_factory);
 
-    context->mml_definition =
-        new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
-    context->monitoring = new Monitoring(context.get());
-
-    if (has("induce-failure")) {
-      if (FailureInducer::instance == 0)
-        FailureInducer::instance = new FailureInducer();
-      FailureInducer::instance->parse_option(get_str("induce-failure"));
-    }
-
-    /**
-     * Read/load MML
-     */
-    std::vector<MetaLog::EntityPtr> entities;
-    std::vector<OperationPtr> operations;
-    std::map<String, OperationPtr> recovery_ops;
-    MetaLog::ReaderPtr mml_reader;
-    OperationPtr operation;
-    RangeServerConnectionPtr rsc;
-    String log_dir = context->toplevel_dir + "/servers/master/log/"
-        + context->mml_definition->name();
-    BalancePlanAuthority *bpa {};
-
-    mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
-            log_dir);
-    mml_reader->get_entities(entities);
-
-    // Uniq-ify the RangeServerConnection and BalancePlanAuthority objects
-    {
-      std::vector<MetaLog::EntityPtr> entities2;
-      std::set<RangeServerConnectionPtr, ltrsc> rsc_set;
-
-      entities2.reserve(entities.size());
-      foreach_ht (MetaLog::EntityPtr &entity, entities) {
-	if (dynamic_cast<RangeServerConnection *>(entity.get())) {
-	  RangeServerConnectionPtr rsc {dynamic_pointer_cast<RangeServerConnection>(entity)};
-          if (rsc_set.count(rsc) > 0)
-            rsc_set.erase(rsc);
-          rsc_set.insert(rsc);
-        }
-	else {
-	  if (dynamic_cast<BalancePlanAuthority *>(entity.get())) {
-	    bpa = dynamic_cast<BalancePlanAuthority *>(entity.get());
-	    context->set_balance_plan_authority(entity);
-	  }
-	  else if (dynamic_cast<SystemState *>(entity.get()))
-	    context->system_state = dynamic_pointer_cast<SystemState>(entity);
-          entities2.push_back(entity);
-        }
+      auto func = [&context](bool status){context->set_startup_status(status);};
+      if (!context->master_file->obtain_master_lock(context->toplevel_dir, func)){
+        context->start_shutdown();
+        context->op->join();
+        break;
       }
-      // Insert uniq'ed RangeServerConnections
-      foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
-        entities2.push_back(rsc);
-      entities.swap(entities2);
-    }
+    
+      // Load (and possibly generate) the cluster ID
+      ClusterId cluster_id(context->hyperspace, ClusterId::GENERATE_IF_NOT_FOUND);
+      HT_INFOF("Cluster id is %llu", (Llu)ClusterId::get());
 
-    if (!context->system_state)
-      context->system_state = make_shared<SystemState>();
+      context->mml_definition =
+        new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
+      context->monitoring = new Monitoring(context.get());
 
-    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              log_dir, entities);
+      if (has("induce-failure")) {
+        if (FailureInducer::instance == 0)
+          FailureInducer::instance = new FailureInducer();
+        FailureInducer::instance->parse_option(get_str("induce-failure"));
+      }
 
-    if (bpa) {
-      bpa->set_mml_writer(context->mml_writer);
-      std::stringstream sout;
-      sout << "Loading BalancePlanAuthority: " << *bpa;
-      HT_INFOF("%s", sout.str().c_str());
-    }
+      /**
+       * Read/load MML
+       */
+      std::vector<MetaLog::EntityPtr> entities;
+      std::vector<OperationPtr> operations;
+      std::map<String, OperationPtr> recovery_ops;
+      MetaLog::ReaderPtr mml_reader;
+      OperationPtr operation;
+      RangeServerConnectionPtr rsc;
+      String log_dir = context->toplevel_dir + "/servers/master/log/"
+        + context->mml_definition->name();
+      BalancePlanAuthority *bpa {};
 
-    context->response_manager->set_mml_writer(context->mml_writer);
+      mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
+                                       log_dir);
+      mml_reader->get_entities(entities);
 
-    // First do System Upgrade
-    operation = make_shared<OperationSystemUpgrade>(context);
-    context->op->add_operation(operation);
-    context->op->wait_for_empty();
+      // Uniq-ify the RangeServerConnection and BalancePlanAuthority objects
+      {
+        std::vector<MetaLog::EntityPtr> entities2;
+        std::set<RangeServerConnectionPtr, ltrsc> rsc_set;
 
-    // Then reconstruct state and start execution
-    foreach_ht (MetaLog::EntityPtr &entity, entities) {
-      Operation *op = dynamic_cast<Operation *>(entity.get());
-      if (op) {
-	operation = dynamic_pointer_cast<Operation>(entity);
-        if (op->get_remove_approval_mask() && !op->removal_approved())
-          context->reference_manager->add(operation);
-
-        if (dynamic_cast<OperationMoveRange *>(op))
-          context->add_move_operation(operation);
-
-        // master was interrupted in the middle of rangeserver failover
-        if (dynamic_cast<OperationRecover *>(op)) {
-          HT_INFO("Recovery was interrupted; continuing");
-          OperationRecover *recover_op = dynamic_cast<OperationRecover *>(op);
-          if (!recover_op->location().empty()) {
-            operations.push_back(operation);
-            recovery_ops[recover_op->location()] = operation;
+        entities2.reserve(entities.size());
+        foreach_ht (MetaLog::EntityPtr &entity, entities) {
+          if (dynamic_cast<RangeServerConnection *>(entity.get())) {
+            RangeServerConnectionPtr rsc {dynamic_pointer_cast<RangeServerConnection>(entity)};
+            if (rsc_set.count(rsc) > 0)
+              rsc_set.erase(rsc);
+            rsc_set.insert(rsc);
+          }
+          else {
+            if (dynamic_cast<BalancePlanAuthority *>(entity.get())) {
+              bpa = dynamic_cast<BalancePlanAuthority *>(entity.get());
+              context->set_balance_plan_authority(entity);
+            }
+            else if (dynamic_cast<SystemState *>(entity.get()))
+              context->system_state = dynamic_pointer_cast<SystemState>(entity);
+            entities2.push_back(entity);
           }
         }
-        else
-          operations.push_back(operation);
+        // Insert uniq'ed RangeServerConnections
+        foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
+          entities2.push_back(rsc);
+        entities.swap(entities2);
       }
-      else if (dynamic_cast<RangeServerConnection *>(entity.get())) {
-        rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
-        context->rsc_manager->add_server(rsc);
+
+      if (!context->system_state)
+        context->system_state = make_shared<SystemState>();
+
+      context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
+                                                log_dir, entities);
+
+      if (bpa) {
+        bpa->set_mml_writer(context->mml_writer);
+        std::stringstream sout;
+        sout << "Loading BalancePlanAuthority: " << *bpa;
+        HT_INFOF("%s", sout.str().c_str());
       }
-    }
-    context->balancer = new LoadBalancer(context);
 
-    // For each RangeServerConnection that doesn't already have an
-    // outstanding OperationRecover, create and add one
-    foreach_ht (MetaLog::EntityPtr &entity, entities) {
-      if (dynamic_cast<RangeServerConnection *>(entity.get())) {
-        rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
-        if (recovery_ops.find(rsc->location()) == recovery_ops.end())
-          operations.push_back(make_shared<OperationRecover>(context, rsc, OperationRecover::RESTART));
+      context->response_manager->set_mml_writer(context->mml_writer);
+
+      // First do System Upgrade
+      operation = make_shared<OperationSystemUpgrade>(context);
+      context->op->add_operation(operation);
+      context->op->wait_for_empty();
+
+      // Then reconstruct state and start execution
+      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        Operation *op = dynamic_cast<Operation *>(entity.get());
+        if (op) {
+          operation = dynamic_pointer_cast<Operation>(entity);
+          if (op->get_remove_approval_mask() && !op->removal_approved())
+            context->reference_manager->add(operation);
+
+          if (dynamic_cast<OperationMoveRange *>(op))
+            context->add_move_operation(operation);
+
+          // master was interrupted in the middle of rangeserver failover
+          if (dynamic_cast<OperationRecover *>(op)) {
+            HT_INFO("Recovery was interrupted; continuing");
+            OperationRecover *recover_op = dynamic_cast<OperationRecover *>(op);
+            if (!recover_op->location().empty()) {
+              operations.push_back(operation);
+              recovery_ops[recover_op->location()] = operation;
+            }
+          }
+          else
+            operations.push_back(operation);
+        }
+        else if (dynamic_cast<RangeServerConnection *>(entity.get())) {
+          rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
+          context->rsc_manager->add_server(rsc);
+        }
       }
+      context->balancer = new LoadBalancer(context);
+
+      // For each RangeServerConnection that doesn't already have an
+      // outstanding OperationRecover, create and add one
+      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        if (dynamic_cast<RangeServerConnection *>(entity.get())) {
+          rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
+          if (recovery_ops.find(rsc->location()) == recovery_ops.end())
+            operations.push_back(make_shared<OperationRecover>(context, rsc, OperationRecover::RESTART));
+        }
+      }
+      recovery_ops.clear();
+
+      if (operations.empty()) {
+        OperationPtr init_op = make_shared<OperationInitialize>(context);
+        if (context->namemap->exists_mapping("/sys/METADATA", 0))
+          init_op->set_state(OperationState::CREATE_RS_METRICS);
+        operations.push_back(init_op);
+      }
+      else {
+        if (context->metadata_table == 0)
+          context->metadata_table = new Table(context->props,
+                                              context->conn_manager, context->hyperspace, context->namemap,
+                                              TableIdentifier::METADATA_NAME);
+
+        if (context->rs_metrics_table == 0)
+          context->rs_metrics_table = new Table(context->props,
+                                                context->conn_manager, context->hyperspace, context->namemap,
+                                                "sys/RS_METRICS");
+      }
+
+      // Add PERPETUAL operations
+      operation = make_shared<OperationWaitForServers>(context);
+      operations.push_back(operation);
+      context->recovery_barrier_op =
+        make_shared<OperationTimedBarrier>(context, Dependency::RECOVERY, Dependency::RECOVERY_BLOCKER);
+      operation = make_shared<OperationRecoveryBlocker>(context);
+      operations.push_back(operation);
+
+      context->op->add_operations(operations);
+
+      context->master_file->write_master_address();
+
+      /// Start timer loop
+      static_cast<HandlerFactory*>(connection_handler_factory.get())->start_timer();
+
+      if (!context->set_startup_status(false))
+        context->start_shutdown();
+
+      context->op->join();
     }
-    recovery_ops.clear();
-
-    if (operations.empty()) {
-      OperationPtr init_op = make_shared<OperationInitialize>(context);
-      if (context->namemap->exists_mapping("/sys/METADATA", 0))
-        init_op->set_state(OperationState::CREATE_RS_METRICS);
-      operations.push_back(init_op);
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
+      exit_status = 1;
     }
-    else {
-      if (context->metadata_table == 0)
-        context->metadata_table = new Table(context->props,
-                context->conn_manager, context->hyperspace, context->namemap,
-                TableIdentifier::METADATA_NAME);
-
-      if (context->rs_metrics_table == 0)
-        context->rs_metrics_table = new Table(context->props,
-                context->conn_manager, context->hyperspace, context->namemap,
-                "sys/RS_METRICS");
-    }
-
-    // Add PERPETUAL operations
-    operation = make_shared<OperationWaitForServers>(context);
-    operations.push_back(operation);
-    context->recovery_barrier_op =
-      make_shared<OperationTimedBarrier>(context, Dependency::RECOVERY, Dependency::RECOVERY_BLOCKER);
-    operation = make_shared<OperationRecoveryBlocker>(context);
-    operations.push_back(operation);
-
-    context->op->add_operations(operations);
-
-    context->master_file->write_master_address();
-
-    /// Start timer loop
-    static_cast<HandlerFactory*>(connection_handler_factory.get())->start_timer();
-
-    if (!context->set_startup_status(false))
-      context->start_shutdown();
-
-    context->op->join();
-    context->mml_writer->close();
-    context->comm->close_socket(listen_addr);
-
-    if (has("pidfile"))
-      FileUtils::unlink(get_str("pidfile"));
-
-    context.reset();
-    Comm::destroy();
+    break;
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    _exit(1);
-  }
 
-  return 0;
+  context->comm->close_socket(listen_addr);
+  context.reset();
+
+  if (has("pidfile"))
+    FileUtils::unlink(get_str("pidfile"));
+
+  Comm::destroy();
+
+  return exit_status;
 }
 
 /** @}*/

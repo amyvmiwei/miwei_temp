@@ -93,6 +93,22 @@ final class MutatorFlag {
 }
 
 /**
+ * Status codes.
+ */
+final class StatusCode {
+  const OK = 0;
+  const WARNING = 1;
+  const CRITICAL = 2;
+  const UNKNOWN = 3;
+  static public $__names = array(
+    0 => 'OK',
+    1 => 'WARNING',
+    2 => 'CRITICAL',
+    3 => 'UNKNOWN',
+  );
+}
+
+/**
  * Specifies a range of rows
  * 
  * <dl>
@@ -3887,6 +3903,115 @@ class Schema {
       }
       $xfer += $output->writeFieldBegin('column_family_defaults', TType::STRUCT, 7);
       $xfer += $this->column_family_defaults->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+/**
+ * Status information.
+ * 
+ * <dl>
+ *   <dt>code</dt>
+ *   <dd>Status code</dd>
+ * 
+ *   <dt>text</dt>
+ *   <dd>Status text</dd>
+ * </dl>
+ */
+class Status {
+  static $_TSPEC;
+
+  /**
+   * @var int
+   */
+  public $code = 0;
+  /**
+   * @var string
+   */
+  public $text = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'code',
+          'type' => TType::I32,
+          ),
+        2 => array(
+          'var' => 'text',
+          'type' => TType::STRING,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['code'])) {
+        $this->code = $vals['code'];
+      }
+      if (isset($vals['text'])) {
+        $this->text = $vals['text'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'Status';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->code);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->text);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('Status');
+    if ($this->code !== null) {
+      $xfer += $output->writeFieldBegin('code', TType::I32, 1);
+      $xfer += $output->writeI32($this->code);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->text !== null) {
+      $xfer += $output->writeFieldBegin('text', TType::STRING, 2);
+      $xfer += $output->writeString($this->text);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

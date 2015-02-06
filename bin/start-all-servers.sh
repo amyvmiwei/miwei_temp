@@ -131,6 +131,6 @@ fi
 #
 if [ $START_THRIFTBROKER == "true" ] ; then
   if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ] ; then
-    $HYPERTABLE_HOME/bin/start-thriftbroker.sh $THRIFTBROKER_OPTS $@
+    $HYPERTABLE_HOME/bin/ht-start-thriftbroker.sh $THRIFTBROKER_OPTS $@
   fi
 fi

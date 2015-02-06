@@ -25,6 +25,8 @@
 
 #include <Common/Error.h>
 #include <Common/Serialization.h>
+#include <Common/Status.h>
+#include <Common/StatusPersister.h>
 #include <Common/StringExt.h>
 
 using namespace Hypertable;
@@ -61,6 +63,17 @@ void OperationStatus::execute() {
                           (int)connected_servers, (int)quorum));
       else
         status.set(Status::Code::WARNING, "RangeServer recovery in progress");
+    }
+    else {
+      Timer timer(m_event->header.timeout_ms, true);
+      m_context->dfs->status(status, &timer);
+      Status::Code code;
+      string text;
+      status.get(&code, text);
+      if (code != Status::Code::OK)
+        status.set(code, format("[fsbroker] %s", text.c_str()));
+      else
+        StatusPersister::get(status);
     }
   }
   m_params.set_status(status);

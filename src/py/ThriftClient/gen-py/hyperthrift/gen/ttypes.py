@@ -115,6 +115,29 @@ class MutatorFlag(object):
     "IGNORE_UNKNOWN_CFS": 2,
   }
 
+class StatusCode(object):
+  """
+  Status codes.
+  """
+  OK = 0
+  WARNING = 1
+  CRITICAL = 2
+  UNKNOWN = 3
+
+  _VALUES_TO_NAMES = {
+    0: "OK",
+    1: "WARNING",
+    2: "CRITICAL",
+    3: "UNKNOWN",
+  }
+
+  _NAMES_TO_VALUES = {
+    "OK": 0,
+    "WARNING": 1,
+    "CRITICAL": 2,
+    "UNKNOWN": 3,
+  }
+
 
 class RowInterval(object):
   """
@@ -2725,6 +2748,98 @@ class Schema(object):
     value = (value * 31) ^ hash(self.group_commit_interval)
     value = (value * 31) ^ hash(self.access_group_defaults)
     value = (value * 31) ^ hash(self.column_family_defaults)
+    return value
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Status(object):
+  """
+  Status information.
+
+  <dl>
+    <dt>code</dt>
+    <dd>Status code</dd>
+
+    <dt>text</dt>
+    <dd>Status text</dd>
+  </dl>
+
+  Attributes:
+   - code
+   - text
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'code', None, 0, ), # 1
+    (2, TType.STRING, 'text', None, None, ), # 2
+  )
+
+  def __init__(self, code=thrift_spec[1][4], text=None,):
+    self.code = code
+    self.text = text
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.code = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.text = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Status')
+    if self.code is not None:
+      oprot.writeFieldBegin('code', TType.I32, 1)
+      oprot.writeI32(self.code)
+      oprot.writeFieldEnd()
+    if self.text is not None:
+      oprot.writeFieldBegin('text', TType.STRING, 2)
+      oprot.writeString(self.text)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    if self.code is None:
+      raise TProtocol.TProtocolException(message='Required field code is unset!')
+    if self.text is None:
+      raise TProtocol.TProtocolException(message='Required field text is unset!')
+    return
+
+
+  def __hash__(self):
+    value = 17
+    value = (value * 31) ^ hash(self.code)
+    value = (value * 31) ^ hash(self.text)
     return value
 
   def __repr__(self):

@@ -87,7 +87,8 @@ void ConnectionHandler::handle(EventPtr &event) {
 
     //event->display();
 
-    if (event->header.command != Lib::Master::Protocol::COMMAND_STATUS) {
+    if (event->header.command != Lib::Master::Protocol::COMMAND_STATUS &&
+        event->header.command != Lib::Master::Protocol::COMMAND_SHUTDOWN) {
       if (m_context->shutdown_in_progress()) {
         ResponseCallback cb(m_context->comm, event);
         cb.error(Error::SERVER_SHUTTING_DOWN, "");

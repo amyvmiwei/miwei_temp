@@ -148,6 +148,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('  string generate_guid()')
   print('  string create_cell_unique(Namespace ns, string table_name, Key key, string value)')
   print('  string error_get_text(i32 error_code)')
+  print('  Status status()')
+  print('  void shutdown()')
   print('')
   sys.exit(0)
 
@@ -947,6 +949,18 @@ elif cmd == 'error_get_text':
     print('error_get_text requires 1 args')
     sys.exit(1)
   pp.pprint(client.error_get_text(eval(args[0]),))
+
+elif cmd == 'status':
+  if len(args) != 0:
+    print('status requires 0 args')
+    sys.exit(1)
+  pp.pprint(client.status())
+
+elif cmd == 'shutdown':
+  if len(args) != 0:
+    print('shutdown requires 0 args')
+    sys.exit(1)
+  pp.pprint(client.shutdown())
 
 else:
   print('Unrecognized method %s' % cmd)

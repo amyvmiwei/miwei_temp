@@ -117,7 +117,7 @@ run_test() {
 
     # If this is a relinquish test, start the ThriftBroker
     if [ $RELINQUISH == "true" ]; then
-        $HT_HOME/bin/start-thriftbroker.sh
+        $HT_HOME/bin/ht-start-thriftbroker.sh
     fi
 
     # create table

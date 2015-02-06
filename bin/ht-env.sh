@@ -179,6 +179,10 @@ wait_for_ok() {
     fi
   done
   $HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"
+  ret=$?
+  [ -s $startlog ] && cat $startlog
+  rm -f $startlog
+  return $ret
 }
 
 

@@ -35,6 +35,7 @@ void init_thrift_client_options() {
     ;
   alias("thrift-timeout", "ThriftBroker.Timeout");
   // hidden aliases
+  alias("thrift-host", "ThriftBroker.Host");
   alias("thrift-port", "ThriftBroker.Port");
 }
 

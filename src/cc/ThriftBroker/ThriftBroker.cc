@@ -66,6 +66,12 @@
 #include <sstream>
 #include <unordered_map>
 
+extern "C" {
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
+}
+
 /// @defgroup ThriftBroker ThriftBroker
 /// %Thrift broker.
 /// The @ref ThriftBroker module contains the definition of the ThriftBroker.
@@ -2424,6 +2430,18 @@ public:
             << tkey << " value=" << value);
     LOG_API_FINISH;
     _return = value.empty() ? guid : value;
+  }
+
+  void status(ThriftGen::Status& _return) override {
+    try {
+      _return.__set_code(0);
+      _return.__set_text("");
+    }
+    RETHROW("");
+  }
+
+  void shutdown() override {
+    kill(getpid(), SIGKILL);
   }
 
   virtual void error_get_text(std::string &_return, int error_code) {

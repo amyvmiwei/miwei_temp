@@ -26,6 +26,11 @@ use constant INSERT => 255;
 package Hypertable::ThriftGen::MutatorFlag;
 use constant NO_LOG_SYNC => 1;
 use constant IGNORE_UNKNOWN_CFS => 2;
+package Hypertable::ThriftGen::StatusCode;
+use constant OK => 0;
+use constant WARNING => 1;
+use constant CRITICAL => 2;
+use constant UNKNOWN => 3;
 package Hypertable::ThriftGen::RowInterval;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::RowInterval->mk_accessors( qw( start_row start_inclusive end_row end_inclusive ) );
@@ -2561,6 +2566,85 @@ sub write {
   if (defined $self->{column_family_defaults}) {
     $xfer += $output->writeFieldBegin('column_family_defaults', TType::STRUCT, 7);
     $xfer += $self->{column_family_defaults}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::Status;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::Status->mk_accessors( qw( code text ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{code} = 0;
+  $self->{text} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{code}) {
+      $self->{code} = $vals->{code};
+    }
+    if (defined $vals->{text}) {
+      $self->{text} = $vals->{text};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'Status';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{code});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{text});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('Status');
+  if (defined $self->{code}) {
+    $xfer += $output->writeFieldBegin('code', TType::I32, 1);
+    $xfer += $output->writeI32($self->{code});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{text}) {
+    $xfer += $output->writeFieldBegin('text', TType::STRING, 2);
+    $xfer += $output->writeString($self->{text});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

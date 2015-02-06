@@ -30,32 +30,41 @@ STOP_HYPERSPACE="false"
 STOP_TESTCLIENT="false"
 STOP_TESTDISPATCHER="false"
 
-for arg in "$@"
-do
-  case $arg in
+
+while [ $# -gt 0 ]; do
+  case $1 in
     thriftbroker)
       only="true"
       STOP_THRIFTBROKER="true"
+      shift
       ;;
     master)
       only="true"
       STOP_MASTER="true"
+      shift
       ;;
     hyperspace)
       only="true"
       STOP_HYPERSPACE="true"
+      shift
       ;;
     rangeserver)
       only="true"
       STOP_RANGESERVER="true"
+      shift
       ;;
     dfsbroker)
       only="true"
       STOP_FSBROKER="true"
+      shift
       ;;
     fsbroker)
       only="true"
       STOP_FSBROKER="true"
+      shift
+      ;;
+    *)
+      break
       ;;
   esac
 done
@@ -89,14 +98,15 @@ usage() {
   echo ""
 }
 
-while [ "$1" != "${1##[-+]}" ]; do
+while [ $# -gt 0 ]; do
   case $1 in
-    '')
-      usage
-      exit 1;;
     --force)
       FORCE="true"
       shift
+      ;;
+    --help)
+      usage
+      exit 1
       ;;
     --no-fsbroker)
       STOP_FSBROKER="false"
@@ -147,8 +157,8 @@ while [ "$1" != "${1##[-+]}" ]; do
       shift
       ;;
     *)
-      usage
-      exit 1;;
+      break
+      ;;
   esac
 done
 
@@ -178,30 +188,21 @@ fi
 # Stop Thriftbroker 
 #
 if [ $STOP_THRIFTBROKER == "true" ] ; then
-  stop_server thriftbroker
+  $HYPERTABLE_HOME/bin/ht-stop-thriftbroker.sh "$@"
 fi
 
 #
 # Stop Master
 #
 if [ $STOP_MASTER == "true" ] ; then
-  echo 'shutdown;quit;' | $HYPERTABLE_HOME/bin/ht master_client --batch
-  wait_for_critical master "Master" "$@"
-  if [ $? -ne 0 ]; then
-    $HYPERTABLE_HOME/bin/ht-stop-master.sh "$@"
-  fi
+  $HYPERTABLE_HOME/bin/ht-stop-master.sh "$@"
 fi
 
 #
 # Stop RangeServer
 #
 if [ $STOP_RANGESERVER == "true" ] ; then
-  echo "Sending shutdown command"
-  echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht rsclient --batch --no-hyperspace
-  wait_for_critical rangeserver "RangeServer" "$@"
-  if [ $? -ne 0 ]; then
-    $HYPERTABLE_HOME/bin/ht-stop-rangeserver.sh "$@"
-  fi
+  $HYPERTABLE_HOME/bin/ht-stop-rangeserver.sh "$@"
 fi
 
 #

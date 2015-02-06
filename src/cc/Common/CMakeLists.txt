@@ -28,6 +28,7 @@ set(Common_SRCS
 Base64.cc
 Checksum.cc
 Config.cc
+ConsoleOutputSquelcher.cc
 Cronolog.cc
 Crontab.cc
 Crypto.cc

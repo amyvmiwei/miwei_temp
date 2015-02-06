@@ -17,24 +17,15 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_THRIFTHELPER_H
-#define HYPERTABLE_THRIFTHELPER_H
+#ifndef Hypertable_ThriftBroker_ThriftHelper_h
+#define Hypertable_ThriftBroker_ThriftHelper_h
 
 #include <iosfwd>
 #include "gen-cpp/HqlService.h"
 
 namespace Hypertable { namespace ThriftGen {
 
-std::ostream &operator<<(std::ostream &, const RowInterval &);
-std::ostream &operator<<(std::ostream &, const Key &);
-std::ostream &operator<<(std::ostream &, const Cell &);
 std::ostream &operator<<(std::ostream &, const CellAsArray &);
-std::ostream &operator<<(std::ostream &, const CellInterval &);
-std::ostream &operator<<(std::ostream &, const ScanSpec &);
-std::ostream &operator<<(std::ostream &, const HqlResult &);
-std::ostream &operator<<(std::ostream &, const HqlResult2 &);
-std::ostream &operator<<(std::ostream &, const HqlResultAsArrays &);
-std::ostream &operator<<(std::ostream &, const ClientException &);
 
 // These are mostly for test code and not efficient for production.
 Cell
@@ -46,6 +37,6 @@ make_cell(const char *row, const char *cf, const char *cq = 0,
           const std::string &value = std::string(), const char *ts = 0,
           const char *rev = 0, KeyFlag::type flag = KeyFlag::INSERT);
 
-}} // namespace Hypertable::Thrift
+}}
 
-#endif /* HYPERTABLE_THRIFTHELPER_H */
+#endif // Hypertable_ThriftBroker_ThriftHelper_h

@@ -1,4 +1,4 @@
-/* -*- ++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,8 +17,8 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_THRIFT_CLIENT_H
-#define HYPERTABLE_THRIFT_CLIENT_H
+#ifndef Hypertable_ThriftBroker_Client_h
+#define Hypertable_ThriftBroker_Client_h
 
 // Note: do NOT add any hypertable dependencies in this file
 #include <protocol/TBinaryProtocol.h>
@@ -27,7 +27,10 @@
 
 #include "gen-cpp/HqlService.h"
 
-namespace Hypertable { namespace Thrift {
+#include <memory>
+
+namespace Hypertable {
+namespace Thrift {
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -50,33 +53,36 @@ struct ClientHelper {
   }
 };
 
-/**
- * A client for the ThriftBroker
- */
-class Client : private ClientHelper, public ThriftGen::HqlServiceClient {
-public:
-  Client(const std::string &host, int port, int timeout_ms = 300000,
-         bool open = true)
-    : ClientHelper(host, port, timeout_ms), HqlServiceClient(protocol),
-      m_do_close(false) {
+  /**
+   * A client for the ThriftBroker.
+   */
+  class Client : private ClientHelper, public ThriftGen::HqlServiceClient {
+  public:
+    Client(const std::string &host, int port, int timeout_ms = 300000,
+           bool open = true)
+      : ClientHelper(host, port, timeout_ms), HqlServiceClient(protocol),
+        m_do_close(false) {
 
-    if (open) {
-      transport->open();
-      m_do_close = true;
+      if (open) {
+        transport->open();
+        m_do_close = true;
+      }
     }
-  }
 
-  virtual ~Client() {
-    if (m_do_close) {
-      transport->close();
-      m_do_close = false;
+    virtual ~Client() {
+      if (m_do_close) {
+        transport->close();
+        m_do_close = false;
+      }
     }
-  }
 
-private:
-  bool m_do_close;
-};
+  private:
+    bool m_do_close;
+  };
+
+  /// Smart pointer to client
+  typedef std::shared_ptr<Client> ClientPtr;
 
 }} // namespace Hypertable::Thrift
 
-#endif /* HYPERTABLE_THRIFT_CLIENT_H */
+#endif // Hypertable_ThriftBroker_Client_h

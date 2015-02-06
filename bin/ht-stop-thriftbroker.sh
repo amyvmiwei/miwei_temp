@@ -24,8 +24,11 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-echo 'shutdown' | $HYPERTABLE_HOME/bin/ht master_client --batch --silent $@
-wait_for_critical master "Master" "$@"
-if [ $? -ne 0 ]; then
-  stop_server master
+echo 'shutdown' | $HYPERTABLE_HOME/bin/ht tbclient --batch --silent $@
+wait_for_critical thriftbroker "ThriftBroker" "$@"
+if [ $? -eq 0 ]; then
+  pidfile=`server_pidfile thriftbroker`
+  \rm -f $pidfile
+else
+  stop_server thriftbroker
 fi

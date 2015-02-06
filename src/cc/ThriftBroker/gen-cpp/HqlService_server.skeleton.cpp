@@ -22,16 +22,52 @@ class HqlServiceHandler : virtual public HqlServiceIf {
     // Your initialization goes here
   }
 
+  /**
+   * Execute an HQL command
+   * 
+   * @param ns - Namespace id
+   * 
+   * @param command - HQL command
+   * 
+   * @param noflush - Do not auto commit any modifications (return a mutator)
+   * 
+   * @param unbuffered - return a scanner instead of buffered results
+   * 
+   * @param ns
+   * @param command
+   * @param noflush
+   * @param unbuffered
+   */
   void hql_exec(HqlResult& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     // Your implementation goes here
     printf("hql_exec\n");
   }
 
+  /**
+   * Convenience method for executing an buffered and flushed query
+   * 
+   * because thrift doesn't (and probably won't) support default argument values
+   * 
+   * @param ns - Namespace
+   * 
+   * @param command - HQL command
+   * 
+   * @param ns
+   * @param command
+   */
   void hql_query(HqlResult& _return, const int64_t ns, const std::string& command) {
     // Your implementation goes here
     printf("hql_query\n");
   }
 
+  /**
+   * @see hql_exec
+   * 
+   * @param ns
+   * @param command
+   * @param noflush
+   * @param unbuffered
+   */
   void hql_exec_as_arrays(HqlResultAsArrays& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     // Your implementation goes here
     printf("hql_exec_as_arrays\n");
@@ -42,6 +78,12 @@ class HqlServiceHandler : virtual public HqlServiceIf {
     printf("hql_exec2\n");
   }
 
+  /**
+   * @see hql_query
+   * 
+   * @param ns
+   * @param command
+   */
   void hql_query_as_arrays(HqlResultAsArrays& _return, const int64_t ns, const std::string& command) {
     // Your implementation goes here
     printf("hql_query_as_arrays\n");

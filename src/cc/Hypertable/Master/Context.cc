@@ -71,13 +71,15 @@ Context::Context(PropertiesPtr &p, Hyperspace::SessionPtr hs) : props(p), hypers
   reference_manager = make_unique<ReferenceManager>();
   response_manager = make_unique<ResponseManager>();
   response_manager_thread = make_unique<Thread>(*response_manager);
-  if (hyperspace)
-    namemap = new NameIdMapper(hyperspace, toplevel_dir);
   dfs = std::make_shared<FsBroker::Lib::Client>(conn_manager, props);
   rsc_manager = new RangeServerConnectionManager();
   metrics_handler = std::make_shared<MetricsHandler>(props);
   metrics_handler->start_collecting();
-  master_file = make_unique<HyperspaceMasterFile>(props, hyperspace);
+
+  if (hyperspace) {
+    namemap = new NameIdMapper(hyperspace, toplevel_dir);
+    master_file = make_unique<HyperspaceMasterFile>(props, hyperspace);
+  }
 
   request_timeout = (time_t)(props->get_i32("Hypertable.Request.Timeout") / 1000);
   if (props->get_bool("Hypertable.Master.Locations.IncludeMasterHash")) {
@@ -101,6 +103,8 @@ Context::Context(PropertiesPtr &p, Hyperspace::SessionPtr hs) : props(p), hypers
 
 
 Context::~Context() {
+  if (mml_writer)
+    mml_writer->close();
   metrics_handler->stop_collecting();
   delete balancer;
 }
@@ -122,10 +126,13 @@ bool Context::startup_in_progress() {
 void Context::start_shutdown() {
   {
     ScopedLock lock(mutex);
+    if (m_shutdown)
+      return;
     m_shutdown = true;
     if (m_startup)
       return;
   }
+  metrics_handler->stop_collecting();
   master_file->shutdown();
   if (recovery_barrier_op)
     recovery_barrier_op->shutdown();

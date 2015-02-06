@@ -15,36 +15,28 @@
 # limitations under the License.
 #
 
-#if [ -e /proc/sys/vm/swappiness ] ; then 
-#  echo "/proc/sys/vm/swappiness = `cat /proc/sys/vm/swappiness`"
-#fi
-
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
   echo ""
-  echo "usage: start-rangeserver.sh [OPTIONS] [<server-options>]"
+  echo "usage: start-thriftbroker.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run range server with valgrind"
-  echo "  --heapcheck run range server with google-perf-tools Heapcheck"
+  echo "  --valgrind  run thriftbroker with valgrind"
+  echo "  --heapcheck run thriftbroker with google-perf-tools Heapcheck"
   echo ""
 }
 
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.rs.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.thriftbroker.%p --leak-check=full --num-callers=20 "
       shift
       ;;
     --heapcheck)
-      HEAPCHECK="env HEAPCHECK=normal"
-      shift
-      ;;
-    --heapprofile)
-      HEAPCHECK="env HEAPPROFILE=/tmp/rs-$$.hprof"
+      HEAPCHECK="env HEAPCHECK=normal "
       shift
       ;;
     *)
@@ -53,6 +45,14 @@ while [ "$1" != "${1##[-+]}" ]; do
   esac
 done
 
-max_retries=200
-report_interval=10
-start_server rangeserver Hypertable.RangeServer Hypertable.RangeServer "$@"
+set_start_vars ThriftBroker
+check_pidfile $pidfile && exit 0
+
+$HYPERTABLE_HOME/bin/ht-check-thriftbroker.sh --silent "$@"
+if [ $? != 0 ] ; then
+  exec_server ThriftBroker --verbose "$@"
+  report_interval=8
+  wait_for_ok thriftbroker "ThriftBroker" "$@"
+else
+  echo "WARNING: ThriftBroker already running."
+fi

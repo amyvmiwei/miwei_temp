@@ -171,7 +171,7 @@ test_setup() {
         exit 1
     fi
 
-    $HT_HOME/bin/start-thriftbroker.sh
+    $HT_HOME/bin/ht-start-thriftbroker.sh
 
 }
 

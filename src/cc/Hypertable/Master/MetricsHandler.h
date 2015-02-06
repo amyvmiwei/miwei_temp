@@ -98,6 +98,9 @@ namespace Hypertable {
 
     /// %Master operations
     interval_metric<int64_t> m_operations {};
+
+    /// Collection has started
+    bool m_started {};
   };
 
   /// Smart pointer to MetricsHandler

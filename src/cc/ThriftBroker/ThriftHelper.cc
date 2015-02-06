@@ -27,61 +27,10 @@
 
 namespace Hypertable { namespace ThriftGen {
 
-std::ostream &operator<<(std::ostream &out, const RowInterval &ri) {
-  out <<"{RowInterval:";
-
-  if (ri.__isset.start_row)
-    out <<" start='"<< ri.start_row <<"'";
-
-  if (ri.__isset.start_inclusive)
-    out <<" start_inclusive="<< ri.start_inclusive;
-
-  if (ri.__isset.end_row)
-    out <<" end='"<< ri.end_row <<"'";
-
-  if (ri.__isset.end_inclusive)
-    out <<" end_inclusive="<< ri.end_inclusive;
-
-  return out <<"}";
-}
-
-std::ostream &operator<<(std::ostream &out, const Key &key) {
-  out <<"{Key:";
-
-  out <<" row='"<< key.row <<"'";
-
-  out <<" cf='"<< key.column_family <<"'";
-
-  if (!key.column_qualifier.empty())
-    out <<" cq='"<< key.column_qualifier <<"'";
-
-  if (key.__isset.timestamp)
-    out << " ts="<< key.timestamp;
-
-  if (key.__isset.revision)
-    out <<" rev="<< key.revision;
-
-  if (key.__isset.flag)
-    out << " flag="<< key.flag;
-
-  return out <<"}";
-}
-
-std::ostream &operator<<(std::ostream &out, const Cell &cell) {
-  out <<"{Cell:";
-
-  out << " " << cell.key;
-
-  if (cell.__isset.value)
-    out <<" value='"<< cell.value <<"'";
-
-  return out <<"}";
-}
-
 std::ostream &operator<<(std::ostream &out, const CellAsArray &cell) {
   size_t len = cell.size();
 
-  out <<"{CellAsArray:";
+  out <<"CellAsArray(";
 
   if (len > 0)
     out <<" row='"<< cell[0] <<"'";
@@ -96,179 +45,15 @@ std::ostream &operator<<(std::ostream &out, const CellAsArray &cell) {
     out <<" value='"<< cell[3] <<"'";
 
   if (len > 4)
-    out << " ts="<< cell[4];
+    out << " timestamp="<< cell[4];
 
   if (len > 5)
-    out <<" rev="<< cell[5];
+    out <<" revision="<< cell[5];
 
   if (len > 6)
     out << " flag="<< cell[6];
 
-  return out <<"}";
-}
-
-std::ostream &operator<<(std::ostream &out, const CellInterval &ci) {
-  out <<"{CellInterval:";
-
-  if (ci.__isset.start_row)
-    out <<" start_row='"<< ci.start_row <<"'";
-
-  if (ci.__isset.start_column)
-    out <<" start_column='"<< ci.start_column <<"'";
-
-  if (ci.__isset.start_inclusive)
-    out <<" start_inclusive="<< ci.start_inclusive;
-
-  if (ci.__isset.end_row)
-    out <<" end_row='"<< ci.end_row <<"'";
-
-  if (ci.__isset.end_column)
-    out <<" end_column='"<< ci.end_column <<"'";
-
-  if (ci.__isset.end_inclusive)
-    out <<" end_inclusive="<< ci.end_inclusive;
-
-  return out <<"}";
-}
-
-std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
-  out <<"{ScanSpec:";
-
-  if (ss.__isset.row_intervals) {
-    out <<" rows=[\n";
-    foreach_ht(const RowInterval &ri, ss.row_intervals)
-      out <<"  "<< ri <<"\n";
-    out <<"  ]\n";
-  }
-  if (ss.__isset.cell_intervals) {
-    out <<" cells=[\n";
-    foreach_ht(const CellInterval &ci, ss.cell_intervals)
-      out <<"  "<< ci <<"\n";
-    out <<"  ]\n";
-  }
-  if (ss.__isset.columns) {
-    out <<" columns=[\n";
-    foreach_ht(const std::string &col, ss.columns)
-      out <<"  "<< col <<"\n";
-    out <<"  ]\n";
-  }
-  if (ss.__isset.row_limit)
-    out <<" row_limit="<< ss.row_limit;
-
-  if (ss.__isset.cell_limit)
-    out <<" cell_limit="<< ss.row_limit;
-
-  if (ss.__isset.cell_limit_per_family)
-    out <<" cell_limit_per_family="<< ss.cell_limit_per_family;
-
-  if (ss.__isset.versions)
-    out <<" versions="<< ss.versions;
-
-  if (ss.__isset.return_deletes)
-    out <<" return_deletes="<< ss.return_deletes;
-
-  if (ss.__isset.keys_only)
-    out <<" keys_only="<< ss.keys_only;
-
-  if (ss.__isset.row_regexp)
-    out <<" row_regexp="<< ss.row_regexp;
-
-  if (ss.__isset.value_regexp)
-    out <<" value_regexp="<< ss.value_regexp;
-
-  if (ss.__isset.start_time)
-    out <<" start_time="<< ss.start_time;
-
-  if (ss.__isset.end_time)
-    out <<" end_time="<< ss.end_time;
-
-  if (ss.__isset.scan_and_filter_rows)
-    out <<" scan_and_filter_rows="<< ss.scan_and_filter_rows;
-
-  if (ss.__isset.row_offset)
-    out <<" row_offset="<< ss.row_offset;
-
-  if (ss.__isset.cell_offset)
-    out <<" cell_offset="<< ss.cell_offset;
-
-  return out <<'}';
-}
-
-std::ostream &operator<<(std::ostream &out, const HqlResult &hr) {
-  out <<"{HqlResult:";
-
-  if (hr.__isset.results) {
-    out <<" results=[";
-    foreach_ht(const std::string &s, hr.results)
-      out <<"  '"<< s <<"'\n";
-    out <<"  ]\n";
-  }
-  if (hr.__isset.cells) {
-    out <<" cells=[\n";
-    foreach_ht(const Cell &cell, hr.cells)
-      out <<"  "<< cell <<"\n";
-    out <<"  ]\n";
-  }
-  if (hr.__isset.scanner)
-    out <<" scanner="<< hr.scanner;
-
-  if (hr.__isset.mutator)
-    out <<" mutator="<< hr.mutator;
-
-  return out <<'}';
-}
-
-std::ostream &operator<<(std::ostream &out, const HqlResult2 &hr) {
-  out <<"{HqlResult2:";
-
-  if (hr.__isset.results) {
-    out <<" results=[";
-    foreach_ht(const std::string &s, hr.results)
-      out <<"  '"<< s <<"'\n";
-    out <<"  ]\n";
-  }
-  if (hr.__isset.cells) {
-    out <<" cells=[\n";
-    foreach_ht(const CellAsArray &cell, hr.cells)
-      out <<"  "<< cell <<"\n";
-    out <<"  ]\n";
-  }
-  if (hr.__isset.scanner)
-    out <<" scanner="<< hr.scanner;
-
-  if (hr.__isset.mutator)
-    out <<" mutator="<< hr.mutator;
-
-  return out <<'}';
-}
-
-std::ostream &operator<<(std::ostream &out, const HqlResultAsArrays &hr) {
-  out <<"{HqlResultAsArrays:";
-
-  if (hr.__isset.results) {
-    out <<" results=[";
-    foreach_ht(const std::string &s, hr.results)
-      out <<"  '"<< s <<"'\n";
-    out <<"  ]\n";
-  }
-  if (hr.__isset.cells) {
-    out <<" cells=[\n";
-    foreach_ht(const CellAsArray &cell, hr.cells)
-      out <<"  "<< cell <<"\n";
-    out <<"  ]\n";
-  }
-  if (hr.__isset.scanner)
-    out <<" scanner="<< hr.scanner;
-
-  if (hr.__isset.mutator)
-    out <<" mutator="<< hr.mutator;
-
-  return out <<'}';
-}
-
-std::ostream &operator<<(std::ostream &out, const ClientException &e) {
-  return out <<"{ClientException: code="<< e.code
-             <<" message='"<< e.message <<"'}";
+  return out <<")";
 }
 
 // must be synced with AUTO_ASSIGN in Hypertable/Lib/KeySpec.h

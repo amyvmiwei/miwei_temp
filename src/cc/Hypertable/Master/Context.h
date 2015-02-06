@@ -136,8 +136,6 @@ namespace Hypertable {
 
     Mutex mutex;
     boost::condition cond;
-    /// %Hyperspace master file handle
-    std::unique_ptr<HyperspaceMasterFile> master_file;
     Comm *comm {};
     SystemStatePtr system_state; //!< System state entity
     RangeServerConnectionManagerPtr rsc_manager;
@@ -148,6 +146,8 @@ namespace Hypertable {
     Hyperspace::SessionPtr hyperspace;
     String toplevel_dir;
     NameIdMapperPtr namemap;
+    /// %Hyperspace master file handle
+    std::unique_ptr<HyperspaceMasterFile> master_file;
     LoadBalancer *balancer {};
     MonitoringPtr monitoring;
     std::unique_ptr<ReferenceManager> reference_manager;

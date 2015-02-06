@@ -40,7 +40,7 @@ using namespace std;
 HyperspaceMasterFile::~HyperspaceMasterFile() {
   unique_lock<mutex> lock(m_mutex);
   if (m_handle) {
-    m_hyperspace->close(m_handle);
+    m_hyperspace->close_nowait(m_handle);
     m_handle = 0;
   }
 }
