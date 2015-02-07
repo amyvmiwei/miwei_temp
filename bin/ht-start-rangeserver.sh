@@ -21,15 +21,15 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-rangeserver.sh [OPTIONS] [<server-options>]"
+  echo "usage: ht-start-rangeserver.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run rangeserver with valgrind"
-  echo "  --heapcheck run rangeserver with google-perf-tools Heapcheck"
+  echo "  --valgrind   Run rangeserver with valgrind"
+  echo "  --heapcheck  Run rangeserver with google-perf-tools Heapcheck"
   echo ""
 }
 
-while [ "$1" != "${1##[-+]}" ]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg.rangeserver.%p --leak-check=full --num-callers=20 "
@@ -38,6 +38,10 @@ while [ "$1" != "${1##[-+]}" ]; do
     --heapcheck)
       HEAPCHECK="env HEAPCHECK=normal "
       shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
       ;;
     *)
       break

@@ -24,6 +24,24 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+usage() {
+  echo ""
+  echo "usage: ht-stop-fsbroker.sh [<server-options>]"
+  echo ""
+}
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 echo 'shutdown' | $HYPERTABLE_HOME/bin/ht fsclient --nowait --batch --silent $@
 wait_for_critical fsbroker "FS Broker" "$@"
 if [ $? -ne 0 ]; then

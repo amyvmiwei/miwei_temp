@@ -78,8 +78,7 @@ Comm::Comm() {
   }
 
   m_verbose = Config::properties->has("verbose") && Config::properties->get_bool("verbose");
-
-  ReactorFactory::silent = Config::properties->has("silent") && Config::properties->get_bool("silent");
+  ReactorFactory::verbose = m_verbose;
 
   InetAddr::initialize(&m_local_addr, System::net_info().primary_addr.c_str(), 0);
 

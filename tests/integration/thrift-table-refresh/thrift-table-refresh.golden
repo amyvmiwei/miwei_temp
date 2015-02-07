@@ -41,5 +41,5 @@ HqlResult(mutator=None, cells=None, results=None, scanner=None)
   Elapsed time:  0.00 s
 
   Elapsed time:  0.00 s
-Error: foo - HYPERTABLE table does not exist
+Hypertable CRITICAL - HYPERTABLE table does not exist (foo)
 HYPERTABLE table does not exist 

@@ -104,13 +104,13 @@ namespace Hypertable {
     /// Set to <i>true</i> if this process is acting as "Proxy Master"
     static bool proxy_master;
 
-    /// Enable silent mode
-    static bool silent;
+    /// Verbose mode
+    static bool verbose;
 
   private:
 
     /// Mutex to serialize calls to #initialize
-    static Mutex        ms_mutex;
+    static Mutex ms_mutex;
 
     /// Atomic integer used for round-robin assignment of reactors
     static atomic_t ms_next_reactor;

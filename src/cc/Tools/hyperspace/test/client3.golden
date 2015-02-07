@@ -149,7 +149,7 @@ busy
 release lockfile;
 close lockfile;
 open lockfile flags=READ|WRITE|LOCK_EXCLUSIVE;
-Error: Hyperspace 'open' error, name=/lockfile flags=0x87 events=0x0 - HYPERSPACE lock conflict
+Hyperspace CRITICAL - HYPERSPACE lock conflict (Hyperspace 'open' error, name=/lockfile flags=0x87 events=0x0)
 open lockfile flags=READ|WRITE|LOCK_SHARED;
 close lockfile;
 echo;

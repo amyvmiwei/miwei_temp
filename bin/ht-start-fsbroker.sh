@@ -34,7 +34,7 @@ usage() {
   echo "usage: ht-start-fsbroker.sh [OPTIONS] (local|hadoop|mapr|ceph|qfs) [<global-args>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run broker with valgrind"
+  echo "  --valgrind  Run FS broker with valgrind"
   echo ""
 }
 
@@ -71,15 +71,19 @@ fs_conflict_error() {
     echo ""
 }
 
-while [ "$1" != "${1##[-+]}" ]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg.fsbroker.%p --leak-check=full --num-callers=20 "
       shift
       ;;
+    -h|--help)
+      usage;
+      exit 0
+      ;;
     *)
-      usage
-      exit 1;;
+      break
+      ;;
   esac
 done
 

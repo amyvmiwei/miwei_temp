@@ -31,12 +31,14 @@
 
 #include <histedit.h>
 
+#include <string>
+
 namespace Hypertable {
 
   class CommandShell : public ReferenceCount {
   public:
-    CommandShell(const String &program_name, CommandInterpreterPtr &,
-                 PropertiesPtr &);
+    CommandShell(const std::string &prompt_str, const std::string &service_name,
+                 CommandInterpreterPtr &, PropertiesPtr &);
 
     ~CommandShell();
 
@@ -56,25 +58,26 @@ namespace Hypertable {
     static CommandShell *ms_instance;
     static const wchar_t *prompt(EditLine *el);
 
-    String m_program_name;
     CommandInterpreterPtr m_interp_ptr;
     PropertiesPtr m_props;
     NotifierPtr m_notifier_ptr;
 
     String m_accum;
     bool m_verbose {};
-    bool m_batch_mode;
-    bool m_silent;
-    bool m_test_mode;
-    bool m_no_prompt;
+    bool m_batch_mode {};
+    bool m_silent {};
+    bool m_test_mode {};
+    bool m_no_prompt {};
     bool m_line_command_mode {};
-    bool m_cont;
-    char *m_line_read;
-    bool m_notify;
-    bool m_has_cmd_file;
-    bool m_has_cmd_exec;
+    bool m_cont {};
+    char *m_line_read {};
+    bool m_notify {};
+    bool m_has_cmd_file {};
+    bool m_has_cmd_exec {};
     String m_input_str;
-    std::wstring m_prompt_str;
+    std::string m_prompt;
+    std::wstring m_wprompt;
+    std::string m_service_name;
     String m_cmd_str;
     String m_cmd_file;
     String m_namespace;

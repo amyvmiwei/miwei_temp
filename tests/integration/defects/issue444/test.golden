@@ -52,6 +52,7 @@ anon_id, item, click_url
 LOAD DATA INFILE "test.tsv" INTO TABLE TestIssue444;
 ERROR hypertable : set: Hypertable::Exception: Bad column family 'query' - HYPERTABLE bad key
 	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, Hypertable::ColumnFamilySpec**) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
+Hypertable CRITICAL - HYPERTABLE bad key (line number 2)
 SELECT * FROM TestIssue444;
 
 LOAD DATA INFILE IGNORE_UNKNOWN_COLUMNS "test.tsv" INTO TABLE TestIssue444;

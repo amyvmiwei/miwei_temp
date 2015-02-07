@@ -24,6 +24,24 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+usage() {
+  echo ""
+  echo "usage: ht-stop-thriftbroker.sh [<server-options>]"
+  echo ""
+}
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 echo 'shutdown' | $HYPERTABLE_HOME/bin/ht tbclient --batch --silent $@
 wait_for_critical thriftbroker "ThriftBroker" "$@"
 if [ $? -eq 0 ]; then

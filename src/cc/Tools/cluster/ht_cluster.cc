@@ -262,7 +262,7 @@ int main(int argc, char **argv) {
       exec_command(compiler.output_script(), environment, arguments);
 
     interp = new ClusterCommandInterpreter(compiler.output_script());
-    shell = new CommandShell("cluster", interp, properties);
+    shell = new CommandShell("cluster", "Cluster", interp, properties);
 
     // Entire line is command
     shell->set_line_command_mode(true);

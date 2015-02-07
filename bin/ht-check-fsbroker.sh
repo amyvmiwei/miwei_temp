@@ -25,4 +25,49 @@ if [ "e$RUNTIME_ROOT" == "e" ]; then
   RUNTIME_ROOT=$HYPERTABLE_HOME
 fi
 
-$RUNTIME_ROOT/bin/ht fsclient --batch -e "status" "$@" localhost
+usage() {
+  echo ""
+  echo "usage: ht-check-fsbroker.sh [OPTIONS] [<server-options>]"
+  echo ""
+  echo "OPTIONS:"
+  echo "  -h,--help             Display usage information"
+  echo "  -t,--timeout <sec>    Timeout after <sec> seconds (default = 5)"
+  echo "  -H,--hostname <addr>  Hostname or IP address of service (default = localhost)"
+  echo ""
+}
+
+TIMEOUT_OPTION="--timeout 5000"
+SERVICE_HOSTNAME=localhost
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    -H|--hostname)
+      shift
+      if [ $# -eq 0 ]; then
+        usage;
+        exit 0
+      fi
+      SERVICE_HOSTNAME=$1
+      shift
+      ;;
+    -t|--timeout)
+      shift
+      if [ $# -eq 0 ]; then
+        usage;
+        exit 0
+      fi
+      let MILLISECONDS=$1*1000
+      TIMEOUT_OPTION="--timeout $MILLISECONDS"
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+$RUNTIME_ROOT/bin/ht fsclient --batch ${TIMEOUT_OPTION} -e "status" "$@" ${SERVICE_HOSTNAME}

@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     CommandInterpreterPtr interp =
         new RangeServerCommandInterpreter(hyperspace, addr, client);
 
-    CommandShellPtr shell = new CommandShell("rsclient", interp, properties);
+    CommandShellPtr shell = new CommandShell("rsclient", "RangeServer", interp, properties);
 
     error = shell->run();
   }

@@ -11,7 +11,7 @@ USE "subtest";
 CREATE TABLE foo('subtest');
 USE "/test/subtest";
 USE "/test/subtest/subsubtest";
-Error: test/subtest/subsubtest - HYPERTABLE namespace does not exist
+Hypertable CRITICAL - HYPERTABLE namespace does not exist (test/subtest/subsubtest)
 SHOW CREATE TABLE foo;
 CREATE TABLE foo (
   subtest,
@@ -20,18 +20,18 @@ CREATE TABLE foo (
 
 DROP TABLE foo;
 DROP NAMESPACE "/test";
-Error: Client operation drop_namespace('test', flags=) failed - HYPERSPACE directory not empty
+Hypertable CRITICAL - HYPERSPACE directory not empty (Client operation drop_namespace('test', flags=) failed)
 USE "/test";
 DROP NAMESPACE "subtest";
 RENAME TABLE foo TO foo_renamed;
 GET LISTING;
 foo_renamed
 DROP TABLE foo;
-Error: Client operation drop_table('test/foo', if_exists=false) failed - HYPERTABLE table does not exist
+Hypertable CRITICAL - HYPERTABLE table does not exist (Client operation drop_table('test/foo', if_exists=false) failed)
 DROP TABLE foo_renamed;
 DROP NAMESPACE "/test";
 CREATE TABLE foo('test');
-Error: Client operation create_table('test/foo') failed - HYPERTABLE namespace does not exist
+Hypertable CRITICAL - HYPERTABLE namespace does not exist (Client operation create_table('test/foo') failed)
 CREATE NAMESPACE "/test";
 USE "/test";
 DROP TABLE IF EXISTS hypertable;
@@ -146,7 +146,7 @@ key4	TestColumnFamily	tcf4
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 ERROR hypertable : set: Hypertable::Exception: Bad column family 'Unknown' - HYPERTABLE bad key
 	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, Hypertable::ColumnFamilySpec**) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
-Error: line number 2 - HYPERTABLE bad key
+Hypertable CRITICAL - HYPERTABLE bad key (line number 2)
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_ts.tsv" INTO TABLE hypertable;
@@ -185,7 +185,7 @@ INSERT INTO test VALUES('2008-07-28 00:00:10', "fz", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:11', "g", "b", "n");
 INSERT INTO test VALUES('2008-07-28 00:00:12', "gz", "b", "n");
 SELECT * FROM test WHERE ('z' < ROW < 'a');
-Error: start_row (z) > end_row (a) - HYPERTABLE bad scan specification
+Hypertable CRITICAL - HYPERTABLE bad scan specification (start_row (z) > end_row (a))
 DELETE c FROM test WHERE ROW = "k1";
 SELECT * FROM test WHERE TIMESTAMP < '2008-06-30 00:00:04';
 k1	b	x
@@ -266,7 +266,7 @@ az	b	n
 b	b	n
 bz	b	n
 SELECT * FROM test WHERE (ROW =^'a' or 'd' < ROW < 'b' or ROW =^ 'b');
-Error: start_row (d) > end_row (b) - HYPERTABLE bad scan specification
+Hypertable CRITICAL - HYPERTABLE bad scan specification (start_row (d) > end_row (b))
 INSERT INTO test values ('2010-01-01 00:00:01', 'r1', 'b:q1', 'v1'), ('2010-01-01 00:00:02', 'r1', 'b:q1', 'v2'), ('2010-01-01 00:00:03', 'r1', 'b:q1', 'v3'), ('2010-01-01 00:00:00', 'r1', 'b:q', 'v4'),('2010-01-01 00:00:05', 'r1', 'b:q1', 'v5') ;
 SELECT * from test WHERE ROW="r1" DISPLAY_TIMESTAMPS;
 2010-01-01 00:00:00.000000000	r1	b:q	v4
@@ -483,7 +483,7 @@ old	tag:abacate	n
 old	tag:abacist	n
 old	tag:abactor	n
 SELECT * from test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
-Error: Bad cell expression - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Bad cell expression)
 SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR CELL = "foo","tag:adage" OR CELL = "cow","tag:Ab" OR CELL =^ "foo","tag:acya");
 maui	tag:abaisance	n
 foo	tag:adage	n
@@ -706,7 +706,7 @@ ALTER TABLE Fruits RENAME COLUMN FAMILY ('Orange', 'Pink') RENAME COLUMN FAMILY 
 insert into Fruits values('www.cnn.com', 'Orange', 'Kumquat');
 ERROR hypertable : set_cells: Hypertable::Exception: Bad column family 'Orange' - HYPERTABLE bad key
 	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, Hypertable::ColumnFamilySpec**) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
-Error: Bad column family 'Orange' - HYPERTABLE bad key
+Hypertable CRITICAL - HYPERTABLE bad key (Bad column family 'Orange')
 insert into Fruits values('www.cnn.com', 'Pink', 'Grapefruit');
 select * from Fruits;
 www.cnn.com	Pink	Grapefruit
@@ -715,15 +715,15 @@ www.google.com	Green	Lime
 www.yahoo.com	Yellow	Banana
 www.yahoo.com	Pink	Clementine
 ALTER TABLE Fruits RENAME COLUMN FAMILY ('Orange', 'Blue');
-Error: Attempt to rename column family 'Orange' which does not exist - HQL bad command
+Hypertable CRITICAL - HQL bad command (Attempt to rename column family 'Orange' which does not exist)
 ALTER TABLE Fruits RENAME COLUMN FAMILY ('Pink', 'Green');
-Error: Attempt to rename column 'Pink' to 'Green', which already exists - HQL bad command
+Hypertable CRITICAL - HQL bad command (Attempt to rename column 'Pink' to 'Green', which already exists)
 
 alter table Fruits add ('8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102', '103', '104', '105', '106', '107', '108', '109', '110', '111', '112', '113', '114', '115', '116', '117', '118', '119', '120', '121', '122', '123', '124', '125', '126', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154', '155', '156', '157', '158', '159', '160', '161', '162', '163', '164', '165', '166', '167', '168', '169', '170', '171', '172', '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', '184', '185', '186', '187', '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', '198', '199', '200', '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '211', '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '222', '223', '224', '225', '226', '227', '228', '229', '230', '231', '232', '233', '234', '235', '236', '237', '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', '251', '252', '253', '254', '255') ;
 
 alter table Fruits drop ('8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102', '103', '104', '105', '106', '107', '108', '109', '110', '111', '112', '113', '114', '115', '116', '117', '118', '119', '120', '121', '122', '123', '124', '125', '126', '127', '128', '129', '130', '131', '132', '133', '134', '135', '136', '137', '138', '139', '140', '141', '142', '143', '144', '145', '146', '147', '148', '149', '150', '151', '152', '153', '154', '155', '156', '157', '158', '159', '160', '161', '162', '163', '164', '165', '166', '167', '168', '169', '170', '171', '172', '173', '174', '175', '176', '177', '178', '179', '180', '181', '182', '183', '184', '185', '186', '187', '188', '189', '190', '191', '192', '193', '194', '195', '196', '197', '198', '199', '200', '201', '202', '203', '204', '205', '206', '207', '208', '209', '210', '211', '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '222', '223', '224', '225', '226', '227', '228', '229', '230', '231', '232', '233', '234', '235', '236', '237', '238', '239', '240', '241', '242', '243', '244', '245', '246', '247', '248', '249', '250', '251', '252', '253', '254', '255') ;
 alter table Fruits add('256');
-Error: Attempt to add > 255 column families to table - HYPERTABLE too many columns
+Hypertable CRITICAL - HYPERTABLE too many columns (Attempt to add > 255 column families to table)
 DESCRIBE TABLE Fruits;
 <Schema>
   <AccessGroupDefaults>
@@ -2743,7 +2743,7 @@ SELECT * FROM hypertable DISPLAY_TIMESTAMPS;
 2010-04-12 10:19:32.000000000	Stover	col2:foo	third
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( 'media:image' );
-Error: Invalid column name media:image - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Invalid column name media:image)
 DROP TABLE IF EXISTS CounterTest;
 CREATE TABLE CounterTest(cf1 COUNTER,
 cf2,
@@ -3033,9 +3033,9 @@ SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "
 
 # negative tests with OFFSET and CELL_OFFSET
 SELECT col2 from RegexpTest OFFSET 1 CELL_OFFSET 2;
-Error: SELECT OFFSET predicate not allowed in combination with OFFSET. - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (SELECT OFFSET predicate not allowed in combination with OFFSET.)
 SELECT col2 from RegexpTest OFFSET 2 CELL_OFFSET 1;
-Error: SELECT OFFSET predicate not allowed in combination with OFFSET. - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (SELECT OFFSET predicate not allowed in combination with OFFSET.)
 
 # issue 528: embedded semicolon test
 DROP TABLE IF EXISTS Test;
@@ -3076,10 +3076,10 @@ DROP TABLE "ns/r";
 CREATE NAMESPACE issue565 IF NOT EXISTS;
 USE issue565;
 DROP NAMESPACE ns;
-Error: Client operation drop_namespace('/issue565/ns', flags=) failed - HYPERTABLE namespace does not exist
+Hypertable CRITICAL - HYPERTABLE namespace does not exist (Client operation drop_namespace('/issue565/ns', flags=) failed)
 CREATE NAMESPACE ns;
 CREATE NAMESPACE ns;
-Error: Client operation create_namespace('issue565/ns', flags=) failed - HYPERTABLE namespace exists
+Hypertable CRITICAL - HYPERTABLE namespace exists (Client operation create_namespace('issue565/ns', flags=) failed)
 GET LISTING;
 ns	(namespace)
 CREATE NAMESPACE ns IF NOT EXISTS;
@@ -3151,7 +3151,7 @@ USE "/RenameTest";
 CREATE TABLE foo (a);
 CREATE TABLE bar (a);
 RENAME TABLE foo TO bar;
-Error: Client operation rename_table(old='RenameTest/foo', new='RenameTest/bar') failed - HYPERTABLE name already in use
+Hypertable CRITICAL - HYPERTABLE name already in use (Client operation rename_table(old='RenameTest/foo', new='RenameTest/bar') failed)
 # issue 1237
 CREATE NAMESPACE '/1';
 CREATE NAMESPACE '/1/2';

@@ -4,16 +4,16 @@ echo << BasicTest >>;
 << BasicTest >>
 mkdir dir1;
 mkdir how/now/brown/cow;
-Error: Hyperspace 'mkdir' error, name=/how/now/brown/cow - HYPERSPACE file not found
+Hyperspace CRITICAL - HYPERSPACE file not found (Hyperspace 'mkdir' error, name=/how/now/brown/cow)
 delete foo;
-Error: Hyperspace 'unlink' error, name=/foo - HYPERSPACE file not found
+Hyperspace CRITICAL - HYPERSPACE file not found (Hyperspace 'unlink' error, name=/foo)
 open foo flags=READ;
-Error: Hyperspace 'open' error, name=/foo flags=0x1 events=0x0 - HYPERSPACE file not found
+Hyperspace CRITICAL - HYPERSPACE file not found (Hyperspace 'open' error, name=/foo flags=0x1 events=0x0)
 open foo flags=READ|CREATE;
 open foo flags=READ|CREATE|EXCL;
-Error: Hyperspace 'open' error, name=/foo flags=0x19 events=0x0 - HYPERSPACE file exists
+Hyperspace CRITICAL - HYPERSPACE file exists (Hyperspace 'open' error, name=/foo flags=0x19 events=0x0)
 lock foo EXCLUSIVE;
-Error: Hyperspace 'lock' error, name='/foo' - HYPERSPACE mode restriction
+Hyperspace CRITICAL - HYPERSPACE mode restriction (Hyperspace 'lock' error, name='/foo')
 exists dir1;
 true
 exists foo;
@@ -21,7 +21,7 @@ true
 exists bar;
 false
 attrget foo testattr;
-Error: Problem getting attribute 'testattr' of hyperspace file '/foo' - HYPERSPACE attribute not found
+Hyperspace CRITICAL - HYPERSPACE attribute not found (Problem getting attribute 'testattr' of hyperspace file '/foo')
 open / flags=READ ;
 readdir /;
 (dir) dir1
@@ -34,9 +34,9 @@ attrset foo testattr="Hello, World!";
 attrget foo testattr;
 Hello, World!
 attrdel foo testattr;
-Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
+Hyperspace CRITICAL - HYPERSPACE CLI parse error (Unable to find '/foo' in open file map)
 attrlist foo;
-Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
+Hyperspace CRITICAL - HYPERSPACE CLI parse error (Unable to find '/foo' in open file map)
 delete foo;
 create foo flags=READ|WRITE attr:msg1="Hello, World!" attr:msg2="How now brown cow";
 mkdir /bar2/;

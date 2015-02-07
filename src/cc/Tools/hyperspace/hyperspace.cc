@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     session_ptr->add_callback(&session_handler);
 
     interp = session_ptr->create_hs_interpreter();
-    shell = new CommandShell("hyperspace", interp, properties);
+    shell = new CommandShell("hyperspace", "Hyperspace", interp, properties);
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
 

@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
     CommandInterpreterPtr interp = new fsclient::CommandInterpreter(client, nowait);
 
-    CommandShellPtr shell = new CommandShell("fsclient", interp, properties);
+    CommandShellPtr shell = new CommandShell("fsclient", "FsBroker", interp, properties);
 
     error = shell->run();
   }

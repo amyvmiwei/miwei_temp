@@ -21,15 +21,15 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-thriftbroker.sh [OPTIONS] [<server-options>]"
+  echo "usage: ht-start-thriftbroker.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run thriftbroker with valgrind"
-  echo "  --heapcheck run thriftbroker with google-perf-tools Heapcheck"
+  echo "  --valgrind   Run thriftbroker with valgrind"
+  echo "  --heapcheck  Run thriftbroker with google-perf-tools Heapcheck"
   echo ""
 }
 
-while [ "$1" != "${1##[-+]}" ]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg.thriftbroker.%p --leak-check=full --num-callers=20 "
@@ -38,6 +38,10 @@ while [ "$1" != "${1##[-+]}" ]; do
     --heapcheck)
       HEAPCHECK="env HEAPCHECK=normal "
       shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
       ;;
     *)
       break

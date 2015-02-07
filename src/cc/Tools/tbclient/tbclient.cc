@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     
     CommandInterpreterPtr interp = new tbclient::CommandInterpreter(client, nowait);
 
-    CommandShellPtr shell = new CommandShell("tbclient", interp, properties);
+    CommandShellPtr shell = new CommandShell("tbclient", "ThriftBroker", interp, properties);
 
     error = shell->run();
   }

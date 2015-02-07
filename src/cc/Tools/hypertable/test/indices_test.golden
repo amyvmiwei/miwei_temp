@@ -6,13 +6,13 @@ DROP TABLE IF EXISTS test;
 
 # CREATE TABLE - negative tests
 CREATE TABLE t (a, INDEX (a));
-Error: parse error at: CREATE TABLE t (a, INDEX (a)) (CREATE TABLE t (a, INDEX (a))) - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (parse error at: CREATE TABLE t (a, INDEX (a)) (CREATE TABLE t (a, INDEX (a))))
 CREATE TABLE t (a, INDEX b);
-Error: Reference to undefined column 'b' - HQL bad command
+Hypertable CRITICAL - HQL bad command (Reference to undefined column 'b')
 CREATE TABLE t (a, INDEX a, INDEX a);
-Error: Index for column family 'a' multiply defined - HQL bad command
+Hypertable CRITICAL - HQL bad command (Index for column family 'a' multiply defined)
 CREATE TABLE "^t" (a, b);
-Error: Invalid table name character '^' - HYPERTABLE syntax error
+Hypertable CRITICAL - HYPERTABLE syntax error (Invalid table name character '^')
 
 # CREATE TABLE
 CREATE TABLE t (a, INDEX a);
@@ -243,7 +243,7 @@ CREATE TABLE t (
 );
 
 SHOW CREATE TABLE "^t";
-Error: indices/^t - HYPERTABLE table does not exist
+Hypertable CRITICAL - HYPERTABLE table does not exist (indices/^t)
 DROP TABLE t;
 
 # verify that the secondary index table is created
@@ -262,7 +262,7 @@ CREATE TABLE '^t' (
 
 DROP TABLE t;
 DROP TABLE '^t';
-Error: Invalid table name character '^' - HYPERTABLE syntax error
+Hypertable CRITICAL - HYPERTABLE syntax error (Invalid table name character '^')
 
 # verify that the secondary index table is created
 CREATE TABLE t (a, b, c, INDEX a, INDEX b, INDEX c);
@@ -282,7 +282,7 @@ CREATE TABLE '^t' (
 
 DROP TABLE t;
 DROP TABLE '^t';
-Error: Invalid table name character '^' - HYPERTABLE syntax error
+Hypertable CRITICAL - HYPERTABLE syntax error (Invalid table name character '^')
 
 # INSERT - simple tests
 CREATE TABLE t (a, b, c, d, INDEX a, INDEX b);
@@ -435,7 +435,7 @@ rowa7	a	cella7
 rowa8	a	cella8
 rowa9	a	cella9
 SELECT unknown FROM t;
-Error: Table= indices/t , Column family=unknown - RANGE SERVER invalid column family
+Hypertable CRITICAL - RANGE SERVER invalid column family (Table= indices/t , Column family=unknown)
 
 SELECT a FROM t WHERE a = "cella2";
 rowa2	a	cella2
@@ -1200,7 +1200,7 @@ CREATE TABLE t (
 );
 
 SHOW CREATE TABLE "^^t";
-Error: indices/^^t - HYPERTABLE table does not exist
+Hypertable CRITICAL - HYPERTABLE table does not exist (indices/^^t)
 DROP TABLE t;
 
 CREATE TABLE t (a, QUALIFIER INDEX a);
@@ -1218,7 +1218,7 @@ CREATE TABLE '^^t' (
 
 DROP TABLE t;
 DROP TABLE '^^t';
-Error: Invalid table name character '^' - HYPERTABLE syntax error
+Hypertable CRITICAL - HYPERTABLE syntax error (Invalid table name character '^')
 
 CREATE TABLE t (a, b, c, QUALIFIER INDEX a, QUALIFIER INDEX b, QUALIFIER INDEX c);
 SHOW CREATE TABLE "t";
@@ -1360,9 +1360,9 @@ CREATE TABLE '^^r' (
 
 DROP TABLE r;
 DROP TABLE "^r";
-Error: Invalid table name character '^' - HYPERTABLE syntax error
+Hypertable CRITICAL - HYPERTABLE syntax error (Invalid table name character '^')
 DROP TABLE "^^r";
-Error: Invalid table name character '^' - HYPERTABLE syntax error
+Hypertable CRITICAL - HYPERTABLE syntax error (Invalid table name character '^')
 
 CREATE TABLE t (a, QUALIFIER INDEX a, INDEX a, b, QUALIFIER INDEX b, INDEX b);
 INSERT INTO t VALUES ("rowa0", "a", "cella0:");
@@ -1532,7 +1532,7 @@ rowa2	a:q0	cella2
 rowa3	a:q0	cella3
 rowa4	a:q0	cella4
 SELECT unknown FROM t;
-Error: Table= indices/t , Column family=unknown - RANGE SERVER invalid column family
+Hypertable CRITICAL - RANGE SERVER invalid column family (Table= indices/t , Column family=unknown)
 SELECT a:q0, a:q1 FROM t;
 rowa0	a:q0	cella0
 rowa1	a:q0	cella1
@@ -1995,7 +1995,7 @@ rowa14	a:^q0123	cella14
 SELECT * FROM t WHERE a:* = "cella0";
 rowa0	a:q0	cella0
 SELECT b FROM t WHERE a:* = "cella0";
-Error: Selected column b must be referenced in Column predicate - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Selected column b must be referenced in Column predicate)
 SELECT a FROM t WHERE a:* = "cella0";
 rowa0	a:q0	cella0
 SELECT a FROM t WHERE a:* = "cella11";
@@ -2055,9 +2055,9 @@ r1	join:a1	value 1
 
 # issue 989
 CREATE TABLE badidea (c COUNTER, INDEX c);
-Error: Attempt to define value index for COUNTER column 'c' - HQL bad command
+Hypertable CRITICAL - HQL bad command (Attempt to define value index for COUNTER column 'c')
 CREATE TABLE badidea (c COUNTER, QUALIFIER INDEX c);
-Error: Attempt to define qualifier index for COUNTER column 'c' - HQL bad command
+Hypertable CRITICAL - HQL bad command (Attempt to define qualifier index for COUNTER column 'c')
 
 # More Index testing
 DROP TABLE IF EXISTS User;

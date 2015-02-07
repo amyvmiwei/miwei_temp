@@ -24,6 +24,24 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+usage() {
+  echo ""
+  echo "usage: ht-stop-master.sh [<server-options>]"
+  echo ""
+}
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 echo 'shutdown' | $HYPERTABLE_HOME/bin/ht master_client --batch --silent $@
 wait_for_critical master "Master" "$@"
 if [ $? -ne 0 ]; then

@@ -200,18 +200,17 @@ CommandShell *CommandShell::ms_instance;
 
 /**
  */
-CommandShell::CommandShell(const String &program_name,
-    CommandInterpreterPtr &interp_ptr, PropertiesPtr &props)
-    : m_program_name(program_name), m_interp_ptr(interp_ptr), m_props(props),
-      m_batch_mode(false), m_silent(false), m_test_mode(false),
-      m_no_prompt(false), m_cont(false), m_line_read(0), m_notify(false),
-      m_has_cmd_file(false), m_has_cmd_exec(false) {
+CommandShell::CommandShell(const string &prompt_str, const string &service_name,
+                           CommandInterpreterPtr &interp_ptr,
+                           PropertiesPtr &props)
+  : m_interp_ptr(interp_ptr), m_props(props), m_prompt(prompt_str),
+    m_service_name(service_name) {
 
   const char *home = getenv("HOME");
   if (home)
-    ms_history_file = (String)home + "/." + m_program_name + "_history";
+    ms_history_file = (String)home + "/." + m_prompt + "_history";
   else
-    ms_history_file = (String)"." + m_program_name + "_history";
+    ms_history_file = (String)"." + m_prompt + "_history";
 
   m_verbose = m_props->has("verbose") ? m_props->get_bool("verbose") : false;
   m_batch_mode = m_props->has("batch");
@@ -276,10 +275,10 @@ CommandShell::CommandShell(const String &program_name,
 
   // Initialize prompt string
   wchar_t buf[64] = {0};
-  const char *p = program_name.c_str();
+  const char *p = prompt_str.c_str();
   mbsrtowcs(buf, &p, 63, 0);
-  m_prompt_str = buf;
-  m_prompt_str += L"> ";
+  m_wprompt = buf;
+  m_wprompt += L"> ";
 
   // Propagate mode flags to interpreter
   m_interp_ptr->set_interactive_mode(!m_batch_mode);
@@ -422,7 +421,7 @@ int CommandShell::run() {
     read_history(ms_history_file.c_str());
 
     cout << endl;
-    cout << "Welcome to the " << m_program_name << " command interpreter."
+    cout << "Welcome to the " << m_prompt << " command interpreter."
          << endl;
     cout << "For information about Hypertable, visit http://hypertable.com"
          << endl;
@@ -436,7 +435,7 @@ int CommandShell::run() {
   if (!m_batch_mode)
     using_history();
 
-  if (!m_program_name.compare("hypertable")) {
+  if (!m_prompt.compare("hypertable")) {
     trim_if(m_namespace, boost::is_any_of(" \t\n\r;"));
     if (m_namespace.empty())
       m_namespace = "/";
@@ -606,13 +605,14 @@ process_line:
         if (m_verbose)
           cerr << e << endl;
         else if (!m_silent)
-          cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
-              << endl;
+          cout << m_service_name << " CRITICAL - " << Error::get_text(e.code())
+               << " (" << e.what() << ")" << endl;
       }
       if(m_notify)
         m_notifier_ptr->notify();
+      exit_status = 2;
       if (m_batch_mode && !m_test_mode)
-        return 2;
+        return exit_status;
       m_accum = "";
       while (!command_queue.empty())
         command_queue.pop();
@@ -639,5 +639,5 @@ CommandShell::prompt(EditLine *el) {
   if (ms_instance->m_cont)
     return L"         -> ";
   else
-    return ms_instance->m_prompt_str.c_str();
+    return ms_instance->m_wprompt.c_str();
 }

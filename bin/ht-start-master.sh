@@ -21,15 +21,15 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-master.sh [OPTIONS] [<server-options>]"
+  echo "usage: ht-start-master.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run master with valgrind"
-  echo "  --heapcheck run master with google-perf-tools Heapcheck"
+  echo "  --valgrind   Run master with valgrind"
+  echo "  --heapcheck  Run master with google-perf-tools Heapcheck"
   echo ""
 }
 
-while [ "$1" != "${1##[-+]}" ]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg.master.%p --leak-check=full --num-callers=20 "
@@ -38,6 +38,10 @@ while [ "$1" != "${1##[-+]}" ]; do
     --heapcheck)
       HEAPCHECK="env HEAPCHECK=normal "
       shift
+      ;;
+    -h|--help)
+      usage;
+      exit 0
       ;;
     *)
       break

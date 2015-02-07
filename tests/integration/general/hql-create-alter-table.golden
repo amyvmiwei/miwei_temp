@@ -120,9 +120,9 @@ CREATE TABLE Foo (
 );
 
 ALTER TABLE Foo MODIFY (a COUNTER);
-Error: Modificaton of COUNTER option for column 'a' is not allowed. - HQL bad command
+Hypertable CRITICAL - HQL bad command (Modificaton of COUNTER option for column 'a' is not allowed.)
 ALTER TABLE Foo MODIFY (a TIME_ORDER desc);
-Error: Modificaton of TIME ORDER option for column 'a' is not allowed. - HQL bad command
+Hypertable CRITICAL - HQL bad command (Modificaton of TIME ORDER option for column 'a' is not allowed.)
 #ALTER TABLE Foo MODIFY (INDEX a);
 #SHOW CREATE TABLE Foo;
 #ALTER TABLE Foo MODIFY (QUALIFIER INDEX b);

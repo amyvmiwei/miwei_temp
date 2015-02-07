@@ -24,6 +24,24 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+usage() {
+  echo ""
+  echo "usage: ht-stop-rangeserver.sh [<server-options>]"
+  echo ""
+}
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 echo 'shutdown' | $HYPERTABLE_HOME/bin/ht rsclient --batch --silent --no-hyperspace $@
 wait_for_critical rangeserver "RangeServer" "$@"
 if [ $? -ne 0 ]; then

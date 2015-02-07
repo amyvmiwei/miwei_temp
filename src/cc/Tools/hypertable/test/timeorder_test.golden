@@ -4,17 +4,17 @@ DROP TABLE IF EXISTS timeorder_test;
 
 # negative tests failing with syntax errors
 CREATE TABLE timeorder_test (cf1 TIME_ORDER, cf2, cf3);
-Error: parse error at: CREATE TABLE timeorder_test (cf1 TIME_ORDER, cf2, cf3) (CREATE TABLE timeorder_test (cf1 TIME_ORDER, cf2, cf3)) - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (parse error at: CREATE TABLE timeorder_test (cf1 TIME_ORDER, cf2, cf3) (CREATE TABLE timeorder_test (cf1 TIME_ORDER, cf2, cf3)))
 CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3);
-Error: parse error at: CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3) (CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3)) - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (parse error at: CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3) (CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3)))
 CREATE TABLE timeorder_test (cf1 TIME_ORDER ASC TIME_ORDER ASC, cf2, cf3);
-Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Multiple specifications of TIME_ORDER option for column 'cf1')
 CREATE TABLE timeorder_test (cf1 TIME_ORDER ASC TIME_ORDER DESC, cf2, cf3);
-Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Multiple specifications of TIME_ORDER option for column 'cf1')
 CREATE TABLE timeorder_test (cf1 TIME_ORDER DESC TIME_ORDER DESC, cf2, cf3);
-Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Multiple specifications of TIME_ORDER option for column 'cf1')
 CREATE TABLE timeorder_test (cf1 TIME_ORDER DESC TIME_ORDER ASC, cf2, cf3);
-Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
+Hypertable CRITICAL - HYPERTABLE HQL parse error (Multiple specifications of TIME_ORDER option for column 'cf1')
 
 # TIME_ORDER ASC is the default
 CREATE TABLE timeorder_test (cf1 TIME_ORDER ASC, cf2);

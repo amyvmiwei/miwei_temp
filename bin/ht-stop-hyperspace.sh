@@ -24,6 +24,24 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+usage() {
+  echo ""
+  echo "usage: ht-stop-hyperspace.sh [<server-options>]"
+  echo ""
+}
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 stop_server hyperspace
 wait_for_critical hyperspace "Hyperspace" "$@"
 

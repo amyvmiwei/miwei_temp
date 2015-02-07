@@ -21,18 +21,22 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-hyperspace.sh [OPTIONS] [<server-options>]"
+  echo "usage: ht-start-hyperspace.sh [OPTIONS] [<server-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --valgrind  run hyperspace with valgrind"
+  echo "  --valgrind  Run hyperspace with valgrind"
   echo ""
 }
 
-while [ "$1" != "${1##[-+]}" ]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg.hyperspace.%p --leak-check=full --num-callers=20 "
       shift
+      ;;
+    -h|--help)
+      usage;
+      exit 0
       ;;
     *)
       break
