@@ -96,7 +96,7 @@ ${HT_HOME}/bin/ht shell --no-prompt --Hypertable.Request.Timeout=30000 --exec "u
 #shut everything down
 cp ${HT_HOME}/log/Master.log ${RUN_DIR}/master.out
 stop_rs2
-$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/ht-destroy-database.sh
 
 #make sure we got all the data back and all ranges are on rs2 
 NUM_KEYS=`cat ${DUMPFILE} | grep -v '#'|wc -l`;

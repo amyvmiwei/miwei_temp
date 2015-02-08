@@ -87,6 +87,6 @@ fi
 
 #shut everything down
 stop_range_servers
-$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/ht-destroy-database.sh
 
 exit $RETVAL

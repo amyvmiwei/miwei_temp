@@ -93,6 +93,6 @@ run_test "USE '/test'; DROP TABLE friends;"
 
 kill -9 `cat $HT_HOME/run/Hypertable.Master.*.pid`
 \rm -f $HT_HOME/run/Hypertable.Master.*.pid
-$HT_HOME/bin/clean-database.sh 
+$HT_HOME/bin/ht-destroy-database.sh 
 
 exit 0

@@ -46,6 +46,6 @@ echo "load data infile 'intermediate.tsv' into TABLE LoadTest;" | $ALT_HOME/bin/
 
 echo "select * from LoadTest;" | $ALT_HOME/bin/ht shell --batch --config=$SCRIPT_DIR/alt_instance.cfg > final.tsv
 
-$ALT_HOME/bin/clean-database.sh --config=$SCRIPT_DIR/alt_instance.cfg
+$ALT_HOME/bin/ht-destroy-database.sh --config=$SCRIPT_DIR/alt_instance.cfg
 
 diff intermediate.tsv final.tsv > /dev/null

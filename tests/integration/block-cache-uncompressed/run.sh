@@ -45,7 +45,7 @@ fi
 
 kill -9 `cat $HT_HOME/run/RangeServer.pid`
 \rm -f $HT_HOME/run/RangeServer.pid
-$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/ht-destroy-database.sh
 
 exit 0
 

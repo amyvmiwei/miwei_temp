@@ -15,7 +15,7 @@ kill_servers() {
   kill -9 `cat $RS2_PIDFILE`
   kill -9 `cat $MASTER_PIDFILE`
   \rm -f $RS1_PIDFILE $RS2_PIDFILE
-  $HT_HOME/bin/ht clean-database.sh
+  $HT_HOME/bin/ht destroy-database.sh
 }
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-master --no-thriftbroker

@@ -53,7 +53,7 @@ fs_conflict_error() {
         echo "and all of its associated state, before launching with the"
         echo "'$NEW_FS' broker:"
         echo ""
-        echo "$HYPERTABLE_HOME/bin/stop-servers.sh ; $HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $OLD_FS ; $HYPERTABLE_HOME/bin/clean-database.sh"
+        echo "$HYPERTABLE_HOME/bin/stop-servers.sh ; $HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $OLD_FS ; $HYPERTABLE_HOME/bin/ht-destroy-database.sh"
         echo ""
     else
         echo "To remove the previous database, and all it's associated state,"

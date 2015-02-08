@@ -84,7 +84,7 @@ if [ $WARNING_COUNT -ne 3 ]; then
 fi
 
 # Cleanup
-$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/ht-destroy-database.sh
 \rm -f /tmp/0.good /tmp/0
 
 exit 0

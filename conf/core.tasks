@@ -193,44 +193,44 @@ task: kill {
 }
 
 
-# Clean master state.
-# Cleans the master state by starting the FS broker and then running the
-# clean-database.sh and ht-stop-monitoring.sh scripts from the current
+# Destroy master state.
+# Destroys the master state by starting the FS broker and then running the
+# ht-destroy-database.sh and ht-stop-monitoring.sh scripts from the current
 # installation.
-task: clean_masters roles: master {
+task: destroy_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
-    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-destroy-database.sh ${CONFIG} || exit \$?
     ${INSTALL_PREFIX}/current/bin/ht-stop-monitoring.sh || exit \$?
   }
 }
 
 
-# Clean Hyperspace state.  Runs the ht-clean-hyperspace.sh script from the
+# Destroy Hyperspace state.  Runs the ht-destroy-hyperspace.sh script from the
 # current installation.
-task: clean_hyperspace roles: hyperspace {
+task: destroy_hyperspace roles: hyperspace {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-clean-hyperspace.sh
+    ${INSTALL_PREFIX}/current/bin/ht-destroy-hyperspace.sh
   }
 }
 
 
-# Clean slave state.  Removes the contents of the run/ directory in the current
+# Destroy slave state.  Removes the contents of the run/ directory in the current
 # installation.
-task: clean_slaves roles: slave {
+task: destroy_slaves roles: slave {
   ssh: {
     rm -rf ${INSTALL_PREFIX}/current/run/*
   }
 }
 
 
-# Destroy database removing all tables.  If the variable \$PROMPT_CLEAN is equal
+# Destroy database removing all tables.  If the variable \$PROMPT_DESTROY is equal
 # to \"true\", this task will first prompt the user for confirmation.  If the
-# confirmation is obtained or \$PROMPT_CLEAN is equal to \"false\", then the task
-# will wipe the database clean by calling the following tasks:  stop, kill,
-# clean_masters, clean_hyperspace, clean_slaves
-task: cleandb {
-  if [ "${PROMPT_CLEAN}" == "true" ]; then
+# confirmation is obtained or \$PROMPT_DESTROY is equal to \"false\", then the task
+# will wipe the database destroy by calling the following tasks:  stop, kill,
+# destroy_masters, destroy_hyperspace, destroy_slaves
+task: destroydb {
+  if [ "${PROMPT_DESTROY}" == "true" ]; then
     echo "This will DELETE ALL DATA stored in Hypertable. ARE YOU SURE you want to proceed?"
     echo -n "('Yes' to proceed)> "
     read RESPONSE EXTRA
@@ -240,9 +240,9 @@ task: cleandb {
   fi
   stop
   kill
-  clean_masters
-  clean_hyperspace
-  clean_slaves
+  destroy_masters
+  destroy_hyperspace
+  destroy_slaves
 }
 
 

@@ -4,7 +4,7 @@ PACKAGE_FILE=/root/packages/hypertable-${HYPERTABLE_VERSION}-linux-x86_64.tar.gz
 FS=hadoop
 HADOOP_DISTRO=cdh4
 ORIGIN_CONFIG_FILE=/root/hypertable.cfg
-PROMPT_CLEAN=true
+PROMPT_DESTROY=true
 
 role: source test00
 role: master test[00-02]

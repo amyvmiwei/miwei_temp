@@ -40,7 +40,7 @@ done
 
 if [ "$clear" ]; then
   $INSTALL_DIR/bin/ht-start-fsbroker.sh $HT_TEST_FS
-  $INSTALL_DIR/bin/ht clean-database $@
+  $INSTALL_DIR/bin/ht destroy-database $@
 else
   $INSTALL_DIR/bin/ht stop servers
 fi
