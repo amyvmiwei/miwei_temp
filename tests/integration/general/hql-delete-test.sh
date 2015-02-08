@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker
 
 echo "CREATE NAMESPACE MATCH_VERSION; quit;" | $HT_HOME/bin/ht shell --batch
 

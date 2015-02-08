@@ -38,7 +38,7 @@ stop_range_server() {
 
 
 run_test() {
-  $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear \
+  $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker --clear \
       --config $CFG_FILE 
   stop_range_server
 
@@ -102,7 +102,7 @@ echo ""
 echo "**** TEST REPORT ****"
 echo ""
 cat report.txt
-$HT_HOME/bin/stop-servers.sh 
+$HT_HOME/bin/ht-stop-servers.sh 
 echo "Test OVER." >> report.txt
 
 grep FAILED report.txt > /dev/null && exit 1

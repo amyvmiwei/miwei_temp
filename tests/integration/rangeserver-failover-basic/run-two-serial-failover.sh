@@ -17,7 +17,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -28,7 +28,7 @@ rm -rf fs fs_pre
 gen_test_data
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start the rangeservers
@@ -57,7 +57,7 @@ $HT_HOME/bin/ht load_generator --spec-file=$SCRIPT_DIR/data.spec \
     --max-keys=$MAX_KEYS --row-seed=$ROW_SEED --table=LoadTest \
     --Hypertable.Mutator.FlushDelay=50 update
 if [ $? != 0 ] ; then
-    $HT_HOME/bin/stop-servers.sh
+    $HT_HOME/bin/ht-stop-servers.sh
     kill_rs 1
     kill_rs 2
     kill_rs 3
@@ -83,12 +83,12 @@ wait_for_recovery rs4
 dump_keys dbdump.two-serial
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_all_rs
 
 echo "Test passed"

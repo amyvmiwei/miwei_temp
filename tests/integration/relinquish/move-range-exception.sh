@@ -100,7 +100,7 @@ stop_hypertable() {
   kill -9 `cat $HT_HOME/run/Master.pid`
   \rm -f $HT_HOME/run/Master.pid
   kill_range_servers 3
-  $HT_HOME/bin/stop-servers.sh --no-master --no-rangeserver
+  $HT_HOME/bin/ht-stop-servers.sh --no-master --no-rangeserver
 }
 
 
@@ -128,7 +128,7 @@ test_setup() {
 
     stop_range_servers $RS_COUNT
 
-    $HT_HOME/bin/start-test-servers.sh --no-master --no-rangeserver \
+    $HT_HOME/bin/ht-start-test-servers.sh --no-master --no-rangeserver \
         --no-thriftbroker --clear --FsBroker.DisableFileRemoval=true
 
     start_master

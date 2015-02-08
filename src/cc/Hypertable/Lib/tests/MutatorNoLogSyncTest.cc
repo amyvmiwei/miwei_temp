@@ -269,7 +269,7 @@ int main(int argc, char **argv) {
 
   config_file = install_dir + config_file;
   Config::parse_file(config_file, file_desc());
-  start_all = ht_bin_path + "/start-test-servers.sh --clear --no-rangeserver"
+  start_all = ht_bin_path + "/ht-start-test-servers.sh --clear --no-rangeserver"
               " --no-thriftbroker --config=" + config_file;
   if (system(start_all.c_str()) !=0) {
     HT_ERROR("Unable to start servers");

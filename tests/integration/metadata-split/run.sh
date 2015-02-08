@@ -98,7 +98,7 @@ run_test() {
   \rm -f $HT_HOME/run/Hypertable.Master*.pid
 
   if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
-      $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-master \
+      $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --no-master \
           --no-thriftbroker
       start_masters $@
       $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
@@ -106,7 +106,7 @@ run_test() {
           --Hypertable.RangeServer.MaintenanceThreads=8 \
           --Hypertable.RangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output.$TEST_ID &
   else
-    $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver \
+    $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver \
         --no-thriftbroker --Hypertable.Master.Gc.Interval=30000 \
         --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.RangeServer.Range.MetadataSplitSize=10K

@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/0.9.6.0"}
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=20K \
     --Hypertable.RangeServer.Scanner.BufferSize=1K
 

@@ -39,7 +39,7 @@ cp ${HYPERTABLE_HOME}/conf/notification-hook.sh notification-hook.bak
 cp notification-hook.sh ${HYPERTABLE_HOME}/conf/notification-hook.sh
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 # start both rangeservers
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
@@ -74,7 +74,7 @@ stop_rs1
 wait_for_recovery
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 stop_rs2
 
 # check if the hook was executed

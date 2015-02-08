@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker
 
 echo "SET READONLY=true; CREATE TABLE SystemState (col);" | $HT_HOME/bin/ht shell --batch
 
@@ -18,8 +18,8 @@ if [ $? != 0 ]; then
 fi
 
 # Restart and make sure it's still in readonly mode
-$HT_HOME/bin/stop-servers.sh
-$HT_HOME/bin/start-test-servers.sh --no-thriftbroker
+$HT_HOME/bin/ht-stop-servers.sh
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker
 
 echo "INSERT INTO SystemState VALUES (\"row\", \"col\", \"value\");" \
     | $HT_HOME/bin/ht shell --batch >& hql-set-test-c.output

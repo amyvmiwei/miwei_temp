@@ -10,7 +10,7 @@ WRITE_SIZE=${WRITE_SIZE:-"500000"}
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \
    --Hypertable.RangeServer.Maintenance.Interval 100 \

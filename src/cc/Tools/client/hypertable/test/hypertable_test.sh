@@ -6,7 +6,7 @@ SCRIPT_DIR=`dirname $0`
 echo "======================================"
 echo "Hypertable shell test"
 echo "======================================"
-$HT_HOME/bin/start-test-servers.sh --clear
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 ./hypertable_test
 

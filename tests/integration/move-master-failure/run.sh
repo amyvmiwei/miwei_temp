@@ -8,7 +8,7 @@ RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
 RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
 RET=0
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --Hypertable.Master.Split.SoftLimitEnabled=false
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --Hypertable.Master.Split.SoftLimitEnabled=false
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
@@ -51,7 +51,7 @@ done
 echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
 echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 
-$HT_HOME/bin/stop-servers.sh master
+$HT_HOME/bin/ht-stop-servers.sh master
 
 echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
 echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
@@ -59,7 +59,7 @@ sleep 1
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
 \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver \
   --induce-failure="relinquish-acknowledge-INITIAL-a:pause(3000):0;relinquish-acknowledge-INITIAL-b:exit:0"
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
@@ -99,7 +99,7 @@ if [ $j -eq 6 ]; then
   pstack `cat $HT_HOME/run/Master.pid` > master.stack
   cp $HT_HOME/log/Master.log .
   cp $HT_HOME/run/monitoring/mop.dot .
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
@@ -129,6 +129,6 @@ RET=$?
 
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
 \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 exit $RET

@@ -14,7 +14,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # clear state
 \rm -rf $HT_HOME/log/*
@@ -24,7 +24,7 @@ $HT_HOME/bin/stop-servers.sh
 gen_test_data
 
 # start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start both rangeservers
@@ -72,7 +72,7 @@ echo "dump nokeys '${RUN_DIR}/rs2_dump.post'; quit;" | $HT_HOME/bin/ht rangeserv
 dump_keys dbdump-a.1
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
@@ -80,11 +80,11 @@ fi
 ${HT_HOME}/bin/ht shell --config=${SCRIPT_DIR}/test.cfg --no-prompt --exec "use sys; select Files,Location from METADATA MAX_VERSIONS=1 into file '${RUN_DIR}/metadata.post';"
 
 # bounce servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 # start master and rs2
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
@@ -96,12 +96,12 @@ ${HT_HOME}/bin/ht shell --config=${SCRIPT_DIR}/test.cfg --no-prompt --exec "use 
 dump_keys dbdump-b.1
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 # check output
@@ -129,7 +129,7 @@ then
 fi
 
 echo "Test passed"
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 exit 0

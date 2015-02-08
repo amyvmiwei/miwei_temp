@@ -14,7 +14,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -32,7 +32,7 @@ let j+=1
 
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start both rangeservers
@@ -63,7 +63,7 @@ sleep 2
 dump_keys dbdump-scan-failover
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
@@ -71,7 +71,7 @@ fi
 wait_for_recovery rs1
 
 # bounce servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 echo "Test passed"

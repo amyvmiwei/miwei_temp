@@ -14,7 +14,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -26,7 +26,7 @@ $HT_HOME/bin/stop-servers.sh
 gen_test_data
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start both rangeservers
@@ -54,9 +54,9 @@ fi
 sleep 2
 
 # now restart the cluster, but do not start rs2
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 1 2
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --Hypertable.Failover.GracePeriod=20000 \
     --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
@@ -70,7 +70,7 @@ wait_for_recovery rs2
 dump_keys dbdump-a.10
 
 # bounce servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 echo "Test passed"

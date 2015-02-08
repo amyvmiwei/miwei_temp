@@ -33,7 +33,7 @@ fi
 echo "======================================"
 echo "Row overflow WRITE test (TableMutator)"
 echo "======================================"
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=2000000 $DISABLE_ARG
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 $HT_HOME/bin/ht ht_write_test \
@@ -46,7 +46,7 @@ check_exit_status 1
 echo "======================================"
 echo "Row overflow WRITE test (HQL Insert)"
 echo "======================================"
-$HT_HOME/bin/start-test-servers.sh --clear \
+$HT_HOME/bin/ht-start-test-servers.sh --clear \
     --Hypertable.RangeServer.Range.SplitSize=200000 $DISABLE_ARG
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 $HT_HOME/bin/ht shell --no-prompt --batch \

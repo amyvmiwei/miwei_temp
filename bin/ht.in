@@ -42,13 +42,13 @@ print_help() {
 
 do_start() {
   service=$1; shift
-  exec $HYPERTABLE_HOME/bin/start-$service.sh "$@"
+  exec $HYPERTABLE_HOME/bin/ht-start-$service.sh "$@"
 }
 
 do_stop() {
   service=$1; shift
-  if [ -x $HYPERTABLE_HOME/bin/stop-$service.sh ]; then
-    exec $HYPERTABLE_HOME/bin/stop-$service.sh "$@"
+  if [ -x $HYPERTABLE_HOME/bin/ht-stop-$service.sh ]; then
+    exec $HYPERTABLE_HOME/bin/ht-stop-$service.sh "$@"
   fi
   pidfile=`server_pidfile $service`
   stop_server $service &&
@@ -58,9 +58,9 @@ do_stop() {
 
 do_restart() {
   service=$1
-  if [ -x $HYPERTABLE_HOME/bin/restart-$service.sh ]; then
+  if [ -x $HYPERTABLE_HOME/bin/ht-restart-$service.sh ]; then
     shift;
-    exec $HYPERTABLE_HOME/bin/restart-$service.sh "$@"
+    exec $HYPERTABLE_HOME/bin/ht-restart-$service.sh "$@"
   fi
   do_stop "$@"
   do_start "$@"

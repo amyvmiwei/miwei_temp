@@ -44,7 +44,7 @@ dump_rs_ranges() {
 # stop and start servers
 rm *.out
 touch $DUMPFILE
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \

@@ -16,7 +16,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -27,7 +27,7 @@ $HT_HOME/bin/stop-servers.sh
 gen_test_data
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --no-master --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start the master
@@ -73,12 +73,12 @@ wait_for_recovery rs2
 dump_keys dbdump-a.7
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 kill_rs 3
 

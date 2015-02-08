@@ -14,7 +14,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -25,7 +25,7 @@ rm -rf fs fs_pre
 gen_test_data
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start both rangeservers
@@ -68,17 +68,17 @@ wait_for_recovery rs1
 dump_keys dbdump-a.6
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # bounce servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 killall Hypertable.Master
 
 # start master and rs2
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
@@ -88,12 +88,12 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
 dump_keys dbdump-b.6
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 echo "Test passed"

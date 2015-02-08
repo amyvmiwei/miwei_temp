@@ -18,7 +18,7 @@ if [ ! -e Test4-data.txt ] ; then
   gzip -d Test4-data.txt.gz
 fi
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.CellStore.TargetSize.Minimum=1500K \
     --Hypertable.RangeServer.Maintenance.MergingCompaction.Delay=0 \
     --Hypertable.RangeServer.Maintenance.Interval=100 \

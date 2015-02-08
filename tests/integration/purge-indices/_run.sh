@@ -10,7 +10,7 @@ LOAD_GEN_FLAG=$2
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-test-servers.sh --no-thriftbroker --clear \
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker --clear \
     --Hypertable.RangeServer.Range.SplitSize=10000000 \
     --Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage=20 \
     --Hypertable.RangeServer.Maintenance.Interval=100 \

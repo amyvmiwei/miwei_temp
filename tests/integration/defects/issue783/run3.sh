@@ -53,7 +53,7 @@ function grep_or_exit_if_not_found()
 \rm -rf $HT_HOME/log/*
 
 # start the cluster with 2 RangeServers and load them with data
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker --no-rangeserver \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker --no-rangeserver \
      --Hypertable.Monitoring.Interval=3000
 sleep 5
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=rs1.pid \

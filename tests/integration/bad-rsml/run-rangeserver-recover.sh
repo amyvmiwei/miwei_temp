@@ -19,7 +19,7 @@ kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
 \rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
 
 # Start servers (minus range server)
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver \
     --no-thriftbroker --clear --induce-failure="bad-rsml:throw:0" \
     --config=${SCRIPT_DIR}/test.cfg 
 
@@ -61,10 +61,10 @@ sleep 10
 ## Kill servers
 kill `cat $HT_HOME/run/Master.pid`
 kill `cat $HT_HOME/run/Hypertable.RangeServer.rs*.pid`
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # Start servers (minus range server)
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver \
     --no-thriftbroker  --config=${SCRIPT_DIR}/test.cfg 
 
 # Start rs1
@@ -98,6 +98,6 @@ kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
 \rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
 
 # Shut down remaining servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 exit 0

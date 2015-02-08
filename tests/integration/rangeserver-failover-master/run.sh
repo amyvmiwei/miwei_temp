@@ -145,11 +145,11 @@ run_test() {
     done
 
     stop_range_servers $RS_COUNT
-    $HT_HOME/bin/stop-servers.sh
+    $HT_HOME/bin/ht-stop-servers.sh
 
     sleep 10
 
-    $HT_HOME/bin/start-test-servers.sh --no-master --no-rangeserver \
+    $HT_HOME/bin/ht-start-test-servers.sh --no-master --no-rangeserver \
         --no-thriftbroker --clear --FsBroker.DisableFileRemoval=true
 
     # start master-launcher script in background. it will restart the
@@ -279,7 +279,7 @@ run_test() {
     done
 
     # shut down remaining servers
-    $HT_HOME/bin/stop-servers.sh
+    $HT_HOME/bin/ht-stop-servers.sh
 
 }
 

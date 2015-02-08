@@ -9,7 +9,7 @@ TTL=10
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.SplitSize=10000000 \

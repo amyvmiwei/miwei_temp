@@ -56,7 +56,7 @@ run_test() {
   shift;
 
   if [ -z "$SKIP_START_SERVERS" ]; then
-    $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+    $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
                                        --clear
   fi
 

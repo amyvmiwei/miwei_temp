@@ -25,7 +25,7 @@ save_failure_state() {
 # clear state
 /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* failed* report.txt
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --no-thriftbroker \
     --Hypertable.Master.Gc.Interval=30000 \
     --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.Range.MetadataSplitSize=10K

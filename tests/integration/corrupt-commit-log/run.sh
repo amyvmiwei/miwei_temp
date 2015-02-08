@@ -7,7 +7,7 @@ WRITE_TOTAL=${WRITE_TOTAL:-"25000000"}
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker
 
 $HT_HOME/bin/ht shell --test-mode < $SCRIPT_DIR/create-table.hql
 
@@ -32,13 +32,13 @@ echo "a" >> /tmp/0
 let SKIP_OFFSET=OFFSET+1
 dd bs=$SKIP_OFFSET if=/tmp/0.good of=/tmp/0 skip=1 seek=1
 
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 $HT_HOME/bin/ht-start-fsbroker.sh local
 
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 
-$HT_HOME/bin/start-test-servers.sh --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker
 $HT_HOME/bin/ht-check-rangeserver.sh
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"

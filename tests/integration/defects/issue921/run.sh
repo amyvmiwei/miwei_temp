@@ -8,7 +8,7 @@ echo "Defect #921"
 echo "======================="
 
 echo "starting HT w/ Thrift"
-$HT_HOME/bin/start-test-servers.sh --clear
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 echo "preparing the table"
 cat ${SCRIPT_DIR}/test.hql | $HT_HOME/bin/ht hypertable \

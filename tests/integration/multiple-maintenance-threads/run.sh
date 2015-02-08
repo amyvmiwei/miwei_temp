@@ -7,7 +7,7 @@ THREADS=${THREADS:-"8"}
 ITERATIONS=${ITERATIONS:-"1"}
 
 for ((i=0; i<$ITERATIONS; i++)) ; do
-    $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+    $HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
         --Hypertable.RangeServer.Range.SplitSize=2500K \
         --Hypertable.RangeServer.AccessGroup.MaxMemory=400K \
         --Hypertable.RangeServer.MaintenanceThreads=$THREADS \

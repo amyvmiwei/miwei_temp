@@ -29,7 +29,7 @@ START_THRIFTBROKER="true"
 
 usage() {
   echo ""
-  echo "usage: start-all-servers.sh [OPTIONS] <fs-choice> [<global-options>]"
+  echo "usage: ht-start-all-servers.sh [OPTIONS] <fs-choice> [<global-options>]"
   echo ""
   echo "OPTIONS:"
   echo "  --heapcheck-rangeserver run Hyperspace.RangeServer with tcmalloc heapcheck"

@@ -23,8 +23,8 @@ usage_exit() {
   echo ""
   echo "Options:"
   echo "  --clear               Clear any existing data"
-  echo "  -h, --help            Show this help message"
-  echo "  and any valid start-all-servers.sh options"
+  echo "  -h, --help            Show this help message and any valid"
+  echo "                        ht-start-all-servers.sh options"
 }
 
 while [ $# -gt 0 ]; do

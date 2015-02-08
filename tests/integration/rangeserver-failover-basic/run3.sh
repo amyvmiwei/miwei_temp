@@ -17,7 +17,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -28,7 +28,7 @@ rm -rf fs fs_pre
 gen_test_data
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start the rangeservers
@@ -64,7 +64,7 @@ if [ $? != 0 ] ; then
     echo "Problem loading table 'LoadTest', exiting ..."
     save_failure_state
     kill_rs 1 2 3 4 5
-    $HT_HOME/bin/stop-servers.sh
+    $HT_HOME/bin/ht-stop-servers.sh
     exit 1
 fi
 
@@ -82,18 +82,18 @@ wait_for_recovery rs2
 dump_keys dbdump-a.3
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # bounce servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 3
 kill_rs 4
 kill_rs 5
 
 # start master and rs3, rs4, rs5
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS3_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs3 \
@@ -109,12 +109,12 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS5_PIDFILE \
 dump_keys dbdump-b.3
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 3
 kill_rs 4
 kill_rs 5

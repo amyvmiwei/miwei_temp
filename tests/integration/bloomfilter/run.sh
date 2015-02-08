@@ -9,13 +9,13 @@ AG_MAXMEM=250000
 . $HT_HOME/bin/ht-env.sh
 
 restart_servers() {
-  $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+  $HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
       --Hypertable.RangeServer.AccessGroup.MaxMemory=$AG_MAXMEM \
       --Hypertable.Mutator.FlushDelay=10
 }
 
 restart_servers_noclean() {
-  $HT_HOME/bin/start-test-servers.sh --no-thriftbroker \
+  $HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker \
       --Hypertable.RangeServer.AccessGroup.MaxMemory=$AG_MAXMEM \
       --Hypertable.Mutator.FlushDelay=10
 }

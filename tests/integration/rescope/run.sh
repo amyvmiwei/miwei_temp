@@ -8,7 +8,7 @@ function finish {
 }
 trap finish EXIT
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=100000 \
     --Hypertable.Master.Split.SoftLimitEnabled=false \
     --Hypertable.RangeServer.Maintenance.Interval 1000 \

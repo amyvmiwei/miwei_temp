@@ -8,7 +8,7 @@ HT_HOME=/mnt/hypertable/current
 HYPERTABLE_HOME=$HT_HOME
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clean --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clean --no-thriftbroker
 
 $HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/create-table.hql
 if [ $? != 0 ] ; then

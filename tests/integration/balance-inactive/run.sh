@@ -18,7 +18,7 @@ kill_servers() {
   $HT_HOME/bin/ht destroy-database.sh
 }
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-master --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --no-master --no-thriftbroker
 
 $HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$MASTER_PIDFILE \
    2>&1 > master.output &

@@ -48,7 +48,7 @@ run_test() {
 }
 
 
-$HT_HOME/bin/start-test-servers.sh --no-thriftbroker --clear
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker --clear
 
 echo "use '/'; create namespace test;" | $HT_HOME/bin/ht shell --batch
 

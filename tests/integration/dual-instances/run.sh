@@ -12,7 +12,7 @@ if [ ! -e words ]; then
   gzip -d < ${TEST_DATA_DIR}/words.gz > words
 fi
 
-$HT_HOME/bin/start-test-servers.sh --clear \
+$HT_HOME/bin/ht-start-test-servers.sh --clear \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=1M
 
@@ -24,7 +24,7 @@ cp -r $HT_HOME/bin $ALT_HOME
 ln -s $HT_HOME/conf $ALT_HOME/conf
 ln -s $HT_HOME/lib $ALT_HOME/lib
 
-env INSTALL_DIR=$ALT_HOME $ALT_HOME/bin/start-test-servers.sh --clear --config=$SCRIPT_DIR/alt_instance.cfg
+env INSTALL_DIR=$ALT_HOME $ALT_HOME/bin/ht-start-test-servers.sh --clear --config=$SCRIPT_DIR/alt_instance.cfg
 
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 

@@ -12,7 +12,7 @@ echo "======================="
 \rm -rf $HT_HOME/log/*
 
 # start the cluster and load it with data
-$HT_HOME/bin/start-test-servers.sh --clear
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 sleep 5
 
 # create the table
