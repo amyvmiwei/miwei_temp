@@ -13,7 +13,7 @@ check ()
   to=$2
   expected=$3
   echo "$from -> $to"
-  $HT_HOME/bin/upgrade-ok.sh $from $to
+  $HT_HOME/bin/ht-upgrade-ok.sh $from $to
   if [ "$?" -ne "$expected" ]
   then
     echo "return code mismatch"

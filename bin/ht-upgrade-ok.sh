@@ -26,7 +26,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: upgrade-ok.sh <from> <to>"
+  echo "usage: ht-upgrade-ok.sh <from> <to>"
   echo ""
   echo "description:"
   echo "  Determines whether or not the upgrade from Hypertable"

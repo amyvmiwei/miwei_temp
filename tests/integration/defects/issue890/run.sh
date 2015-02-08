@@ -8,7 +8,7 @@ echo "Defect #890"
 echo "======================="
 
 # make sure hypertable jar files are copied into lib/java
-$HT_HOME/bin/set-hadoop-distro.sh cdh3
+$HT_HOME/bin/ht-set-hadoop-distro.sh cdh3
 
 cp $SCRIPT_DIR/TestSerializers.java .
 

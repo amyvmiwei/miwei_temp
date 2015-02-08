@@ -26,8 +26,8 @@ $HT_HOME/bin/stop-servers.sh
 
 $HT_HOME/bin/start-test-servers.sh --no-thriftbroker
 
-$HT_HOME/bin/ht serverup rangeserver
-if [ $? != 0 ]; then
+$HT_HOME/bin/ht-check-rangeserver.sh
+if [ $? -ne 0 ]; then
   RET=1
 fi
 

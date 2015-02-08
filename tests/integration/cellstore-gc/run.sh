@@ -4,7 +4,6 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
-MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_TOTAL=${WRITE_TOTAL:-"30000000"}
 WRITE_SIZE=${WRITE_SIZE:-"500000"}
 

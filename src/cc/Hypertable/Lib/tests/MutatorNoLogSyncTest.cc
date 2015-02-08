@@ -261,8 +261,8 @@ int main(int argc, char **argv) {
   unlink("./Hypertable.RangeServer");
   HT_ASSERT(link("../RangeServer/Hypertable.RangeServer",
                  "./Hypertable.RangeServer") == 0);
-  unlink("./serverup");
-  HT_ASSERT(link("../../Tools/serverup/serverup", "./serverup") == 0);
+  unlink("./ht_serverup");
+  HT_ASSERT(link("../../Tools/serverup/ht_serverup", "./ht_serverup") == 0);
   system("mkdir conf");
   system("touch conf/METADATA.xml");
   system("touch conf/RS_METRICS.xml");
@@ -416,7 +416,7 @@ namespace {
   void check_rangeserver(uint32_t port) {
     //make syscall to serverup and make sure RangeServer is up
     String command;
-    command = (String)"./serverup --wait 5000 --silent --range-server localhost:" + port + (String)" rangeserver";
+    command = (String)"./ht_serverup --wait 5000 --silent --range-server localhost:" + port + (String)" rangeserver";
     if (system(command.c_str()) !=0) {
       HT_ERRORF("RangeServer on port %d did not come up", port);
       exit(1);

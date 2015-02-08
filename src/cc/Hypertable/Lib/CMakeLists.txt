@@ -177,10 +177,6 @@ add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
 target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperFsBroker ${MALLOC_LIBRARY} HyperThirdParty m)
 
-# generate_test_data
-add_executable(generate_test_data generate_test_data.cc)
-target_link_libraries(generate_test_data Hypertable)
-
 # ColumnFamilySpec_test
 add_executable(ColumnFamilySpec_test tests/ColumnFamilySpec_test.cc)
 target_link_libraries(ColumnFamilySpec_test Hypertable)
@@ -363,8 +359,6 @@ if (NOT HT_COMPONENT_INSTALL)
 
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/Lib)
-  install(TARGETS generate_test_data
-      RUNTIME DESTINATION bin)
   install(TARGETS Hypertable
       LIBRARY DESTINATION lib
       ARCHIVE DESTINATION lib)

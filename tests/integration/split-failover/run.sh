@@ -227,7 +227,7 @@ run_test() {
         let j=2
         while [ $j -le $RS_COUNT ] ; do
             if test -z "${INDUCED_FAILURE[$j]}" ; then
-                $HT_HOME/bin/metalog_dump /hypertable/servers/rs$j/log/rsml | fgrep "load_acknowledged=false"
+                $HT_HOME/bin/ht metalog_dump /hypertable/servers/rs$j/log/rsml | fgrep "load_acknowledged=false"
                 if [ $? -eq 0 ] ; then
                     let error_count++
                 fi

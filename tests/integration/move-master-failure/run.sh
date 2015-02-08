@@ -82,11 +82,11 @@ echo $HQL_COMMAND | $HT_HOME/bin/ht shell --batch --Hypertable.Request.Timeout=1
 
 # Wait for the Master to die
 let j=0
-$HT_HOME/bin/ht serverup master
+$HT_HOME/bin/ht-check-master.sh
 while [ $? -eq 0 ] && [ $j -lt 12 ]; do
     sleep 10
     let j++
-    $HT_HOME/bin/ht serverup master
+    $HT_HOME/bin/ht-check-master.sh
 done
 
 if [ $j -eq 6 ]; then

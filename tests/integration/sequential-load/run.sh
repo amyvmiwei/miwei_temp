@@ -3,7 +3,6 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
-MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_SIZE=${WRITE_SIZE:-"20000000"}
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \

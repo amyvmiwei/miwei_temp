@@ -78,8 +78,8 @@ target_link_libraries(HyperCommon ${EXPAT_LIBRARIES} ${SIGAR_LIBRARIES}
   ${NCURSES_LIBRARY} ${CMAKE_THREAD_LIBS_INIT}
     ${RE2_LIBRARIES} ${MALLOC_LIBRARY} ${Libssl_LIBRARIES})
 
-add_executable(system_info system_info.cc)
-target_link_libraries(system_info HyperCommon)
+add_executable(ht_system_info system_info.cc)
+target_link_libraries(ht_system_info HyperCommon)
 
 add_executable(ht_checksum ht_checksum.cc)
 target_link_libraries(ht_checksum HyperCommon)
@@ -241,6 +241,6 @@ if (NOT HT_COMPONENT_INSTALL)
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
 
-  install(TARGETS system_info ht_checksum
+  install(TARGETS ht_system_info ht_checksum
           RUNTIME DESTINATION bin)
 endif ()

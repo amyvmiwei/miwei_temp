@@ -36,7 +36,7 @@ stop_range_server() {
     rm -f $pidfile
     sleep 1
 
-    if $HT_HOME/bin/serverup --silent rangeserver; then
+    if $HT_HOME/bin/ht serverup --silent rangeserver; then
       echo "Can't stop range server, exiting"
       ps -ef | grep Hypertable.RangeServer
       exit 1

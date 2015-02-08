@@ -94,8 +94,8 @@ target_link_libraries(system_state_test HyperCommon HyperMaster Hypertable ${MAL
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/Master/tests")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/Master")
 
-add_executable(htgc htgc.cc GcWorker.cc)
-target_link_libraries(htgc HyperMaster HyperFsBroker Hypertable ${RRD_LIBRARIES})
+add_executable(ht_gc gc.cc GcWorker.cc)
+target_link_libraries(ht_gc HyperMaster HyperFsBroker Hypertable ${RRD_LIBRARIES})
 
 configure_file(${SRC_DIR}/balance_plan_authority_test.golden
     ${DST_DIR}/balance_plan_authority_test.golden COPYONLY)
@@ -159,7 +159,7 @@ if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/Master)
-  install(TARGETS HyperMaster Hypertable.Master htgc
+  install(TARGETS HyperMaster Hypertable.Master ht_gc
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

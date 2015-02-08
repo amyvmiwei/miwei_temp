@@ -4,8 +4,7 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 PIDFILE=$HT_HOME/run/RangeServer.pid
 LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.RangeServerLauncher.pid
-DUMP_METALOG=$HT_HOME/bin/metalog_dump
-MY_IP=`$HT_HOME/bin/system_info --my-ip`
+DUMP_METALOG="$HT_HOME/bin/ht metalog_dump"
 METALOG="/hypertable/servers/rs1/log/rsml/"
 RANGE_SIZE=${RANGE_SIZE:-"7M"}
 

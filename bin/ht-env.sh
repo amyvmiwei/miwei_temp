@@ -107,7 +107,7 @@ show_success() {
 }
 
 check_server() {
-  $HYPERTABLE_HOME/bin/serverup --silent "$@" >& /dev/null
+  $HYPERTABLE_HOME/bin/ht serverup --silent "$@" >& /dev/null
 }
 
 wait_for_server() {
@@ -116,7 +116,7 @@ wait_for_server() {
   server_desc=$1; shift
   max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
-  address=`$HYPERTABLE_HOME/bin/serverup --display-address=true $server`
+  address=`$HYPERTABLE_HOME/bin/ht serverup --display-address=true $server`
 
   if [ "$address" ]; then
     address=" ($address)";
