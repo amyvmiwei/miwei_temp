@@ -110,6 +110,7 @@ namespace Hypertable {
 
     /** Context.
      * @param p Reference to properties object
+     * @param hs Hyperspace session
      */
     Context(PropertiesPtr &p, Hyperspace::SessionPtr hs);
 

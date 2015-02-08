@@ -193,7 +193,7 @@ void create_table(String &ns, String &table, String &rs_metrics_file) {
 ;
   // load from file
   String install_dir = System::install_dir;
-  String cmd_str = install_dir + (String)"/bin/hypertable --test-mode --exec \""+ hql + "\"";
+  String cmd_str = install_dir + (String)"/bin/ht_hypertable --test-mode --exec \""+ hql + "\"";
   if (verbose)
     HT_INFOF("Running command: %s", cmd_str.c_str());
   HT_EXPECT(::system(cmd_str.c_str()) == 0, Error::FAILED_EXPECTATION);

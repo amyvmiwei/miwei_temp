@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
 DIGEST="openssl dgst -md5"
@@ -98,7 +98,7 @@ run_test() {
     echo "Test $TEST_ID FAILED." >> report.txt
     echo "Test $TEST_ID FAILED." >> errors.txt
     DUMP_FILE=`pwd`/rsdump.$TEST_ID
-    echo "dump '$DUMP_FILE';" | $HT_HOME/bin/ht ht_rsclient --batch
+    echo "dump '$DUMP_FILE';" | $HT_HOME/bin/ht ht_rangeserver --batch
 
     cat out >> report.txt
     touch error

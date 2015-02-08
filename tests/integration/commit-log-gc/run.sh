@@ -16,7 +16,7 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=1M
 
-$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
+$HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
 for ((i=1; i<10; i++)) ; do
 

@@ -1,0 +1,4 @@
+/// @defgroup ToolsClient client
+/// @ingroup Tools
+/// Client programs.
+/// This modules contains client programs for issuing commands to servers.

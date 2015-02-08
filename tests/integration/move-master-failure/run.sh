@@ -35,8 +35,8 @@ $HT_HOME/bin/ht ht_load_generator update \
     --Field.value.size=1000 \
     --max-bytes=$WRITE_SIZE
 
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 
 echo "" > metadata.a
 echo "use sys; select * from METADATA MAX_VERSIONS 1;" | $HT_HOME/bin/ht shell --batch > metadata.b
@@ -48,13 +48,13 @@ while [ $? != 0 ]; do
   diff metadata.a metadata.b > /dev/null
 done
 
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 
 $HT_HOME/bin/stop-servers.sh master
 
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
+echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 sleep 1
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
 \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid

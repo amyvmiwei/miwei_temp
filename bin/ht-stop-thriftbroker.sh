@@ -42,7 +42,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-echo 'shutdown' | $HYPERTABLE_HOME/bin/ht tbclient --batch --silent $@
+echo 'shutdown' | $HYPERTABLE_HOME/bin/ht thriftbroker --batch --silent $@
 wait_for_critical thriftbroker "ThriftBroker" "$@"
 if [ $? -eq 0 ]; then
   pidfile=`server_pidfile thriftbroker`

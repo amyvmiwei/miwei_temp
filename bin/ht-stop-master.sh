@@ -42,7 +42,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-echo 'shutdown' | $HYPERTABLE_HOME/bin/ht master_client --batch --silent $@
+echo 'shutdown' | $HYPERTABLE_HOME/bin/ht master --batch --silent $@
 wait_for_critical master "Master" "$@"
 if [ $? -ne 0 ]; then
   stop_server master

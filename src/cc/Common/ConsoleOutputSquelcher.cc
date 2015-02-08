@@ -22,7 +22,7 @@
 /// @file
 /// Definition for ConsoleOutputSquelcher.
 /// This file contains the definition of ConsoleOutputSquelcher, a class for
-/// temporarily redirecting <i>stdout</i> and </i>stderr</i> to
+/// temporarily redirecting <i>stdout</i> and <i>stderr</i> to
 /// <code>/dev/null</code>.
 
 #include <Common/Compat.h>

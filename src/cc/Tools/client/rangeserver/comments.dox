@@ -1,0 +1,4 @@
+/// @defgroup ToolsClientRangeServer rangeserver
+/// @ingroup ToolsClient
+/// %RangeServer command line interface.
+/// This program is used to issue commands to the %RangeServer.

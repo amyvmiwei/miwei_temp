@@ -21,8 +21,8 @@
 
 /// @file
 /// Declarations for StatusPersister.
-/// This file contains declarations for StatusPersister, a class to hold Nagios-style
-/// status information for a running program.
+/// This file contains declarations for StatusPersister, a class for persisting
+/// permanent program status to disk.
 
 #ifndef Common_StatusPersister_h
 #define Common_StatusPersister_h
@@ -39,29 +39,38 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
-  /// Holds Nagios-style program status information.
+  /// Persists program status information to disk.
   class StatusPersister {
 
   public:
 
     /// Sets persistent status.
+    /// @param status Program status to persist
+    /// @param additional_lines Additional log entry lines
     static void set(const Status &status,
                     std::vector<std::string> additional_lines);
 
     /// Gets persistent status.
+    /// If #ms_fname is empty, calls initialize().  Then populates
+    /// <code>status</code> with #ms_status.
+    /// @param status Program status to persist
     static void get(Status &status);
 
   private:
 
+    /// Initializes variables.
+    /// This function sets #ms_fname to
+    /// <code>$HT_HOME/run/STATUS.&lt;program_name&gt;</code> and if the file
+    /// exists, parses it and initializes #ms_status with the last entry.
     static void initialize();
 
     /// %Mutex for serializaing access to members
     static std::mutex ms_mutex;
 
-    /// %Mutex for serializaing access to members
+    /// Name of persistent status file
     static std::string ms_fname;
 
-    /// Current persistent status;
+    /// Current persistent status
     static Status ms_status;
 
   };

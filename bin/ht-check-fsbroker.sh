@@ -70,4 +70,4 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-$RUNTIME_ROOT/bin/ht fsclient --batch ${TIMEOUT_OPTION} -e "status" "$@" ${SERVICE_HOSTNAME}
+$RUNTIME_ROOT/bin/ht fsbroker --batch ${TIMEOUT_OPTION} -e "status" "$@" ${SERVICE_HOSTNAME}

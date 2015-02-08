@@ -1,0 +1,4 @@
+/// @defgroup ToolsClientFsBroker fsbroker
+/// @ingroup ToolsClient
+/// File system broker command line interface.
+/// This program is used to issue commands to the file system broker.

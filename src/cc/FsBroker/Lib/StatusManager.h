@@ -76,7 +76,7 @@ namespace Lib {
 
     /// Sets status.
     /// @param code %Status code.
-    /// @param code %Status message.
+    /// @param text %Status text.
     void set_status(Status::Code code, const std::string &text);
 
     /// Sets status to CRITICAL with status text associated with errno.

@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"500000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid

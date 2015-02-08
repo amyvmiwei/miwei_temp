@@ -9,8 +9,8 @@ RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
 MASTER_PIDFILE=$HT_HOME/run/Master.pid
 
 kill_servers() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
   kill -9 `cat $RS1_PIDFILE`
   kill -9 `cat $RS2_PIDFILE`
   kill -9 `cat $MASTER_PIDFILE`

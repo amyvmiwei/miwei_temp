@@ -22,7 +22,7 @@
 /// @file
 /// Declaration for ConsoleOutputSquelcher.
 /// This file contains the declaration of ConsoleOutputSquelcher, a class for
-/// temporarily redirecting <i>stdout</i> and </i>stderr</i> to
+/// temporarily redirecting <i>stdout</i> and <i>stderr</i> to
 /// <code>/dev/null</code>.
 
 #ifndef Hypertable_Common_ConsoleOutputSquelcher_h
@@ -33,18 +33,18 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
-  /// Temporarily redirects <i>stdout</i> and </i>stderr</i> to
+  /// Temporarily redirects <i>stdout</i> and <i>stderr</i> to
   /// <code>/dev/null</code>.
   class ConsoleOutputSquelcher {
   public:
     
     /// Constructor.
-    /// Redirects <i>stdout</i> and </i>stderr</i> to platform equivalent of
+    /// Redirects <i>stdout</i> and <i>stderr</i> to platform equivalent of
     /// Unix <code>/dev/null</code>.
     ConsoleOutputSquelcher();
 
     /// Destructor.
-    /// Restores <i>stdout</i> and </i>stderr</i>.
+    /// Restores <i>stdout</i> and <i>stderr</i>.
     ~ConsoleOutputSquelcher();
 
   private:

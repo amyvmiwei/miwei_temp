@@ -42,7 +42,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-echo 'shutdown' | $HYPERTABLE_HOME/bin/ht fsclient --nowait --batch --silent $@
+echo 'shutdown' | $HYPERTABLE_HOME/bin/ht fsbroker --nowait --batch --silent $@
 wait_for_critical fsbroker "FS Broker" "$@"
 if [ $? -ne 0 ]; then
   stop_server fsbroker

@@ -2,7 +2,6 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
-HT_SHELL=$HT_HOME/bin/hypertable
 PIDFILE=$HT_HOME/run/RangeServer.pid
 SCRIPT_DIR=`dirname $0`
 startlog=/tmp/start-metadata-split$$.log
@@ -117,7 +116,7 @@ run_test() {
   # give servers time to come up
   sleep 2;
 
-  $HT_SHELL --batch < $SCRIPT_DIR/create-table.hql
+  $HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/create-table.hql
   if [ $? != 0 ] ; then
     echo "Error creating table 'LoadTest', shell returned %?"
     save_failure_state
@@ -135,7 +134,7 @@ run_test() {
   fi
 
   sleep 1
-  echo "wait for maintenance;" | $HT_HOME/bin/ht ht_rsclient --batch  
+  echo "wait for maintenance;" | $HT_HOME/bin/ht ht_rangeserver --batch  
 
   fgrep ERROR rangeserver.output.$TEST_ID | fgrep -v FailureInducer | fgrep -v skew > error.$TEST_ID
 

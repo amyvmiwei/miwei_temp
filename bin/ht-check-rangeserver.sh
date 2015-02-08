@@ -70,4 +70,4 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-$RUNTIME_ROOT/bin/ht rsclient ${TIMEOUT_OPTION} --batch --no-hyperspace -e "status" "$@" ${SERVICE_HOSTNAME}
+$RUNTIME_ROOT/bin/ht rangeserver ${TIMEOUT_OPTION} --batch --no-hyperspace -e "status" "$@" ${SERVICE_HOSTNAME}

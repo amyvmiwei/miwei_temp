@@ -42,7 +42,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-echo 'shutdown' | $HYPERTABLE_HOME/bin/ht rsclient --batch --silent --no-hyperspace $@
+echo 'shutdown' | $HYPERTABLE_HOME/bin/ht rangeserver --batch --silent --no-hyperspace $@
 wait_for_critical rangeserver "RangeServer" "$@"
 if [ $? -ne 0 ]; then
   stop_server rangeserver

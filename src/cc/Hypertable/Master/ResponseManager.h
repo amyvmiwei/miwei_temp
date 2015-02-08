@@ -216,7 +216,6 @@ namespace Hypertable {
   public:
 
     /** Constructor.
-     * @param context Pointer to shared context object
      */
     ResponseManager() : m_context(std::make_shared<ResponseManagerContext>()) { }
 
@@ -256,7 +255,7 @@ namespace Hypertable {
 
     /** Adds response delivery information and/or delivers response.
      * This method first checks to see if the operation specified by
-     * <code>operation_id</cod> has been added
+     * <code>operation_id</code> has been added
      * to <code>m_context->expirable_ops</code>.  If it has been added, then a
      * response is immediately sent back to the client, the operation is
      * removed from <code>m_context->expirable_ops</code> and added to

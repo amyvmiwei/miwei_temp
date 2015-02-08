@@ -61,8 +61,8 @@ $HT_HOME/bin/ht ht_load_generator update \
 
 sleep 3
 
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
+echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 
 sleep 1
 

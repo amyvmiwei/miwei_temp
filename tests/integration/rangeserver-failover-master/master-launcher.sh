@@ -15,7 +15,7 @@ stop_range_servers() {
     local port
     let port=38059+$1
     while [ $port -ge 38060 ] ; do
-        echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
+        echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$port
         let port-=1
     done
     sleep 1

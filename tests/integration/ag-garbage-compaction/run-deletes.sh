@@ -3,7 +3,6 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
 PIDFILE=$HT_HOME/run/RangeServer.pid
-HT_SHELL=$HT_HOME/bin/hypertable
 SCRIPT_DIR=`dirname $0`
 
 . $HT_HOME/bin/ht-env.sh
@@ -18,7 +17,7 @@ $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.AccessGroup.MaxMemory=250000 \
     $@ > rangeserver.output 2>&1 &
 
-echo "use '/'; create table LoadTest ( Field );" | $HT_SHELL --batch
+echo "use '/'; create table LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
 
 for ((i=1; i<10; i++)) ; do
 

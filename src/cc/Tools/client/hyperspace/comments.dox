@@ -1,0 +1,4 @@
+/// @defgroup ToolsClientHyperspace hyperspace
+/// @ingroup ToolsClient
+/// %Hyperspace command line interface.
+/// This program is used to issue commands to %Hyperspace.

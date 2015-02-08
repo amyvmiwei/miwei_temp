@@ -491,9 +491,8 @@ namespace Hypertable {
     virtual void status(Status &status, Timer *timer=0) = 0;
 
     /// Decodes the response from an status request.
-    /// @param event reference to response event
-    /// @param code Address of variable to hold status code
-    /// @param output Reference to string to hold status text
+    /// @param event Reference to response event
+    /// @param status Reference to status information output parameter
     virtual void decode_response_status(EventPtr &event, Status &status) = 0;
 
     /** Decodes the response from an request that only returns an error code

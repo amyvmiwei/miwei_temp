@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
 PIDFILE=$HT_HOME/run/RangeServer.pid
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 HQL_CREATE=$1
 LOAD_GEN_FLAG=$2
@@ -31,7 +31,7 @@ $HT_HOME/bin/ht ht_load_generator update \
 sleep 5
 
 # trigger the compaction
-$HT_HOME/bin/ht_rsclient --exec "COMPACT RANGES USER; WAIT FOR MAINTENANCE;"
+$HT_HOME/bin/ht_rangeserver --exec "COMPACT RANGES USER; WAIT FOR MAINTENANCE;"
 sleep 10
 
 echo "Verifying Field1"

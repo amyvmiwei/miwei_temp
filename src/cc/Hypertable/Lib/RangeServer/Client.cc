@@ -69,22 +69,21 @@
 #include <Common/Serialization.h>
 
 using namespace Hypertable;
-using namespace Hypertable::Lib::RangeServer;
 using namespace Hypertable::Config;
 using namespace std;
 
-Client::Client(Comm *comm, int32_t timeout_ms)
+Lib::RangeServer::Client::Client(Comm *comm, int32_t timeout_ms)
   : m_comm(comm), m_default_timeout_ms(timeout_ms) {
   if (timeout_ms == 0)
     m_default_timeout_ms = get_i32("Hypertable.Request.Timeout");
 }
 
 
-Client::~Client() {
+Lib::RangeServer::Client::~Client() {
 }
 
 
-void Client::compact(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::compact(const CommAddress &addr, const TableIdentifier &table,
                      const String &row, int32_t flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
@@ -101,7 +100,7 @@ void Client::compact(const CommAddress &addr, const TableIdentifier &table,
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::compact(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::compact(const CommAddress &addr, const TableIdentifier &table,
                      const String &row, int32_t flags,
                      DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_COMPACT);
@@ -111,7 +110,7 @@ void Client::compact(const CommAddress &addr, const TableIdentifier &table,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::compact(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::compact(const CommAddress &addr, const TableIdentifier &table,
                      const String &row, int32_t flags,
                      DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_COMPACT);
@@ -123,7 +122,7 @@ void Client::compact(const CommAddress &addr, const TableIdentifier &table,
 
 
 void
-Client::load_range(const CommAddress &addr,
+Lib::RangeServer::Client::load_range(const CommAddress &addr,
                    const TableIdentifier &table, const RangeSpec &range_spec,
                    const RangeState &range_state, bool needs_compaction) {
   do_load_range(addr, table, range_spec, range_state, needs_compaction,
@@ -131,7 +130,7 @@ Client::load_range(const CommAddress &addr,
 }
 
 void
-Client::load_range(const CommAddress &addr,
+Lib::RangeServer::Client::load_range(const CommAddress &addr,
                    const TableIdentifier &table, const RangeSpec &range_spec,
                    const RangeState &range_state, bool needs_compaction,
     Timer &timer) {
@@ -140,7 +139,7 @@ Client::load_range(const CommAddress &addr,
 }
 
 void
-Client::do_load_range(const CommAddress &addr,
+Lib::RangeServer::Client::do_load_range(const CommAddress &addr,
                       const TableIdentifier &table, const RangeSpec &range_spec,
                       const RangeState &range_state, bool needs_compaction,
                       int32_t timeout_ms) {
@@ -161,7 +160,7 @@ Client::do_load_range(const CommAddress &addr,
 }
 
 void
-Client::acknowledge_load(const CommAddress &addr,
+Lib::RangeServer::Client::acknowledge_load(const CommAddress &addr,
                          const vector<QualifiedRangeSpec*> &ranges,
                          map<QualifiedRangeSpec, int> &response_map) {
   DispatchHandlerSynchronizer sync_handler;
@@ -200,7 +199,7 @@ Client::acknowledge_load(const CommAddress &addr,
   }
 }
 
-void Client::update(const CommAddress &addr, uint64_t cluster_id, 
+void Lib::RangeServer::Client::update(const CommAddress &addr, uint64_t cluster_id, 
                     const TableIdentifier &table, int32_t count,
                     StaticBuffer &buffer, int32_t flags,
                     DispatchHandler *handler) {
@@ -215,7 +214,7 @@ void Client::update(const CommAddress &addr, uint64_t cluster_id,
 }
 
 void
-Client::create_scanner(const CommAddress &addr,
+Lib::RangeServer::Client::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_CREATE_SCANNER);
@@ -229,7 +228,7 @@ Client::create_scanner(const CommAddress &addr,
 }
 
 void
-Client::create_scanner(const CommAddress &addr,
+Lib::RangeServer::Client::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, DispatchHandler *handler,
     Timer &timer) {
@@ -244,7 +243,7 @@ Client::create_scanner(const CommAddress &addr,
 }
 
 void
-Client::create_scanner(const CommAddress &addr,
+Lib::RangeServer::Client::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, ScanBlock &scan_block) {
   do_create_scanner(addr, table, range, scan_spec,
@@ -252,7 +251,7 @@ Client::create_scanner(const CommAddress &addr,
 }
 
 void
-Client::create_scanner(const CommAddress &addr,
+Lib::RangeServer::Client::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, ScanBlock &scan_block,
     Timer &timer) {
@@ -261,7 +260,7 @@ Client::create_scanner(const CommAddress &addr,
 }
 
 void
-Client::do_create_scanner(const CommAddress &addr,
+Lib::RangeServer::Client::do_create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, ScanBlock &scan_block,
     int32_t timeout_ms) {
@@ -288,7 +287,7 @@ Client::do_create_scanner(const CommAddress &addr,
 
 
 void
-Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
                         DispatchHandler *handler) {
 
   CommHeader header(Protocol::COMMAND_DESTROY_SCANNER);
@@ -300,7 +299,7 @@ Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
 }
 
 void
-Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
                         DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_DESTROY_SCANNER);
   header.gid = scanner_id;
@@ -312,18 +311,18 @@ Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
 
 
 void
-Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id) {
+Lib::RangeServer::Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id) {
   do_destroy_scanner(addr, scanner_id, m_default_timeout_ms);
 }
 
 void
-Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::destroy_scanner(const CommAddress &addr, int32_t scanner_id,
                         Timer &timer) {
   do_destroy_scanner(addr, scanner_id, timer.remaining());
 }
 
 void
-Client::do_destroy_scanner(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::do_destroy_scanner(const CommAddress &addr, int32_t scanner_id,
                            int32_t timeout_ms) {
 
   DispatchHandlerSynchronizer sync_handler;
@@ -342,7 +341,7 @@ Client::do_destroy_scanner(const CommAddress &addr, int32_t scanner_id,
 }
 
 void
-Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
                         DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_FETCH_SCANBLOCK);
   header.flags |= CommHeader::FLAGS_BIT_PROFILE;
@@ -354,7 +353,7 @@ Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
 }
 
 void
-Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
                         DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_FETCH_SCANBLOCK);
   header.flags |= CommHeader::FLAGS_BIT_PROFILE;
@@ -367,19 +366,19 @@ Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
 
 
 void
-Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
                         ScanBlock &scan_block) {
   do_fetch_scanblock(addr, scanner_id, scan_block, m_default_timeout_ms);
 }
 
 void
-Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
                         ScanBlock &scan_block, Timer &timer) {
   do_fetch_scanblock(addr, scanner_id, scan_block, timer.remaining());
 }
 
 void
-Client::do_fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
+Lib::RangeServer::Client::do_fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
                            ScanBlock &scan_block, int32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_FETCH_SCANBLOCK);
@@ -402,7 +401,7 @@ Client::do_fetch_scanblock(const CommAddress &addr, int32_t scanner_id,
 }
 
 
-void Client::drop_table(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::drop_table(const CommAddress &addr, const TableIdentifier &table,
                         DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_DROP_TABLE);
   Request::Parameters::DropTable params(table);
@@ -411,7 +410,7 @@ void Client::drop_table(const CommAddress &addr, const TableIdentifier &table,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::drop_table(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::drop_table(const CommAddress &addr, const TableIdentifier &table,
                         DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_DROP_TABLE);
   Request::Parameters::DropTable params(table);
@@ -421,11 +420,11 @@ void Client::drop_table(const CommAddress &addr, const TableIdentifier &table,
 }
 
 
-void Client::drop_table(const CommAddress &addr, const TableIdentifier &table) {
+void Lib::RangeServer::Client::drop_table(const CommAddress &addr, const TableIdentifier &table) {
   do_drop_table(addr, table, m_default_timeout_ms);
 }
 
-void Client::do_drop_table(const CommAddress &addr,const TableIdentifier &table,
+void Lib::RangeServer::Client::do_drop_table(const CommAddress &addr,const TableIdentifier &table,
                            int32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_DROP_TABLE);
@@ -441,7 +440,7 @@ void Client::do_drop_table(const CommAddress &addr,const TableIdentifier &table,
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::update_schema(const CommAddress &addr,const TableIdentifier &table,
+void Lib::RangeServer::Client::update_schema(const CommAddress &addr,const TableIdentifier &table,
                            const String &schema, DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_UPDATE_SCHEMA);
   if (table.is_system())
@@ -453,7 +452,7 @@ void Client::update_schema(const CommAddress &addr,const TableIdentifier &table,
 }
 
 void
-Client::update_schema(const CommAddress &addr,
+Lib::RangeServer::Client::update_schema(const CommAddress &addr,
     const TableIdentifier &table, const String &schema,
     DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_UPDATE_SCHEMA);
@@ -465,7 +464,7 @@ Client::update_schema(const CommAddress &addr,
   send_message(addr, cbuf, handler, timer.remaining());
 }
 
-void Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
+void Lib::RangeServer::Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
                              const TableIdentifier &table,
                              DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_COMMIT_LOG_SYNC);
@@ -477,7 +476,7 @@ void Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
+void Lib::RangeServer::Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
                              const TableIdentifier &table,
                              DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_COMMIT_LOG_SYNC);
@@ -489,15 +488,15 @@ void Client::commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
   send_message(addr, cbuf, handler, timer.remaining());
 }
 
-void Client::status(const CommAddress &addr, Status &status) {
+void Lib::RangeServer::Client::status(const CommAddress &addr, Status &status) {
   do_status(addr, status, m_default_timeout_ms);
 }
 
-void Client::status(const CommAddress &addr, Status &status, Timer &timer) {
+void Lib::RangeServer::Client::status(const CommAddress &addr, Status &status, Timer &timer) {
   do_status(addr, status, timer.remaining());
 }
 
-void Client::do_status(const CommAddress &addr, Status &status, int32_t timeout_ms) {
+void Lib::RangeServer::Client::do_status(const CommAddress &addr, Status &status, int32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_STATUS);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
@@ -520,7 +519,7 @@ void Client::do_status(const CommAddress &addr, Status &status, int32_t timeout_
 
 }
 
-void Client::wait_for_maintenance(const CommAddress &addr) {
+void Lib::RangeServer::Client::wait_for_maintenance(const CommAddress &addr) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_WAIT_FOR_MAINTENANCE);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
@@ -535,14 +534,14 @@ void Client::wait_for_maintenance(const CommAddress &addr) {
 }
 
 
-void Client::shutdown(const CommAddress &addr) {
+void Lib::RangeServer::Client::shutdown(const CommAddress &addr) {
   CommHeader header(Protocol::COMMAND_SHUTDOWN);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBufPtr cbuf(new CommBuf(header));
   send_message(addr, cbuf, 0, m_default_timeout_ms);
 }
 
-void Client::dump(const CommAddress &addr, String &outfile, bool nokeys) {
+void Lib::RangeServer::Client::dump(const CommAddress &addr, String &outfile, bool nokeys) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_DUMP);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
@@ -560,7 +559,7 @@ void Client::dump(const CommAddress &addr, String &outfile, bool nokeys) {
 }
 
 void
-Client::dump_pseudo_table(const CommAddress &addr, const TableIdentifier &table,
+Lib::RangeServer::Client::dump_pseudo_table(const CommAddress &addr, const TableIdentifier &table,
                           const String &pseudo_table_name,
                           const String &outfile) {
   DispatchHandlerSynchronizer sync_handler;
@@ -577,20 +576,20 @@ Client::dump_pseudo_table(const CommAddress &addr, const TableIdentifier &table,
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::get_statistics(const CommAddress &addr,
+void Lib::RangeServer::Client::get_statistics(const CommAddress &addr,
                             vector<SystemVariable::Spec>&specs,
                             int64_t generation, StatsRangeServer &stats) {
   do_get_statistics(addr, specs, generation, stats, m_default_timeout_ms);
 }
 
-void Client::get_statistics(const CommAddress &addr,
+void Lib::RangeServer::Client::get_statistics(const CommAddress &addr,
                             vector<SystemVariable::Spec>&specs,
                             int64_t generation, StatsRangeServer &stats,
                             Timer &timer) {
   do_get_statistics(addr, specs, generation, stats, timer.remaining());
 }
 
-void Client::do_get_statistics(const CommAddress &addr,
+void Lib::RangeServer::Client::do_get_statistics(const CommAddress &addr,
                                vector<SystemVariable::Spec> &specs,
                                int64_t generation, StatsRangeServer &stats,
                                int32_t timeout_ms) {
@@ -617,7 +616,7 @@ void Client::do_get_statistics(const CommAddress &addr,
   }
 }
 
-void Client::get_statistics(const CommAddress &addr,
+void Lib::RangeServer::Client::get_statistics(const CommAddress &addr,
                             vector<SystemVariable::Spec>&specs,
                             int64_t generation, DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_GET_STATISTICS);
@@ -628,7 +627,7 @@ void Client::get_statistics(const CommAddress &addr,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::get_statistics(const CommAddress &addr,
+void Lib::RangeServer::Client::get_statistics(const CommAddress &addr,
                             vector<SystemVariable::Spec>&specs,
                             int64_t generation, DispatchHandler *handler,
                             Timer &timer) {
@@ -640,7 +639,7 @@ void Client::get_statistics(const CommAddress &addr,
   send_message(addr, cbuf, handler, timer.remaining());
 }
 
-void Client::drop_range(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::drop_range(const CommAddress &addr, const TableIdentifier &table,
                         const RangeSpec &range, DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_DROP_RANGE);
   Request::Parameters::DropRange params(table, range);
@@ -649,7 +648,7 @@ void Client::drop_range(const CommAddress &addr, const TableIdentifier &table,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::drop_range(const CommAddress &addr, const TableIdentifier &table,
+void Lib::RangeServer::Client::drop_range(const CommAddress &addr, const TableIdentifier &table,
                         const RangeSpec &range, DispatchHandler *handler,
                         Timer &timer) {
   CommHeader header(Protocol::COMMAND_DROP_RANGE);
@@ -659,19 +658,19 @@ void Client::drop_range(const CommAddress &addr, const TableIdentifier &table,
   send_message(addr, cbuf, handler, timer.remaining());
 }
 
-void Client::relinquish_range(const CommAddress &addr,
+void Lib::RangeServer::Client::relinquish_range(const CommAddress &addr,
                               const TableIdentifier &table,
                               const RangeSpec &range) {
   do_relinquish_range(addr, table, range, m_default_timeout_ms);
 }
 
-void Client::relinquish_range(const CommAddress &addr,
+void Lib::RangeServer::Client::relinquish_range(const CommAddress &addr,
                               const TableIdentifier &table,
                               const RangeSpec &range, Timer &timer) {
   do_relinquish_range(addr, table, range, timer.remaining());
 }
 
-void Client::do_relinquish_range(const CommAddress &addr,
+void Lib::RangeServer::Client::do_relinquish_range(const CommAddress &addr,
                                  const TableIdentifier &table,
                                  const RangeSpec &range,
                                  int32_t timeout_ms) {
@@ -690,7 +689,7 @@ void Client::do_relinquish_range(const CommAddress &addr,
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::heapcheck(const CommAddress &addr, String &outfile) {
+void Lib::RangeServer::Client::heapcheck(const CommAddress &addr, String &outfile) {
   DispatchHandlerSynchronizer sync_handler;
   CommHeader header(Protocol::COMMAND_HEAPCHECK);
   Request::Parameters::Heapcheck params(outfile);
@@ -705,7 +704,7 @@ void Client::heapcheck(const CommAddress &addr, String &outfile) {
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::replay_fragments(const CommAddress &addr, int64_t op_id,
+void Lib::RangeServer::Client::replay_fragments(const CommAddress &addr, int64_t op_id,
     const String &recover_location, int plan_generation, int32_t type,
     const vector<int32_t> &fragments, const Lib::RangeServerRecovery::ReceiverPlan &plan,
                               int32_t replay_timeout) {
@@ -727,7 +726,7 @@ void Client::replay_fragments(const CommAddress &addr, int64_t op_id,
 
 }
 
-void Client::phantom_load(const CommAddress &addr, const String &location,
+void Lib::RangeServer::Client::phantom_load(const CommAddress &addr, const String &location,
                           int32_t plan_generation,
                           const vector<int32_t> &fragments,
                           const vector<QualifiedRangeSpec> &range_specs,
@@ -748,7 +747,7 @@ void Client::phantom_load(const CommAddress &addr, const String &location,
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::phantom_update(const CommAddress &addr, const String &location,
+void Lib::RangeServer::Client::phantom_update(const CommAddress &addr, const String &location,
                             int32_t plan_generation, const QualifiedRangeSpec &range,
                             int32_t fragment, StaticBuffer &buffer,
                             DispatchHandler *handler) {
@@ -761,7 +760,7 @@ void Client::phantom_update(const CommAddress &addr, const String &location,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::phantom_prepare_ranges(const CommAddress &addr, int64_t op_id,
+void Lib::RangeServer::Client::phantom_prepare_ranges(const CommAddress &addr, int64_t op_id,
                                     const String &location,
                                     int32_t plan_generation, 
                                     const vector<QualifiedRangeSpec> &ranges,
@@ -783,7 +782,7 @@ void Client::phantom_prepare_ranges(const CommAddress &addr, int64_t op_id,
 
 }
 
-void Client::phantom_commit_ranges(const CommAddress &addr, int64_t op_id,
+void Lib::RangeServer::Client::phantom_commit_ranges(const CommAddress &addr, int64_t op_id,
                                    const String &location, int32_t plan_generation, 
                                    const vector<QualifiedRangeSpec> &ranges,
                                    int32_t timeout_ms) {
@@ -803,7 +802,7 @@ void Client::phantom_commit_ranges(const CommAddress &addr, int64_t op_id,
              + Hypertable::Protocol::string_format_message(event));
 }
 
-void Client::set_state(const CommAddress &addr,
+void Lib::RangeServer::Client::set_state(const CommAddress &addr,
                        vector<SystemVariable::Spec> &specs, int64_t generation,
                        DispatchHandler *handler, Timer &timer) {
   CommHeader header(Protocol::COMMAND_SET_STATE);
@@ -815,7 +814,7 @@ void Client::set_state(const CommAddress &addr,
 }
 
 
-void Client::table_maintenance_enable(const CommAddress &addr,
+void Lib::RangeServer::Client::table_maintenance_enable(const CommAddress &addr,
                                       const TableIdentifier &table,
                                       DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_TABLE_MAINTENANCE_ENABLE);
@@ -826,7 +825,7 @@ void Client::table_maintenance_enable(const CommAddress &addr,
   send_message(addr, cbuf, handler, m_default_timeout_ms);
 }
 
-void Client::table_maintenance_disable(const CommAddress &addr,
+void Lib::RangeServer::Client::table_maintenance_disable(const CommAddress &addr,
                                        const TableIdentifier &table,
                                        DispatchHandler *handler) {
   CommHeader header(Protocol::COMMAND_TABLE_MAINTENANCE_DISABLE);
@@ -838,7 +837,7 @@ void Client::table_maintenance_disable(const CommAddress &addr,
 }
 
 
-void Client::send_message(const CommAddress &addr, CommBufPtr &cbuf,
+void Lib::RangeServer::Client::send_message(const CommAddress &addr, CommBufPtr &cbuf,
                           DispatchHandler *handler, int32_t timeout_ms) {
   int error;
 

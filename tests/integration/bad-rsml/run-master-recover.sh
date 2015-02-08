@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 DATA_SEED=42
 DATA_SIZE=${DATA_SIZE:-"2000000"}

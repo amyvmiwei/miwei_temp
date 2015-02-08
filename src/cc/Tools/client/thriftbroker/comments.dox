@@ -1,0 +1,4 @@
+/// @defgroup ToolsClientThriftBroker thriftbroker
+/// @ingroup ToolsClient
+/// ThriftBroker command line interface.
+/// This program is used to issue commands to the %ThriftBroker.

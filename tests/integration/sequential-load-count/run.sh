@@ -33,7 +33,7 @@ while true; do
 
   sleep 5
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG < create-table.hql
+  $HYPERTABLE_HOME/bin/ht shell --no-prompt --config=$CONFIG < create-table.hql
   if [ $? != 0 ] ; then
      echo "Unable to create table 'SequentialLoadCountTest', exiting ..."
      exit 1
@@ -46,7 +46,7 @@ while true; do
      exit 1
   fi
 
-  $HYPERTABLE_HOME/bin/hypertable --no-prompt --config=$CONFIG < shutdown.hql
+  $HYPERTABLE_HOME/bin/ht shell --no-prompt --config=$CONFIG < shutdown.hql
   if [ $? != 0 ] ; then
      echo "Unable to shutdown RangeServers exiting ..."
      exit 1
@@ -57,7 +57,7 @@ while true; do
 
   sleep 15
 
-  $HYPERTABLE_HOME/bin/hypertable --batch --config=$CONFIG < dump-table.hql > dbdump
+  $HYPERTABLE_HOME/bin/ht shell --batch --config=$CONFIG < dump-table.hql > dbdump
 
   wc -l dbdump > count.output
   diff count.output count.golden

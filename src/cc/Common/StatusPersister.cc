@@ -20,9 +20,9 @@
  */
 
 /// @file
-/// Declarations for StatusPersister.
-/// This file contains declarations for StatusPersister, a class to hold Nagios-style
-/// status information for a running program.
+/// Definitions for StatusPersister.
+/// This file contains definitions for StatusPersister, a class for persisting
+/// permanent program status to disk.
 
 #include <Common/Compat.h>
 
@@ -64,6 +64,21 @@ namespace {
   }
 }
 
+/// @detail
+/// If #ms_fname is empty, calls initialize(), then creates a log entry and
+/// writes it to #ms_fname.  Prior to writing the entry, if #ms_fname does not
+/// exist, a comment header is written to the file.  The format of the status
+///  entry is as follows:
+/// <pre>
+/// WARNING - Corruption encountered in commit log file /hypertable/servers/rs1/log/user/0
+///   Time 2025-02-03 16:36:00
+///   HYPERTABLE block compressor bad block header
+///   Header checksum mismatch: 19262 (computed) != 23614 (stored)
+///   File archived to /hypertable/backup/hypertable/servers/rs1/log/user/0
+/// </pre>
+/// The first line is the status information from <code>status</code>, the
+/// second line contain the current time, and the subsequent lines are
+/// <code>additional_lines</code>.
 void StatusPersister::set(const Status &status,
                           std::vector<std::string> additional_lines) {
   lock_guard<mutex> lock(ms_mutex);

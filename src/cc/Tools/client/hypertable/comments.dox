@@ -1,0 +1,4 @@
+/// @defgroup ToolsClientHypertable hypertable
+/// @ingroup ToolsClient
+/// %Hypertable command line interface.
+/// This program is used to issue commands to %Hypertable.

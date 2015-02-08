@@ -9,7 +9,7 @@ $HYPERTABLE_HOME/bin/start-test-servers.sh --clean --no-thriftbroker
 
 sleep 5
 
-echo "create table LoadTest ( Field );" | $HYPERTABLE_HOME/bin/hypertable --batch
+echo "create table LoadTest ( Field );" | $HYPERTABLE_HOME/bin/ht shell --batch
 
 if [ $? != 0 ] ; then
     echo "Unable to create table 'LoadTest', exiting ..."

@@ -11,7 +11,7 @@ HYPERTABLE_HOME=/home/doug/hypertable/current
 
 $HYPERTABLE_HOME/bin/start-test-servers.sh --clear
 
-$HYPERTABLE_HOME/bin/hypertable < create-table.hql
+$HYPERTABLE_HOME/bin/ht shell < create-table.hql
 
 sleep 2
 

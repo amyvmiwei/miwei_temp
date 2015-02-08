@@ -10,7 +10,7 @@ RET=0
 $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.Range.SplitSize=1M
 
-$HT_HOME/bin/hypertable --batch < $SCRIPT_DIR/create-table.hql
+$HT_HOME/bin/ht shell --batch < $SCRIPT_DIR/create-table.hql
 
 $HT_HOME/bin/stop-servers.sh
 

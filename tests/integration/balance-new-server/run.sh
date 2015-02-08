@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
 WRITE_SIZE=${WRITE_SIZE:-"40000000"}
@@ -13,8 +13,8 @@ RUN_DIR=`pwd`
 . $HT_HOME/bin/ht-env.sh
 
 stop_range_servers() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 
   sleep 1
 

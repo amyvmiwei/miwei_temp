@@ -49,7 +49,6 @@ HyperspaceMasterFile::~HyperspaceMasterFile() {
 /// This method writes the address on which the Master is listening to
 /// the <i>address</i> attribute of the <code>/hypertable/master</code>
 /// in Hyperspace (format is IP:port).
-/// @param context Reference to context object
 /// @note The top-level directory <code>/hypertable</code> may be different
 /// depending on the <code>Hypertable.Directory</code> property.
 void HyperspaceMasterFile::write_master_address() {

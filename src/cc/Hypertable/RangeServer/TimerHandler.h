@@ -79,8 +79,7 @@ namespace Hypertable {
 
     /// %Timer event handler callback method.
     /// This method performs the following steps:
-    ///   -# If #m_shutdown is <i>true</i>, this method sets #m_shutdown_complete
-    ///      to <i>true</i>, signals #m_shutdown_cond, and returns immediately.
+    ///   -# If #m_shutdown is <i>true</i>, return.
     ///   -# If the application queue is paused, it will restart it in the
     ///      following cirucmstances:
     ///        - Low memory mode is in effect and the system is no longer low on

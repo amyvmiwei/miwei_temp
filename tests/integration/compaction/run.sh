@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"500000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
@@ -38,7 +38,7 @@ start_master_and_rangeservers() {
 
 stop_master_and_rangeservers() {
     # stop master
-    echo 'shutdown;quit;' | $HYPERTABLE_HOME/bin/ht master_client --batch
+    echo 'shutdown;quit;' | $HYPERTABLE_HOME/bin/ht master --batch
     # wait for master shutdown
     wait_for_server_shutdown master "master" "$@"
     if [ $? != 0 ] ; then
@@ -46,12 +46,12 @@ stop_master_and_rangeservers() {
     fi
 
     # stop rs1
-    echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$RS1_PORT
+    echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$RS1_PORT
     kill -9 `cat $RS1_PIDFILE`
     \rm -f $RS1_PIDFILE
 
     # stop rs2
-    echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$RS2_PORT
+    echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$RS2_PORT
     kill -9 `cat $RS2_PIDFILE`
     \rm -f $RS2_PIDFILE
 }
@@ -162,7 +162,7 @@ run_test() {
         fi
     else
         if [ $MANUAL == "true" ]; then
-            echo "COMPACT RANGES ALL;" | $HT_HOME/bin/ht rsclient --batch localhost:$MANUAL_COMPACT_SERVER_PORT
+            echo "COMPACT RANGES ALL;" | $HT_HOME/bin/ht rangeserver --batch localhost:$MANUAL_COMPACT_SERVER_PORT
         fi
         wait_for_induced_failure
         if [ $? -ne 0 ] ; then

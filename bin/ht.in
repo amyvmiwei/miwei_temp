@@ -82,7 +82,7 @@ do_cmd() {
 }
 
 print_version() {
-  $HYPERTABLE_HOME/bin/hypertable --version
+  $HYPERTABLE_HOME/bin/ht_hypertable --version
   HADOOP_VERSION="unknown"
   if [ -f $HYPERTABLE_HOME/lib/java/hadoop-core-* ] ; then
     HADOOP_VERSION=`basename $HYPERTABLE_HOME/lib/java/hadoop-core-*.jar .jar |
@@ -110,7 +110,7 @@ case $cmd in
   start)        do_start "$@";;
   stop)         do_stop "$@";;
   restart)      do_restart "$@";;
-  shell)        exec $HYPERTABLE_HOME/bin/hypertable "$@";;
+  shell)        exec $HYPERTABLE_HOME/bin/ht_hypertable "$@";;
   version|-v|--version) print_version;;
   help|-h|--help) print_help;;
   /*)           exec $cmd "$@";;

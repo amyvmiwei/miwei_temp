@@ -70,4 +70,4 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-$RUNTIME_ROOT/bin/ht tbclient ${TIMEOUT_OPTION} --batch -e "status" "$@" ${SERVICE_HOSTNAME}
+$RUNTIME_ROOT/bin/ht thriftbroker ${TIMEOUT_OPTION} --batch -e "status" "$@" ${SERVICE_HOSTNAME}

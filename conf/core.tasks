@@ -450,11 +450,11 @@ task: upgrade {
 RS_DUMP_FILE=/tmp/rsdump.txt
 
 # Dump RangeServer statistics.  Sends \"dump NOKEYS '\$RS_DUMP_FILE'\" to the
-# rsclient command interpreter which causes the RangeServer to write detailed
+# rangeserver command interpreter which causes the RangeServer to write detailed
 # range and access group statistics to file \$RS_DUMP_FILE (\"$RS_DUMP_FILE\").
 task: rangeserver_dump roles: slave {
   ssh: {
-    echo "dump NOKEYS '${RS_DUMP_FILE}';" | ${INSTALL_DIR}/bin/ht rsclient --batch ${CONFIG}
+    echo "dump NOKEYS '${RS_DUMP_FILE}';" | ${INSTALL_DIR}/bin/ht rangeserver --batch ${CONFIG}
   }
 }
 

@@ -26,7 +26,7 @@ test() {
   filter_type=$1
   echo "Run test for Bloom filter of type ${filter_type}"
 
-  $HT_HOME/bin/hypertable --no-prompt < \
+  $HT_HOME/bin/ht shell --no-prompt < \
       $SCRIPT_DIR/create-bloom-${filter_type}-table.hql
 
   echo "================="

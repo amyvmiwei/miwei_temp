@@ -89,7 +89,7 @@ wait_for_file $HT_HOME/run/monitoring/rangeservers/rs2_stats_v0.rrd
 wait_for_file $HT_HOME/run/monitoring/rangeservers/rs3_stats_v0.rrd
 
 # compact ranges and wait a bit till RS_METRICS is populated
-${HT_HOME}/bin/ht rsclient --exec "COMPACT RANGES USER; WAIT FOR MAINTENANCE;"
+${HT_HOME}/bin/ht rangeserver --exec "COMPACT RANGES USER; WAIT FOR MAINTENANCE;"
 
 sleep 15
 

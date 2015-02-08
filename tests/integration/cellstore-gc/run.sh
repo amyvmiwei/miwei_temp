@@ -17,7 +17,7 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=500K
 
-$HT_HOME/bin/hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
+$HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
 $HT_HOME/bin/ht_load_generator update \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=10K \

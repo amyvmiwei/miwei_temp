@@ -131,7 +131,7 @@ using namespace std;
  * prevent concurrent masters and then reads/increments/writes the 32-bit
  * integer attribute 'generation'; Creates the server Keepalive handler.
  */
-Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
+Hyperspace::Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler,
                ApplicationQueuePtr &app_queue_ptr)
   : m_verbose(false), m_next_handle_number(1), m_next_session_id(1),
@@ -248,7 +248,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
 }
 
 
-Master::~Master() {
+Hyperspace::Master::~Master() {
   m_metrics_handler->stop_collecting();
   delete m_bdb_fs;
   ::close(m_lock_fd);
@@ -261,7 +261,7 @@ Master::~Master() {
  * > create new session in BDB
  * > insert session id & expiry time into session expiry map
  */
-uint64_t Master::create_session(struct sockaddr_in &addr) {
+uint64_t Hyperspace::Master::create_session(struct sockaddr_in &addr) {
   ScopedLock lock(m_session_map_mutex);
 
   SessionDataPtr session_data;
@@ -289,7 +289,7 @@ uint64_t Master::create_session(struct sockaddr_in &addr) {
 /*
  *
  */
-bool Master::get_session(uint64_t session_id, SessionDataPtr &session_data) {
+bool Hyperspace::Master::get_session(uint64_t session_id, SessionDataPtr &session_data) {
   ScopedLock lock(m_session_map_mutex);
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
@@ -303,7 +303,7 @@ bool Master::get_session(uint64_t session_id, SessionDataPtr &session_data) {
  * > Lock the session expiry map and erase the session data object from it
  * > Set the expiry time to now
  */
-void Master::destroy_session(uint64_t session_id) {
+void Hyperspace::Master::destroy_session(uint64_t session_id) {
   ScopedLock lock(m_session_map_mutex);
   SessionDataPtr session_data;
   SessionMap::iterator iter = m_session_map.find(session_id);
@@ -321,7 +321,7 @@ void Master::destroy_session(uint64_t session_id) {
 /*
  *
  */
-void Master::initialize_session(uint64_t session_id, const String &name) {
+void Hyperspace::Master::initialize_session(uint64_t session_id, const String &name) {
   SessionDataPtr session_data;
   {
     ScopedLock lock(m_session_map_mutex);
@@ -352,7 +352,7 @@ void Master::initialize_session(uint64_t session_id, const String &name) {
  *   > Mark in mem session data as expired
  *   > (Don't delete session completely as handles etc need to be cleaned up)
  */
-int Master::renew_session_lease(uint64_t session_id) {
+int Hyperspace::Master::renew_session_lease(uint64_t session_id) {
   ScopedLock lock(m_session_map_mutex);
   bool renewed = false;
   bool commited = false;
@@ -395,7 +395,7 @@ int Master::renew_session_lease(uint64_t session_id) {
  * > else return false
  */
 bool
-Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
+Hyperspace::Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
   ScopedLock lock(m_session_map_mutex);
   struct LtSessionData ascending;
 
@@ -420,7 +420,7 @@ Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
  * > destroy all expired & open handles
  * > delete expired sessions in BDB
  */
-void Master::remove_expired_sessions() {
+void Hyperspace::Master::remove_expired_sessions() {
   SessionDataPtr session_data;
   int error;
   String errmsg;
@@ -482,7 +482,7 @@ void Master::remove_expired_sessions() {
  * > Send out CHILD_NODE_ADDED notifications
  */
 void
-Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
+Hyperspace::Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
   bool commited = false;
   m_metrics_handler->request_increment();
   CommandContext ctx("mkdir", session_id);
@@ -522,7 +522,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name, const
 }
 
 void
-Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
+Hyperspace::Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
   std::vector<EventContext> evts;
   bool commited = false;
   m_metrics_handler->request_increment();
@@ -598,7 +598,7 @@ Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, cons
  * > Deliver notifications
  */
 void
-Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
+Hyperspace::Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
   bool commited = false;
   m_metrics_handler->request_increment();
   CommandContext ctx("unlink", session_id);
@@ -636,7 +636,7 @@ Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
  *
  */
 void
-Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
+Hyperspace::Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     uint32_t flags, uint32_t event_mask, std::vector<Attribute> &init_attrs) {
 
   bool commited = false;
@@ -684,7 +684,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
 /*
  * Close
  */
-void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
+void Hyperspace::Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   m_metrics_handler->request_increment();
   CommandContext ctx("close", session_id);
   HT_BDBTXN_BEGIN() {
@@ -716,7 +716,7 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   }
 }
 
-void Master::close(CommandContext &ctx, uint64_t handle)
+void Hyperspace::Master::close(CommandContext &ctx, uint64_t handle)
 {
   if (!ctx.session_data) {
     if (!get_session(ctx.session_id, ctx.session_data)) {
@@ -756,7 +756,7 @@ void Master::close(CommandContext &ctx, uint64_t handle)
  * > Send response
  */
 void
-Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
+Hyperspace::Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
                  const char *name, uint32_t oflags, const std::vector<Attribute> &attrs) {
 
   bool commited = false;
@@ -829,7 +829,7 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
  *
  */
 void
-Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
+Hyperspace::Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
                  uint64_t handle, const char *name,
                  const std::vector<String> &attrs) {
 
@@ -881,7 +881,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
  *
  */
 void
-Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
+Hyperspace::Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
                  uint64_t handle, const char *name, const char* attr) {
 
   uint64_t attr_val;
@@ -920,7 +920,7 @@ Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
  *
  */
 void
-Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
+Hyperspace::Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
                  const char *name) {
   bool commited = false;
   m_metrics_handler->request_increment();
@@ -954,7 +954,7 @@ Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
 }
 
 void
-Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_t handle,
+Hyperspace::Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_t handle,
                     const char *name, const char *attr)
 {
   bool exists = false;
@@ -981,7 +981,7 @@ Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_
 }
 
 void
-Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t handle)
+Hyperspace::Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t handle)
 {
   std::vector<String> attributes;
   m_metrics_handler->request_increment();
@@ -1015,7 +1015,7 @@ Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t ha
  *
  */
 void
-Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
+Hyperspace::Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
                const char *name) {
 
   bool file_exists = false;
@@ -1052,7 +1052,7 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
  *
  */
 void
-Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
+Hyperspace::Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
                 uint64_t handle) {
   std::vector<DirEntry> listing;
   m_metrics_handler->request_increment();
@@ -1088,7 +1088,7 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
  *
  */
 void
-Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
+Hyperspace::Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
                      uint64_t handle, const char *name, const char *attr, bool include_sub_entries) {
   std::vector<DirEntryAttr> listing;
   m_metrics_handler->request_increment();
@@ -1127,7 +1127,7 @@ Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
  *
  */
 void
-Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
+Hyperspace::Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
                       uint64_t handle, const char *name, const char *attr) {
   std::vector<DirEntryAttr> listing;
   m_metrics_handler->request_increment();
@@ -1158,7 +1158,7 @@ Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
 /*
  * shutdown
  */
-void Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
+void Hyperspace::Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
   if (m_verbose)
     HT_INFOF("shutdown(session=%llu", (Llu)session_id);
 
@@ -1192,7 +1192,7 @@ void Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
   m_keepalive_handler_ptr->shutdown();
 }
 
-void Master::status(ResponseCallbackStatus *cb) {
+void Hyperspace::Master::status(ResponseCallbackStatus *cb) {
   HT_INFO("status");
   cb->response(m_status);
 }
@@ -1201,7 +1201,7 @@ void Master::status(ResponseCallbackStatus *cb) {
  * lock
  */
 void
-Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
+Hyperspace::Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
              uint32_t mode, bool try_lock) {
   SessionDataPtr session_data;
   bool notify = true;
@@ -1377,7 +1377,7 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
  * > Set exclusive handle to acquiring handle or add acquiring handle to set of shared handles
  * > Set handle data to locked
  */
-void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, String& node) {
+void Hyperspace::Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, String& node) {
 
   if (node == "")
     m_bdb_fs->get_handle_node(txn, handle, node);
@@ -1397,7 +1397,7 @@ void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, String& no
  * > Set exclusive handle to acquiring handle or add acquiring handle to set of shared handles
  * > Set handle data to locked
  */
-void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, const String& node) {
+void Hyperspace::Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, const String& node) {
 
   HT_ASSERT(node != "");
   if (mode == LOCK_MODE_SHARED)
@@ -1414,7 +1414,7 @@ void Master::lock_handle(BDbTxn &txn, uint64_t handle, uint32_t mode, const Stri
  * release
  */
 void
-Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
+Hyperspace::Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
   SessionDataPtr session_data;
   String node;
   int error = 0;
@@ -1507,7 +1507,7 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
  *   > set node to unlocked in BDB
  *
  */
-void Master::release_lock(BDbTxn &txn, uint64_t handle, const String &node,
+void Hyperspace::Master::release_lock(BDbTxn &txn, uint64_t handle, const String &node,
     HyperspaceEventPtr &release_event, NotificationMap &release_notifications) {
   vector<uint64_t> next_lock_handles;
   uint64_t exclusive_lock_handle=0;
@@ -1552,7 +1552,7 @@ void Master::release_lock(BDbTxn &txn, uint64_t handle, const String &node,
  * > Persist lock granted notifications
  * > Persist lock acquired notifications
  */
-void Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node,
+void Hyperspace::Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node,
     HyperspaceEventPtr &lock_granted_event, NotificationMap &lock_granted_notifications,
     HyperspaceEventPtr &lock_acquired_event, NotificationMap &lock_acquired_notifications) {
   vector<uint64_t> next_lock_handles;
@@ -1619,7 +1619,7 @@ void Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node,
  * > Store the handles affected by an event in BerkeleyDB
  */
 void
-Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id,
+Hyperspace::Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id,
                                     NotificationMap &handles_to_sessions)
 {
   if (handles_to_sessions.size() > 0) {
@@ -1638,7 +1638,7 @@ Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id,
  * > Store the handle addected by an event in BerkeleyDB
  */
 void
-Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id, uint64_t handle)
+Hyperspace::Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id, uint64_t handle)
 {
   vector<uint64_t> handles;
   handles.push_back(handle);
@@ -1649,7 +1649,7 @@ Master::persist_event_notifications(BDbTxn &txn, uint64_t event_id, uint64_t han
  *
  */
 void
-Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
+Hyperspace::Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
     NotificationMap &handles_to_sessions, bool wait_for_notify)
 {
   SessionDataPtr session_data;
@@ -1693,7 +1693,7 @@ Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
  *
  */
 bool
-Master::find_parent_node(const String &normal_name,String &parent_name, String &child_name) {
+Hyperspace::Master::find_parent_node(const String &normal_name,String &parent_name, String &child_name) {
   size_t last_slash = normal_name.rfind("/", normal_name.length());
 
   child_name.clear();
@@ -1732,7 +1732,7 @@ Master::find_parent_node(const String &normal_name,String &parent_name, String &
  *
  */
 bool
-Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
+Hyperspace::Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
                        bool wait_for_notify) {
   bool has_refs = false;
   NotificationMap lock_release_notifications, lock_granted_notifications,
@@ -1827,13 +1827,13 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
   return true;
 }
 
-void Master::handle_sleep() {
+void Hyperspace::Master::handle_sleep() {
   boost::xtime_get(&m_sleep_time, boost::TIME_UTC_);
   HT_INFO("Suspend detected.");
 }
 
 
-void Master::handle_wakeup() {
+void Hyperspace::Master::handle_wakeup() {
   boost::xtime now;
   uint64_t lease_credit;
 
@@ -1856,7 +1856,7 @@ void Master::handle_wakeup() {
 /*
  *
  */
-void Master::do_maintenance() {
+void Hyperspace::Master::do_maintenance() {
 
   {
     ScopedLock lock(m_maintenance_mutex);
@@ -1874,7 +1874,7 @@ void Master::do_maintenance() {
 
 }
 
-void Master::mkdir(CommandContext &ctx, const char *name) {
+void Hyperspace::Master::mkdir(CommandContext &ctx, const char *name) {
   if (m_verbose) {
     HT_INFOF("%s(session_id=%llu, name=%s)", ctx.friendly_name, (Llu)ctx.session_id, name);
   }
@@ -1924,7 +1924,7 @@ void Master::mkdir(CommandContext &ctx, const char *name) {
 
 
 
-void Master::open(CommandContext &ctx, const char *name,
+void Hyperspace::Master::open(CommandContext &ctx, const char *name,
           uint32_t flags, uint32_t event_mask,
           std::vector<Attribute> &init_attrs, uint64_t& handle,
           bool& created, uint64_t& lock_generation) {
@@ -2080,7 +2080,7 @@ void Master::open(CommandContext &ctx, const char *name,
             flags, event_mask);
 }
 
-void Master::unlink(CommandContext &ctx, const char *name) {
+void Hyperspace::Master::unlink(CommandContext &ctx, const char *name) {
   if (m_verbose) {
     HT_INFOF("%s(session_id=%llu, name=%s)", ctx.friendly_name, (Llu)ctx.session_id, name);
   }
@@ -2139,7 +2139,7 @@ void Master::unlink(CommandContext &ctx, const char *name) {
   m_bdb_fs->delete_node(txn, node);
 }
 
-void Master::attr_set(CommandContext &ctx, uint64_t handle,
+void Hyperspace::Master::attr_set(CommandContext &ctx, uint64_t handle,
                       const char *name, const std::vector<Attribute> &attrs) {
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
@@ -2176,7 +2176,7 @@ void Master::attr_set(CommandContext &ctx, uint64_t handle,
   }
 }
 
-void Master::attr_get(CommandContext &ctx, uint64_t handle,
+void Hyperspace::Master::attr_get(CommandContext &ctx, uint64_t handle,
                       const char *name, const char *attr, DynamicBuffer &dbuf) {
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
@@ -2196,7 +2196,7 @@ void Master::attr_get(CommandContext &ctx, uint64_t handle,
   }
 }
 
-void Master::attr_get(CommandContext &ctx, uint64_t handle,
+void Hyperspace::Master::attr_get(CommandContext &ctx, uint64_t handle,
                       const char *name, const std::vector<String> &attrs,
                       std::vector<DynamicBufferPtr> &dbufs) {
   dbufs.clear();
@@ -2220,7 +2220,7 @@ void Master::attr_get(CommandContext &ctx, uint64_t handle,
   }
 }
 
-void Master::attr_incr(CommandContext &ctx, uint64_t handle,
+void Hyperspace::Master::attr_incr(CommandContext &ctx, uint64_t handle,
                        const char *name, const char* attr, uint64_t& attr_val) {
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
@@ -2240,7 +2240,7 @@ void Master::attr_incr(CommandContext &ctx, uint64_t handle,
   }
 }
 
-void Master::attr_del(CommandContext &ctx, uint64_t handle, const char *name) {
+void Hyperspace::Master::attr_del(CommandContext &ctx, uint64_t handle, const char *name) {
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
 
@@ -2253,7 +2253,7 @@ void Master::attr_del(CommandContext &ctx, uint64_t handle, const char *name) {
   create_event(ctx, node, EVENT_MASK_ATTR_DEL, name);
 }
 
-void Master::attr_exists(CommandContext& ctx, uint64_t handle,
+void Hyperspace::Master::attr_exists(CommandContext& ctx, uint64_t handle,
                          const char *name, const char *attr, bool& exists) {
   exists = false;
 
@@ -2273,7 +2273,7 @@ void Master::attr_exists(CommandContext& ctx, uint64_t handle,
     exists = true;
 }
 
-void Master::attr_list(CommandContext& ctx, uint64_t handle, std::vector<String>& attributes) {
+void Hyperspace::Master::attr_list(CommandContext& ctx, uint64_t handle, std::vector<String>& attributes) {
   attributes.clear();
 
   HT_ASSERT(ctx.txn);
@@ -2290,7 +2290,7 @@ void Master::attr_list(CommandContext& ctx, uint64_t handle, std::vector<String>
   }
 }
 
-void Master::exists(CommandContext& ctx, const char *name, bool& file_exists) {
+void Hyperspace::Master::exists(CommandContext& ctx, const char *name, bool& file_exists) {
   file_exists = false;
 
   HT_ASSERT(ctx.txn);
@@ -2306,7 +2306,7 @@ void Master::exists(CommandContext& ctx, const char *name, bool& file_exists) {
     HT_INFOF("exitting exists(session_id=%llu, name=%s)", (Llu)ctx.session_id, name);
 }
 
-void Master::readdir(CommandContext& ctx, uint64_t handle, std::vector<DirEntry>& listing) {
+void Hyperspace::Master::readdir(CommandContext& ctx, uint64_t handle, std::vector<DirEntry>& listing) {
   listing.clear();
 
   HT_ASSERT(ctx.txn);
@@ -2319,7 +2319,7 @@ void Master::readdir(CommandContext& ctx, uint64_t handle, std::vector<DirEntry>
   m_bdb_fs->get_directory_listing(txn, node, listing);
 }
 
-void Master::readdir_attr(CommandContext& ctx, uint64_t handle, const char *name, const char *attr,
+void Hyperspace::Master::readdir_attr(CommandContext& ctx, uint64_t handle, const char *name, const char *attr,
                           bool include_sub_entries, std::vector<DirEntryAttr>& listing) {
   listing.clear();
 
@@ -2338,7 +2338,7 @@ void Master::readdir_attr(CommandContext& ctx, uint64_t handle, const char *name
   m_bdb_fs->get_directory_attr_listing(txn, node, attr, include_sub_entries, listing);
 }
 
-void Master::readpath_attr(CommandContext& ctx, uint64_t handle, const char *name, const char *attr,
+void Hyperspace::Master::readpath_attr(CommandContext& ctx, uint64_t handle, const char *name, const char *attr,
                            std::vector<DirEntryAttr>& listing) {
   listing.clear();
 
@@ -2391,7 +2391,7 @@ void Master::readpath_attr(CommandContext& ctx, uint64_t handle, const char *nam
 /*
  * Validates the session and returns the node for the handle specified
  */
-bool Master::get_handle_node(CommandContext &ctx, uint64_t handle, const char* attr, String &node) {
+bool Hyperspace::Master::get_handle_node(CommandContext &ctx, uint64_t handle, const char* attr, String &node) {
   if (!ctx.session_data) {
     if (!get_session(ctx.session_id, ctx.session_data)) {
       ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
@@ -2430,7 +2430,7 @@ bool Master::get_handle_node(CommandContext &ctx, uint64_t handle, const char* a
 /*
  * Validates the session and returns the node for the name specified
  */
-bool Master::get_named_node(CommandContext &ctx, const char *name, const char* attr, String &node, bool *is_dir) {
+bool Hyperspace::Master::get_named_node(CommandContext &ctx, const char *name, const char* attr, String &node, bool *is_dir) {
   if (!ctx.session_data) {
     if (!get_session(ctx.session_id, ctx.session_data)) {
       ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
@@ -2474,7 +2474,7 @@ bool Master::get_named_node(CommandContext &ctx, const char *name, const char* a
 
 /*
  */
-void Master::create_event(CommandContext &ctx, const String &node, uint32_t event_mask, const String &name) {
+void Hyperspace::Master::create_event(CommandContext &ctx, const String &node, uint32_t event_mask, const String &name) {
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
 
@@ -2495,19 +2495,19 @@ void Master::create_event(CommandContext &ctx, const String &node, uint32_t even
 
 /*
  */
-void Master::deliver_event_notifications(CommandContext &ctx, bool wait_for_notify) {
+void Hyperspace::Master::deliver_event_notifications(CommandContext &ctx, bool wait_for_notify) {
   foreach_ht(EventContext& evt, ctx.evts)
     if (evt.persisted_notifications)
       deliver_event_notifications(evt, wait_for_notify);
 }
 
-void Master::deliver_event_notifications(EventContext &evt, bool wait_for_notify) {
+void Hyperspace::Master::deliver_event_notifications(EventContext &evt, bool wait_for_notify) {
   deliver_event_notifications(evt.event, evt.notifications, wait_for_notify);
 }
 
 /*
  */
-void Master::get_generation_number() {
+void Hyperspace::Master::get_generation_number() {
 
   HT_BDBTXN_BEGIN() {
     if (!m_bdb_fs->get_xattr_i32(txn, "/hyperspace/metadata", "generation",
@@ -2526,7 +2526,7 @@ void Master::get_generation_number() {
  * create the node data
  */
 bool
-Master::validate_and_create_node_data(BDbTxn &txn, const String &node)
+Hyperspace::Master::validate_and_create_node_data(BDbTxn &txn, const String &node)
 {
   // make sure node is exists
   if (!m_bdb_fs->exists(txn, node)) {

@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"200000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
@@ -55,8 +55,8 @@ sleep 2
 ${HT_HOME}/bin/ht shell --config=${SCRIPT_DIR}/test.cfg --no-prompt --exec "use sys; select Location from METADATA MAX_VERSIONS=1 into file '${RUN_DIR}/metadata.pre';"
 
 # dump ranges
-echo "dump nokeys '${RUN_DIR}/rs1_dump.pre'; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
-echo "dump nokeys '${RUN_DIR}/rs2_dump.pre'; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+echo "dump nokeys '${RUN_DIR}/rs1_dump.pre'; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
+echo "dump nokeys '${RUN_DIR}/rs2_dump.pre'; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
 # copy state
 cp -R ${HT_HOME}/fs ${RUN_DIR}/fs_pre
 
@@ -67,7 +67,7 @@ stop_rs 1
 wait_for_recovery rs1
 
 # dump rs2 ranges
-echo "dump nokeys '${RUN_DIR}/rs2_dump.post'; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+echo "dump nokeys '${RUN_DIR}/rs2_dump.post'; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
 
 dump_keys dbdump-a.1
 if [ $? -ne 0 ] ; then

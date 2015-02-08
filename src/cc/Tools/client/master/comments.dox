@@ -1,0 +1,4 @@
+/// @defgroup ToolsClientMaster master
+/// @ingroup ToolsClient
+/// %Master command line interface.
+/// This program is used to issue commands to the %Master.

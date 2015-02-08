@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 DATA_SEED=42
 DATA_SIZE=${DATA_SIZE:-"2000000"}
@@ -68,7 +68,7 @@ stop_range_servers() {
     local port
     let port=15869+$1
     while [ $port -ge 15870 ] ; do
-        echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
+        echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$port
         let port-=1
     done
     sleep 1
@@ -79,7 +79,7 @@ stop_range_servers() {
 stop_rs() {
     local port
     let port=15869+$1
-    echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
+    echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$port
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }

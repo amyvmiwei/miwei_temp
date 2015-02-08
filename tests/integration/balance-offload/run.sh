@@ -2,7 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
-HT_SHELL=$HT_HOME/bin/hypertable
+HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
 MAX_KEYS=${MAX_KEYS:-"500"} 
@@ -16,27 +16,27 @@ RS2_RANGES="$RUN_DIR/rs2_ranges.out"
 . $HT_HOME/bin/ht-env.sh
 
 stop_rs2() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
   sleep 1
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
   \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 }
 
 stop_rs1() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
   sleep 1
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs1.pid`
   \rm -f $HT_HOME/run/Hypertable.RangeServer.rs1.pid
 }
 
 compact_user() {
-  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
-  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
+  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
 }
 
 dump_rs_ranges() {
-  echo "dump nokeys '$RS1_RANGES';" | $HT_HOME/bin/ht rsclient localhost:15870
-  echo "dump nokeys '$RS2_RANGES';" | $HT_HOME/bin/ht rsclient localhost:15871
+  echo "dump nokeys '$RS1_RANGES';" | $HT_HOME/bin/ht rangeserver localhost:15870
+  echo "dump nokeys '$RS2_RANGES';" | $HT_HOME/bin/ht rangeserver localhost:15871
 }
 
 

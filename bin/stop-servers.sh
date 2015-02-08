@@ -162,11 +162,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ ! -e $HYPERTABLE_HOME/bin/ht_master_client ] ; then
+if [ ! -e $HYPERTABLE_HOME/bin/ht_master ] ; then
   STOP_MASTER="false"
 fi
 
-if [ ! -e $HYPERTABLE_HOME/bin/ht_rsclient ] ; then
+if [ ! -e $HYPERTABLE_HOME/bin/ht_rangeserver ] ; then
   STOP_RANGESERVER="false"
 fi
 
