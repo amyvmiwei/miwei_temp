@@ -41,7 +41,7 @@ check_killed  Hypertable.Master
 check_killed  Hypertable.RangeServer
 check_killed  Hyperspace.Master
 check_killed  ThriftBroker
-check_killed  localBroker
+check_killed  htFsBrokerLocal
 
 $HT_HOME/bin/start-test-servers.sh
 
@@ -50,21 +50,21 @@ check_running Hypertable.Master
 check_running Hypertable.RangeServer
 check_running Hyperspace.Master
 check_running ThriftBroker
-check_running localBroker
+check_running htFsBrokerLocal
 
 $HT_HOME/bin/stop-servers.sh thriftbroker
 check_running Hypertable.Master
 check_running Hypertable.RangeServer
 check_running Hyperspace.Master
 check_killed  ThriftBroker
-check_running localBroker
+check_running htFsBrokerLocal
 
 $HT_HOME/bin/stop-servers.sh thriftbroker master
 check_killed  Hypertable.Master
 check_running Hypertable.RangeServer
 check_running Hyperspace.Master
 check_killed  ThriftBroker
-check_running localBroker
+check_running htFsBrokerLocal
 
 $HT_HOME/bin/stop-servers.sh rangeserver
 sleep 5
@@ -72,13 +72,13 @@ check_killed  Hypertable.Master
 check_killed  Hypertable.RangeServer
 check_running Hyperspace.Master
 check_killed  ThriftBroker
-check_running localBroker
+check_running htFsBrokerLocal
 
 $HT_HOME/bin/stop-servers.sh hyperspace dfsbroker
 check_killed  Hypertable.Master
 check_killed  Hypertable.RangeServer
 check_killed  Hyperspace.Master
 check_killed  ThriftBroker
-check_killed  localBroker
+check_killed  htFsBrokerLocal
 
 echo "SUCCESS"

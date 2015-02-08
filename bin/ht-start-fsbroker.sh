@@ -118,13 +118,13 @@ if [ $? != 0 ] ; then
     fi
     exec_server jrun org.hypertable.FsBroker.hadoop.main --verbose "$@"
   elif [ "$FS" == "mapr" ] ; then
-    exec_server maprBroker --verbose "$@"
+    exec_server htFsBrokerMapr --verbose "$@"
   elif [ "$FS" == "ceph" ] ; then
     exec_server cephBroker --verbose "$@"
   elif [ "$FS" == "local" ] ; then
-    exec_server localBroker --verbose "$@"
+    exec_server htFsBrokerLocal --verbose "$@"
   elif [ "$FS" == "qfs" ] ; then
-    exec_server qfsBroker --verbose "$@"
+    exec_server htFsBrokerQfs --verbose "$@"
   else
     usage
     exit 1

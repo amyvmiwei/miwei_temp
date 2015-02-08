@@ -38,7 +38,7 @@ ldd_if_exists $HYPERTABLE_HOME/bin/ht_fsbroker
 ldd_if_exists $HYPERTABLE_HOME/bin/dumplog
 ldd_if_exists $HYPERTABLE_HOME/bin/hyperspace
 ldd_if_exists $HYPERTABLE_HOME/bin/hypertable
-ldd_if_exists $HYPERTABLE_HOME/bin/localBroker
+ldd_if_exists $HYPERTABLE_HOME/bin/htFsBrokerLocal
 ldd_if_exists $HYPERTABLE_HOME/bin/metalog_dump
 ldd_if_exists $HYPERTABLE_HOME/bin/serverup
 ldd_if_exists $HYPERTABLE_HOME/bin/system_info

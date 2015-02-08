@@ -20,7 +20,7 @@ set(INSTALLED_SERVERS
   ${INSTALL_DIR}/bin/Hyperspace.Master
   ${INSTALL_DIR}/bin/Hypertable.Master
   ${INSTALL_DIR}/bin/Hypertable.RangeServer
-  ${INSTALL_DIR}/bin/localBroker
+  ${INSTALL_DIR}/bin/htFsBrokerLocal
 )
 
 if (Thrift_FOUND)
