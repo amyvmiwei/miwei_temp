@@ -8,7 +8,7 @@ set -v
 
 $HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker --no-rangeserver --clean
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS_PIDFILE \
     --induce-failure="create-scanner-user-1:exit:0"  2>&1 > rangeserver.output&
 
 cat $SCRIPT_DIR/create-table.hql | $HT_HOME/bin/ht hypertable --batch

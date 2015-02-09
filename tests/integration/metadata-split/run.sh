@@ -19,26 +19,26 @@ cleanup_and_abort() {
 
 start_masters() {
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15870 $@ \
-        --pidfile $HT_HOME/run/Hypertable.Master.15870.pid \
-        --Hypertable.Master.Gc.Interval=30000 \
-        --Hypertable.RangeServer.Range.SplitSize=18K \
-        --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15870.log&
-    wait_for_server_up "master" "master:15870" "--Hypertable.Master.Port=15870"
+    $HT_HOME/bin/htMaster --Master.Port=15870 $@ \
+        --pidfile $HT_HOME/run/Master.15870.pid \
+        --Master.Gc.Interval=30000 \
+        --htRangeServer.Range.SplitSize=18K \
+        --htRangeServer.Range.MetadataSplitSize=10K \
+        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Master.15870.log&
+    wait_for_server_up "master" "master:15870" "--Master.Port=15870"
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15871 \
-        --pidfile $HT_HOME/run/Hypertable.Master.15871.pid \
-        --Hypertable.Master.Gc.Interval=30000 \
-        --Hypertable.RangeServer.Range.SplitSize=18K \
-        --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15871.log&
-    #wait_for_server_up "master" "master:15871" "--Hypertable.Master.Port=15871"
+    $HT_HOME/bin/htMaster --Master.Port=15871 \
+        --pidfile $HT_HOME/run/Master.15871.pid \
+        --Master.Gc.Interval=30000 \
+        --htRangeServer.Range.SplitSize=18K \
+        --htRangeServer.Range.MetadataSplitSize=10K \
+        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Master.15871.log&
+    #wait_for_server_up "master" "master:15871" "--Master.Port=15871"
     # chris - do not use wait_for_server_up because serverup cannot connect
     # to this master; it's caught in main(), trying to acquire the hyperspace
     # lock and not yet able to accept socket connections
     sleep 5
-    ps `cat $HT_HOME/run/Hypertable.Master.15871.pid`
+    ps `cat $HT_HOME/run/Master.15871.pid`
     if [ $? != 0 ] ; then
       echo "Master (15871) not running, exiting...";
       exit 1
@@ -56,7 +56,7 @@ stop_range_server() {
 
     if $HT_HOME/bin/ht serverup --silent rangeserver; then
       echo "Can't stop range server, exiting..."
-      ps -ef | grep Hypertable.RangeServer
+      ps -ef | grep htRangeServer
       exit 1
     fi
   fi
@@ -74,7 +74,7 @@ save_failure_state() {
   ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
   mkdir $ARCHIVE_DIR
   mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output* error* failed* running* $ARCHIVE_DIR
-  mv Hypertable.Master.*.log $ARCHIVE_DIR
+  mv Master.*.log $ARCHIVE_DIR
   cp $HT_HOME/log/Master.log $ARCHIVE_DIR
   if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
     ln Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
@@ -94,22 +94,22 @@ run_test() {
   touch running.$TEST_ID
 
   stop_range_server
-  kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
-  \rm -f $HT_HOME/run/Hypertable.Master*.pid
+  kill -9 `cat $HT_HOME/run/Master*.pid`
+  \rm -f $HT_HOME/run/Master*.pid
 
   if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
       $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --no-master \
           --no-thriftbroker
       start_masters $@
-      $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
-          --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-          --Hypertable.RangeServer.MaintenanceThreads=8 \
-          --Hypertable.RangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output.$TEST_ID &
+      $HT_HOME/bin/ht RangeServer --verbose --pidfile=$PIDFILE \
+          --htRangeServer.CellStore.DefaultBlockSize=1K \
+          --htRangeServer.MaintenanceThreads=8 \
+          --htRangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output.$TEST_ID &
   else
     $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver \
-        --no-thriftbroker --Hypertable.Master.Gc.Interval=30000 \
-        --Hypertable.RangeServer.Range.SplitSize=18K \
-        --Hypertable.RangeServer.Range.MetadataSplitSize=10K
+        --no-thriftbroker --Master.Gc.Interval=30000 \
+        --htRangeServer.Range.SplitSize=18K \
+        --htRangeServer.Range.MetadataSplitSize=10K
     $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
   fi
 
@@ -147,7 +147,7 @@ run_test() {
   # Verify that the falure was induced
   if [ $@ ]; then
     if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
-      fgrep "induced failure" Hypertable.Master.15870.log
+      fgrep "induced failure" Master.15870.log
     else
       fgrep "induced failure" rangeserver.output.$TEST_ID
     fi
@@ -185,8 +185,8 @@ run_test() {
   fi
 
   if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
-      kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
-      \rm -f $HT_HOME/run/Hypertable.Master*.pid
+      kill -9 `cat $HT_HOME/run/Master*.pid`
+      \rm -f $HT_HOME/run/Master*.pid
   fi
 
   /bin/rm -f running.$TEST_ID

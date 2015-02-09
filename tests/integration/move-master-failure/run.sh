@@ -4,19 +4,19 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
 WRITE_SIZE=${WRITE_SIZE:-"40000000"}
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 RET=0
 
 $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --Hypertable.Master.Split.SoftLimitEnabled=false
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=15870 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=400K 2>&1 > rangeserver.rs1.output&
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
@@ -56,17 +56,17 @@ $HT_HOME/bin/ht-stop-servers.sh master
 echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
 echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
 sleep 1
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
-\rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
+kill -9 `cat $HT_HOME/run/RangeServer.rs?.pid`
+\rm -f $HT_HOME/run/RangeServer.rs?.pid
 
 $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver \
   --induce-failure="relinquish-acknowledge-INITIAL-a:pause(3000):0;relinquish-acknowledge-INITIAL-b:exit:0"
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=38062 2>&1 >> rangeserver.rs1.output&
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=38063 2>&1 >> rangeserver.rs2.output&
 
@@ -94,8 +94,8 @@ if [ $j -eq 6 ]; then
   touch $HT_HOME/run/debug-op
   sleep 60
   cp $HT_HOME/run/op.output .
-  kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
-  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
+  kill -9 `cat $HT_HOME/run/RangeServer.rs?.pid`
+  \rm -f $HT_HOME/run/RangeServer.rs?.pid
   pstack `cat $HT_HOME/run/Master.pid` > master.stack
   cp $HT_HOME/log/Master.log .
   cp $HT_HOME/run/monitoring/mop.dot .
@@ -127,8 +127,8 @@ $HT_HOME/bin/ht ht_load_generator update \
     --max-bytes=$WRITE_SIZE
 RET=$?
 
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
-\rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
+kill -9 `cat $HT_HOME/run/RangeServer.rs?.pid`
+\rm -f $HT_HOME/run/RangeServer.rs?.pid
 $HT_HOME/bin/ht-stop-servers.sh
 
 exit $RET

@@ -32,13 +32,13 @@ usage() {
   echo "usage: ht-start-all-servers.sh [OPTIONS] <fs-choice> [<global-options>]"
   echo ""
   echo "OPTIONS:"
-  echo "  --heapcheck-rangeserver run Hyperspace.RangeServer with tcmalloc heapcheck"
-  echo "  --valgrind-hyperspace   run Hyperspace.Master with valgrind"
-  echo "  --valgrind-master       run Hypertable.Master with valgrind"
-  echo "  --valgrind-rangeserver  run Hypertable.RangeServer with valgrind"
+  echo "  --heapcheck-rangeserver run RangeServer with tcmalloc heapcheck"
+  echo "  --valgrind-hyperspace   run Hyperspace with valgrind"
+  echo "  --valgrind-master       run Master with valgrind"
+  echo "  --valgrind-rangeserver  run RangeServer with valgrind"
   echo "  --valgrind-thriftbroker run ThriftBroker with valgrind"
-  echo "  --no-rangeserver        do not launch the range server"
-  echo "  --no-master             do not launch the Hypertable master"
+  echo "  --no-rangeserver        do not launch the RangeServer"
+  echo "  --no-master             do not launch the Master"
   echo "  --no-thriftbroker       do not launch the ThriftBroker"
   echo ""
   echo "FS choices: qfs, hadoop, mapr, local"
@@ -113,14 +113,14 @@ $HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $FS $@ &
 wait
 
 #
-# Start Hypertable.Master
+# Start Master
 #
 if [ $START_MASTER == "true" ] ; then
   $HYPERTABLE_HOME/bin/ht-start-master.sh $MASTER_OPTS $@
 fi
 
 #
-# Start Hypertable.RangeServer
+# Start RangeServer
 #
 if [ $START_RANGESERVER == "true" ] ; then
   $HYPERTABLE_HOME/bin/ht-start-rangeserver.sh $RANGESERVER_OPTS $@
@@ -130,7 +130,7 @@ fi
 # Start ThriftBroker (optional)
 #
 if [ $START_THRIFTBROKER == "true" ] ; then
-  if [ -f $HYPERTABLE_HOME/bin/ThriftBroker ] ; then
+  if [ -f $HYPERTABLE_HOME/bin/htThriftBroker ] ; then
     $HYPERTABLE_HOME/bin/ht-start-thriftbroker.sh $THRIFTBROKER_OPTS $@
   fi
 fi

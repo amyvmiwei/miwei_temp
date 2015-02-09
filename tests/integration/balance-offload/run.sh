@@ -6,8 +6,8 @@ HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 #DATA_SEED=42 # for repeating certain runs
 MAX_KEYS=${MAX_KEYS:-"500"} 
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 RUN_DIR=`pwd`
 DUMPFILE="$RUN_DIR/dump_keys.out"
 RS1_RANGES="$RUN_DIR/rs1_ranges.out"
@@ -18,15 +18,15 @@ RS2_RANGES="$RUN_DIR/rs2_ranges.out"
 stop_rs2() {
   echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15871
   sleep 1
-  kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
-  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
+  kill -9 `cat $HT_HOME/run/RangeServer.rs?.pid`
+  \rm -f $HT_HOME/run/RangeServer.rs?.pid
 }
 
 stop_rs1() {
   echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:15870
   sleep 1
-  kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs1.pid`
-  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs1.pid
+  kill -9 `cat $HT_HOME/run/RangeServer.rs1.pid`
+  \rm -f $HT_HOME/run/RangeServer.rs1.pid
 }
 
 compact_user() {
@@ -46,11 +46,11 @@ rm *.out
 touch $DUMPFILE
 $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.out&
 sleep 10
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.out&
 

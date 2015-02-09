@@ -15,8 +15,8 @@ RUN_DIR=`pwd`
 \rm -rf $HT_HOME/log/*
 
 # shut down range servers
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
-\rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
+kill -9 `cat $HT_HOME/run/RangeServer.*.pid`
+\rm -f $HT_HOME/run/RangeServer.*.pid
 
 # maybe generate test data
 if [ ! -s golden_dump.md5 ] ; then
@@ -32,18 +32,18 @@ $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver \
     --config=${SCRIPT_DIR}/test.cfg 
 
 # Start rs1
-$HT_HOME/bin/ht Hypertable.RangeServer \
+$HT_HOME/bin/ht RangeServer \
     --config=${SCRIPT_DIR}/test.cfg \
     --verbose \
-    --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs1.pid \
+    --pidfile=$HT_HOME/run/RangeServer.rs1.pid \
     --Hypertable.RangeServer.ProxyName=rs1 \
     --Hypertable.RangeServer.Port=15870 > rangeserver.rs1.output &
 
 # Start rs2
-$HT_HOME/bin/ht Hypertable.RangeServer \
+$HT_HOME/bin/ht RangeServer \
     --config=${SCRIPT_DIR}/test.cfg \
     --verbose \
-    --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs2.pid \
+    --pidfile=$HT_HOME/run/RangeServer.rs2.pid \
     --Hypertable.RangeServer.ProxyName=rs2 \
     --Hypertable.RangeServer.Port=15871 > rangeserver.rs2.output &
 
@@ -65,7 +65,7 @@ if [ $? != 0 ] ; then
 fi
 
 ## Kill rs2
-kill `cat $HT_HOME/run/Hypertable.RangeServer.rs2.pid`
+kill `cat $HT_HOME/run/RangeServer.rs2.pid`
 
 ## Wait for "Problem reading RSML" to appear in Master log
 grep "Problem reading RSML" $HT_HOME/log/Master.log
@@ -103,8 +103,8 @@ else
 fi
 
 # Shut down range servers
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
-\rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
+kill -9 `cat $HT_HOME/run/RangeServer.*.pid`
+\rm -f $HT_HOME/run/RangeServer.*.pid
 
 # Shut down remaining servers
 $HT_HOME/bin/ht-stop-servers.sh

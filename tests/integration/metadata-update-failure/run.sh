@@ -30,7 +30,7 @@ stop_range_server() {
 
     if $HT_HOME/bin/ht serverup --silent rangeserver; then
       echo "Can't stop range server, exiting"
-      ps -ef | grep Hypertable.RangeServer
+      ps -ef | grep htRangeServer
       exit 1
     fi
   fi
@@ -42,7 +42,7 @@ run_test() {
       --config $CFG_FILE 
   stop_range_server
 
-  $HT_HOME/bin/Hypertable.RangeServer --verbose \
+  $HT_HOME/bin/htRangeServer --verbose \
       --induce-failure=LiveFileTracker-update_files_column:throw:0\
       --config $SCRIPT_DIR/metadata-update-failure.cfg > rangeserver.output >&1 &
   # give rangeserver time to get registered etc 

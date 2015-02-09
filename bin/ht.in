@@ -73,6 +73,8 @@ do_cmd() {
     exec $HYPERTABLE_HOME/bin/ht_$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/ht-$cmd.sh ]; then
     exec $HYPERTABLE_HOME/bin/ht-$cmd.sh "$@"
+  elif [ -x $HYPERTABLE_HOME/bin/ht$cmd ]; then
+    exec $HYPERTABLE_HOME/bin/ht$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/$cmd ]; then
     exec $HYPERTABLE_HOME/bin/$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/$cmd.sh ]; then
@@ -92,8 +94,8 @@ print_version() {
                     sed 's/hadoop-[a-z-]*\(.*\)-.*/\1/'`
   fi
   echo "  Hadoop: $HADOOP_VERSION"
-  if [ -x $HYPERTABLE_HOME/bin/cephBroker ]; then
-    echo " " `$HYPERTABLE_HOME/bin/cephBroker --ceph-version`
+  if [ -x $HYPERTABLE_HOME/bin/htFsBrokerCeph ]; then
+    echo " " `$HYPERTABLE_HOME/bin/htFsBrokerCeph --ceph-version`
   fi
   echo "  BerkeleyDB:" @BDB_VERSION@
   echo "  Boost:" @BOOST_VERSION@

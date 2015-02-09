@@ -91,9 +91,9 @@ else ()
   set(HYPERSPACE_MALLOC_LIBRARY ${MALLOC_LIBRARY})
 endif ()
 
-# Hyperspace.Master
-add_executable(Hyperspace.Master ${Master_SRCS})
-target_link_libraries(Hyperspace.Master Hyperspace ${BDB_LIBRARIES} ${HYPERSPACE_MALLOC_LIBRARY})
+# htHyperspace
+add_executable(htHyperspace ${Master_SRCS})
+target_link_libraries(htHyperspace Hyperspace ${BDB_LIBRARIES} ${HYPERSPACE_MALLOC_LIBRARY})
 
 # BerkeleyDbFilesystem test
 add_executable(bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc StateDbKeys.cc)
@@ -113,7 +113,7 @@ if (NOT HT_COMPONENT_INSTALL)
 
   install(FILES ${HEADERS} DESTINATION include/Hyperspace)
 
-  install(TARGETS Hyperspace Hyperspace.Master
+  install(TARGETS Hyperspace htHyperspace
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

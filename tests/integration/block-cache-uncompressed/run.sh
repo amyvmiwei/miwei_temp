@@ -7,7 +7,7 @@ RS_PIDFILE=$HT_HOME/run/RangeServer.pid
 
 $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS_PIDFILE \
    --Hypertable.RangeServer.BlockCache.Compressed=false \
    --Hypertable.RangeServer.Maintenance.Interval=100 \
    --Hypertable.RangeServer.Range.SplitSize=400K 2>1 > rangeserver.output&

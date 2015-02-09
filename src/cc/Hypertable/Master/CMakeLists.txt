@@ -72,9 +72,9 @@ SystemState.cc
 add_library(HyperMaster ${Master_SRCS})
 target_link_libraries(HyperMaster m Hyperspace HyperFsBroker Hypertable ${RRD_LIBRARIES})
 
-# Hypertable.Master
-add_executable(Hypertable.Master main.cc)
-target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperRanger HyperFsBroker ${MALLOC_LIBRARY})
+# htMaster
+add_executable(htMaster main.cc)
+target_link_libraries(htMaster HyperMaster Hyperspace Hypertable HyperRanger HyperFsBroker ${MALLOC_LIBRARY})
 
 # op_test_driver
 add_executable(op_test_driver tests/op_test_driver.cc)
@@ -159,7 +159,7 @@ if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/Master)
-  install(TARGETS HyperMaster Hypertable.Master ht_gc
+  install(TARGETS HyperMaster htMaster ht_gc
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

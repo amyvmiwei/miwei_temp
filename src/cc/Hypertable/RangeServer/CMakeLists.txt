@@ -151,9 +151,9 @@ endif ()
 add_library(HyperRanger ${RangeServer_SRCS})
 target_link_libraries(HyperRanger m HyperFsBroker Hypertable ${RE2_LIBRARIES})
 
-# RangeServer
-add_executable(Hypertable.RangeServer main.cc)
-target_link_libraries(Hypertable.RangeServer HyperRanger ${MALLOC_LIBRARY})
+# htRangeServer
+add_executable(htRangeServer main.cc)
+target_link_libraries(htRangeServer HyperRanger ${MALLOC_LIBRARY})
 
 # ht_csdump
 add_executable(ht_csdump csdump.cc)
@@ -171,7 +171,7 @@ if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/RangeServer)
-  install(TARGETS HyperRanger Hypertable.RangeServer ht_csdump ht_csvalidate ht_count_stored
+  install(TARGETS HyperRanger htRangeServer ht_csdump ht_csvalidate ht_count_stored
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

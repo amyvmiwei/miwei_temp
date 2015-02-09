@@ -76,9 +76,9 @@ if [ $? -ne 1 ]; then
   exit 1
 fi
 
-WARNING_COUNT=`grep WARNING $HT_HOME/run/STATUS.Hypertable.RangeServer | wc -l`
+WARNING_COUNT=`grep WARNING $HT_HOME/run/STATUS.htRangeServer | wc -l`
 if [ $WARNING_COUNT -ne 3 ]; then
-  cat $HT_HOME/run/STATUS.Hypertable.RangeServer
+  cat $HT_HOME/run/STATUS.htRangeServer
   echo "ERROR: Expected 3 warnings, only got $WARNING_COUNT"
   exit 1
 fi

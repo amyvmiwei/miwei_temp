@@ -258,9 +258,9 @@ int main(int argc, char **argv) {
 
   // Setup dirs /links
   unlink("rs1.out");unlink("rs2.out");unlink("rs3.out");
-  unlink("./Hypertable.RangeServer");
-  HT_ASSERT(link("../RangeServer/Hypertable.RangeServer",
-                 "./Hypertable.RangeServer") == 0);
+  unlink("./htRangeServer");
+  HT_ASSERT(link("../RangeServer/htRangeServer",
+                 "./htRangeServer") == 0);
   unlink("./ht_serverup");
   HT_ASSERT(link("../../Tools/serverup/ht_serverup", "./ht_serverup") == 0);
   system("mkdir conf");
@@ -449,7 +449,7 @@ namespace {
       rs_args.push_back("--debug");
       rs_args.push_back((const char *)0);
 
-      rs = new ServerLauncher("./Hypertable.RangeServer", (char * const *)&rs_args[0],
+      rs = new ServerLauncher("./htRangeServer", (char * const *)&rs_args[0],
                               outfile.c_str());
       rangeservers.push_back(rs);
     }

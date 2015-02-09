@@ -5,8 +5,8 @@ HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=50000
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 RUN_DIR=`pwd`
 
 . $HT_HOME/bin/ht-env.sh
@@ -29,11 +29,11 @@ $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg \
     --Hyperspace.KeepAlive.Interval=10000
 # start both rangeservers
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.output&
 wait_for_server_connect
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.output&
 
@@ -58,7 +58,7 @@ fi
 sleep 4
 
 # suspend rs1 with sigstop
-kill -STOP `cat $HT_HOME/run/Hypertable.RangeServer.rs1.pid`
+kill -STOP `cat $HT_HOME/run/RangeServer.rs1.pid`
 
 # wait for recovery to complete 
 wait_for_recovery rs1
@@ -69,7 +69,7 @@ kill_rs 2
 
 $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 >> rangeserver.rs2.output&
 
@@ -84,7 +84,7 @@ if [ $? -ne 0 ] ; then
 fi
 
 $HT_HOME/bin/ht-stop-servers.sh
-kill -CONT `cat $HT_HOME/run/Hypertable.RangeServer.rs1.pid`
+kill -CONT `cat $HT_HOME/run/RangeServer.rs1.pid`
 kill_rs 1
 kill_rs 2
 

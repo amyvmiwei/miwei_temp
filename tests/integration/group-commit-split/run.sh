@@ -38,7 +38,7 @@ stop_range_server() {
 
     if $HT_HOME/bin/ht serverup --silent rangeserver; then
       echo "Can't stop range server, exiting"
-      ps -ef | grep Hypertable.RangeServer
+      ps -ef | grep htRangeServer
       exit 1
     fi
   fi
@@ -125,21 +125,21 @@ env | grep '^TEST_[0-9]=' || set_tests 0 1 2 3 4 5 6 7 8
 
 [ "$TEST_0" ] && run_test 0
 [ "$TEST_1" ] && run_test 1 "--induce-failure=split-1:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff high"
+    --htRangeServer.Range.SplitOff high"
 [ "$TEST_2" ] && run_test 2 "--induce-failure=split-2:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff high"
+    --htRangeServer.Range.SplitOff high"
 [ "$TEST_3" ] && run_test 3 "--induce-failure=split-3:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff high"
+    --htRangeServer.Range.SplitOff high"
 [ "$TEST_4" ] && run_test 4 "--induce-failure=split-4:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff high"
+    --htRangeServer.Range.SplitOff high"
 [ "$TEST_5" ] && run_test 5 "--induce-failure=split-1:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff low"
+    --htRangeServer.Range.SplitOff low"
 [ "$TEST_6" ] && run_test 6 "--induce-failure=split-2:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff low"
+    --htRangeServer.Range.SplitOff low"
 [ "$TEST_7" ] && run_test 7 "--induce-failure=split-3:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff low"
+    --htRangeServer.Range.SplitOff low"
 [ "$TEST_8" ] && run_test 8 "--induce-failure=split-4:exit:0 \
-    --Hypertable.RangeServer.Range.SplitOff low"
+    --htRangeServer.Range.SplitOff low"
 
 if [ -e errors.txt ] && [ "$TEST_8" ] ; then
     ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`

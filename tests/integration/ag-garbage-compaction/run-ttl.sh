@@ -11,7 +11,7 @@ TTL=10
 
 $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
 
-$HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
+$HT_HOME/bin/htRangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Range.SplitSize=10000000 \
     --Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage=20 \
     --Hypertable.RangeServer.Maintenance.Interval=100 \

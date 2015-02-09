@@ -37,48 +37,48 @@ fi
 
 # no options: stop everything
 $HT_HOME/bin/ht-stop-servers.sh
-check_killed  Hypertable.Master
-check_killed  Hypertable.RangeServer
-check_killed  Hyperspace.Master
-check_killed  ThriftBroker
+check_killed  htMaster
+check_killed  htRangeServer
+check_killed  htHyperspace
+check_killed  htThriftBroker
 check_killed  htFsBrokerLocal
 
 $HT_HOME/bin/ht-start-test-servers.sh
 
 # make sure they're all running
-check_running Hypertable.Master
-check_running Hypertable.RangeServer
-check_running Hyperspace.Master
-check_running ThriftBroker
+check_running htMaster
+check_running htRangeServer
+check_running htHyperspace
+check_running htThriftBroker
 check_running htFsBrokerLocal
 
 $HT_HOME/bin/ht-stop-servers.sh thriftbroker
-check_running Hypertable.Master
-check_running Hypertable.RangeServer
-check_running Hyperspace.Master
-check_killed  ThriftBroker
+check_running htMaster
+check_running htRangeServer
+check_running htHyperspace
+check_killed  htThriftBroker
 check_running htFsBrokerLocal
 
 $HT_HOME/bin/ht-stop-servers.sh thriftbroker master
-check_killed  Hypertable.Master
-check_running Hypertable.RangeServer
-check_running Hyperspace.Master
-check_killed  ThriftBroker
+check_killed  htMaster
+check_running htRangeServer
+check_running htHyperspace
+check_killed  htThriftBroker
 check_running htFsBrokerLocal
 
 $HT_HOME/bin/ht-stop-servers.sh rangeserver
 sleep 5
-check_killed  Hypertable.Master
-check_killed  Hypertable.RangeServer
-check_running Hyperspace.Master
-check_killed  ThriftBroker
+check_killed  htMaster
+check_killed  htRangeServer
+check_running htHyperspace
+check_killed  htThriftBroker
 check_running htFsBrokerLocal
 
 $HT_HOME/bin/ht-stop-servers.sh hyperspace dfsbroker
-check_killed  Hypertable.Master
-check_killed  Hypertable.RangeServer
-check_killed  Hyperspace.Master
-check_killed  ThriftBroker
+check_killed  htMaster
+check_killed  htRangeServer
+check_killed  htHyperspace
+check_killed  htThriftBroker
 check_killed  htFsBrokerLocal
 
 echo "SUCCESS"

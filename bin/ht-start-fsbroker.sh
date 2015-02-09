@@ -120,7 +120,7 @@ if [ $? != 0 ] ; then
   elif [ "$FS" == "mapr" ] ; then
     exec_server htFsBrokerMapr --verbose "$@"
   elif [ "$FS" == "ceph" ] ; then
-    exec_server cephBroker --verbose "$@"
+    exec_server htFsBrokerCeph --verbose "$@"
   elif [ "$FS" == "local" ] ; then
     exec_server htFsBrokerLocal --verbose "$@"
   elif [ "$FS" == "qfs" ] ; then

@@ -49,7 +49,7 @@ check_pidfile $pidfile && exit 0
 
 $HYPERTABLE_HOME/bin/ht-check-hyperspace.sh --silent "$@"
 if [ $? != 0 ] ; then
-  exec_server Hyperspace.Master --verbose "$@"
+  exec_server htHyperspace --verbose "$@"
   wait_for_ok hyperspace "Hyperspace" "$@"
 else
   echo "WARNING: Hyperspace already running."

@@ -20,12 +20,12 @@ save_failure_state() {
 
 
 start_master() {
-  set_start_vars Hypertable.Master
+  set_start_vars Master
   check_pidfile $pidfile && return 0
 
   check_server --config=${SCRIPT_DIR}/test.cfg master
   if [ $? != 0 ] ; then
-      $HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$MASTER_PIDFILE \
+      $HT_HOME/bin/ht Master --verbose --pidfile=$MASTER_PIDFILE \
           --config=${SCRIPT_DIR}/test.cfg 2>&1 > $MASTER_LOG&
     wait_for_server_up master "$pidname" --config=${SCRIPT_DIR}/test.cfg
   else
@@ -97,20 +97,20 @@ stop_rs() {
     local port
     let port=38059+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$port
-    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
-    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
+    kill -9 `cat $HT_HOME/run/RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/RangeServer.rs$1.pid
 }
 
 kill_rs() {
     for num in "$@"; do
-        kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs${num}.pid`
-        \rm -f $HT_HOME/run/Hypertable.RangeServer.rs${num}.pid
+        kill -9 `cat $HT_HOME/run/RangeServer.rs${num}.pid`
+        \rm -f $HT_HOME/run/RangeServer.rs${num}.pid
     done
 }
 
 kill_all_rs() {
-    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs*.pid`
-    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs*.pid
+    kill -9 `cat $HT_HOME/run/RangeServer.rs*.pid`
+    \rm -f $HT_HOME/run/RangeServer.rs*.pid
     kill -9 `cat $HT_HOME/run/RangeServer.pid`
     \rm -f $HT_HOME/run/RangeServer.pid
 }

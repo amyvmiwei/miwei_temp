@@ -35,12 +35,12 @@ save_failure_state() {
 }
 
 start_master() {
-  set_start_vars Hypertable.Master
+  set_start_vars Master
   check_pidfile $pidfile && return 0
 
   check_server --config=${SCRIPT_DIR}/test.cfg master
   if [ $? != 0 ] ; then
-      $HT_HOME/bin/Hypertable.Master --verbose \
+      $HT_HOME/bin/htMaster --verbose \
         --pidfile=$HT_HOME/run/Master.pid \
         --Hypertable.Master.Gc.Interval=30000 \
         --Hypertable.RangeServer.Range.SplitSize=18K \
@@ -88,8 +88,8 @@ stop_range_servers() {
     while [ $port -ge 15870 ] ; do
         echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$port
         let rsnum=port-15869
-        kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid`
-        \rm -f $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid
+        kill -9 `cat $HT_HOME/run/RangeServer.rs${rsnum}.pid`
+        \rm -f $HT_HOME/run/RangeServer.rs${rsnum}.pid
         let port-=1
     done
 }
@@ -97,8 +97,8 @@ stop_range_servers() {
 kill_range_servers() {
     let rsnum=1
     while [ $rsnum -le $1 ] ; do
-        kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid`
-        \rm -f $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid
+        kill -9 `cat $HT_HOME/run/RangeServer.rs${rsnum}.pid`
+        \rm -f $HT_HOME/run/RangeServer.rs${rsnum}.pid
         let rsnum++
     done
 }
@@ -107,13 +107,13 @@ stop_rs() {
     local port
     let port=15869+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rangeserver localhost:$port
-    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
-    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
+    kill -9 `cat $HT_HOME/run/RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/RangeServer.rs$1.pid
 }
 
 kill_rs() {
-    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
-    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
+    kill -9 `cat $HT_HOME/run/RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/RangeServer.rs$1.pid
 }
 
 
@@ -124,7 +124,7 @@ run_test() {
     let i=1
     while [ $# -gt 0 ] ; do
         INDUCED_FAILURE[$i]=$1
-        PIDFILE[$i]=$HT_HOME/run/Hypertable.RangeServer.rs$i.pid
+        PIDFILE[$i]=$HT_HOME/run/RangeServer.rs$i.pid
         let port=15869+$i
         PORT[$i]=$port
         let i+=1
@@ -153,7 +153,7 @@ run_test() {
         if test -n "${INDUCED_FAILURE[$j]}" ; then
             INDUCER_ARG=--induce-failure=${INDUCED_FAILURE[$j]}
         fi
-        $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=${PIDFILE[$j]} \
+        $HT_HOME/bin/ht RangeServer --verbose --pidfile=${PIDFILE[$j]} \
             --Hypertable.RangeServer.ProxyName=rs$j \
             --Hypertable.RangeServer.Port=${PORT[$j]} $INDUCER_ARG \
             --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \

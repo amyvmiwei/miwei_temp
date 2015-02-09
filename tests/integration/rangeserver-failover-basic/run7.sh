@@ -5,9 +5,9 @@ HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"500000"}
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
-RS3_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs3.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
+RS3_PIDFILE=$HT_HOME/run/RangeServer.rs3.pid
 MASTER_LOG=$HT_HOME/log/Master.log
 RUN_DIR=`pwd`
 
@@ -34,13 +34,13 @@ $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
 start_master
 
 # start the rangeservers
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.output&
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.output&
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS3_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS3_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs3 \
    --Hypertable.RangeServer.Port=15872 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs3.output&
 

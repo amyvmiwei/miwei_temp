@@ -17,18 +17,18 @@
 #
 
 set(INSTALLED_SERVERS
-  ${INSTALL_DIR}/bin/Hyperspace.Master
-  ${INSTALL_DIR}/bin/Hypertable.Master
-  ${INSTALL_DIR}/bin/Hypertable.RangeServer
+  ${INSTALL_DIR}/bin/htHyperspace
+  ${INSTALL_DIR}/bin/htMaster
+  ${INSTALL_DIR}/bin/htRangeServer
   ${INSTALL_DIR}/bin/htFsBrokerLocal
 )
 
 if (Thrift_FOUND)
-  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/ThriftBroker)
+  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/htThriftBroker)
 endif ()
 
 if (Ceph_FOUND)
-  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/cephBroker)
+  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/htFsBrokerCeph)
 endif ()
 
 set(TEST_SERVERS_STARTED ${HYPERTABLE_BINARY_DIR}/test-servers-started)

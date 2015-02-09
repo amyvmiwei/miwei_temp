@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 PIDFILE=$HT_HOME/run/Master.pid
-LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.MasterLauncher.pid
+LAUNCHER_PIDFILE=$HT_HOME/run/MasterLauncher.pid
 DUMP_METALOG="$HT_HOME/bin/ht metalog_dump"
 METALOG="/hypertable/servers/master/log/mml"
 SCRIPT_DIR=`dirname $0`
@@ -19,8 +19,8 @@ stop_range_servers() {
         let port-=1
     done
     sleep 1
-    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
-    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
+    kill -9 `cat $HT_HOME/run/RangeServer.rs?.pid`
+    \rm -f $HT_HOME/run/RangeServer.rs?.pid
 }
 
 # Kill launcher if running & store pid of this launcher
@@ -46,7 +46,7 @@ if [ $1 == "--restart-rangeservers" ]; then
     shift
 fi
 
-$HT_HOME/bin/Hypertable.Master --verbose --pidfile=$PIDFILE \
+$HT_HOME/bin/htMaster --verbose --pidfile=$PIDFILE \
     --config=${SCRIPT_DIR}/test.cfg $1
 
 # Exit if base run
@@ -68,8 +68,8 @@ if [ $RESTART_RANGESERVERS -ne 0 ]; then
   let j=1
   while [ $j -le $RESTART_RANGESERVERS ] ; do
       let port=38059+$j
-      $HT_HOME/bin/ht Hypertable.RangeServer --verbose \
-          --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs$j.pid \
+      $HT_HOME/bin/ht RangeServer --verbose \
+          --pidfile=$HT_HOME/run/RangeServer.rs$j.pid \
           --Hypertable.RangeServer.ProxyName=rs$j \
           --Hypertable.RangeServer.Port=$port \
           --config=${SCRIPT_DIR}/test.cfg 2>&1 >> rangeserver.rs$j.output.$TEST &
@@ -79,7 +79,7 @@ fi
 
 
 #$HT_HOME/bin/ht valgrind -v --log-file=vg_rs1.log --track-origins=yes \
-$HT_HOME/bin/Hypertable.Master --pidfile=$PIDFILE --verbose \
+$HT_HOME/bin/htMaster --pidfile=$PIDFILE --verbose \
     --config=${SCRIPT_DIR}/test.cfg
 
 \rm -f $LAUNCHER_PIDFILE

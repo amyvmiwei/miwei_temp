@@ -29,17 +29,17 @@ ldd_if_exists() {
 
 
 {
-ldd_if_exists $HYPERTABLE_HOME/bin/Hyperspace.Master
-ldd_if_exists $HYPERTABLE_HOME/bin/Hypertable.Master
-ldd_if_exists $HYPERTABLE_HOME/bin/Hypertable.RangeServer
-ldd_if_exists $HYPERTABLE_HOME/bin/ThriftBroker
-ldd_if_exists $HYPERTABLE_HOME/bin/csdump
+ldd_if_exists $HYPERTABLE_HOME/bin/htHyperspace
+ldd_if_exists $HYPERTABLE_HOME/bin/htMaster
+ldd_if_exists $HYPERTABLE_HOME/bin/htRangeServer
+ldd_if_exists $HYPERTABLE_HOME/bin/htThriftBroker
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_csdump
 ldd_if_exists $HYPERTABLE_HOME/bin/ht_fsbroker
-ldd_if_exists $HYPERTABLE_HOME/bin/dumplog
-ldd_if_exists $HYPERTABLE_HOME/bin/hyperspace
-ldd_if_exists $HYPERTABLE_HOME/bin/hypertable
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_dumplog
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_hyperspace
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_hypertable
 ldd_if_exists $HYPERTABLE_HOME/bin/htFsBrokerLocal
-ldd_if_exists $HYPERTABLE_HOME/bin/metalog_dump
-ldd_if_exists $HYPERTABLE_HOME/bin/serverup
-ldd_if_exists $HYPERTABLE_HOME/bin/system_info
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_metalog_dump
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_serverup
+ldd_if_exists $HYPERTABLE_HOME/bin/ht_system_info
 } | fgrep -v hypertable | cut -f1 -d'(' | sort | uniq

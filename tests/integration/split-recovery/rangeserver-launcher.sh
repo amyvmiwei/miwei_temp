@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 PIDFILE=$HT_HOME/run/RangeServer.pid
-LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.RangeServerLauncher.pid
+LAUNCHER_PIDFILE=$HT_HOME/run/RangeServerLauncher.pid
 DUMP_METALOG="$HT_HOME/bin/ht metalog_dump"
 METALOG="/hypertable/servers/rs1/log/rsml/"
 RANGE_SIZE=${RANGE_SIZE:-"7M"}
@@ -23,7 +23,7 @@ if [ -f $PIDFILE ]; then
   \rm -f $PIDFILE
 fi
 
-$HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
+$HT_HOME/bin/htRangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.UpdateDelay=100 \
     --Hypertable.RangeServer.Range.SplitSize=$RANGE_SIZE $@
 
@@ -43,6 +43,6 @@ echo "Range states:"
 $DUMP_METALOG --all $METALOG
 
 #$HT_HOME/bin/ht valgrind -v --log-file=vg_rs1.log --track-origins=yes \
-$HT_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --verbose
+$HT_HOME/bin/htRangeServer --pidfile=$PIDFILE --verbose
 
 \rm -f $LAUNCHER_PIDFILE

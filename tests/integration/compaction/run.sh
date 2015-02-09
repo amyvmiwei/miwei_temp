@@ -5,8 +5,8 @@ HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"500000"}
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 RS1_PORT=26001
 RS2_PORT=26002
 RUN_DIR=`pwd`
@@ -25,12 +25,12 @@ start_master_and_rangeservers() {
 
     $HT_HOME/bin/ht-start-master.sh $CONFIG
 
-    $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+    $HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
         --Hypertable.RangeServer.ProxyName=rs1 \
         --Hypertable.RangeServer.Port=$RS1_PORT $INDUCER1_ARG $CONFIG \
         2>&1 >> rangeserver.rs1.compaction-exception-$TEST.output &
 
-    $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+    $HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
         --Hypertable.RangeServer.ProxyName=rs2 \
         --Hypertable.RangeServer.Port=$RS2_PORT $INDUCER2_ARG $CONFIG \
         2>&1 >> rangeserver.rs2.compaction-exception-$TEST.output &
