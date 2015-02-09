@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -x
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
@@ -19,31 +19,28 @@ cleanup_and_abort() {
 
 start_masters() {
 
-    $HT_HOME/bin/htMaster --Master.Port=15870 $@ \
-        --pidfile $HT_HOME/run/Master.15870.pid \
-        --Master.Gc.Interval=30000 \
-        --htRangeServer.Range.SplitSize=18K \
-        --htRangeServer.Range.MetadataSplitSize=10K \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Master.15870.log&
-    wait_for_server_up "master" "master:15870" "--Master.Port=15870"
 
-    $HT_HOME/bin/htMaster --Master.Port=15871 \
-        --pidfile $HT_HOME/run/Master.15871.pid \
-        --Master.Gc.Interval=30000 \
-        --htRangeServer.Range.SplitSize=18K \
-        --htRangeServer.Range.MetadataSplitSize=10K \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Master.15871.log&
-    #wait_for_server_up "master" "master:15871" "--Master.Port=15871"
-    # chris - do not use wait_for_server_up because serverup cannot connect
-    # to this master; it's caught in main(), trying to acquire the hyperspace
-    # lock and not yet able to accept socket connections
+    # Start master on port 15870
+    pidfile=$RUNTIME_ROOT/run/Master.15870.pid
+    logfile="Master.15870.log"
+    exec_server htMaster --verbose --Hypertable.Master.Port=15870 \
+        --Hypertable.Master.Gc.Interval=30000 \
+        --Hypertable.RangeServer.Range.SplitSize=18K \
+        --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
+        --Hypertable.Connection.Retry.Interval=3000 "$@"
+    wait_for_ok master "Master" --Hypertable.Master.Port=15870
+
+    # Start master on port 15871
+    pidfile=$RUNTIME_ROOT/run/Master.15871.pid
+    logfile="Master.15871.log"
+    exec_server htMaster --verbose --Hypertable.Master.Port=15871 \
+        --Hypertable.Master.Gc.Interval=30000 \
+        --Hypertable.RangeServer.Range.SplitSize=18K \
+        --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
+        --Hypertable.Connection.Retry.Interval=3000
+    wait_for_ok master "Master" --Hypertable.Master.Port=15871
+
     sleep 5
-    ps `cat $HT_HOME/run/Master.15871.pid`
-    if [ $? != 0 ] ; then
-      echo "Master (15871) not running, exiting...";
-      exit 1
-    fi
-    echo "Master (15871) seems to be running"
 }
 
 
@@ -102,14 +99,14 @@ run_test() {
           --no-thriftbroker
       start_masters $@
       $HT_HOME/bin/ht RangeServer --verbose --pidfile=$PIDFILE \
-          --htRangeServer.CellStore.DefaultBlockSize=1K \
-          --htRangeServer.MaintenanceThreads=8 \
-          --htRangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output.$TEST_ID &
+          --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
+          --Hypertable.RangeServer.MaintenanceThreads=8 \
+          --Hypertable.RangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output.$TEST_ID &
   else
     $HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver \
-        --no-thriftbroker --Master.Gc.Interval=30000 \
-        --htRangeServer.Range.SplitSize=18K \
-        --htRangeServer.Range.MetadataSplitSize=10K
+        --no-thriftbroker --Hypertable.Master.Gc.Interval=30000 \
+        --Hypertable.RangeServer.Range.SplitSize=18K \
+        --Hypertable.RangeServer.Range.MetadataSplitSize=10K
     $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
   fi
 
