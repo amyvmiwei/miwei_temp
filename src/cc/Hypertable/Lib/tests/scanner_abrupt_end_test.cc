@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
   try {
     hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]), "./hypertable.cfg");
     namespace_ptr = hypertable_client_ptr->open_namespace("/");
-    table_ptr = namespace_ptr->open_table("RandomTest");
+    table_ptr = namespace_ptr->open_table("LoadTest");
     scanner = table_ptr->create_scanner(scan_spec.get());
     while(scanner->next(cell) && ii < num_cells) {
       ++ii;

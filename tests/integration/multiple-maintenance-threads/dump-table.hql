@@ -1,3 +1,1 @@
-use '/';
-select * from RandomTest KEYS_ONLY;
-quit;
+select * from LoadTest KEYS_ONLY;

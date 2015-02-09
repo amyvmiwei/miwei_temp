@@ -1,0 +1,9 @@
+[rowkey]
+        component.0.order=random
+        component.0.type=integer
+        component.0.format="%012lld"
+        component.0.min=1234567890
+        component.0.max=1234567891
+[Field]
+        value.size=1000
+        value.fixed=true

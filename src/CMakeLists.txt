@@ -9,7 +9,6 @@ add_subdirectory(cc/Hypertable)
 add_subdirectory(cc/Tools)
 add_subdirectory(cc/FsBroker/Lib)
 add_subdirectory(cc/FsBroker/local)
-add_subdirectory(cc/Benchmark)
 
 add_subdirectory(py/ganglia)
 add_subdirectory(rb/Monitoring)

@@ -239,11 +239,6 @@ if (Thrift_FOUND)
   set(ThriftBroker_IDL_DIR ${HYPERTABLE_SOURCE_DIR}/src/cc/ThriftBroker)
 endif ()
 
-if (BOOST_VERSION MATCHES "1_34")
-  message(STATUS "Got boost 1.34.x, prepend fix directory")
-  include_directories(BEFORE src/cc/boost-1_34-fix)
-endif ()
-
 if (GCC_VERSION MATCHES "^([4-9]|[1-9][0-9]+)\\.")
   SET (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-variadic-macros")
   SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros")

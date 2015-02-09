@@ -2,6 +2,7 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
+SPEC_FILE="$SCRIPT_DIR/data.spec"
 DATA_SIZE=${DATA_SIZE:-"20000000"}
 DISABLE_ARG=
 
@@ -36,10 +37,11 @@ echo "======================================"
 $HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
     --Hypertable.RangeServer.Range.SplitSize=2000000 $DISABLE_ARG
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
-$HT_HOME/bin/ht ht_write_test \
+
+$HT_HOME/bin/ht load_generator update --spec-file=$SPEC_FILE \
+    --max-bytes=$DATA_SIZE --rowkey-seed=1234 \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=50K \
-    --Hypertable.Mutator.FlushDelay=5 --max-keys=1 \
-    $DATA_SIZE 2>&1 | grep -c '^Failed.*row overflow'
+    --Hypertable.Mutator.FlushDelay=5 2>&1 | grep -c 'row overflow'
 
 check_exit_status 1
 
@@ -59,7 +61,7 @@ echo "======================================"
 echo "Row overflow WRITE test (Thrift mutator)"
 echo "======================================"
 # insert one more row via thrift
-$SCRIPT_DIR/thrift_insert.py RandomTest thisisarowkey Field 2>&1 | grep -c 'row overflow'
+$SCRIPT_DIR/thrift_insert.py LoadTest thisisarowkey Field 2>&1 | grep -c 'row overflow'
 check_exit_status 3
 
 exit 0

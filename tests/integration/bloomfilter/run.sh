@@ -3,7 +3,8 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 SCRIPT_DIR=`dirname $0`
-DATA_SIZE=${DATA_SIZE:-"5000000"}
+SPEC_FILE=$SCRIPT_DIR/data.spec
+MAX_KEYS=${MAX_KEYS:-"5000"}
 AG_MAXMEM=250000
 
 . $HT_HOME/bin/ht-env.sh
@@ -32,24 +33,21 @@ test() {
   echo "================="
   echo "random WRITE test"
   echo "================="
-  $HT_HOME/bin/random_write_test \
-      --blocksize=100 \
-            $DATA_SIZE
+  $HT_HOME/bin/ht load_generator update --spec-file=$SPEC_FILE \
+      --max-keys=$MAX_KEYS --rowkey-seed=68
 
   echo "================="
   echo "random READ test"
   echo "================="
-  $HT_HOME/bin/random_read_test \
-      --blocksize=100 \
-      $DATA_SIZE
+  $HT_HOME/bin/ht load_generator query --spec-file=$SPEC_FILE \
+      --max-keys=$MAX_KEYS --rowkey-seed=68
 
   restart_servers_noclean
   echo "================="
   echo "random READ test"
   echo "================="
-  $HT_HOME/bin/random_read_test \
-      --blocksize=100 \
-      $DATA_SIZE
+  $HT_HOME/bin/ht load_generator query --spec-file=$SPEC_FILE \
+      --max-keys=$MAX_KEYS --rowkey-seed=68
 }
 
 test $1
