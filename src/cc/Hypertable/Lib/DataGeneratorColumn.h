@@ -49,17 +49,18 @@ namespace Hypertable {
 
   class ColumnSpec {
   public:
-    ColumnSpec() : size(-1), order(RANDOM), seed(1), word_stream(false), to_stdout(false) { }
+    ColumnSpec() {}
     QualifierSpec qualifier;
-    int size;
-    int order;
+    int size {-1};
+    int order {RANDOM};
     String source;
     String cooked_source;
     String column_family;
-    unsigned seed;
+    unsigned seed {1};
     String distribution;
-    bool word_stream;
-    bool to_stdout;
+    bool word_stream {};
+    bool to_stdout {};
+    bool fixed {};
   };
 
   class Column : public ColumnSpec {
@@ -97,17 +98,22 @@ namespace Hypertable {
       }
       else {
 
-        if (s == "") {
-          m_value_data_len = size * 50;
-          m_value_data.reset( new char [ m_value_data_len ] );
+        if (s.empty()) {
+          m_value_data_len = size;
+          if (!fixed)
+            m_value_data_len *= 50;
+          m_value_data.reset( new char [ m_value_data_len+1 ] );
           Random::fill_buffer_with_random_ascii((char *)m_value_data.get(),
                                                 m_value_data_len);
+          ((char *)m_value_data.get())[m_value_data_len] = 0;
           m_source = (const char *)m_value_data.get();
+
         }
         else {
           m_source = (const char *)FileUtils::mmap(s, &m_value_data_len);
           HT_ASSERT(m_value_data_len >= size);
         }
+        m_value = m_source;
         m_value_data_len -= size;
         if (cooked_source.empty())
           m_render_buf.reset( new char [size * 2 + 1] );
@@ -122,10 +128,10 @@ namespace Hypertable {
       // "cooked mode": we have two pointers. move the second pointer forward.
       // if it reaches eof then restart at the beginning, and move the first
       // pointer forward
-      off_t offset = 0;
+      off_t offset {};
       const char *p;
-      size_t first_word_size = 0;
-      size_t second_word_size = 0;
+      size_t first_word_size {};
+      size_t second_word_size {};
       if (!cooked_source.empty()) {
         m_cooked.clear();
         p = m_source + m_first_offset;
@@ -155,9 +161,9 @@ namespace Hypertable {
         }
         m_size = m_cooked.size();
       }
-      // otherwise ("raw" mode): pick a random offset
       else if (!m_word_stream) {
-        offset = Random::number32() % m_value_data_len;
+        if (!fixed)
+          offset = Random::number32() % m_value_data_len;
       }
 
       if (m_qualifiers.empty())
@@ -176,7 +182,7 @@ namespace Hypertable {
             else
               m_value = m_source + offset;
           }
-          else {
+          else if (!fixed) {
             const char *src = m_source + offset;
             if (!m_cooked.empty())
               src = m_cooked.c_str();
