@@ -50,7 +50,7 @@ if (Libssh_INCLUDE_DIR AND Libssh_LIBRARY)
   set(Libssh_FOUND TRUE)
   set(Libssh_LIBRARIES ${Libssh_LIBRARY} ${Libssh_ssl_LIBRARY} ${Libssh_crypto_LIBRARY})
 
-  exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+  exec_program(${CMAKE_SOURCE_DIR}/bin/src-utils/ldd.sh
                ARGS ${Libssh_LIBRARY}
                OUTPUT_VARIABLE LDD_OUT
                RETURN_VALUE LDD_RETURN)

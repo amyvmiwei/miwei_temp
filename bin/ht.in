@@ -34,7 +34,6 @@ print_help() {
   echo "      valid <Service>: fsbroker, hyperspace, master, rangeserver, "
   echo "                       thriftbroker, servers"
   echo "  clean-databases                     Remove all existing databases"
-  echo "  ldd <executable>                    Print dynamic linking info"
   echo "  shell [ShellOptions]                See shell --help for options"
   echo "  version                             Show version info"
   echo "  help                                Show this help"

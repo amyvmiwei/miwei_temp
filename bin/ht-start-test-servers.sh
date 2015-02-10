@@ -22,15 +22,16 @@ usage_exit() {
   echo "$0 [Options]"
   echo ""
   echo "Options:"
-  echo "  --clear               Clear any existing data"
+  echo "  --destroy             Destroys existing database before starting servers"
   echo "  -h, --help            Show this help message and any valid"
   echo "                        ht-start-all-servers.sh options"
 }
 
 while [ $# -gt 0 ]; do
   case $1 in
-    --clear)              clear=1;;
-    --clean)              clear=1;;
+    --clear)              destroy=1;;
+    --clean)              destroy=1;;
+    --destroy)            destroy=1;;
     -h|--help)            usage_exit;;
     --val*|--no*|--heap*) opts[${#opts[*]}]=$1;;
     *)                    break;;
@@ -38,7 +39,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if [ "$clear" ]; then
+if [ "$destroy" ]; then
   $INSTALL_DIR/bin/ht-start-fsbroker.sh $HT_TEST_FS
   $INSTALL_DIR/bin/ht destroy-database $@
 else

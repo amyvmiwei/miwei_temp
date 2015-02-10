@@ -18,9 +18,6 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-. $HYPERTABLE_HOME/bin/ht-env.sh
-
 DARWIN=
 
 # Do ldd on several platforms
@@ -28,11 +25,8 @@ case `uname -s` in
   Darwin)     ldd='otool -L'; DARWIN="yes";;
   *)          ldd=ldd;;
 esac
-case $1 in
-  /*)         file=$1;;
-  lib/*)      file=$HYPERTABLE_HOME/lib/$1;;
-  *)          file=$HYPERTABLE_HOME/bin/$1;;
-esac
+
+file=$1
 
 if [ "$DARWIN" == "yes" ] ; then
   $ldd "$file" > /tmp/ldd-step1-$$
