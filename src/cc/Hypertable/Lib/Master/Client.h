@@ -40,7 +40,6 @@
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/CommBuf.h>
 #include <AsyncComm/ConnectionManager.h>
-#include <AsyncComm/DispatchHandler.h>
 
 #include <Common/ReferenceCount.h>
 #include <Common/StatsSystem.h>
@@ -97,29 +96,16 @@ namespace Master {
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);
 
-    void create_namespace(const String &name, int32_t flags,
-                          DispatchHandler *handler, Timer *timer=0);
     void create_namespace(const String &name, int32_t flags, Timer *timer=0);
 
-    void drop_namespace(const String &name, int32_t flags,
-                        DispatchHandler *handler, Timer *timer=0);
     void drop_namespace(const String &name, int32_t flags, Timer *timer=0);
 
     void compact(const String &tablename, const String &row,
-                 int32_t range_types, DispatchHandler *handler,
-                 Timer *timer = 0);
-    void compact(const String &tablename, const String &row,
                  int32_t range_types, Timer *timer = 0);
     void create_table(const String &name, const String &schema,
-                      DispatchHandler *handler, Timer *timer = 0);
-    void create_table(const String &name, const String &schema,
                       Timer *timer = 0);
-    void alter_table(const String &tablename, const String &schema, bool force,
-                     DispatchHandler *handler, Timer *timer = 0);
     void alter_table(const String &tablename, const String &schema,
                      bool force, Timer *timer = 0);
-    void rename_table(const String &from, const String &to,
-                      DispatchHandler *handler, Timer *timer = 0);
     void rename_table(const String &from, const String &to,
                       Timer *timer = 0);
 
@@ -128,22 +114,12 @@ namespace Master {
     void move_range(const String &source, int64_t range_id,
                     TableIdentifier &table,
 		    RangeSpec &range, const String &transfer_log,
-		    uint64_t soft_limit, bool split,
-		    DispatchHandler *handler, Timer *timer = 0);
-    void move_range(const String &source, int64_t range_id,
-                    TableIdentifier &table,
-		    RangeSpec &range, const String &transfer_log,
 		    uint64_t soft_limit, bool split, Timer *timer=0);
 
-    void relinquish_acknowledge(const String &source, int64_t range_id,
-                                TableIdentifier &table, RangeSpec &range,
-                                DispatchHandler *handler, Timer *timer = 0);
     void relinquish_acknowledge(const String &source, int64_t range_id,
                                 TableIdentifier &table,
                                 RangeSpec &range, Timer *timer=0);
 
-    void drop_table(const String &name, bool if_exists,
-                    DispatchHandler *handler, Timer *timer=0);
     void drop_table(const String &name, bool if_exists, Timer *timer=0);
 
     /// Carries out a <i>recreate index tables</i> %Master operation.
@@ -157,18 +133,7 @@ namespace Master {
 
     void shutdown(Timer *timer=0);
 
-    void balance(BalancePlan &plan, DispatchHandler *handler,
-                 Timer *timer = 0);
-
     void balance(BalancePlan &plan, Timer *timer = 0);
-
-    /** Set system state variables asynchronously.
-     * @param specs Vector of system variable specs
-     * @param handler Dispatch handler for asynchronous rendezvous
-     * @param timer Deadline timer
-     */
-    void set_state(const std::vector<SystemVariable::Spec> &specs,
-                   DispatchHandler *handler, Timer *timer = 0);
 
     /** Set system state variables synchronously.
      * @param specs Vector of system variable specs

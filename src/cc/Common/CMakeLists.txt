@@ -81,9 +81,6 @@ target_link_libraries(HyperCommon ${EXPAT_LIBRARIES} ${SIGAR_LIBRARIES}
 add_executable(ht_system_info system_info.cc)
 target_link_libraries(ht_system_info HyperCommon)
 
-add_executable(ht_checksum ht_checksum.cc)
-target_link_libraries(ht_checksum HyperCommon)
-
 add_executable(ht_wordstream ht_wordstream.cc)
 target_link_libraries(ht_wordstream HyperCommon)
 
@@ -241,6 +238,6 @@ if (NOT HT_COMPONENT_INSTALL)
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
 
-  install(TARGETS ht_system_info ht_checksum
+  install(TARGETS ht_system_info
           RUNTIME DESTINATION bin)
 endif ()

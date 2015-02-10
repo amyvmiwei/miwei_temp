@@ -185,50 +185,6 @@ void Master::Client::initialize(Timer *&timer, Timer &tmp_timer) {
   timer->start();
 }
 
-void
-Master::Client::create_namespace(const String &name, int32_t flags, DispatchHandler *handler,
-                         Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("create_namespace('%s', flags=%s)", name.c_str(),
-                        NamespaceFlag::to_str(flags).c_str());
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_CREATE_NAMESPACE);
-      Request::Parameters::CreateNamespace params(name, flags);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
 
 void
 Master::Client::create_namespace(const String &name, int32_t flags, Timer *timer) {
@@ -257,50 +213,6 @@ Master::Client::create_namespace(const String &name, int32_t flags, Timer *timer
     id = decode_i64(&ptr, &remain);
 
     fetch_result(id, timer, event, label);
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
-
-void
-Master::Client::drop_namespace(const String &name, int32_t flags,
-                             DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("drop_namespace('%s', flags=%s)",
-                        name.c_str(), NamespaceFlag::to_str(flags).c_str());
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_DROP_NAMESPACE);
-      Request::Parameters::DropNamespace params(name, flags);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
     return;
   }
 
@@ -351,48 +263,6 @@ Master::Client::drop_namespace(const String &name, int32_t flags, Timer *timer) 
 
 }
 
-void Master::Client::compact(const String &tablename, const String &row,
-                     int32_t range_types, DispatchHandler *handler,
-                     Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("compact('%s')", tablename.c_str());
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_COMPACT);
-      Request::Parameters::Compact params(tablename, row, range_types);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
 
 void Master::Client::compact(const String &tablename, const String &row,
                      int32_t range_types, Timer *timer) {
@@ -431,49 +301,6 @@ void Master::Client::compact(const String &tablename, const String &row,
 
 void
 Master::Client::create_table(const String &name, const String &schema,
-                           DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("create_table('%s')", name.c_str());
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_CREATE_TABLE);
-      Request::Parameters::CreateTable params(name, schema);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-}
-
-
-void
-Master::Client::create_table(const String &name, const String &schema,
                            Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
@@ -497,48 +324,6 @@ Master::Client::create_table(const String &name, const String &schema,
     size_t remain = event->payload_len - 4;
     id = decode_i64(&ptr, &remain);
     fetch_result(id, timer, event, label);
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-}
-
-void
-Master::Client::alter_table(const String &name, const String &schema,
-                    bool force, DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("alter_table('%s')", name.c_str());
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_ALTER_TABLE);
-      Request::Parameters::AlterTable params(name, schema, force);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
     return;
   }
 
@@ -613,28 +398,6 @@ void Master::Client::status(Status &status, Timer *timer) {
             m_master_addr.format().c_str());
 }
 
-void
-Master::Client::move_range(const String &source, int64_t range_id,
-                           TableIdentifier &table,
-                           RangeSpec &range, const String &transfer_log,
-                           uint64_t soft_limit, bool split, 
-                           DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  String label =
-    format("move_range(%s[%s..%s] (%lld), transfer_log='%s', soft_limit=%llu)",
-           table.id, range.start_row, range.end_row, (Lld)range_id,
-           transfer_log.c_str(), (Llu)soft_limit);
-
-  initialize(timer, tmp_timer);
-
-  CommHeader header(Protocol::COMMAND_MOVE_RANGE);
-  Request::Parameters::MoveRange params(source, range_id, table, range,
-                                        transfer_log, soft_limit, split);
-  CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-  params.encode(cbuf->get_data_ptr_address());
-  send_message_async(cbuf, handler, timer, label);
-}
-
 
 void
 Master::Client::move_range(const String &source, int64_t range_id,
@@ -679,53 +442,6 @@ Master::Client::move_range(const String &source, int64_t range_id,
 }
 
 
-
-void
-Master::Client::relinquish_acknowledge(const String &source, int64_t range_id,
-                                       TableIdentifier &table, RangeSpec &range,
-                                       DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("relinquish_acknowledge(%s[%s..%s] id=%lld)",
-                        table.id, range.start_row, range.end_row,(Lld)range_id);
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
-      Request::Parameters::RelinquishAcknowledge params(source, range_id, table, range);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
-
-
 void
 Master::Client::relinquish_acknowledge(const String &source, int64_t range_id,
                                        TableIdentifier &table,
@@ -766,49 +482,6 @@ Master::Client::relinquish_acknowledge(const String &source, int64_t range_id,
 }
 
 
-void
-Master::Client::rename_table(const String &from, const String &to,
-                     DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("rename_table(old='%s', new='%s')", from.c_str(), to.c_str());
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_RENAME_TABLE);
-      Request::Parameters::RenameTable params(from, to);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
-
 
 void
 Master::Client::rename_table(const String &from, const String &to, Timer *timer) {
@@ -843,50 +516,6 @@ Master::Client::rename_table(const String &from, const String &to, Timer *timer)
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
   }
-}
-
-void
-Master::Client::drop_table(const String &name, bool if_exists,
-                         DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = format("drop_table('%s', if_exists=%s)",
-                        name.c_str(), if_exists ? "true" : "false");
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_DROP_TABLE);
-      Request::Parameters::DropTable params(name, if_exists);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
 }
 
 
@@ -981,48 +610,6 @@ void Master::Client::shutdown(Timer *timer) {
   }
 }
 
-void Master::Client::balance(BalancePlan &plan, DispatchHandler *handler,
-                     Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = "balance";
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_BALANCE);
-      Request::Parameters::Balance params(plan);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-}
-
-
 
 void Master::Client::balance(BalancePlan &plan, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
@@ -1069,50 +656,7 @@ void Master::Client::balance(BalancePlan &plan, Timer *timer) {
 
 
 void Master::Client::set_state(const std::vector<SystemVariable::Spec> &specs,
-                       DispatchHandler *handler, Timer *timer) {
-
-  Timer tmp_timer(m_timeout_ms);
-  EventPtr event;
-  String label = "set";
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-
-    {
-      CommHeader header(Protocol::COMMAND_SET_STATE);
-      Request::Parameters::SetState params(specs);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      if (!send_message(cbuf, timer, event, label))
-        continue;
-    }
-
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    int64_t id = decode_i64(&ptr, &remain);
-
-    {
-      CommHeader header(Protocol::COMMAND_FETCH_RESULT);
-      Request::Parameters::FetchResult params(id);
-      CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
-      params.encode(cbuf->get_data_ptr_address());
-      send_message_async(cbuf, handler, timer, label);
-    }
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "Client operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
-
-void Master::Client::set_state(const std::vector<SystemVariable::Spec> &specs,
-                       Timer *timer) {
+                               Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   EventPtr event;
   int64_t id = 0;
@@ -1225,7 +769,8 @@ Master::Client::send_message(CommBufPtr &cbp, Timer *timer, EventPtr &event, con
     int32_t error = Hypertable::Protocol::response_code(event);
     if (error == Error::COMM_NOT_CONNECTED ||
         error == Error::COMM_BROKEN_CONNECTION ||
-        error == Error::COMM_CONNECT_ERROR) {
+        error == Error::COMM_CONNECT_ERROR ||
+        error == Error::SERVER_NOT_READY) {
       poll(0, 0, std::min(timer->remaining(), (System::rand32() % 3000)));
       return false;
     }
