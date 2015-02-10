@@ -209,6 +209,10 @@ void
 ConnectionManager::send_connect_request(ConnectionStatePtr &conn_state) {
   int error;
 
+  if (conn_state->state == State::DECOMMISSIONED)
+    HT_FATALF("Attempt to connect decommissioned connection to service='%s'",
+              conn_state->service_name.c_str());
+
   if (!conn_state->local_addr.is_set())
     error = m_impl->comm->connect(conn_state->addr, shared_from_this());
   else
@@ -218,10 +222,8 @@ ConnectionManager::send_connect_request(ConnectionStatePtr &conn_state) {
   if (error == Error::OK)
     return;
   else if (error == Error::COMM_ALREADY_CONNECTED) {
-    HT_ASSERT(!conn_state->initializer ||
-              conn_state->state == State::CONNECTED ||
-              conn_state->state == State::READY);
-    conn_state->state = State::READY;
+    if (conn_state->state == State::DISCONNECTED)
+      conn_state->state = State::READY;
     conn_state->cond.notify_all();
   }
   else if (error == Error::COMM_INVALID_PROXY) {
