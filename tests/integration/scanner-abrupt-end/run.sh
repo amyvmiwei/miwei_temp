@@ -9,7 +9,7 @@ MAX_KEYS=50000
 
 set -v
 
-$HT_HOME/bin/ht-start-test-servers.sh --clean
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 cmd="$HT_HOME/bin/ht hypertable --no-prompt --command-file=$SCRIPT_DIR/create-table.hql"
 echo "$cmd"

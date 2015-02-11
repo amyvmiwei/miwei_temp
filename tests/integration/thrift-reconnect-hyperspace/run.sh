@@ -7,7 +7,7 @@ set -v
 TEST_BIN=./client_test
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 
-$HT_HOME/bin/ht-start-test-servers.sh --clean
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 sleep 5;
 $HT_HOME/bin/ht-stop-servers.sh --no-thriftbroker 

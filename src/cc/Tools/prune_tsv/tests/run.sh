@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/ht-start-test-servers.sh --clean
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 #
 # Generate prune_test.tsv

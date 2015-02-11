@@ -5,7 +5,7 @@ SCRIPT_DIR=`dirname $0`
 SPEC_FILE="$SCRIPT_DIR/../../data/random-test.spec"
 MAX_KEYS=50000
 
-$HT_HOME/bin/ht-start-test-servers.sh --clean
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 $HT_HOME/bin/ht hypertable --no-prompt < $SCRIPT_DIR/create-table.hql
 
@@ -25,7 +25,7 @@ $HT_HOME/bin/ht load_generator query --spec-file=$SPEC_FILE \
 
 pushd .
 cd $HT_HOME
-./bin/ht-start-test-servers.sh --clean
+./bin/ht-start-test-servers.sh --clear
 popd
 
 $HT_HOME/bin/ht hypertable --no-prompt < $SCRIPT_DIR/create-table-memory.hql

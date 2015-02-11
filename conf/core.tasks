@@ -229,7 +229,7 @@ task: destroy_slaves roles: slave {
 # confirmation is obtained or \$PROMPT_DESTROY is equal to \"false\", then the task
 # will wipe the database destroy by calling the following tasks:  stop, kill,
 # destroy_masters, destroy_hyperspace, destroy_slaves
-task: destroydb {
+task: destroy {
   if [ "${PROMPT_DESTROY}" == "true" ]; then
     echo "This will DELETE ALL DATA stored in Hypertable. ARE YOU SURE you want to proceed?"
     echo -n "('Yes' to proceed)> "
