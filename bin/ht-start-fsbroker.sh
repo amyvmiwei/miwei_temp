@@ -116,7 +116,7 @@ if [ $? != 0 ] ; then
       echo "ERROR: hadoop broker cannot be run with valgrind"
       exit 1
     fi
-    exec_server jrun org.hypertable.FsBroker.hadoop.main --verbose "$@"
+    exec_server ht-java-run.sh org.hypertable.FsBroker.hadoop.main --verbose "$@"
   elif [ "$FS" == "mapr" ] ; then
     exec_server htFsBrokerMapr --verbose "$@"
   elif [ "$FS" == "ceph" ] ; then

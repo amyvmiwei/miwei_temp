@@ -19,7 +19,7 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-JRUN_OPTS=
+JAVA_RUN_OPTS=
 COUNT=1
 THRIFTBROKER_COUNT=1
 
@@ -28,7 +28,7 @@ usage() {
   echo "usage: start-test-client.sh [options] <host>[:<port>]"
   echo ""
   echo "options:"
-  echo "  --jrun-opts <str>  Supplies <str> to the jrun command"
+  echo "  --java-run-opts <str>  Supplies <str> to the ht-java-run.sh command"
   echo ""
   echo "Launches the java test client.  Client will connect to the"
   echo "dispatcher running at <host>[:<port>] to receive instructions"
@@ -36,9 +36,9 @@ usage() {
 }
 
 while [ $# -gt 1 ] ; do
-  if [ "--jrun-opts" = "$1" ] ; then
+  if [ "--java-run-opts" = "$1" ] ; then
     shift
-    JRUN_OPTS="$JRUN_OPTS $1"
+    JAVA_RUN_OPTS="$JAVA_RUN_OPTS $1"
     shift
   elif [ "--thriftbroker-count" = "$1" ] ; then
     shift
@@ -60,7 +60,9 @@ let j=$COUNT
 
 while [ $j -gt 0 ] ; do
   let tbport=15867+j%THRIFTBROKER_COUNT
-  start_server_no_check test_client jrun Hypertable.TestClient-$j $JRUN_OPTS org.hypertable.examples.PerformanceTest.Client --thriftbroker-port=$tbport "$@"
+  start_server_no_check test_client ht-java-run.sh Hypertable.TestClient-$j \
+      $JAVA_RUN_OPTS org.hypertable.examples.PerformanceTest.Client \
+      --thriftbroker-port=$tbport "$@"
   let j--
 done
 

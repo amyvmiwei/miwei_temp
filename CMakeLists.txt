@@ -280,8 +280,6 @@ file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 install(PROGRAMS ${HYPERTABLE_BINARY_DIR}/ht DESTINATION bin)
 
-install(PROGRAMS bin/jrun DESTINATION bin)
-
 # Copy Thrift files
 if (THRIFT_SOURCE_DIR)
   message(STATUS "Copying PHP files into installation")
