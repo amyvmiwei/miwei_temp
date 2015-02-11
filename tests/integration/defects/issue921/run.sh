@@ -17,7 +17,7 @@ cat ${SCRIPT_DIR}/test.hql | $HT_HOME/bin/ht hypertable \
 
 
 # make sure hypertable jar files are copied into lib/java
-$HT_HOME/bin/ht-set-hadoop-distro.sh cdh3
+$HT_HOME/bin/ht-set-hadoop-distro.sh cdh5
 
 #
 # javac/java failed on test01 with this:
@@ -30,7 +30,7 @@ $HT_HOME/bin/ht-set-hadoop-distro.sh cdh3
 # in the classpath
 #
 echo "compiling"
-CP=$HT_HOME/lib/java/libthrift-0.8.0.jar:$HT_HOME/lib/java/*:$SCRIPT_DIR:.
+CP=$HT_HOME/lib/java/*:$SCRIPT_DIR:.
 javac -classpath $CP -d . $SCRIPT_DIR/TestInputOutput.java
 
 echo "running"
