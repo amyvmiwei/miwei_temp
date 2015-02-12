@@ -82,12 +82,12 @@ int main (int argc, char **argv) {
       port = get_i16("FsBroker.Port");
 
     Comm *comm = Comm::instance();
-    ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
+    ApplicationQueuePtr app_queue = make_shared<ApplicationQueue>(worker_count);
     HT_INFOF("attemping to create new CephBroker with address %s", properties->get_str("CephBroker.MonAddr").c_str());
     BrokerPtr broker = new CephBroker(properties);
     HT_INFO("Created CephBroker!");
     ConnectionHandlerFactoryPtr chfp =
-      new FsBroker::Lib::ConnectionHandlerFactory(comm, app_queue, broker);
+      make_shared<FsBroker::Lib::ConnectionHandlerFactory>(comm, app_queue, broker);
     InetAddr listen_addr(INADDR_ANY, port);
 
     comm->listen(listen_addr, chfp);

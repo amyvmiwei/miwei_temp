@@ -26,9 +26,10 @@ extern "C" {
 
 #include <FsBroker/Lib/Broker.h>
 
+#include <Common/Properties.h>
+#include <Common/Status.h>
 #include <Common/String.h>
 #include <Common/atomic.h>
-#include <Common/Properties.h>
 
 #include <ceph/libceph.h>
 
@@ -97,6 +98,9 @@ namespace FsBroker {
     }
 
     int rmdir_recursive(const char *directory);
+
+    /// Server status information
+    Hypertable::Status m_status;
 
     bool m_verbose;
     String m_root_dir;
