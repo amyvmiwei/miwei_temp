@@ -107,7 +107,7 @@ echo "[test-10]" >> thrift-table-refresh.output
 $SCRIPT_DIR/thrift_hql.py "DROP TABLE foo" >>  thrift-table-refresh.output
 
 # select 
-echo "use '/'; SELECT * FROM foo;" | $HT_HOME/bin/ht shell --batch 2>&1 | fgrep -v "Table.cc" >> thrift-table-refresh.output
+echo "use '/'; SELECT * FROM foo;" | $HT_HOME/bin/ht shell --batch >> thrift-table-refresh.output
 
 # query via thrift
 $SCRIPT_DIR/thrift_query.py foo  2>&1 | cut -f1 -d'-' >> thrift-table-refresh.output
