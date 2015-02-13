@@ -4,7 +4,7 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 SCRIPT_OUTPUT=hyperspace_dump.out
 
-$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/ht-destroy-database.sh
 
 $HT_HOME/bin/ht-start-hyperspace.sh
 

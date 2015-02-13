@@ -25,11 +25,18 @@
  * encode and decode a %MetaLog entity header.
  */
 
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
-#include "Common/Time.h"
+#include <Common/Compat.h>
 
 #include "MetaLogEntity.h"
+
+#include <Common/Serialization.h>
+#include <Common/Time.h>
+
+#include <string>
+
+extern "C" {
+#include <time.h>
+}
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
@@ -102,7 +109,8 @@ void EntityHeader::display(std::ostream &os) {
   if (display_timestamp) {
     time_t t = (time_t)(timestamp / 1000000000LL);
     char buf[32];
-    String timestr = ctime_r(&t, buf);
+    struct tm tmval;
+    string timestr(asctime_r(gmtime_r(&t, &tmval), buf));
     boost::trim_if(timestr, boost::is_any_of(" \t\n"));
     os << ",timestamp=" << timestr;
   }

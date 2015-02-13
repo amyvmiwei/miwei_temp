@@ -134,7 +134,7 @@ task: stop_slaves roles: slave {
 task: stop_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/ht-stop-master.sh ${CONFIG}
-    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
+    ${INSTALL_PREFIX}/current/bin/ht-stop-monitoring.sh
   }
 }
 
@@ -143,7 +143,7 @@ task: stop_masters roles: master {
 # Stops monitoring servers in the current installation.
 task: stop_monitoring roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
+    ${INSTALL_PREFIX}/current/bin/ht-stop-monitoring.sh
   }
 }
 
@@ -193,44 +193,44 @@ task: kill {
 }
 
 
-# Clean master state.
-# Cleans the master state by starting the FS broker and then running the
-# clean-database.sh and stop-monitoring.sh scripts from the current
+# Destroy master state.
+# Destroys the master state by starting the FS broker and then running the
+# ht-destroy-database.sh and ht-stop-monitoring.sh scripts from the current
 # installation.
-task: clean_masters roles: master {
+task: destroy_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
-    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG} || exit \$?
-    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-destroy-database.sh ${CONFIG} || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-stop-monitoring.sh || exit \$?
   }
 }
 
 
-# Clean Hyperspace state.  Runs the ht-clean-hyperspace.sh script from the
+# Destroy Hyperspace state.  Runs the ht-destroy-hyperspace.sh script from the
 # current installation.
-task: clean_hyperspace roles: hyperspace {
+task: destroy_hyperspace roles: hyperspace {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/ht-clean-hyperspace.sh
+    ${INSTALL_PREFIX}/current/bin/ht-destroy-hyperspace.sh
   }
 }
 
 
-# Clean slave state.  Removes the contents of the run/ directory in the current
+# Destroy slave state.  Removes the contents of the run/ directory in the current
 # installation.
-task: clean_slaves roles: slave {
+task: destroy_slaves roles: slave {
   ssh: {
     rm -rf ${INSTALL_PREFIX}/current/run/*
   }
 }
 
 
-# Destroy database removing all tables.  If the variable \$PROMPT_CLEAN is equal
+# Destroy database removing all tables.  If the variable \$PROMPT_DESTROY is equal
 # to \"true\", this task will first prompt the user for confirmation.  If the
-# confirmation is obtained or \$PROMPT_CLEAN is equal to \"false\", then the task
-# will wipe the database clean by calling the following tasks:  stop, kill,
-# clean_masters, clean_hyperspace, clean_slaves
-task: cleandb {
-  if [ "${PROMPT_CLEAN}" == "true" ]; then
+# confirmation is obtained or \$PROMPT_DESTROY is equal to \"false\", then the task
+# will wipe the database destroy by calling the following tasks:  stop, kill,
+# destroy_masters, destroy_hyperspace, destroy_slaves
+task: destroy {
+  if [ "${PROMPT_DESTROY}" == "true" ]; then
     echo "This will DELETE ALL DATA stored in Hypertable. ARE YOU SURE you want to proceed?"
     echo -n "('Yes' to proceed)> "
     read RESPONSE EXTRA
@@ -240,17 +240,17 @@ task: cleandb {
   fi
   stop
   kill
-  clean_masters
-  clean_hyperspace
-  clean_slaves
+  destroy_masters
+  destroy_hyperspace
+  destroy_slaves
 }
 
 
 # Start monitoring server.  Starts the monitoring server by running the
-# start-monitoring.sh script from the current installation.
+# ht-start-monitoring.sh script from the current installation.
 task: start_monitoring roles: master {
   ssh: {
-    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh
+    ${INSTALL_PREFIX}/current/bin/ht-start-monitoring.sh
   }
 }
 
@@ -270,7 +270,7 @@ task: start_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/ht-start-fsbroker.sh ${FS} ${CONFIG} || exit \$?
     ${INSTALL_PREFIX}/current/bin/ht-start-master.sh ${CONFIG} || exit \$?
-    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh || exit \$?
+    ${INSTALL_PREFIX}/current/bin/ht-start-monitoring.sh || exit \$?
   }
 }
 
@@ -403,22 +403,22 @@ task: install_package roles: master, hyperspace, slave, thriftbroker, spare {
 }
 
 # FHS-ize the installation.
-# FHS-izes the installations by running bin/fhsize.sh from the
+# FHS-izes the installations by running bin/ht-fhsize.sh from the
 # \$HYPERTABLE_VERSION (${HYPERTABLE_VERSION}) installation and writes
 # $\HADOOP_DISTRO (${HADOOP_DISTRO}) into the conf/hadoop-distro file
 task: fhsize {
   ssh: {
-    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/fhsize.sh
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/ht-fhsize.sh
     echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
   }
 }
 
 
 # Verify upgrade.
-# Verifies upgrade by running upgrade-ok.sh
+# Verifies upgrade by running ht-upgrade-ok.sh
 task: verify_upgrade roles: source {
   ssh: {
-    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/upgrade-ok.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/ht-upgrade-ok.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
   }
 }
 
@@ -427,10 +427,10 @@ task: verify_upgrade roles: source {
 # Upgrades installation by copying or re-creating existing symlinks for
 # \"hyperspace\", \"conf\", \"run\", \"log\"  and \"fs\" directories from the
 # current installation to installation specified by \$HYPERTABLE_VERSION
-# (${HYPERTABLE_VERSION}). This is accomplished with a call to upgrade.sh
+# (${HYPERTABLE_VERSION}). This is accomplished with a call to ht-upgrade.sh
 task: upgrade_installation roles: master, hyperspace, slave, thriftbroker, spare {
   ssh: {
-    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/upgrade.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/ht-upgrade.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
   }
 }
 

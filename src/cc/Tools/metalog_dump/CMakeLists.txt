@@ -17,10 +17,10 @@
 # 02110-1301, USA.
 #
 
-# metalog_dump - program to print a textual representation of the metalog
-add_executable(metalog_dump metalog_dump.cc)
-target_link_libraries(metalog_dump HyperFsBroker HyperMaster HyperRanger Hypertable)
+# ht_metalog_dump - program to print a textual representation of the metalog
+add_executable(ht_metalog_dump metalog_dump.cc)
+target_link_libraries(ht_metalog_dump HyperFsBroker HyperMaster HyperRanger Hypertable)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS metalog_dump RUNTIME DESTINATION bin)
+  install(TARGETS ht_metalog_dump RUNTIME DESTINATION bin)
 endif ()

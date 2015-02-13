@@ -2,12 +2,12 @@
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
-DATA_SIZE=${DATA_SIZE:-"100000000"}
+MAX_KEYS=${MAX_KEYS:-"100000"}
 THREADS=${THREADS:-"8"}
 ITERATIONS=${ITERATIONS:-"1"}
 
 for ((i=0; i<$ITERATIONS; i++)) ; do
-    $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+    $HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
         --Hypertable.RangeServer.Range.SplitSize=2500K \
         --Hypertable.RangeServer.AccessGroup.MaxMemory=400K \
         --Hypertable.RangeServer.MaintenanceThreads=$THREADS \
@@ -21,7 +21,10 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
     echo "=================================="
     echo "$THREADS Maintenence Threads WRITE test"
     echo "=================================="
-    $HT_HOME/bin/ht random_write_test $DATA_SIZE
+
+    SPEC="$SCRIPT_DIR/../../data/random-test.spec"
+    $HT_HOME/bin/ht load_generator update --spec-file=$SPEC \
+        --max-keys=$MAX_KEYS --rowkey-seed=42
 
     kill %1
 
@@ -30,9 +33,8 @@ for ((i=0; i<$ITERATIONS; i++)) ; do
     }
 
     count=`dump_it`
-    expected=$((DATA_SIZE / 1000))
 
-    if test $count -ne $expected; then
+    if test $count -ne $MAX_KEYS; then
         echo "Expected: $expected, got: $count"
         # try dump again to see if it's a transient problem
         echo "Second dump: `dump_it`"

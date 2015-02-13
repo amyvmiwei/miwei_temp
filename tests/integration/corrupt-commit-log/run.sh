@@ -7,7 +7,7 @@ WRITE_TOTAL=${WRITE_TOTAL:-"25000000"}
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker
 
 $HT_HOME/bin/ht shell --test-mode < $SCRIPT_DIR/create-table.hql
 
@@ -32,13 +32,13 @@ echo "a" >> /tmp/0
 let SKIP_OFFSET=OFFSET+1
 dd bs=$SKIP_OFFSET if=/tmp/0.good of=/tmp/0 skip=1 seek=1
 
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 $HT_HOME/bin/ht-start-fsbroker.sh local
 
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 
-$HT_HOME/bin/start-test-servers.sh --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker
 $HT_HOME/bin/ht-check-rangeserver.sh
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
@@ -48,12 +48,12 @@ fi
 #
 # Last block header truncated
 #
-ht-stop-rangeserver.sh
+$HT_HOME/bin/ht-stop-rangeserver.sh
 \rm -f /tmp/0
 dd bs=$OFFSET if=/tmp/0.good of=/tmp/0 count=1
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
-ht-start-rangeserver.sh
+$HT_HOME/bin/ht-start-rangeserver.sh
 $HT_HOME/bin/ht-check-rangeserver.sh
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
@@ -63,28 +63,28 @@ fi
 #
 # Last block payload truncated
 #
-ht-stop-rangeserver.sh
+$HT_HOME/bin/ht-stop-rangeserver.sh
 \rm -f /tmp/0
 let TRUNCATE_OFFSET=OFFSET+50
 dd bs=$TRUNCATE_OFFSET if=/tmp/0.good of=/tmp/0 count=1
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
-ht-start-rangeserver.sh
+$HT_HOME/bin/ht-start-rangeserver.sh
 $HT_HOME/bin/ht-check-rangeserver.sh
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
   exit 1
 fi
 
-WARNING_COUNT=`grep WARNING $HT_HOME/run/STATUS.Hypertable.RangeServer | wc -l`
+WARNING_COUNT=`grep WARNING $HT_HOME/run/STATUS.htRangeServer | wc -l`
 if [ $WARNING_COUNT -ne 3 ]; then
-  cat $HT_HOME/run/STATUS.Hypertable.RangeServer
+  cat $HT_HOME/run/STATUS.htRangeServer
   echo "ERROR: Expected 3 warnings, only got $WARNING_COUNT"
   exit 1
 fi
 
 # Cleanup
-$HT_HOME/bin/clean-database.sh
+$HT_HOME/bin/ht-destroy-database.sh
 \rm -f /tmp/0.good /tmp/0
 
 exit 0

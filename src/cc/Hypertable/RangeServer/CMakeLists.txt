@@ -151,27 +151,27 @@ endif ()
 add_library(HyperRanger ${RangeServer_SRCS})
 target_link_libraries(HyperRanger m HyperFsBroker Hypertable ${RE2_LIBRARIES})
 
-# RangeServer
-add_executable(Hypertable.RangeServer main.cc)
-target_link_libraries(Hypertable.RangeServer HyperRanger ${MALLOC_LIBRARY})
+# htRangeServer
+add_executable(htRangeServer main.cc)
+target_link_libraries(htRangeServer HyperRanger ${MALLOC_LIBRARY})
 
-# csdump
-add_executable(csdump csdump.cc)
-target_link_libraries(csdump HyperRanger)
+# ht_csdump
+add_executable(ht_csdump csdump.cc)
+target_link_libraries(ht_csdump HyperRanger)
 
-# csvalidate
-add_executable(csvalidate csvalidate.cc)
-target_link_libraries(csvalidate HyperRanger)
+# ht_csvalidate
+add_executable(ht_csvalidate csvalidate.cc)
+target_link_libraries(ht_csvalidate HyperRanger)
 
-# count_stored - program to diff two sorted files
-add_executable(count_stored count_stored.cc)
-target_link_libraries(count_stored HyperRanger)
+# ht_count_stored - program to diff two sorted files
+add_executable(ht_count_stored count_stored.cc)
+target_link_libraries(ht_count_stored HyperRanger)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/RangeServer)
-  install(TARGETS HyperRanger Hypertable.RangeServer csdump csvalidate count_stored
+  install(TARGETS HyperRanger htRangeServer ht_csdump ht_csvalidate ht_count_stored
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

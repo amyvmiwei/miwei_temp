@@ -1,6 +1,5 @@
-use "/";
-drop table if exists RandomTest;
-create table RandomTest (
+drop table if exists LoadTest;
+create table LoadTest (
   Field,
   T1,
   T2,

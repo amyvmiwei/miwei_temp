@@ -36,9 +36,9 @@ stop_range_server() {
     rm -f $pidfile
     sleep 1
 
-    if $HT_HOME/bin/serverup --silent rangeserver; then
+    if $HT_HOME/bin/ht serverup --silent rangeserver; then
       echo "Can't stop range server, exiting"
-      ps -ef | grep Hypertable.RangeServer
+      ps -ef | grep htRangeServer
       exit 1
     fi
   fi
@@ -56,7 +56,7 @@ run_test() {
   shift;
 
   if [ -z "$SKIP_START_SERVERS" ]; then
-    $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+    $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
                                        --clear
   fi
 

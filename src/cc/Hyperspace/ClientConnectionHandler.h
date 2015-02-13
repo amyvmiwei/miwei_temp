@@ -60,14 +60,14 @@ namespace Hyperspace {
       int error = m_comm->connect(addr, shared_from_this());
 
       if (error == Error::COMM_ALREADY_CONNECTED) {
-        HT_WARNF("Connection attempt to Hyperspace.Master "
+        HT_WARNF("Connection attempt to htHyperspace "
                  "at %s - %s", InetAddr::format(addr).c_str(),
                  Error::get_text(error));
         error = Error::OK;
       }
 
       if (error != Error::OK) {
-        HT_ERRORF("Problem establishing TCP connection with Hyperspace.Master "
+        HT_ERRORF("Problem establishing TCP connection with htHyperspace "
                   "at %s - %s", InetAddr::format(addr).c_str(),
                   Error::get_text(error));
         m_comm->close_socket(addr);

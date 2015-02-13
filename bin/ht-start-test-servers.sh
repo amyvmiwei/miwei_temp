@@ -19,18 +19,19 @@ INSTALL_DIR=${INSTALL_DIR:-$(cd `dirname $0`/.. && pwd)}
 HT_TEST_FS=${HT_TEST_FS:-local}
 
 usage_exit() {
-  echo "$0 [Options]"
+  echo
+  echo "ht-start-test-servers.sh [Options]"
   echo ""
   echo "Options:"
-  echo "  --clear               Clear any existing data"
-  echo "  -h, --help            Show this help message"
-  echo "  and any valid start-all-servers.sh options"
+  echo "  --clear     Clears (destroys) existing database before starting servers"
+  echo "  -h, --help  Show this help message and any valid ht-start-all-servers.sh"
+  echo "              options"
+  echo
 }
 
 while [ $# -gt 0 ]; do
   case $1 in
     --clear)              clear=1;;
-    --clean)              clear=1;;
     -h|--help)            usage_exit;;
     --val*|--no*|--heap*) opts[${#opts[*]}]=$1;;
     *)                    break;;
@@ -40,7 +41,7 @@ done
 
 if [ "$clear" ]; then
   $INSTALL_DIR/bin/ht-start-fsbroker.sh $HT_TEST_FS
-  $INSTALL_DIR/bin/ht clean-database $@
+  $INSTALL_DIR/bin/ht destroy-database $@
 else
   $INSTALL_DIR/bin/ht stop servers
 fi

@@ -18,18 +18,42 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# This script invokes java with class path for thrift clients
+SCRIPT_DIR=`dirname $0`
 
-# The installation directory
-export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-. $HYPERTABLE_HOME/bin/ht-env.sh
+usage() {
+  echo ""
+  echo "usage: xdeps.sh [OPTIONS] <exename> [ <exename> ... ]"
+  echo ""
+  echo "OPTIONS:"
+  echo "  -h,--help             Display usage information"
+  echo ""
+  echo "This script generates of a list of the unique shared library"
+  echo "dependencies across all of the executables listed on the"
+  echo "command line."
+  echo ""
+}
 
-$HYPERTABLE_HOME/bin/set-hadoop-distro.sh cdh4
-
-javalib=$HYPERTABLE_HOME/lib/java
-CLASSPATH=`echo $javalib/libthrift-*.jar`
-for j in $javalib/hypertable*.jar $javalib/slf4j*.jar $javalib/log4j*.jar
-do CLASSPATH=$CLASSPATH:$j
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
 done
 
-exec java -cp "$CLASSPATH" "$@"
+if [ $# -eq 0 ]; then
+  usage;
+  exit 0
+fi
+
+(
+  for f in $@; do
+    $SCRIPT_DIR/ldd.sh $f
+  done
+) | fgrep -v hypertable | cut -f2 | cut -f1 -d'(' | sort | uniq
+
+exit 0

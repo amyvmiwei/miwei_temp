@@ -22,7 +22,7 @@
 /// @file
 /// Crontab class for periodic events.
 /// The Crontab class is used to track the timing of a periodic event.
-/// This is used i.e. in the Hypertable.Master to schedule LoadBalancer events.
+/// This is used i.e. in the htMaster to schedule LoadBalancer events.
 
 #ifndef HYPERTABLE_CRONTAB_H
 #define HYPERTABLE_CRONTAB_H

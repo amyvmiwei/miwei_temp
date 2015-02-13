@@ -1384,7 +1384,7 @@ Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler,
       handler)) != Error::OK) {
     std::string str;
     if (!m_silent)
-      HT_WARNF("Comm::send_request to Hypertable.Master at %s failed - %s",
+      HT_WARNF("Comm::send_request to htHyperspace at %s failed - %s",
                m_master_addr.format().c_str(), Error::get_text(error));
   }
   return error;

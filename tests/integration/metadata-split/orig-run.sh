@@ -25,12 +25,12 @@ save_failure_state() {
 # clear state
 /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* failed* report.txt
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-rangeserver --no-thriftbroker \
     --Hypertable.Master.Gc.Interval=30000 \
     --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.Range.MetadataSplitSize=10K
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
@@ -48,7 +48,7 @@ sleep 5
 kill -9 `cat $PIDFILE`
 \rm -f $PIDFILE
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
@@ -76,7 +76,7 @@ echo "USE '/'; DUMP TABLE LoadTest INTO FILE 'dump.tsv';" | $HT_HOME/bin/ht shel
 kill -9 `cat $PIDFILE`
 \rm -f $PIDFILE
 
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE >> rangeserver.output &
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$PIDFILE >> rangeserver.output &
 
 echo "USE '/'; DROP TABLE IF EXISTS LoadTest; CREATE TABLE LoadTest ( Field );" | $HT_HOME/bin/ht shell --batch
 

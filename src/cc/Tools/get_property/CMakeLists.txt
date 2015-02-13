@@ -21,10 +21,10 @@ set(get_property_SRCS
 get_property.cc
 )
 
-# get_property - program for outputting the value of a property
-add_executable(get_property ${get_property_SRCS})
-target_link_libraries(get_property HyperCommon HyperComm)
+# ht_get_property - program for outputting the value of a property
+add_executable(ht_get_property ${get_property_SRCS})
+target_link_libraries(ht_get_property HyperCommon HyperComm)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS get_property RUNTIME DESTINATION bin)
+  install(TARGETS ht_get_property RUNTIME DESTINATION bin)
 endif ()

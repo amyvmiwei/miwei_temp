@@ -54,7 +54,7 @@ check_pidfile $pidfile && exit 0
 
 $HYPERTABLE_HOME/bin/ht-check-rangeserver.sh --silent "$@"
 if [ $? != 0 ] ; then
-  exec_server Hypertable.RangeServer --verbose "$@"
+  exec_server htRangeServer --verbose "$@"
   max_retries=3600
   report_interval=30
   retries=20

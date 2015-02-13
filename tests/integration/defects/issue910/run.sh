@@ -12,7 +12,7 @@ echo "======================="
 \rm -rf $HT_HOME/log/*
 
 # start the cluster
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker
 sleep 5
 
 $HT_HOME/bin/ht shell --test-mode < $SCRIPT_DIR/create-table.hql

@@ -56,7 +56,7 @@ namespace Hypertable {
     public:
       CacheNode(uint32_t id, IOHandler *handler, DispatchHandler *dh)
         : id(id), handler(handler), dh(dh) {}
-      struct CacheNode  *prev, *next;  //!< Doubly-linked list pointers
+      CacheNode  *prev, *next;    //!< Doubly-linked list pointers
       boost::xtime       expire;  //!< Absolute expiration time
       uint32_t           id;      //!< Request ID
       IOHandler         *handler; //!< IOHandler associated with this request

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
@@ -12,28 +12,25 @@ let testnum=1
 
 start_masters() {
 
-    kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid` 2>&1 >& /dev/null
-    /bin/rm -rf $HT_HOME/run/log_backup/mml $HT_HOME/run/Hypertable.Master*.pid
+    kill -9 `cat $HT_HOME/run/Master*.pid` 2>&1 >& /dev/null
+    /bin/rm -rf $HT_HOME/run/log_backup/mml $HT_HOME/run/Master*.pid
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15870 $@ \
-        --pidfile $HT_HOME/run/Hypertable.Master.15870.pid \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15870.log&
-    wait_for_server_up "master" "master:15870" "--Hypertable.Master.Port=15870"
+    set_start_vars Master
+    logger=
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15871 \
-        --pidfile $HT_HOME/run/Hypertable.Master.15871.pid \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15871.log&
-    # wait_for_server_up "master" "master:15871" "--Hypertable.Master.Port=15871"
-    # chris (Jan 16 2012) - do not use wait_for_server_up because serverup 
-    # cannot connect to this master. It's caught in main(), trying to 
-    # acquire the hyperspace lock and not yet able to accept socket connections.
+    # Start master on port 15870
+    pidfile=$RUNTIME_ROOT/run/Master.15870.pid
+    logfile="Master.15870.log"
+    exec_server htMaster --verbose --Hypertable.Master.Port=15870 --Hypertable.Connection.Retry.Interval=3000 "$@"
+    wait_for_ok master "Master" --Hypertable.Master.Port=15870
+
+    # Start master on port 15871
+    pidfile=$RUNTIME_ROOT/run/Master.15871.pid
+    logfile="Master.15871.log"
+    exec_server htMaster --verbose --Hypertable.Master.Port=15871 --Hypertable.Connection.Retry.Interval=3000
+    wait_for_ok master "Master" --Hypertable.Master.Port=15871
+
     sleep 5
-    ps `cat $HT_HOME/run/Hypertable.Master.15871.pid`
-    if [ $? != 0 ] ; then
-        echo "Master (15871) not running, exiting...";
-        exit 1
-    fi
-    echo "Master (15871) appears to be running"
 }
 
 run_test() {
@@ -48,12 +45,12 @@ run_test() {
 }
 
 
-$HT_HOME/bin/start-test-servers.sh --no-thriftbroker --clear
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker --clear
 
 echo "use '/'; create namespace test;" | $HT_HOME/bin/ht shell --batch
 
-kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
-\rm -f $HT_HOME/run/Hypertable.Master*.pid
+kill -9 `cat $HT_HOME/run/Master*.pid`
+\rm -f $HT_HOME/run/Master*.pid
 
 start_masters "--induce-failure=connection-handler-before-id-response:exit:1"
 run_test "use '/test'; create namespace foo;"
@@ -91,8 +88,8 @@ run_test "USE '/test'; DROP TABLE win;"
 start_masters "--induce-failure=drop-table-INITIAL:exit:1"
 run_test "USE '/test'; DROP TABLE friends;"
 
-kill -9 `cat $HT_HOME/run/Hypertable.Master.*.pid`
-\rm -f $HT_HOME/run/Hypertable.Master.*.pid
-$HT_HOME/bin/clean-database.sh 
+kill -9 `cat $HT_HOME/run/Master.*.pid`
+\rm -f $HT_HOME/run/Master.*.pid
+$HT_HOME/bin/ht-destroy-database.sh 
 
 exit 0

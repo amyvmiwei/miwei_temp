@@ -260,9 +260,6 @@ namespace {
     HT_DEBUG_OUT << "Checking master on " << host << ":" << port << HT_END;
     InetAddr addr(host, port);
 
-    // issue 816: try to connect via Lib::Master::Client. If it refuses, and if
-    // the host name is localhost then check if there's a
-    // Hypertable.Master.state file and verify the pid
     Lib::Master::Client *master = new Lib::Master::Client(conn_mgr, addr, wait_ms);
 
     if (!master->wait_for_connection(wait_ms)) {

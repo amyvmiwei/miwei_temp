@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -45,6 +45,8 @@ DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
   for (size_t i=0; i<generator->m_row_component_specs.size(); i++) {
     if (generator->m_row_component_specs[i].type == INTEGER)
       row_comp = new RowComponentInteger( generator->m_row_component_specs[i] );
+    else if (generator->m_row_component_specs[i].type == STRING)
+      row_comp = new RowComponentString( generator->m_row_component_specs[i] );
     else if (generator->m_row_component_specs[i].type == TIMESTAMP)
       row_comp = new RowComponentTimestamp( generator->m_row_component_specs[i] );
     else
@@ -83,7 +85,7 @@ void DataGeneratorIterator::next() {
       break;
   } while (compi > 0);
 
-  m_row = "";
+  m_row.clear();
 
   for (size_t i=0; i<m_row_components.size(); i++)
     m_row_components[i]->render(m_row);
@@ -165,6 +167,8 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
         str = m_props->get_str(names[i]);
         if (!strcasecmp(str.c_str(), "integer"))
           m_row_component_specs[index].type = INTEGER;
+        else if (!strcasecmp(str.c_str(), "string"))
+          m_row_component_specs[index].type = STRING;
         else if (!strcasecmp(str.c_str(), "timestamp"))
           m_row_component_specs[index].type = TIMESTAMP;
         else
@@ -193,6 +197,14 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       else if (ends_with(ptr, ".seed")) {
         str = m_props->get_str(names[i]);
         m_row_component_specs[index].seed = atoi(str.c_str());
+      }
+      else if (ends_with(ptr, ".length.min")) {
+        str = m_props->get_str(names[i]);
+        m_row_component_specs[index].length_min = atoi(str.c_str());
+      }
+      else if (ends_with(ptr, ".length.max")) {
+        str = m_props->get_str(names[i]);
+        m_row_component_specs[index].length_max = atoi(str.c_str());
       }
       else
         HT_THROW(Error::SYNTAX_ERROR, format("Invalid key - %s", names[i].c_str()));
@@ -258,6 +270,15 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       else if (!strcmp(tptr, "value.cooked-source")) {
         m_column_specs[columni].cooked_source = str;
       }
+      else if (!strcmp(tptr, "value.fixed")) {
+        if (!strcasecmp(str.c_str(), "false"))
+          m_column_specs[columni].fixed = false;
+        else if (!strcasecmp(str.c_str(), "true"))
+          m_column_specs[columni].fixed = true;
+        else
+          HT_THROW(Error::SYNTAX_ERROR, format("Bad value for 'value.fixed'"));
+      }
+
     }
   }
 

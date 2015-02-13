@@ -8,13 +8,13 @@ echo "Defect #890"
 echo "======================="
 
 # make sure hypertable jar files are copied into lib/java
-$HT_HOME/bin/set-hadoop-distro.sh cdh3
+$HT_HOME/bin/ht-set-hadoop-distro.sh cdh5
 
 cp $SCRIPT_DIR/TestSerializers.java .
 
 echo "compiling"
-JARS=`perl $SCRIPT_DIR/jars.pl $HT_HOME`
-javac -classpath "$JARS:." TestSerializers.java
+JARS=$HT_HOME/lib/java/libthrift.jar:$HT_HOME/lib/java/hypertable.jar:$SCRIPT_DIR:.
+javac -classpath $JARS ./TestSerializers.java
 
 echo "running"
-java -ea -classpath $HT_HOME/lib/java/*:. TestSerializers
+java -ea -classpath $JARS TestSerializers

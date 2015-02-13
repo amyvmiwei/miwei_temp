@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clear \
+$HT_HOME/bin/ht-start-test-servers.sh --clear \
     --Hypertable.Master.Gc.Interval=30000 \
     --Hypertable.RangeServer.Range.SplitSize=33K \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \

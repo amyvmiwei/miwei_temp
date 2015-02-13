@@ -5,8 +5,8 @@ HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"200000"}
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 MASTER_LOG=$HT_HOME/log/Master.log
 RUN_DIR=`pwd`
 
@@ -15,7 +15,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -31,14 +31,14 @@ cp ${HYPERTABLE_HOME}/conf/notification-hook.sh notification-hook.bak
 cp ${SCRIPT_DIR}/run9-notification-hook.sh ${HYPERTABLE_HOME}/conf/notification-hook.sh
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 # start both rangeservers
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.output&
 wait_for_server_connect
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
     --Hypertable.RangeServer.ProxyName=rs2 \
     --induce-failure=replay-fragments-user-0:throw:0 \
     --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.output&
@@ -65,10 +65,10 @@ stop_rs 1
 wait_for_recovery rs1
 
 # stop servers
-killall Hypertable.Master
-killall Hyperspace.Master
+killall htMaster
+killall htHyperspace
 kill_rs 2
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # check if the hook was executed
 cat /tmp/failover-run9-output | sed 's/\/[^ ]*/{{FRAGMENT}}/g' > notifications

@@ -21,7 +21,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 usage() {
   echo ""
-  echo "usage: start-monitoring.sh"
+  echo "usage: ht-start-monitoring.sh"
   echo ""
 }
 

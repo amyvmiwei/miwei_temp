@@ -54,9 +54,9 @@ else ()
   set(THRIFT_MALLOC_LIBRARY ${MALLOC_LIBRARY})
 endif ()
 
-# ThriftBroker
-add_executable(ThriftBroker ${ThriftBroker_SRCS})
-target_link_libraries(ThriftBroker HyperThriftConfig HyperAppHelper ${THRIFT_MALLOC_LIBRARY})
+# htThriftBroker
+add_executable(htThriftBroker ${ThriftBroker_SRCS})
+target_link_libraries(htThriftBroker HyperThriftConfig HyperAppHelper ${THRIFT_MALLOC_LIBRARY})
 
 # Basic regression test
 add_executable(client_test tests/client_test.cc)
@@ -69,7 +69,7 @@ target_link_libraries(serialized_test HyperThrift HyperCommon Hypertable)
 add_test(ThriftClient-Serialized-cpp serialized_test)
 
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
-  install(TARGETS HyperThrift HyperThriftConfig ThriftBroker
+  install(TARGETS HyperThrift HyperThriftConfig htThriftBroker
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

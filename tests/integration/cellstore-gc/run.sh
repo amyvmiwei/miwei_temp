@@ -4,13 +4,12 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
-MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_TOTAL=${WRITE_TOTAL:-"30000000"}
 WRITE_SIZE=${WRITE_SIZE:-"500000"}
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.Master.Gc.Interval=5000 \
    --Hypertable.RangeServer.CommitLog.RollLimit 1M \
    --Hypertable.RangeServer.CommitLog.Compressor none \

@@ -81,7 +81,7 @@ fi
 
 usage() {
   echo ""
-  echo "usage: stop-servers.sh [OPTIONS]"
+  echo "usage: ht-stop-servers.sh [OPTIONS]"
   echo ""
   echo "OPTIONS:"
   echo "  --force                 kill processes to ensure they're stopped"

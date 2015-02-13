@@ -34,7 +34,6 @@ print_help() {
   echo "      valid <Service>: fsbroker, hyperspace, master, rangeserver, "
   echo "                       thriftbroker, servers"
   echo "  clean-databases                     Remove all existing databases"
-  echo "  ldd <executable>                    Print dynamic linking info"
   echo "  shell [ShellOptions]                See shell --help for options"
   echo "  version                             Show version info"
   echo "  help                                Show this help"
@@ -42,13 +41,13 @@ print_help() {
 
 do_start() {
   service=$1; shift
-  exec $HYPERTABLE_HOME/bin/start-$service.sh "$@"
+  exec $HYPERTABLE_HOME/bin/ht-start-$service.sh "$@"
 }
 
 do_stop() {
   service=$1; shift
-  if [ -x $HYPERTABLE_HOME/bin/stop-$service.sh ]; then
-    exec $HYPERTABLE_HOME/bin/stop-$service.sh "$@"
+  if [ -x $HYPERTABLE_HOME/bin/ht-stop-$service.sh ]; then
+    exec $HYPERTABLE_HOME/bin/ht-stop-$service.sh "$@"
   fi
   pidfile=`server_pidfile $service`
   stop_server $service &&
@@ -58,9 +57,9 @@ do_stop() {
 
 do_restart() {
   service=$1
-  if [ -x $HYPERTABLE_HOME/bin/restart-$service.sh ]; then
+  if [ -x $HYPERTABLE_HOME/bin/ht-restart-$service.sh ]; then
     shift;
-    exec $HYPERTABLE_HOME/bin/restart-$service.sh "$@"
+    exec $HYPERTABLE_HOME/bin/ht-restart-$service.sh "$@"
   fi
   do_stop "$@"
   do_start "$@"
@@ -73,6 +72,8 @@ do_cmd() {
     exec $HYPERTABLE_HOME/bin/ht_$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/ht-$cmd.sh ]; then
     exec $HYPERTABLE_HOME/bin/ht-$cmd.sh "$@"
+  elif [ -x $HYPERTABLE_HOME/bin/ht$cmd ]; then
+    exec $HYPERTABLE_HOME/bin/ht$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/$cmd ]; then
     exec $HYPERTABLE_HOME/bin/$cmd "$@"
   elif [ -x $HYPERTABLE_HOME/bin/$cmd.sh ]; then
@@ -92,8 +93,8 @@ print_version() {
                     sed 's/hadoop-[a-z-]*\(.*\)-.*/\1/'`
   fi
   echo "  Hadoop: $HADOOP_VERSION"
-  if [ -x $HYPERTABLE_HOME/bin/cephBroker ]; then
-    echo " " `$HYPERTABLE_HOME/bin/cephBroker --ceph-version`
+  if [ -x $HYPERTABLE_HOME/bin/htFsBrokerCeph ]; then
+    echo " " `$HYPERTABLE_HOME/bin/htFsBrokerCeph --ceph-version`
   fi
   echo "  BerkeleyDB:" @BDB_VERSION@
   echo "  Boost:" @BOOST_VERSION@

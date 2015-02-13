@@ -3,10 +3,9 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 NUM_POLLS=${NUM_POLLS:-"10"}
-MY_IP=`$HT_HOME/bin/system_info --my-ip`
 WRITE_SIZE=${WRITE_SIZE:-"20000000"}
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker \
    --Hypertable.RangeServer.CommitLog.Compressor none \
    --Hypertable.RangeServer.Maintenance.Interval 10 \
    --Hypertable.RangeServer.Range.SplitSize=300K

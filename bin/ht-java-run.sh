@@ -19,7 +19,7 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-# Parse and remove jrun specific arguments
+# Parse and remove ht-java-run.sh specific arguments
 DEBUG_ARGS=
 
 # Setup CLASSPATH
@@ -55,7 +55,7 @@ if [ -z "$DISTRO" ]; then
     echo "No Hadoop distro is configured.  Run the following script to"
     echo "configure:"
     echo ""
-    echo "$HYPERTABLE_HOME/bin/set-hadoop-distro.sh"
+    echo "$HYPERTABLE_HOME/bin/ht-set-hadoop-distro.sh"
     exit 1
 fi
 
@@ -87,7 +87,7 @@ else
 fi
 
 if [ $DISTRO_NEEDS_SETTING -eq 1 ]; then
-    $HYPERTABLE_HOME/bin/set-hadoop-distro.sh $DISTRO
+    $HYPERTABLE_HOME/bin/ht-set-hadoop-distro.sh $DISTRO
 fi
 
 

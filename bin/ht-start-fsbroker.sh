@@ -53,7 +53,7 @@ fs_conflict_error() {
         echo "and all of its associated state, before launching with the"
         echo "'$NEW_FS' broker:"
         echo ""
-        echo "$HYPERTABLE_HOME/bin/stop-servers.sh ; $HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $OLD_FS ; $HYPERTABLE_HOME/bin/clean-database.sh"
+        echo "$HYPERTABLE_HOME/bin/ht-stop-servers.sh ; $HYPERTABLE_HOME/bin/ht-start-fsbroker.sh $OLD_FS ; $HYPERTABLE_HOME/bin/ht-destroy-database.sh"
         echo ""
     else
         echo "To remove the previous database, and all it's associated state,"
@@ -116,15 +116,15 @@ if [ $? != 0 ] ; then
       echo "ERROR: hadoop broker cannot be run with valgrind"
       exit 1
     fi
-    exec_server jrun org.hypertable.FsBroker.hadoop.main --verbose "$@"
+    exec_server ht-java-run.sh org.hypertable.FsBroker.hadoop.main --verbose "$@"
   elif [ "$FS" == "mapr" ] ; then
-    exec_server maprBroker --verbose "$@"
+    exec_server htFsBrokerMapr --verbose "$@"
   elif [ "$FS" == "ceph" ] ; then
-    exec_server cephBroker --verbose "$@"
+    exec_server htFsBrokerCeph --verbose "$@"
   elif [ "$FS" == "local" ] ; then
-    exec_server localBroker --verbose "$@"
+    exec_server htFsBrokerLocal --verbose "$@"
   elif [ "$FS" == "qfs" ] ; then
-    exec_server qfsBroker --verbose "$@"
+    exec_server htFsBrokerQfs --verbose "$@"
   else
     usage
     exit 1

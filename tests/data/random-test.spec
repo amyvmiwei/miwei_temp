@@ -1,0 +1,9 @@
+[rowkey]
+        component.0.order=random
+        component.0.type=string
+        component.0.distribution=uniform
+        component.0.length.min=12
+        component.0.length.max=12
+[Field]
+        value.size=1000
+        value.fixed=true

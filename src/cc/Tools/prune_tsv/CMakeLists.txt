@@ -20,13 +20,13 @@
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/prune_tsv")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/prune_tsv")
 
-# prune_tsv - drops lines with date string older than window
-add_executable(prune_tsv prune_tsv.cc)
-target_link_libraries(prune_tsv HyperCommon HyperComm)
+# ht_prune_tsv - drops lines with date string older than window
+add_executable(ht_prune_tsv prune_tsv.cc)
+target_link_libraries(ht_prune_tsv HyperCommon HyperComm)
 
 add_test(prune-tsv env INSTALL_DIR=${INSTALL_DIR}
                    ${CMAKE_CURRENT_SOURCE_DIR}/tests/run.sh)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS prune_tsv RUNTIME DESTINATION bin)
+  install(TARGETS ht_prune_tsv RUNTIME DESTINATION bin)
 endif ()

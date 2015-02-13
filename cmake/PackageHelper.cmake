@@ -17,7 +17,7 @@
 #
 
 macro(HT_GET_SONAME var fpath)
-  exec_program(${CMAKE_SOURCE_DIR}/bin/soname.sh ARGS ${fpath}
+  exec_program(${CMAKE_SOURCE_DIR}/bin/src-utils/soname.sh ARGS ${fpath}
                OUTPUT_VARIABLE SONAME_OUT RETURN_VALUE SONAME_RETURN)
   set(${var})
 
@@ -83,12 +83,12 @@ if (NOT PACKAGE_THRIFTBROKER)
 endif ()
 
 # Need to include some "system" libraries as well
-exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+exec_program(${CMAKE_SOURCE_DIR}/bin/src-utils/ldd.sh
              ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out
              OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
 
 if (NOT LDD_RETURN STREQUAL "0")
-  exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+  exec_program(${CMAKE_SOURCE_DIR}/bin/src-utils/ldd.sh
                ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/${CMAKE_VERSION}/CompilerIdCXX/a.out
                OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
 endif ()
@@ -112,7 +112,7 @@ if (LDD_RETURN STREQUAL "0")
   HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib} ${cxx_lib} ${cxxabi_lib})
 else ()
   set(LDD_CMD "${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out")
-  set(LDD_CMD "${CMAKE_SOURCE_DIR}/bin/ldd.sh ${LDD_CMD}")
+  set(LDD_CMD "${CMAKE_SOURCE_DIR}/bin/src-utils/ldd.sh ${LDD_CMD}")
   message("ERROR: ${LDD_CMD} returned ${LDD_RETURN}")
   message(FATAL_ERROR "${LDD_OUT}")
 endif ()
@@ -214,16 +214,16 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
 
 # RPM package variables
 
-configure_file (${CMAKE_SOURCE_DIR}/bin/rpm_pre_install.sh.in ${CMAKE_BINARY_DIR}/rpm_pre_install.sh)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/rpm_pre_install.sh DESTINATION bin)
+configure_file (${CMAKE_SOURCE_DIR}/bin/ht-rpm-pre-install.sh.in ${CMAKE_BINARY_DIR}/ht-rpm-pre-install.sh)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/ht-rpm-pre-install.sh DESTINATION bin)
 
-configure_file (${CMAKE_SOURCE_DIR}/bin/rpm_post_install.sh.in ${CMAKE_BINARY_DIR}/rpm_post_install.sh)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/rpm_post_install.sh DESTINATION bin)
+configure_file (${CMAKE_SOURCE_DIR}/bin/ht-rpm-post-install.sh.in ${CMAKE_BINARY_DIR}/ht-rpm-post-install.sh)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/ht-rpm-post-install.sh DESTINATION bin)
 
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
-set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/rpm_pre_install.sh)
-set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/rpm_post_install.sh)
+set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/ht-rpm-pre-install.sh)
+set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/ht-rpm-post-install.sh)
 
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "

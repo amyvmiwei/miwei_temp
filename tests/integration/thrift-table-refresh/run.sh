@@ -3,7 +3,7 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clear
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 echo "[test-1]" > thrift-table-refresh.output
 
@@ -107,7 +107,7 @@ echo "[test-10]" >> thrift-table-refresh.output
 $SCRIPT_DIR/thrift_hql.py "DROP TABLE foo" >>  thrift-table-refresh.output
 
 # select 
-echo "use '/'; SELECT * FROM foo;" | $HT_HOME/bin/ht shell --batch 2>&1 | fgrep -v "Table.cc" >> thrift-table-refresh.output
+echo "use '/'; SELECT * FROM foo;" | $HT_HOME/bin/ht shell --batch >> thrift-table-refresh.output
 
 # query via thrift
 $SCRIPT_DIR/thrift_query.py foo  2>&1 | cut -f1 -d'-' >> thrift-table-refresh.output

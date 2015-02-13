@@ -6,7 +6,7 @@ declare -a Distros=('apache1' 'apache2' 'cdh3' 'cdh4' 'cdh5' 'hdp2');
 
 usage() {
   echo ""
-  echo "usage: set-hadoop-distro.sh <distro>"
+  echo "usage: ht-set-hadoop-distro.sh <distro>"
   echo ""
   echo "This script will copy the jar files for <distro> into the primary jar"
   echo "directory ($HT_HOME/lib/java)"

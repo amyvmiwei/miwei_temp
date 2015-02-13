@@ -4,7 +4,7 @@ HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 HYPERTABLE_HOME=$HT_HOME;
 SCRIPT_DIR=`dirname $0`
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker                \
+$HT_HOME/bin/ht-start-test-servers.sh --clear --no-thriftbroker                \
                 --induce-failure=fail-index-mutator-0:signal:0
 
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql

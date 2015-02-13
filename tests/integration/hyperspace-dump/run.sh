@@ -4,7 +4,7 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 SCRIPT_OUTPUT=hyperspace_dump.out
 
-$HT_HOME/bin/start-test-servers.sh --clear
+$HT_HOME/bin/ht-start-test-servers.sh --clear
 
 echo "[test1]" > ${SCRIPT_OUTPUT}
 $HT_HOME/bin/ht hyperspace --command-file hyperspace_dump_test1.in

@@ -27,9 +27,9 @@ stop_range_server() {
     \rm -f $pidfile
     sleep 1
 
-    if $HT_HOME/bin/serverup --silent rangeserver; then
+    if $HT_HOME/bin/ht serverup --silent rangeserver; then
       echo "Can't stop range server, exiting"
-      ps -ef | grep Hypertable.RangeServer
+      ps -ef | grep htRangeServer
       exit 1
     fi
   fi
@@ -60,12 +60,12 @@ run_test() {
   if [ -z "$SKIP_START_SERVERS" ]; then
       stop_range_server
       \rm -f $HT_HOME/run/RangeServer.pid
-      $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
+      $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
   fi
 
   $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
 
-  set_start_vars Hypertable.RangeServer
+  set_start_vars RangeServer
   wait_for_server_up rangeserver "$pidname"
 
   $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql

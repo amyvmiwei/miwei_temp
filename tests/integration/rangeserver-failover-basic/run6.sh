@@ -5,8 +5,8 @@ HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"200000"}
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 RUN_DIR=`pwd`
 
 . $HT_HOME/bin/ht-env.sh
@@ -14,7 +14,7 @@ RUN_DIR=`pwd`
 . $SCRIPT_DIR/utilities.sh
 
 kill_all_rs
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 
 # get rid of all old logfiles
 \rm -rf $HT_HOME/log/*
@@ -25,20 +25,20 @@ rm -rf fs fs_pre
 gen_test_data
 
 # stop and start servers
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 
 # start both rangeservers
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.output&
 wait_for_server_connect
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.output&
 
 # start a standby-master
-$HT_HOME/bin/ht Hypertable.Master --verbose --pidfile=$HT_HOME/run/Master.pid \
+$HT_HOME/bin/ht Master --verbose --pidfile=$HT_HOME/run/Master.pid \
    --port=37011 --config=${SCRIPT_DIR}/test.cfg 2>&1 > $HT_HOME/log/Master.log&
 
 # create table
@@ -68,19 +68,19 @@ wait_for_recovery rs1
 dump_keys dbdump-a.6
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # bounce servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
-killall Hypertable.Master
+killall htMaster
 
 # start master and rs2
-$HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
-$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+$HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 >> rangeserver.rs2.output&
 
@@ -88,12 +88,12 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
 dump_keys dbdump-b.6
 if [ $? -ne 0 ] ; then
   kill_all_rs
-  $HT_HOME/bin/stop-servers.sh
+  $HT_HOME/bin/ht-stop-servers.sh
   exit 1
 fi
 
 # stop servers
-$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/ht-stop-servers.sh
 kill_rs 2
 
 echo "Test passed"

@@ -9,10 +9,9 @@ echo "======================="
 
 
 # only start servers if they're not yet running
-$HT_HOME/bin/serverup rangeserver
-if [ "$?" -ne "0" ]
-then
-    $HT_HOME/bin/start-test-servers.sh --clear
+$HT_HOME/bin/ht-check-rangeserver.sh
+if [ $? -ne 0 ]; then
+    $HT_HOME/bin/ht-start-test-servers.sh --clear
 fi
 
 cat ${SCRIPT_DIR}/test.hql | $HT_HOME/bin/ht hypertable \

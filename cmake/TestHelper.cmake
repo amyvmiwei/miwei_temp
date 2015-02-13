@@ -17,25 +17,25 @@
 #
 
 set(INSTALLED_SERVERS
-  ${INSTALL_DIR}/bin/Hyperspace.Master
-  ${INSTALL_DIR}/bin/Hypertable.Master
-  ${INSTALL_DIR}/bin/Hypertable.RangeServer
-  ${INSTALL_DIR}/bin/localBroker
+  ${INSTALL_DIR}/bin/htHyperspace
+  ${INSTALL_DIR}/bin/htMaster
+  ${INSTALL_DIR}/bin/htRangeServer
+  ${INSTALL_DIR}/bin/htFsBrokerLocal
 )
 
 if (Thrift_FOUND)
-  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/ThriftBroker)
+  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/htThriftBroker)
 endif ()
 
 if (Ceph_FOUND)
-  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/cephBroker)
+  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/htFsBrokerCeph)
 endif ()
 
 set(TEST_SERVERS_STARTED ${HYPERTABLE_BINARY_DIR}/test-servers-started)
 
 add_custom_command(
   OUTPUT    ${TEST_SERVERS_STARTED}
-  COMMAND   ${INSTALL_DIR}/bin/start-test-servers.sh
+  COMMAND   ${INSTALL_DIR}/bin/ht-start-test-servers.sh
   ARGS      --clear
   DEPENDS   ${INSTALLED_SERVERS}
   COMMENT   "Starting test servers"

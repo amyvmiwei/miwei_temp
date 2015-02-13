@@ -58,7 +58,7 @@ case $confirm in
       exit 1
     fi
 
-    TOPLEVEL="/"`$HYPERTABLE_HOME/bin/get_property $@ Hypertable.Directory`"/"
+    TOPLEVEL="/"`$HYPERTABLE_HOME/bin/ht get_property $@ Hypertable.Directory`"/"
     TOPLEVEL=`echo $TOPLEVEL | tr -s "/" | sed 's/.$//g'`
 
     $HYPERTABLE_HOME/bin/ht fsbroker --timeout 60000 -e "rmdir $TOPLEVEL/servers" "$@"

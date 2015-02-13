@@ -49,7 +49,7 @@ if (Libssl_INCLUDE_DIR AND Libssl_LIBRARY)
   set(Libssl_FOUND TRUE)
   set(Libssl_LIBRARIES ${Libssl_LIBRARY} ${Libcrypto_LIBRARY})
 
-  exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+  exec_program(${CMAKE_SOURCE_DIR}/bin/src-utils/ldd.sh
                ARGS ${Libssl_LIBRARY}
                OUTPUT_VARIABLE LDD_OUT
                RETURN_VALUE LDD_RETURN)

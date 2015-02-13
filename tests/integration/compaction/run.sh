@@ -5,8 +5,8 @@ HYPERTABLE_HOME=${HT_HOME}
 HT_SHELL="$HT_HOME/bin/ht shell"
 SCRIPT_DIR=`dirname $0`
 MAX_KEYS=${MAX_KEYS:-"500000"}
-RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
-RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
+RS1_PIDFILE=$HT_HOME/run/RangeServer.rs1.pid
+RS2_PIDFILE=$HT_HOME/run/RangeServer.rs2.pid
 RS1_PORT=26001
 RS2_PORT=26002
 RUN_DIR=`pwd`
@@ -25,12 +25,12 @@ start_master_and_rangeservers() {
 
     $HT_HOME/bin/ht-start-master.sh $CONFIG
 
-    $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
+    $HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS1_PIDFILE \
         --Hypertable.RangeServer.ProxyName=rs1 \
         --Hypertable.RangeServer.Port=$RS1_PORT $INDUCER1_ARG $CONFIG \
         2>&1 >> rangeserver.rs1.compaction-exception-$TEST.output &
 
-    $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
+    $HT_HOME/bin/ht RangeServer --verbose --pidfile=$RS2_PIDFILE \
         --Hypertable.RangeServer.ProxyName=rs2 \
         --Hypertable.RangeServer.Port=$RS2_PORT $INDUCER2_ARG $CONFIG \
         2>&1 >> rangeserver.rs2.compaction-exception-$TEST.output &
@@ -102,7 +102,7 @@ run_test() {
     fi        
     shift
 
-    $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-master \
+    $HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver --no-master \
         --no-thriftbroker --clear --FsBroker.DisableFileRemoval=true
 
     \rm -f rangeserver.rs1.compaction-exception-$TEST.output
@@ -132,7 +132,7 @@ run_test() {
         echo "Problem loading table 'LoadTest', exiting ..."
         save_failure_state
         kill_rs 1 2
-        $HT_HOME/bin/stop-servers.sh
+        $HT_HOME/bin/ht-stop-servers.sh
         exit 1
     fi
 
@@ -145,7 +145,7 @@ run_test() {
             echo $HQL_COMMAND | $HT_HOME/bin/ht shell --batch --Hypertable.Request.Timeout=20000
             if [ $? -ne 0 ] ; then
                 stop_master_and_rangeservers
-                $HT_HOME/bin/stop-servers.sh
+                $HT_HOME/bin/ht-stop-servers.sh
                 exit 1
             fi
             wait_for_induced_failure
@@ -156,7 +156,7 @@ run_test() {
         done
         if [ $j -eq 0 ]; then
             stop_master_and_rangeservers
-            $HT_HOME/bin/stop-servers.sh
+            $HT_HOME/bin/ht-stop-servers.sh
             echo "Falure was not induced!"
             exit 1
         fi
@@ -167,7 +167,7 @@ run_test() {
         wait_for_induced_failure
         if [ $? -ne 0 ] ; then
             stop_master_and_rangeservers
-            $HT_HOME/bin/stop-servers.sh
+            $HT_HOME/bin/ht-stop-servers.sh
             echo "Falure was not induced!"
             exit 1
         fi
@@ -181,7 +181,7 @@ run_test() {
 
     # stop all servers
     stop_master_and_rangeservers
-    $HT_HOME/bin/stop-servers.sh
+    $HT_HOME/bin/ht-stop-servers.sh
 }
 
 if [ $TEST == 1 ] ; then
