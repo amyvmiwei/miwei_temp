@@ -48,12 +48,12 @@ fi
 #
 # Last block header truncated
 #
-ht-stop-rangeserver.sh
+$HT_HOME/bin/ht-stop-rangeserver.sh
 \rm -f /tmp/0
 dd bs=$OFFSET if=/tmp/0.good of=/tmp/0 count=1
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
-ht-start-rangeserver.sh
+$HT_HOME/bin/ht-start-rangeserver.sh
 $HT_HOME/bin/ht-check-rangeserver.sh
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
@@ -63,13 +63,13 @@ fi
 #
 # Last block payload truncated
 #
-ht-stop-rangeserver.sh
+$HT_HOME/bin/ht-stop-rangeserver.sh
 \rm -f /tmp/0
 let TRUNCATE_OFFSET=OFFSET+50
 dd bs=$TRUNCATE_OFFSET if=/tmp/0.good of=/tmp/0 count=1
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
-ht-start-rangeserver.sh
+$HT_HOME/bin/ht-start-rangeserver.sh
 $HT_HOME/bin/ht-check-rangeserver.sh
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
