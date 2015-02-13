@@ -55,7 +55,7 @@ namespace Parameters {
     /// <code>fname</code> and #m_accurate to <code>accurate</code>
     /// @param fname File name
     /// @param accurate Flag indicating that accurate length is desired
-    Length(const String &fname, bool accurate)
+    Length(const std::string &fname, bool accurate)
       : m_fname(fname), m_accurate(accurate) {}
 
     /// Gets file name
@@ -78,7 +78,7 @@ namespace Parameters {
 			 size_t *remainp) override;
 
     /// File name
-    String m_fname;
+    std::string m_fname;
 
     /// Accurate flag
     bool m_accurate;

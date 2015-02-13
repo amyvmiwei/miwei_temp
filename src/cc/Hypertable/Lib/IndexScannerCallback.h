@@ -64,7 +64,7 @@ namespace {
 
 namespace Hypertable {
 
-static String last;
+static std::string last;
   static const char *tmp_schema_outer=
         "<Schema>"
           "<AccessGroup name=\"default\">"
@@ -191,7 +191,7 @@ static String last;
      */
     virtual void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
       bool is_eos = scancells->get_eos();
-      String table_name = scanner->get_table_name();
+      std::string table_name = scanner->get_table_name();
 
       ScopedLock lock(m_mutex);
 
@@ -253,7 +253,7 @@ static String last;
      * @param eos end of scan
      */
     virtual void scan_error(TableScannerAsync *scanner, int error, 
-                            const String &error_msg, bool eos) {
+                            const std::string &error_msg, bool eos) {
       m_original_cb->scan_error(scanner, error, error_msg, eos);
       if (eos)
         m_original_cb->decrement_outstanding();
@@ -476,7 +476,7 @@ static String last;
         ssb.set_row_regexp(primary_spec.row_regexp);
 
         // Fetch primary columns and restrict by time interval
-        foreach_ht (const String &s, primary_spec.columns)
+        foreach_ht (const std::string &s, primary_spec.columns)
           ssb.add_column(s.c_str());
         ssb.set_time_interval(primary_spec.time_interval.first, 
                               primary_spec.time_interval.second);
@@ -539,7 +539,7 @@ static String last;
       HT_ASSERT(m_tmp_table == NULL);
       HT_ASSERT(m_mutator == NULL);
 
-      String inner;
+      std::string inner;
       for (auto cf : m_primary_table->schema()->get_column_families()) {
         if (m_qualifier_scan && !cf->get_qualifier_index())
           continue;
@@ -550,7 +550,7 @@ static String last;
 
       Client *client = m_primary_table->get_namespace()->get_client();
       NamespacePtr nstmp = client->open_namespace("/tmp");
-      String guid = HyperAppHelper::generate_guid();
+      std::string guid = HyperAppHelper::generate_guid();
       nstmp->create_table(guid, format(tmp_schema_outer, inner.c_str()));
       m_tmp_table = nstmp->open_table(guid);
 
@@ -587,7 +587,7 @@ static String last;
         last = (const char *)cell.row_key;
 
         ScanSpecBuilder *ssb = new ScanSpecBuilder;
-        foreach_ht (const String &s, primary_spec.columns)
+        foreach_ht (const std::string &s, primary_spec.columns)
           ssb->add_column(s.c_str());
         ssb->set_max_versions(primary_spec.max_versions);
         ssb->set_return_deletes(primary_spec.return_deletes);
@@ -619,7 +619,7 @@ static String last;
       //
       // Create a new ScanSpec
       ScanSpecBuilder *ssb = new ScanSpecBuilder;
-      foreach_ht (const String &s, primary_spec.columns)
+      foreach_ht (const std::string &s, primary_spec.columns)
         ssb->add_column(s.c_str());
       ssb->set_max_versions(primary_spec.max_versions);
       ssb->set_return_deletes(primary_spec.return_deletes);
@@ -927,10 +927,10 @@ static String last;
     int m_readahead_count;
 
     // temporary storage to persist pointer data before it goes out of scope
-    String m_last_rowkey_verify;
+    std::string m_last_rowkey_verify;
     
     // temporary storage to persist pointer data before it goes out of scope
-    String m_last_rowkey_tracking;
+    std::string m_last_rowkey_tracking;
 
     // Carry-over matching bits for last key
     uint32_t m_cur_matching;

@@ -60,7 +60,7 @@ namespace Hypertable {
         if (!m_scanner->is_complete()) {
           ScanCellsPtr cells;
           int error=Error::OK;
-          String error_msg;
+          std::string error_msg;
           while (!m_scanner->is_complete())
             m_queue->next_result(cells, &error, error_msg);
         }
@@ -105,7 +105,7 @@ namespace Hypertable {
      * @param error
      * @param error_msg
      */
-    void scan_error(int error, const String &error_msg);
+    void scan_error(int error, const std::string &error_msg);
 
     TableCallback m_callback;
     TableScannerQueuePtr m_queue;
@@ -115,7 +115,7 @@ namespace Hypertable {
     size_t m_cur_cells_index;
     size_t m_cur_cells_size;
     int m_error;
-    String m_error_msg;
+    std::string m_error_msg;
     bool m_eos;
     Cell m_ungot;
   };

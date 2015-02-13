@@ -31,6 +31,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <string>
 
 namespace Hypertable {
 
@@ -120,7 +121,7 @@ namespace Hypertable {
       return *this;
     }
 
-    void set_id(const String &new_name) {
+    void set_id(const std::string &new_name) {
       m_name = new_name;
       id = m_name.c_str();
     }
@@ -130,7 +131,7 @@ namespace Hypertable {
       id = m_name.c_str();
     }
 
-    String get_id() const {
+    std::string get_id() const {
       return m_name;
     }
 
@@ -145,7 +146,7 @@ namespace Hypertable {
     void decode_internal(uint8_t version, const uint8_t **bufp,
 			 size_t *remainp) override;
 
-    String m_name;
+    std::string m_name;
   };
 
   std::ostream &operator<<(std::ostream &os, const TableIdentifier &tid);

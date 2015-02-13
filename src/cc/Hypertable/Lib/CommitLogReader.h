@@ -52,9 +52,9 @@ namespace Hypertable {
   class CommitLogReader : public CommitLogBase {
 
   public:
-    CommitLogReader(FilesystemPtr &fs, const String &log_dir);
+    CommitLogReader(FilesystemPtr &fs, const std::string &log_dir);
 
-    CommitLogReader(FilesystemPtr &fs, const String &log_dir,
+    CommitLogReader(FilesystemPtr &fs, const std::string &log_dir,
                     const std::vector<int32_t> &fragment_filter);
 
     virtual ~CommitLogReader() { }
@@ -80,7 +80,7 @@ namespace Hypertable {
 
     const std::map<uint32_t, uint32_t> &get_error_map() { return m_error_map; }
 
-    String last_fragment_fname() { return m_last_fragment_fname; }
+    std::string last_fragment_fname() { return m_last_fragment_fname; }
 
     int32_t last_fragment_id() { return m_last_fragment_id; }
 
@@ -103,7 +103,7 @@ namespace Hypertable {
     std::vector<int32_t>  m_init_fragments;
     std::map<uint32_t, uint32_t> m_error_map;
     StringSet              m_linked_logs;
-    String                 m_last_fragment_fname;
+    std::string                 m_last_fragment_fname;
     int32_t                m_last_fragment_id {};
     bool                   m_verbose {};
   };

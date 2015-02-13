@@ -46,14 +46,14 @@ namespace Hypertable {
 
     enum Flag { IS_NAMESPACE=0x0001, CREATE_INTERMEDIATE=0x0002 };
 
-    NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir);
+    NameIdMapper(Hyperspace::SessionPtr &hyperspace, const std::string &toplevel_dir);
     /**
      * @param name name of the table/namespace
      * @param id the returned id of the table/namespace specified by name
      * @param is_namespacep Set to <i>true</i> if name corresponds to a namespace
      * @return true if mapping exists
      */
-    bool name_to_id(const String &name, String &id, bool *is_namespacep=0);
+    bool name_to_id(const std::string &name, std::string &id, bool *is_namespacep=0);
 
     /**
      * @param id the id of the table/namespace
@@ -61,7 +61,7 @@ namespace Hypertable {
      * @param is_namespacep Set to <i>true</i> if name corresponds to a namespace
      * @return true if mapping exists
      */
-    bool id_to_name(const String &id, String &name, bool *is_namespacep=0);
+    bool id_to_name(const std::string &id, std::string &name, bool *is_namespacep=0);
 
     /**
      * @param id the id of the namespace
@@ -69,7 +69,7 @@ namespace Hypertable {
      * @param listing returned names of the table/namespaces contained within the namespace
      *        specified by id
      */
-    void id_to_sublisting(const String &id, bool include_sub_entries, std::vector<NamespaceListing> &listing);
+    void id_to_sublisting(const std::string &id, bool include_sub_entries, std::vector<NamespaceListing> &listing);
 
     /** Adds a new mapping.
      * @param name name to map
@@ -77,19 +77,19 @@ namespace Hypertable {
      * @param flags control falgs (IS_NAMESPACE and/or CREATE_INTERMEDIATE)
      * @param ignore_exists Don't throw an exception if mapping already exists
      */
-    void add_mapping(const String &name, String &id, int flags=0, bool ignore_exists=false);
+    void add_mapping(const std::string &name, std::string &id, int flags=0, bool ignore_exists=false);
 
     /** Drops a mapping.
      * @param name name to map
      */
-    void drop_mapping(const String &name);
+    void drop_mapping(const std::string &name);
 
     /**
      * @param name name to check for mapping
      * @param is_namespace if mapping exists set to true if is namespace
      * @return true if mapping exists, false otherwise
      */
-    bool exists_mapping(const String &name, bool *is_namespace);
+    bool exists_mapping(const std::string &name, bool *is_namespace);
 
     /**
      * Rename one entity, it doesn't recursively rename all entities under the path
@@ -98,20 +98,20 @@ namespace Hypertable {
      * @param old_name old name
      * @param new_name new name
      */
-    void rename(const String &old_name, const String &new_name);
+    void rename(const std::string &old_name, const std::string &new_name);
 
-    void add_entry(const String &names_parent, const String &names_entry,
+    void add_entry(const std::string &names_parent, const std::string &names_entry,
                    std::vector<uint64_t> &ids, bool is_namespace);
 
   protected:
-    bool do_mapping(const String &input, bool id_in, String &output, bool *is_namespacep);
+    bool do_mapping(const std::string &input, bool id_in, std::string &output, bool *is_namespacep);
     static void get_namespace_listing(const std::vector<Hyperspace::DirEntryAttr> &dir_listing, std::vector<NamespaceListing> &listing);
 
     Mutex m_mutex;
     Hyperspace::SessionPtr m_hyperspace;
-    String m_toplevel_dir;
-    String m_names_dir;
-    String m_ids_dir;
+    std::string m_toplevel_dir;
+    std::string m_names_dir;
+    std::string m_ids_dir;
     size_t m_prefix_components;
   };
 

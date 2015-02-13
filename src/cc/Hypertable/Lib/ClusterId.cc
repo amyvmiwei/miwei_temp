@@ -48,7 +48,7 @@ uint64_t ClusterId::id;
 ClusterId::ClusterId(Hyperspace::SessionPtr &hyperspace,
                      bool generate_if_not_found) {
 
-  String toplevel_dir = properties->get_str("Hypertable.Directory");
+  string toplevel_dir = properties->get_str("Hypertable.Directory");
   uint64_t handle = 0;
   
   HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, hyperspace, &handle);
@@ -64,7 +64,7 @@ ClusterId::ClusterId(Hyperspace::SessionPtr &hyperspace,
       // get the "cluster_id" attribute
       DynamicBuffer buf;
       hyperspace->attr_get(handle, "cluster_id", buf);
-      String cluster_id((const char *)buf.base, buf.fill());
+      string cluster_id((const char *)buf.base, buf.fill());
       id = (uint64_t)strtoull(cluster_id.c_str(), 0, 0);
       return;
     }
@@ -85,7 +85,7 @@ ClusterId::ClusterId(Hyperspace::SessionPtr &hyperspace,
   // Generate new cluster ID
   uint16_t port = properties->get_i16("Hypertable.Master.Port");
   InetAddr addr(System::net_info().primary_addr, port);
-  String tmp = addr.format() + Hypertable::format("%u", (unsigned)time(0));
+  string tmp = addr.format() + Hypertable::format("%u", (unsigned)time(0));
   id = (uint64_t)md5_hash(tmp.c_str());
   tmp = Hypertable::format("%llu", (Llu)id);
 

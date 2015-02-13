@@ -99,7 +99,7 @@ namespace Hypertable {
      * @param error_msg error message
      * @param is_create true if this is event is for a create_scanner request
      */
-    void handle_error(int scanner_id, int error, const String &error_msg, bool is_create);
+    void handle_error(int scanner_id, int error, const std::string &error_msg, bool is_create);
 
     /**
      * Deal with timeouts
@@ -108,7 +108,7 @@ namespace Hypertable {
      * @param error_msg error message
      * @param is_create true if this is event is for a create_scanner request
      */
-    void handle_timeout(int scanner_id, const String &error_msg, bool is_create);
+    void handle_timeout(int scanner_id, const std::string &error_msg, bool is_create);
 
     /**
      * Returns number of bytes scanned
@@ -120,7 +120,7 @@ namespace Hypertable {
     /**
      * Returns the name of the table as it was when the scanner was created
      */
-    String get_table_name() const;
+    std::string get_table_name() const;
 
     /**
      * Returns a pointer to the table
@@ -166,7 +166,7 @@ namespace Hypertable {
     boost::condition    m_cond;
     int                 m_outstanding;
     int                 m_error;
-    String              m_error_msg;
+    std::string              m_error_msg;
     Table              *m_table;
     bool                m_cancelled;
     bool                m_use_index;

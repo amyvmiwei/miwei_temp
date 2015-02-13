@@ -33,9 +33,11 @@
 #include <Common/String.h>
 #include <Common/StringExt.h>
 
+#include <string>
 #include <unordered_map>
 
 using namespace Hypertable;
+using namespace std;
 
 namespace {
 
@@ -93,7 +95,7 @@ const char *SystemVariable::code_to_string(int var_code) {
   return text;
 }
 
-int SystemVariable::string_to_code(const String &var_string) {
+int SystemVariable::string_to_code(const string &var_string) {
   if (string_to_code_map.find(var_string) == string_to_code_map.end())
     return -1;
   return string_to_code_map[var_string];
@@ -106,7 +108,7 @@ bool SystemVariable::default_value(int var_code) {
 
 String SystemVariable::specs_to_string(const std::vector<Spec> &specs) {
   bool first = true;
-  String str;
+  string str;
   for (auto &spec : specs) {
     if (!first)
       str += ",";

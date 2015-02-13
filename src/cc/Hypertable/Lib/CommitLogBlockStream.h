@@ -64,15 +64,15 @@ namespace Hypertable {
   public:
 
     CommitLogBlockStream(FilesystemPtr &fs);
-    CommitLogBlockStream(FilesystemPtr &fs, const String &log_dir,
-                         const String &fragment);
+    CommitLogBlockStream(FilesystemPtr &fs, const std::string &log_dir,
+                         const std::string &fragment);
     virtual ~CommitLogBlockStream();
 
-    void load(const String &log_dir, const String &fragment);
+    void load(const std::string &log_dir, const std::string &fragment);
     void close();
     bool next(CommitLogBlockInfo *, BlockHeaderCommitLog *);
 
-    String &get_fname() { return m_fname; }
+    std::string &get_fname() { return m_fname; }
 
     static bool ms_assert_on_error;
 
@@ -131,13 +131,13 @@ namespace Hypertable {
     FilesystemPtr m_fs;
 
     /// Directory containing commit log fragment file
-    String m_log_dir;
+    std::string m_log_dir;
 
     /// Fragment file name within commit log directory
-    String m_fragment;
+    std::string m_fragment;
 
     /// Full pathname of commit log fragment file
-    String m_fname;
+    std::string m_fname;
 
     /// Version of commit log fragment file format
     uint32_t m_version;

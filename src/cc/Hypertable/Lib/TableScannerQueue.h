@@ -58,7 +58,7 @@ namespace Hypertable {
 
     virtual void add_unlocked(ApplicationHandler *app_handler) { }
 
-    void next_result(ScanCellsPtr &cells, int *error, String &error_msg) {
+    void next_result(ScanCellsPtr &cells, int *error, std::string &error_msg) {
       ApplicationHandler *app_handler;
       cells = 0;
       *error = Error::OK;
@@ -102,7 +102,7 @@ namespace Hypertable {
       m_cond.notify_one();
     }
 
-    void set_error(int error, const String &error_msg) {
+    void set_error(int error, const std::string &error_msg) {
       ScopedLock lock(m_mutex);
       m_error = error;
       m_error_msg = error_msg;
@@ -118,7 +118,7 @@ namespace Hypertable {
     WorkQueue              m_work_queue;
     CellsQueue             m_cells_queue;
     int                    m_error;
-    String                 m_error_msg;
+    std::string                 m_error_msg;
     bool                   m_error_shown;
   };
 

@@ -47,7 +47,7 @@ using namespace Hyperspace;
 
 Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
              Hyperspace::SessionPtr &hyperspace, NameIdMapperPtr &namemap,
-             const String &name, int32_t flags)
+             const string &name, int32_t flags)
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_namemap(namemap),
     m_name(name), m_flags(flags), m_stale(true), m_namespace(0) {
@@ -64,7 +64,7 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
              ConnectionManagerPtr &conn_manager, 
              Hyperspace::SessionPtr &hyperspace, ApplicationQueueInterfacePtr &app_queue,
-             NameIdMapperPtr &namemap, const String &name, 
+             NameIdMapperPtr &namemap, const string &name, 
              int32_t flags, uint32_t timeout_ms)
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace),
@@ -76,10 +76,10 @@ Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
 
 
 void Table::initialize() {
-  String tablefile;
+  string tablefile;
   DynamicBuffer value_buf(0);
-  String errmsg;
-  String table_id;
+  string errmsg;
+  string table_id;
   bool is_index = false;
 
   {

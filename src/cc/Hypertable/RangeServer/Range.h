@@ -50,7 +50,6 @@
 #include <Hypertable/Lib/RangeState.h>
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/TableIdentifier.h>
-#include <Hypertable/Lib/Timestamp.h>
 
 #include <Common/Barrier.h>
 #include <Common/ReferenceCount.h>

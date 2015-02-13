@@ -205,25 +205,6 @@ bool InetAddr::initialize(sockaddr_in *addr, uint32_t haddr, uint16_t port) {
   return true;
 }
 
-size_t InetAddr::encoded_length() const {
-  return 8;
-}
-
-void InetAddr::encode(uint8_t **bufp) const {
-  *(*bufp)++ = sizeof(sockaddr_in);
-  *(*bufp)++ = sin_family;
-  Serialization::encode_i16(bufp, sin_port);
-  Serialization::encode_i32(bufp, sin_addr.s_addr);
-}
-
-void InetAddr::decode(const uint8_t **bufp, size_t *remainp) {
-  Serialization::decode_i8(bufp, remainp);
-  sin_family = Serialization::decode_i8(bufp, remainp);
-  sin_port = Serialization::decode_i16(bufp, remainp);
-  sin_addr.s_addr = Serialization::decode_i32(bufp, remainp);
-}
-
-
 String InetAddr::format(const sockaddr_in &addr, int sep) {
   // inet_ntoa is not thread safe on many platforms and deprecated
   const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
@@ -242,6 +223,99 @@ String InetAddr::hex(const sockaddr_in &addr, int sep) {
   return Hypertable::format("%x%c%x", ntohl(addr.sin_addr.s_addr), sep,
                             ntohs(addr.sin_port));
 }
+
+
+size_t InetAddr::encoded_length() const {
+  size_t length = encoded_length_internal();
+  return 1 + Serialization::encoded_length_vi32(length) + length;
+}
+
+/**
+ * @details
+ * Encoding is as follows:
+ * <table>
+ * <tr>
+ * <th>Encoding</th>
+ * <th>Description</th>
+ * </tr>
+ * <tr>
+ * <td>1 byte</td>
+ * <td>Encoding version as returned by encoding_version()</td>
+ * </tr>
+ * <tr>
+ * <td>vint</td>
+ * <td>Length of encoded object as returned by encoded_length_internal()</td>
+ * </tr>
+ * <tr>
+ * <td>variable</td>
+ * <td>Object encoded with encode_internal()</td>
+ * </tr>
+ * </table>
+ */
+void InetAddr::encode(uint8_t **bufp) const {
+  Serialization::encode_i8(bufp, encoding_version());
+  Serialization::encode_vi32(bufp, encoded_length_internal());
+  encode_internal(bufp);
+}
+
+void InetAddr::decode(const uint8_t **bufp, size_t *remainp) {
+  uint8_t version = Serialization::decode_i8(bufp, remainp);
+  if (version > encoding_version())
+    HT_THROWF(Error::PROTOCOL_ERROR, "Unsupported InetAddr version %d", (int)version);
+  size_t encoding_length = Serialization::decode_vi32(bufp, remainp);
+  const uint8_t *end = *bufp + encoding_length;
+  size_t tmp_remain = encoding_length;
+  decode_internal(version, bufp, &tmp_remain);
+  HT_ASSERT(*bufp <= end);
+  *remainp -= encoding_length;
+  // If encoding is longer than we expect, that means we're decoding a newer
+  // version, so skip the newer portion that we don't know about
+  if (*bufp < end)
+    *bufp = end;
+}
+
+void InetAddr::legacy_decode(const uint8_t **bufp, size_t *remainp) {
+  Serialization::decode_i8(bufp, remainp);
+  sin_family = Serialization::decode_i8(bufp, remainp);
+  sin_port = Serialization::decode_i16(bufp, remainp);
+  sin_addr.s_addr = Serialization::decode_i32(bufp, remainp);
+}
+
+uint8_t InetAddr::encoding_version() const {
+  return 1;
+}
+
+size_t InetAddr::encoded_length_internal() const {
+  return 8;
+}
+
+/// @details
+/// Encoding is as follows:
+/// <table>
+/// <tr>
+/// <th>Encoding</th>
+/// <th>Description</th>
+/// </tr>
+/// <tr><td>i8</td><td>sizeof(sockaddr_in)</td></tr>
+/// <tr><td>i8</td><td>Address family (sin_family)</td></tr>
+/// <tr><td>i16</td><td>Port</td></tr>
+/// <tr><td>i16</td><td>Address (sin_addr.s_addr)</td></tr>
+/// </table>
+void InetAddr::encode_internal(uint8_t **bufp) const {
+  *(*bufp)++ = sizeof(sockaddr_in);
+  *(*bufp)++ = sin_family;
+  Serialization::encode_i16(bufp, sin_port);
+  Serialization::encode_i32(bufp, sin_addr.s_addr);
+}
+
+void InetAddr::decode_internal(uint8_t version, const uint8_t **bufp,
+                                 size_t *remainp) {
+  Serialization::decode_i8(bufp, remainp);
+  sin_family = Serialization::decode_i8(bufp, remainp);
+  sin_port = Serialization::decode_i16(bufp, remainp);
+  sin_addr.s_addr = Serialization::decode_i32(bufp, remainp);
+}
+
 
 std::ostream &operator<<(std::ostream &out, const Endpoint &e) {
   out << e.host <<':'<< e.port;

@@ -25,9 +25,13 @@
 /// set of table parts (i.e. PRIMARY, VALUE_INDEX, QUALIFIER_INDEX)
 
 #include <Common/Compat.h>
+
 #include "TableParts.h"
 
+#include <Common/Serialization.h>
+
 using namespace Hypertable;
+using namespace std;
 
 uint8_t TableParts::encoding_version() const {
   return 1;

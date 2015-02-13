@@ -109,12 +109,12 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
 
   cell_predicates.resize(256);
 
-  String family;
+  string family;
   DynamicBuffer regex_prefix_buf;
   const char *prefix;
   size_t prefix_len;
   ColumnFamilySpec *cf_spec = 0;
-  String index_row_prefix;
+  string index_row_prefix;
   DynamicBuffer index_row_buf;
   LoadDataEscape lde;
   bool qualifier_match_only = false;
@@ -255,7 +255,7 @@ void TableScannerAsync::transform_primary_scan_spec(ScanSpecBuilder &primary_spe
         primary_spec.add_column(column);
     }
     else {
-      String family;
+      string family;
       const char *colon;
       StringSet selected_columns;
       // If columns selected that are not referenced in predicate, throw error
@@ -285,7 +285,7 @@ void TableScannerAsync::transform_primary_scan_spec(ScanSpecBuilder &primary_spe
 void TableScannerAsync::add_index_row(ScanSpecBuilder &ssb, const char *row)
 {
   // this code is identical to the RELOP_SW handler in HqlParser.h
-  String tmp;
+  string tmp;
   RowInterval ri;
   ri.start = row;
   ri.start_inclusive = true;
@@ -431,7 +431,7 @@ bool TableScannerAsync::is_cancelled() {
   return m_cancelled;
 }
 
-void TableScannerAsync::handle_error(int scanner_id, int error, const String &error_msg,
+void TableScannerAsync::handle_error(int scanner_id, int error, const string &error_msg,
                                      bool is_create) {
   bool cancelled = is_cancelled();
   ScopedLock lock(m_mutex);
@@ -503,7 +503,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
   }
 }
 
-void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg, bool is_create) {
+void TableScannerAsync::handle_timeout(int scanner_id, const string &error_msg, bool is_create) {
   bool cancelled = is_cancelled();
   ScopedLock lock(m_mutex);
   bool next;

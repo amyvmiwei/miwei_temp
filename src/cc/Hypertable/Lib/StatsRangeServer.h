@@ -49,11 +49,11 @@ namespace Hypertable {
 
     StatsRangeServer(const StatsRangeServer &other);
 
-    void set_location( const String &loc ) {
+    void set_location( const std::string &loc ) {
       if (loc != location)
         location = loc;
     }
-    void set_version( const String &ver ) {
+    void set_version( const std::string &ver ) {
       if (ver != version)
         version = ver;
     }
@@ -62,8 +62,8 @@ namespace Hypertable {
       return !(*this == other);
     }
 
-    String location;
-    String version;
+    std::string location;
+    std::string version;
     int64_t timestamp {};
     int32_t range_count {};
     int32_t scanner_count {};

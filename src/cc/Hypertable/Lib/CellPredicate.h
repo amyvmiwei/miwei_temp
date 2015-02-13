@@ -69,14 +69,14 @@ namespace Hypertable {
       }
       bool regex_qualifier_match(const char *str) {
         if (!qualifier_regex) {
-          String pattern(qualifier, (size_t)qualifier_len);
+          std::string pattern(qualifier, (size_t)qualifier_len);
           qualifier_regex.reset(new RE2(pattern));
         }
         return RE2::PartialMatch(str, *qualifier_regex);
       }
       bool regex_value_match(const char *str) {
         if (!value_regex) {
-          String pattern(value, (size_t)value_len);
+          std::string pattern(value, (size_t)value_len);
           value_regex.reset(new RE2(pattern));
         }
         return RE2::PartialMatch(str, *value_regex);

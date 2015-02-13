@@ -202,7 +202,7 @@ void RangeServerConnection::decode_old(const uint8_t **bufp, size_t *remainp) {
   m_state = Serialization::decode_i32(bufp, remainp);
   // was removal_time but not used ...
   Serialization::decode_i32(bufp, remainp);
-  m_public_addr.decode(bufp, remainp);
+  m_public_addr.legacy_decode(bufp, remainp);
   m_location = Serialization::decode_vstr(bufp, remainp);
   m_hostname = Serialization::decode_vstr(bufp, remainp);
   m_comm_addr.set_proxy(m_location);

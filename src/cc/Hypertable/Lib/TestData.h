@@ -34,18 +34,18 @@ namespace Hypertable {
 
   class TestData {
   public:
-    bool load(const String &datadir) {
+    bool load(const std::string &datadir) {
       struct stat statbuf;
       char *contentdata, *worddata, *urldata;
       char *base, *ptr, *last, *str;
       off_t len;
-      String shakespearefile = datadir + "/shakespeare.txt";
-      String shakespearegz = datadir + "/shakespeare.txt.gz";
-      String wordsfile = datadir + "/words";
-      String wordsgz = datadir + "/words.gz";
-      String urlsfile = datadir + "/urls.txt";
-      String urlsgz = datadir + "/urls.txt.gz";
-      String syscmd;
+      std::string shakespearefile = datadir + "/shakespeare.txt";
+      std::string shakespearegz = datadir + "/shakespeare.txt.gz";
+      std::string wordsfile = datadir + "/words";
+      std::string wordsgz = datadir + "/words.gz";
+      std::string urlsfile = datadir + "/urls.txt";
+      std::string urlsgz = datadir + "/urls.txt.gz";
+      std::string syscmd;
 
       /**
        * Load content vector

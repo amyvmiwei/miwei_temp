@@ -57,7 +57,7 @@ namespace Parameters {
     /// @param op_id Recovery operation ID
     /// @param location Proxy name of %RangeServer whose log is being replayed
     /// @param plan_generation Recovery plan generation
-    ReplayStatus(int64_t op_id, const String &location, int32_t plan_generation)
+    ReplayStatus(int64_t op_id, const std::string &location, int32_t plan_generation)
       : m_op_id(op_id), m_location(location), m_plan_generation(plan_generation)
     { }
 

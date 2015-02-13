@@ -67,8 +67,8 @@ namespace Hypertable {
 
     TableIdentifierManaged table;
     RangeSpecManaged range;
-    String source_location;
-    String dest_location;
+    std::string source_location;
+    std::string dest_location;
     int32_t error {};
     bool complete {};
 

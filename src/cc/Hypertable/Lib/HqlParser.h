@@ -163,10 +163,10 @@ namespace Hypertable {
         value_is_call=false;
       }
       ::int64_t timestamp;
-      String row_key;
+      std::string row_key;
       bool row_key_is_call;
-      String column_key;
-      String value;
+      std::string column_key;
+      std::string value;
       bool value_is_call;
     };
 
@@ -183,22 +183,22 @@ namespace Hypertable {
       }
       bool empty() { return !(start_set || end_set); }
 
-      void set_start(const String &s, bool inclusive) {
+      void set_start(const std::string &s, bool inclusive) {
         HQL_DEBUG(s <<" inclusive="<< inclusive);
         start = s;
         start_inclusive = inclusive;
         start_set = true;
       }
-      void set_end(const String &s, bool inclusive) {
+      void set_end(const std::string &s, bool inclusive) {
         HQL_DEBUG(s <<" inclusive="<< inclusive);
         end = s;
         end_inclusive = inclusive;
         end_set = true;
       }
-      String start;
+      std::string start;
       bool start_inclusive;
       bool start_set;
-      String end;
+      std::string end;
       bool end_inclusive;
       bool end_set;
     };
@@ -217,26 +217,26 @@ namespace Hypertable {
 
       bool empty() { return !(start_set || end_set); }
 
-      void set_start(const String &row, const String &column, bool inclusive) {
+      void set_start(const std::string &row, const std::string &column, bool inclusive) {
         HQL_DEBUG(row <<','<< column <<" inclusive="<< inclusive);
         start_row = row;
         start_column = column;
         start_inclusive = inclusive;
         start_set = true;
       }
-      void set_end(const String &row, const String &column, bool inclusive) {
+      void set_end(const std::string &row, const std::string &column, bool inclusive) {
         HQL_DEBUG(row <<','<< column <<" inclusive="<< inclusive);
         end_row = row;
         end_column = column;
         end_inclusive = inclusive;
         end_set = true;
       }
-      String start_row;
-      String start_column;
+      std::string start_row;
+      std::string start_column;
       bool start_inclusive;
       bool start_set;
-      String end_row;
-      String end_column;
+      std::string end_row;
+      std::string end_column;
       bool end_inclusive;
       bool end_set;
     };
@@ -264,16 +264,16 @@ namespace Hypertable {
       ::int64_t end_time() { return builder.get().time_interval.second; }
 
       ScanSpecBuilder builder;
-      String outfile;
+      std::string outfile;
       bool display_timestamps {};
       bool display_revisions {};
       bool keys_only {};
-      String current_rowkey;
+      std::string current_rowkey;
       bool current_rowkey_set {};
       RowInterval current_ri;
       CellInterval current_ci;
-      String current_cell_row;
-      String current_cell_column;
+      std::string current_cell_row;
+      std::string current_cell_column;
       bool    start_time_set {};
       bool    end_time_set {};
       ::int64_t current_timestamp {};
@@ -290,25 +290,25 @@ namespace Hypertable {
       }
       NamespacePtr nsp;
       int command {};
-      String ns;
-      String table_name;
-      String pseudo_table_name;
-      String clone_table_name;
-      String new_table_name;
-      String str;
-      String output_file;
-      String input_file;
-      String source;
-      String destination;
-      String rs_name;
+      std::string ns;
+      std::string table_name;
+      std::string pseudo_table_name;
+      std::string clone_table_name;
+      std::string new_table_name;
+      std::string str;
+      std::string output_file;
+      std::string input_file;
+      std::string source;
+      std::string destination;
+      std::string rs_name;
       int input_file_src {};
-      String header_file;
+      std::string header_file;
       int header_file_src {};
       ::uint32_t group_commit_interval {};
       ColumnFamilyOptions table_cf_defaults;
       AccessGroupOptions table_ag_defaults;
       std::vector<String> columns;
-      String timestamp_column;
+      std::string timestamp_column;
       int load_flags {};
       uint32_t flags {};
       SchemaPtr alter_schema;
@@ -335,7 +335,7 @@ namespace Hypertable {
       BalancePlan balance_plan;
       std::vector<String> delete_columns;
       bool delete_all_columns {};
-      String delete_row;
+      std::string delete_row;
       ::int64_t delete_time {};
       ::int64_t delete_version_time {};
       SystemVariable::Spec current_variable_spec;
@@ -345,20 +345,20 @@ namespace Hypertable {
       bool tables_only {};
       bool with_ids {};
       bool replay {};
-      String range_start_row;
-      String range_end_row;
+      std::string range_start_row;
+      std::string range_end_row;
       ::int32_t scanner_id {-1};
       ::int32_t row_uniquify_chars {};
       bool escape {true};
       bool nokeys {};
-      String current_rename_column_old_name;
-      String current_column_family;
-      String current_column_predicate_name;
-      String current_column_predicate_qualifier;
+      std::string current_rename_column_old_name;
+      std::string current_column_family;
+      std::string current_column_predicate_name;
+      std::string current_column_predicate_qualifier;
       uint32_t current_column_predicate_operation {};
       char field_separator {};
 
-      void validate_function(const String &s) {
+      void validate_function(const std::string &s) {
         if (s=="guid")
           return;
         HT_THROW(Error::HQL_PARSE_ERROR, String("Unknown function "
@@ -508,19 +508,19 @@ namespace Hypertable {
     /// Creates string with outer quotes stripped off.
     /// @param str Pointer to c-style string
     /// @param len Length of string
-    /// @return String with outer quotes stripped off
-    inline String strip_quotes(const char *str, size_t len) {
+    /// @return std::string with outer quotes stripped off
+    inline std::string strip_quotes(const char *str, size_t len) {
       if (len > 1 && (*str == '\'' || *str == '"') && *str == *(str+len-1))
         return String(str+1, len-2);
       return String(str, len);
     }
 
-    inline String regex_from_literal(const char *str, size_t len) {
+    inline std::string regex_from_literal(const char *str, size_t len) {
       if (len > 0 && *str != '/')
         return strip_quotes(str, len);
-      String regex = String(str+1, len-2);
-      String oldStr("\\/");
-      String newStr("/");
+      std::string regex = String(str+1, len-2);
+      std::string oldStr("\\/");
+      std::string newStr("/");
       size_t pos = 0;
       while((pos = regex.find(oldStr, pos)) != std::string::npos) {
         regex.replace(pos, oldStr.length(), newStr);
@@ -529,7 +529,7 @@ namespace Hypertable {
       return regex;
     }
 
-    inline bool invalid_column_name(const String &name) {
+    inline bool invalid_column_name(const std::string &name) {
       if (!isalpha(name[0]))
         return false;
       std::function<bool(char)> valid_char_predicate =
@@ -565,7 +565,7 @@ namespace Hypertable {
     struct set_table_name {
       set_table_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = String(str, end-str);
+        std::string name = String(str, end-str);
         const char *pseudo = strstr(name.c_str(), "^.");
         if (pseudo) {
           state.table_name = String(name.c_str(), pseudo);
@@ -591,7 +591,7 @@ namespace Hypertable {
     struct start_alter_table {
       start_alter_table(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         if (strstr(name.c_str(), "^."))
           HT_THROWF(Error::UNSUPPORTED_OPERATION,
                     "Psudo-table '%s' schema cannot be altered", name.c_str());
@@ -707,7 +707,7 @@ namespace Hypertable {
     struct start_create_table_statement {
       start_create_table_statement(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         state.table_name = name;
         state.create_schema = new Schema();
       }
@@ -850,7 +850,7 @@ namespace Hypertable {
     struct open_column_family {
       open_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
 
         if (state.modify) {
           state.cf_spec = state.get_modified_column_family(name);
@@ -884,7 +884,7 @@ namespace Hypertable {
     struct open_existing_column_family {
       open_existing_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         HT_ASSERT(state.alter_schema);
         state.cf_spec = state.alter_schema->get_column_family(name);
         if (state.cf_spec == nullptr)
@@ -906,7 +906,7 @@ namespace Hypertable {
     struct drop_column_family {
       drop_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         HT_ASSERT(state.alter_schema);
         bool drop_from_modified_ag {};
         state.cf_spec = state.alter_schema->get_column_family(name);
@@ -936,7 +936,7 @@ namespace Hypertable {
     struct drop_value_index {
       drop_value_index(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         HT_ASSERT(state.alter_schema);
         ColumnFamilySpec *cf = state.find_column_family_in_modified_ag(name);
         if (cf == nullptr) {
@@ -953,7 +953,7 @@ namespace Hypertable {
     struct drop_qualifier_index {
       drop_qualifier_index(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         HT_ASSERT(state.alter_schema);
         ColumnFamilySpec *cf = state.find_column_family_in_modified_ag(name);
         if (cf == nullptr) {
@@ -984,7 +984,7 @@ namespace Hypertable {
     struct set_rename_column_family_new_name {
       set_rename_column_family_new_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String new_name = strip_quotes(str, end-str);
+        std::string new_name = strip_quotes(str, end-str);
         if (state.alter_schema->get_column_family(new_name))
           HT_THROWF(Error::HQL_BAD_COMMAND,
                     "Attempt to rename column '%s' to '%s', which already exists",
@@ -1037,7 +1037,7 @@ namespace Hypertable {
     struct set_time_order {
       set_time_order(ParserState &state) : state(state) { }
       void operator()(const char *str, const char *end) const {
-        String val = String(str, end-str);
+        std::string val = String(str, end-str);
         to_lower(val);
         if (state.cf_spec) {
           state.check_and_set_column_option(state.cf_spec->get_name(), "TIME_ORDER");
@@ -1063,7 +1063,7 @@ namespace Hypertable {
           ++unit_ptr;
 
         if (unit_ptr < end) {
-          String unit_str = String(unit_ptr, end-unit_ptr);
+          std::string unit_str = String(unit_ptr, end-unit_ptr);
           to_lower(unit_str);
 
           if (unit_str.find("month") == 0)
@@ -1095,7 +1095,7 @@ namespace Hypertable {
     struct open_access_group {
       open_access_group(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         if (state.modify)
           state.ag_spec = state.create_modified_access_group(name);
         else
@@ -1137,7 +1137,7 @@ namespace Hypertable {
     struct set_compressor {
       set_compressor(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String compressor = strip_quotes(str, end-str);
+        std::string compressor = strip_quotes(str, end-str);
         to_lower(compressor);
         if (state.ag_spec) {
           if (!state.ag_spec_is_new() &&
@@ -1188,7 +1188,7 @@ namespace Hypertable {
     struct set_bloom_filter {
       set_bloom_filter(ParserState &state) : state(state) { }
       void operator()(char const * str, char const *end) const {
-        String bloom_filter = strip_quotes(str, end-str);
+        std::string bloom_filter = strip_quotes(str, end-str);
         to_lower(bloom_filter);
         if (state.ag_spec) {
           if (!state.ag_spec_is_new() &&
@@ -1208,7 +1208,7 @@ namespace Hypertable {
       access_group_add_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         ColumnFamilySpec *cf = nullptr;
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
 
         if (state.modify) {
           if (state.ag_spec->get_column(name) != nullptr)
@@ -1244,7 +1244,7 @@ namespace Hypertable {
     struct create_index {
       create_index(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         ColumnFamilySpec *cf = 0;
 
         if (state.alter_schema)
@@ -1271,7 +1271,7 @@ namespace Hypertable {
     struct create_qualifier_index {
       create_qualifier_index(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = strip_quotes(str, end-str);
+        std::string name = strip_quotes(str, end-str);
         ColumnFamilySpec *cf = 0;
 
         if (state.alter_schema)
@@ -1306,7 +1306,7 @@ namespace Hypertable {
     struct scan_set_row_regexp {
       scan_set_row_regexp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String regexp(str, end-str);
+        std::string regexp(str, end-str);
         trim_if(regexp, boost::is_any_of("'\""));
         state.scan.builder.set_row_regexp(regexp.c_str());
       }
@@ -1316,7 +1316,7 @@ namespace Hypertable {
     struct scan_set_value_regexp {
       scan_set_value_regexp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String regexp(str, end-str);
+        std::string regexp(str, end-str);
         trim_if(regexp, boost::is_any_of("'\""));
         state.scan.builder.set_value_regexp(regexp.c_str());
        }
@@ -1359,7 +1359,7 @@ namespace Hypertable {
       scan_set_column_predicate_value(ParserState &state, uint32_t operation=0)
         : state(state), operation(operation) { }
       void operator()(char const *str, char const *end) const {
-        String s;
+        std::string s;
         if (operation == ColumnPredicate::REGEX_MATCH)
           s = regex_from_literal(str, end-str);
         else
@@ -1450,7 +1450,7 @@ namespace Hypertable {
     struct set_input_file {
       set_input_file(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String file = String(str, end-str);
+        std::string file = String(str, end-str);
         trim_if(file, is_any_of("'\""));
 
         if (boost::algorithm::starts_with(file, "fs://")) {
@@ -1480,7 +1480,7 @@ namespace Hypertable {
     struct set_header_file {
       set_header_file(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String file = String(str, end-str);
+        std::string file = String(str, end-str);
         trim_if(file, is_any_of("'\""));
 
         state.header_file_src = LOCAL_FILE;
@@ -1522,7 +1522,7 @@ namespace Hypertable {
     struct add_column {
       add_column(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String column(str, end-str);
+        std::string column(str, end-str);
         trim_if(column, is_any_of("'\""));
         state.columns.push_back(column);
       }
@@ -1565,7 +1565,7 @@ namespace Hypertable {
     struct set_field_separator {
       set_field_separator(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String field_separator(str, end-str);
+        std::string field_separator(str, end-str);
         trim_if(field_separator, is_any_of("'\""));
         if (field_separator.length() != 1)
           HT_THROW(Error::HQL_PARSE_ERROR,
@@ -1579,7 +1579,7 @@ namespace Hypertable {
       scan_add_column_family(ParserState &state, int qualifier_flag=0) : state(state),
           qualifier_flag(qualifier_flag) { }
       void operator()(char const *str, char const *end) const {
-        String column_name(str, end-str);
+        std::string column_name(str, end-str);
         trim_if(column_name, is_any_of("'\""));
         if (qualifier_flag == NO_QUALIFIER)
           state.scan.builder.add_column(column_name.c_str());
@@ -1594,8 +1594,8 @@ namespace Hypertable {
       scan_add_column_qualifier(ParserState &state, int _qualifier_flag=0)
           : state(state), qualifier_flag(_qualifier_flag) { }
       void operator()(char const *str, char const *end) const {
-        String qualifier(str, end-str);
-        String qualified_column = state.current_column_family 
+        std::string qualifier(str, end-str);
+        std::string qualified_column = state.current_column_family 
             + (qualifier_flag == PREFIX_QUALIFIER
                 ? ":^"
                 : ":")
@@ -1604,7 +1604,7 @@ namespace Hypertable {
       }
       void operator()(const char c) const {
         HT_ASSERT(c == '*');
-        String qualified_column = state.current_column_family + ":*";
+        std::string qualified_column = state.current_column_family + ":*";
         state.scan.builder.add_column(qualified_column.c_str());
       }
       ParserState &state;
@@ -1660,8 +1660,8 @@ namespace Hypertable {
       scan_set_cell_column(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         CellInterval &ci = state.scan.current_ci;
-        String &row = state.scan.current_cell_row;
-        String &column = state.scan.current_cell_column;
+        std::string &row = state.scan.current_cell_row;
+        std::string &column = state.scan.current_cell_column;
 
         column = String(str, end-str);
         trim_if(column, is_any_of("'\""));
@@ -1758,7 +1758,7 @@ namespace Hypertable {
             const char *ptr;
             for (ptr = end - 1; ptr > str; --ptr) {
               if (::uint8_t(*ptr) < 0xffu) {
-                String temp_str(str, ptr - str);
+                std::string temp_str(str, ptr - str);
                 temp_str.append(1, (*ptr) + 1);
                 state.scan.current_ri.set_end(temp_str, false);
                 break;
@@ -2029,8 +2029,8 @@ namespace Hypertable {
         }
         else if (state.scan.current_cell_row.size()
                  && state.scan.current_ci.empty()) {
-          String &row = state.scan.current_cell_row;
-          String &column = state.scan.current_cell_column;
+          std::string &row = state.scan.current_cell_row;
+          std::string &column = state.scan.current_cell_column;
 
           switch (relop) {
           case RELOP_EQ:
@@ -2075,7 +2075,7 @@ namespace Hypertable {
     struct scan_set_time {
       scan_set_time(ParserState &state) : state(state){ }
       void operator()(char const *str, char const *end) const {
-        String time_str = strip_quotes(str, end-str);
+        std::string time_str = strip_quotes(str, end-str);
 
         try {
           state.scan.current_timestamp = parse_ts(time_str.c_str());
@@ -2174,7 +2174,7 @@ namespace Hypertable {
     struct set_insert_timestamp {
       set_insert_timestamp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String time_str = strip_quotes(str, end-str);
+        std::string time_str = strip_quotes(str, end-str);
 
         try {
           state.current_insert_value.timestamp = parse_ts(time_str.c_str());
@@ -2264,7 +2264,7 @@ namespace Hypertable {
     struct delete_column {
       delete_column(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String column(str, end-str);
+        std::string column(str, end-str);
         trim_if(column, is_any_of("'\""));
         state.delete_columns.push_back(column);
       }
@@ -2285,7 +2285,7 @@ namespace Hypertable {
     struct set_delete_timestamp {
       set_delete_timestamp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String time_str = strip_quotes(str, end-str);
+        std::string time_str = strip_quotes(str, end-str);
 
         try {
           state.delete_time = parse_ts(time_str.c_str());
@@ -2302,7 +2302,7 @@ namespace Hypertable {
     struct set_delete_version_timestamp {
       set_delete_version_timestamp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String time_str = strip_quotes(str, end-str);
+        std::string time_str = strip_quotes(str, end-str);
 
         try {
           state.delete_version_time = parse_ts(time_str.c_str());
@@ -2335,7 +2335,7 @@ namespace Hypertable {
     struct set_flags_range_type {
       set_flags_range_type(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String range_type_str = String(str, end-str);
+        std::string range_type_str = String(str, end-str);
         trim_if(range_type_str, is_any_of("'\""));
         to_lower(range_type_str);
         if (range_type_str == "all")
@@ -2359,7 +2359,7 @@ namespace Hypertable {
     struct set_flags_compaction_type {
       set_flags_compaction_type(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String compaction_type_str = String(str, end-str);
+        std::string compaction_type_str = String(str, end-str);
         trim_if(compaction_type_str, is_any_of("'\""));
         to_lower(compaction_type_str);
         if (compaction_type_str == "minor")
@@ -2381,7 +2381,7 @@ namespace Hypertable {
     struct set_flags_index_type {
       set_flags_index_type(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String index_type_str = String(str, end-str);
+        std::string index_type_str = String(str, end-str);
         to_lower(index_type_str);
         if (index_type_str == "value")
           state.flags = TableParts::VALUE_INDEX;
@@ -2398,7 +2398,7 @@ namespace Hypertable {
     struct set_variable_name {
       set_variable_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name = String(str, end-str);
+        std::string name = String(str, end-str);
         to_upper(name);
         state.current_variable_spec.code = SystemVariable::string_to_code(name);
         if (state.current_variable_spec.code == -1)
@@ -2411,7 +2411,7 @@ namespace Hypertable {
     struct set_variable_value {
       set_variable_value(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String value = String(str, end-str);
+        std::string value = String(str, end-str);
         to_lower(value);
         if (value == "true")
           state.current_variable_spec.value = true;
@@ -2624,7 +2624,6 @@ namespace Hypertable {
           Token MAJOR        = as_lower_d["major"];
           Token MERGING      = as_lower_d["merging"];
           Token GC           = as_lower_d["gc"];
-          Token SYNC         = as_lower_d["sync"];
           Token FS           = as_lower_d["fs"];
           Token SET          = as_lower_d["set"];
           Token REBUILD      = as_lower_d["rebuild"];

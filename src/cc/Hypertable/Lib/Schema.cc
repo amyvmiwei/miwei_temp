@@ -196,7 +196,7 @@ namespace {
 }
 
 
-Schema *Schema::new_instance(const String &buf) {
+Schema *Schema::new_instance(const string &buf) {
   Schema *schema = new Schema();
   XmlParserSchema parser(schema, buf.c_str(), buf.length());
   try {
@@ -286,7 +286,7 @@ const string Schema::render_xml(bool with_ids) {
   return output;
 }
 
-const string Schema::render_hql(const String &table_name) {
+const string Schema::render_hql(const string &table_name) {
   string output = "CREATE TABLE ";
   output += maybe_quote(table_name);
   output += " (\n";
@@ -389,7 +389,7 @@ void Schema::add_access_group(AccessGroupSpec *ag) {
 
 }
 
-ColumnFamilySpec *Schema::remove_column_family(const String &name) {
+ColumnFamilySpec *Schema::remove_column_family(const string &name) {
   auto iter = m_column_family_map.find(name);
   if (iter != m_column_family_map.end()) {
     ColumnFamilySpec *cf = iter->second;
@@ -434,13 +434,13 @@ bool Schema::column_family_exists(int32_t id, bool get_deleted) const
   return false;
 }
 
-bool Schema::access_group_exists(const String &name) const
+bool Schema::access_group_exists(const string &name) const
 {
   auto ag_iter = m_access_group_map.find(name);
   return (ag_iter != m_access_group_map.end());
 }
 
-void Schema::rename_column_family(const String &old_name, const String &new_name) {
+void Schema::rename_column_family(const string &old_name, const string &new_name) {
   ColumnFamilySpec *cf;
 
   // update key and ColumnFamily in m_column_family_map
@@ -462,7 +462,7 @@ void Schema::rename_column_family(const String &old_name, const String &new_name
   }
 }
 
-void Schema::drop_column_family(const String &name) {
+void Schema::drop_column_family(const string &name) {
 
   auto cf_map_it = m_column_family_map.find(name);
   if (cf_map_it == m_column_family_map.end())

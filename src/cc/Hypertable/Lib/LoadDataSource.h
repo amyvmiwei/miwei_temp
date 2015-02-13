@@ -50,7 +50,7 @@ namespace Hypertable {
   class LoadDataSource : public ReferenceCount {
 
   public:
-    LoadDataSource(const String &header_fname,
+    LoadDataSource(const std::string &header_fname,
                    int row_uniquify_chars = 0,
                    int load_flags = 0);
 
@@ -64,7 +64,7 @@ namespace Hypertable {
                       bool *is_deletep, uint32_t *consumedp);
 
     virtual void init(const std::vector<String> &key_columns, 
-                      const String &timestamp_column,
+                      const std::string &timestamp_column,
                       char field_separator);
 
     int64_t get_current_lineno() { return m_cur_line; }
@@ -86,7 +86,7 @@ namespace Hypertable {
 
     virtual void parse_header(const String& header,
                               const std::vector<String> &key_columns,
-                              const String &timestamp_column);
+                              const std::string &timestamp_column);
     virtual void init_src()=0;
     virtual uint64_t incr_consumed()=0;
 
@@ -113,15 +113,15 @@ namespace Hypertable {
       TIMESTAMP =         (1 << 1)
     };
 
-    String get_header();
+    std::string get_header();
 
     bool parse_date_format(const char *str, int64_t &timestamp);
     bool parse_sec(const char *str, char **end_ptr, int64_t &ns);
     bool add_row_component(int index);
 
     struct ColumnInfo {
-      String family;
-      String qualifier;
+      std::string family;
+      std::string qualifier;
     };
 
     std::vector<ColumnInfo> m_column_info;
@@ -141,10 +141,10 @@ namespace Hypertable {
     uint64_t m_offset;
     bool m_zipped;
     FixedRandomStringGenerator *m_rsgen;
-    String m_header_fname;
+    std::string m_header_fname;
     int m_row_uniquify_chars;
     int m_load_flags;
-    String m_first_line;
+    std::string m_first_line;
     unsigned long m_source_size;
     bool m_first_line_cached;
     char m_field_separator;

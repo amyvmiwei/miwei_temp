@@ -27,8 +27,6 @@
 #ifndef Hypertable_Common_Serializable_h
 #define Hypertable_Common_Serializable_h
 
-#include <Common/Serialization.h>
-
 namespace Hypertable {
 
   /// @addtogroup Common

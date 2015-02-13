@@ -224,8 +224,8 @@ namespace Hypertable {
      *                --num-hashes 7 --max-approx-items 900</BloomFilter>
      *   <InMemory>true</InMemory>
      * @endverbatim
-     * @param line_prefix String to prepend to each line of output
-     * @return String representing options in XML format
+     * @param line_prefix std::string to prepend to each line of output
+     * @return std::string representing options in XML format
      */
     const std::string render_xml(const std::string &line_prefix) const;
 
@@ -238,7 +238,7 @@ namespace Hypertable {
     /// <pre>
     /// REPLICATION 3 BLOCKSIZE 67108864 COMPRESSOR "zlib --best" BLOOMFILTER "rows+cols --false-positive 0.02" IN_MEMORY
     /// </pre>
-    /// @return String representing options in HQL format
+    /// @return std::string representing options in HQL format
     const std::string render_hql() const;
 
     /// Parsers a bloom filter specification and sets properties.
@@ -582,9 +582,9 @@ namespace Hypertable {
        </ColumnFamily>
      </AccessGroup>
      @endverbatim
-     * @param line_prefix String to prepend to each line of output
+     * @param line_prefix std::string to prepend to each line of output
      * @param with_ids Include column family IDs and Generation in output
-     * @return String representing spec in XML format
+     * @return std::string representing spec in XML format
      */
     const std::string render_xml(const std::string &line_prefix,
                                  bool with_ids=false) const;
@@ -599,7 +599,7 @@ namespace Hypertable {
     ///     COMPRESSOR "bmz --fp-len 20 --offset 5" BLOOMFILTER "none"
     ///     IN_MEMORY MAX_VERSIONS 3 TTL 86400 TIME_ORDER desc
     /// </pre>
-    /// @return String representing access group specification in HQL format
+    /// @return std::string representing access group specification in HQL format
     const std::string render_hql() const;
 
     /// Returns reference to column specifications.

@@ -54,7 +54,7 @@ namespace Hypertable {
      * @param error_msg
      * @param eos end of scan
      */
-    void scan_error(TableScannerAsync *scanner, int error, const String &error_msg,
+    void scan_error(TableScannerAsync *scanner, int error, const std::string &error_msg,
                     bool eos);
 
     /**

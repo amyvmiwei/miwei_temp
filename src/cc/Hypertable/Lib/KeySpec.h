@@ -141,18 +141,18 @@ namespace Hypertable {
    */
   class KeySpecBuilder : boost::noncopyable {
   public:
-    void set_row(const String &row) {
+    void set_row(const std::string &row) {
       m_strings.push_back(row);
       m_key_spec.row = m_strings.back().c_str();
       m_key_spec.row_len = m_strings.back().length();
     }
 
-    void set_column_family(const String &cf) {
+    void set_column_family(const std::string &cf) {
       m_strings.push_back(cf);
       m_key_spec.column_family = m_strings.back().c_str();
     }
 
-    void set_column_qualifier(const String &cq) {
+    void set_column_qualifier(const std::string &cq) {
       m_strings.push_back(cq);
       m_key_spec.column_qualifier = m_strings.back().c_str();
       m_key_spec.column_qualifier_len = m_strings.back().length();

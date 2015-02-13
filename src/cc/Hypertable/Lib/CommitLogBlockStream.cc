@@ -59,7 +59,7 @@ CommitLogBlockStream::CommitLogBlockStream(FilesystemPtr &fs)
 
 
 CommitLogBlockStream::CommitLogBlockStream(FilesystemPtr &fs,
-    const String &log_dir, const String &fragment)
+    const string &log_dir, const string &fragment)
   : m_fs(fs), m_fd(-1), m_cur_offset(0), m_file_length(0) {
   load(log_dir, fragment);
 }
@@ -70,7 +70,7 @@ CommitLogBlockStream::~CommitLogBlockStream() {
 }
 
 
-void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
+void CommitLogBlockStream::load(const string &log_dir, const string &fragment) {
   if (m_fd != -1)
     close();
   m_fragment = fragment;
@@ -207,7 +207,7 @@ CommitLogBlockStream::read_header(FilesystemPtr &fs, int32_t fd,
 
 void
 CommitLogBlockStream::write_header(FilesystemPtr &fs, int32_t fd) {
-  String header_str = format("CL%04u\f\n", (unsigned)LatestVersion);
+  string header_str = format("CL%04u\f\n", (unsigned)LatestVersion);
   StaticBuffer buf(HEADER_SIZE);
   HT_ASSERT(header_str.size() == HEADER_SIZE);
   memcpy(buf.base, header_str.c_str(), HEADER_SIZE);

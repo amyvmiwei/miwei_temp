@@ -86,7 +86,7 @@ namespace Hypertable {
        * @param path %Path to %MetaLog directory
        * @param flags Flags that control reading behavior
        */
-      Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path, int flags=0);
+      Reader(FilesystemPtr &fs, DefinitionPtr &definition, const std::string &path, int flags=0);
 
       /** Returns latest version of all entities.
        * @param entities Reference to vector to hold returned entities
@@ -141,7 +141,7 @@ namespace Hypertable {
        * Error::METALOG_MISSING_RECOVER_ENTITY, or one of the exceptions
        * returned by Client::open_buffered(), or Client::read().
        */
-      void load_file(const String &fname);
+      void load_file(const std::string &fname);
 
       /** Returns %MetaLog Definition version read from log file header.
        * @return %MetaLog Definition version read from log file header.
@@ -186,7 +186,7 @@ namespace Hypertable {
       MetaLog::DefinitionPtr m_definition;
 
       /// Path name of %MetaLog directory
-      String m_path;
+      std::string m_path;
 
       /// Flags that control read behavior
       int m_flags;
@@ -204,7 +204,7 @@ namespace Hypertable {
       std::vector<EntityPtr> m_entities;
 
       /// Local backup path initialized in @ref primary_metalog_reader_constructor
-      String m_backup_path;
+      std::string m_backup_path;
 
       /// %MetaLog Definition version read from log file header.
       uint16_t m_version;

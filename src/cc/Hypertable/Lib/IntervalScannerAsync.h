@@ -100,14 +100,14 @@ namespace Hypertable {
     /// Accumulated profile data
     ProfileDataScanner m_profile_data;
     bool                m_eos;
-    String              m_create_scanner_row;
+    std::string              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
     RangeLocationInfo   m_next_range_info;
     bool                m_fetch_outstanding;
     bool                m_create_outstanding;
     EventPtr            m_create_event;
-    String              m_start_row;
-    String              m_end_row;
+    std::string              m_start_row;
+    std::string              m_end_row;
     bool                m_end_inclusive;
     uint32_t            m_timeout_ms;
     bool                m_current;

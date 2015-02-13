@@ -45,7 +45,7 @@ TableMutatorIntervalHandler::TableMutatorIntervalHandler(Comm *comm,
 void TableMutatorIntervalHandler::start() {
   char unique_hash[33];
   uint32_t first_interval;
-  String str = HyperAppHelper::generate_guid();
+  string str = HyperAppHelper::generate_guid();
 
   md5_string(str.c_str(), unique_hash);
 

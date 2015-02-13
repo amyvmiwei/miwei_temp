@@ -131,7 +131,7 @@ namespace Hypertable {
     int64_t m_amount;
     int64_t m_count;
     unsigned long m_last_data_size;
-    String m_row;
+    std::string m_row;
     int32_t  m_next_column;
   };
 
@@ -162,7 +162,7 @@ namespace Hypertable {
     std::vector<ColumnSpec> m_column_specs;
 
   private:
-    int parse_order(const String &str);
+    int parse_order(const std::string &str);
   };
 
 }

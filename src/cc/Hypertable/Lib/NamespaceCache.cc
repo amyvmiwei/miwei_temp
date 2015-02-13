@@ -38,9 +38,9 @@ NamespaceCache::NamespaceCache(PropertiesPtr &props, RangeLocatorPtr &range_loca
               m_app_queue && m_namemap && m_master_client && m_table_cache);
 }
 
-NamespacePtr NamespaceCache::get(const String &name) {
+NamespacePtr NamespaceCache::get(const string &name) {
   ScopedLock lock(m_mutex);
-  String id;
+  string id;
   bool is_namespace = false;
   NamespacePtr ns;
   NamespaceMap::iterator it = m_namespace_map.find(name);
@@ -59,7 +59,7 @@ NamespacePtr NamespaceCache::get(const String &name) {
   return ns;
 }
 
-bool NamespaceCache::remove(const String &name) {
+bool NamespaceCache::remove(const string &name) {
   ScopedLock lock(m_mutex);
   bool found = false;
   NamespaceMap::iterator it = m_namespace_map.find(name);

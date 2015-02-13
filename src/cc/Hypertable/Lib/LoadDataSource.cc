@@ -61,7 +61,7 @@ using namespace std;
 /**
  *
  */
-LoadDataSource::LoadDataSource(const String &header_fname, 
+LoadDataSource::LoadDataSource(const string &header_fname, 
                                int row_uniquify_chars, 
                                int load_flags)
   : m_type_mask(0), m_cur_line(0), m_line_buffer(0),
@@ -88,11 +88,11 @@ LoadDataSource::LoadDataSource(const String &header_fname,
 String
 LoadDataSource::get_header()
 {
-  String three_column_header = format("#row%ccolumn%cvalue",
+  string three_column_header = format("#row%ccolumn%cvalue",
                                       m_field_separator, m_field_separator);
-  String four_column_header = format("#timestamp%crow%ccolumn%cvalue",
+  string four_column_header = format("#timestamp%crow%ccolumn%cvalue",
                    m_field_separator, m_field_separator, m_field_separator);
-  String header = "";
+  string header = "";
   if (m_header_fname != "") {
     std::ifstream in(m_header_fname.c_str());
     getline(in, header);
@@ -147,9 +147,9 @@ LoadDataSource::get_header()
 
 void
 LoadDataSource::init(const std::vector<String> &key_columns,
-                     const String &timestamp_column,
+                     const string &timestamp_column,
                      char field_separator) {
-  String header;
+  string header;
   m_field_separator = field_separator;
   init_src();
   header = get_header();
@@ -157,11 +157,11 @@ LoadDataSource::init(const std::vector<String> &key_columns,
 }
 
 void
-LoadDataSource::parse_header(const String &header, 
+LoadDataSource::parse_header(const string &header, 
                              const std::vector<String> &key_columns,
-                             const String &timestamp_column) 
+                             const string &timestamp_column) 
 {
-  String line, column_name;
+  string line, column_name;
   char *base, *ptr, *colon_ptr;
   int index = 0;
   KeyComponentInfo key_comps;
@@ -306,7 +306,7 @@ bool
 LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
                      bool *is_deletep, uint32_t *consumedp) 
 {
-  String line;
+  string line;
   int index;
   char *base, *ptr, *colon;
 

@@ -47,8 +47,8 @@ namespace Hypertable {
     bool remove_ok(StringSet &remove_ok_logs) {
       return parent == 0 || remove_ok_logs.count(log_dir);
     }
-    String to_str(StringSet &remove_ok_logs) {
-      String msg = format("FileInfo=(logdir=%s,num=%d,revision=%lld,references=%d,rmOk=%d)",
+    std::string to_str(StringSet &remove_ok_logs) {
+      std::string msg = format("FileInfo=(logdir=%s,num=%d,revision=%lld,references=%d,rmOk=%d)",
                           log_dir.c_str(), (int)num, (Lld)revision, (int)references,
                           (int)remove_ok_logs.count(log_dir));
       if (parent)
@@ -57,7 +57,7 @@ namespace Hypertable {
                       (int)parent->references, (int)remove_ok_logs.count(parent->log_dir));
       return msg;
     }
-    String     log_dir;
+    std::string     log_dir;
     uint32_t   num;
     uint64_t   size;
     int64_t    revision;
@@ -81,7 +81,7 @@ namespace Hypertable {
    */
   class CommitLogBase : public ReferenceCount {
   public:
-    CommitLogBase(const String &log_dir)
+    CommitLogBase(const std::string &log_dir)
       : m_log_dir(log_dir), m_latest_revision(TIMESTAMP_MIN),
         m_range_reference_required(true) {
 
@@ -105,7 +105,7 @@ namespace Hypertable {
       other->m_fragment_queue.clear();
     }
 
-    String &get_log_dir() { return m_log_dir; }
+    std::string &get_log_dir() { return m_log_dir; }
 
     int64_t get_latest_revision() { return m_latest_revision; }
 
@@ -123,8 +123,8 @@ namespace Hypertable {
 
   protected:
     Mutex             m_mutex;
-    String            m_log_dir;
-    String            m_log_name;
+    std::string            m_log_dir;
+    std::string            m_log_name;
     LogFragmentQueue  m_fragment_queue;
     int64_t           m_latest_revision;
     std::set<int64_t> m_linked_log_hashes;

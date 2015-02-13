@@ -65,7 +65,7 @@ namespace Hypertable {
       return !(*this == other);
     }
 
-    String table_id;
+    std::string table_id;
     uint32_t range_count;
     uint32_t scanner_count;
     uint64_t cell_count;

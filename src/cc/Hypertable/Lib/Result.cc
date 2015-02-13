@@ -30,7 +30,7 @@ Result::Result(TableScannerAsync *scanner, ScanCellsPtr &cells) : m_scanner(scan
   return;
 }
 
-Result::Result(TableScannerAsync *scanner, int error, const String &error_msg) :
+Result::Result(TableScannerAsync *scanner, int error, const string &error_msg) :
     m_scanner(scanner), m_mutator(0), m_error(error), m_error_msg(error_msg), m_isscan(true),
     m_iserror(true) {
   return;
@@ -65,7 +65,7 @@ void Result::get_cells(Cells &cells) {
   m_cells->get(cells);
 }
 
-void Result::get_error(int &error, String &error_msg) {
+void Result::get_error(int &error, string &error_msg) {
   if (!m_iserror)
     HT_THROW(Error::NOT_ALLOWED, "Requested error for non-error result");
   error = m_error;

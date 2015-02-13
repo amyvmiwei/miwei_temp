@@ -67,7 +67,7 @@ namespace Hypertable {
       /** Called when interpreter returns a string result
        * Maybe called multiple times for a list of string results
        */
-      virtual void on_return(const String &) { }
+      virtual void on_return(const std::string &) { }
 
       /** Called when interpreter is ready to scan */
       virtual void on_scan(TableScanner &) { }
@@ -108,7 +108,7 @@ namespace Hypertable {
       SmallCallback(CellsBuilder &builder, std::vector<String> &strs)
         : cells(builder), retstrs(strs) { }
 
-      virtual void on_return(const String &ret) { retstrs.push_back(ret); }
+      virtual void on_return(const std::string &ret) { retstrs.push_back(ret); }
       virtual void on_scan(TableScanner &scanner) { copy(scanner, cells); }
       virtual void on_dump(TableDumper &dumper) { copy(dumper, cells); }
     };
@@ -118,23 +118,23 @@ namespace Hypertable {
                    bool immutable_namespace=true);
 
     /** The main interface for the interpreter */
-    void execute(const String &str, Callback &);
+    void execute(const std::string &str, Callback &);
 
     /** A convenient method demonstrate the usage of the interface */
     void
-    execute(const String &str, CellsBuilder &output, std::vector<String> &ret) {
+    execute(const std::string &str, CellsBuilder &output, std::vector<String> &ret) {
       SmallCallback cb(output, ret);
       execute(str, cb);
     }
 
     /** More convenient method for admin commands (create/drop table etc.) */
-    void execute(const String &cmd) {
+    void execute(const std::string &cmd) {
       CellsBuilder cb;
       std::vector<String> res;
       execute(cmd, cb, res);
     }
 
-    void set_namespace(const String &ns);
+    void set_namespace(const std::string &ns);
 
   private:
     Client *m_client;

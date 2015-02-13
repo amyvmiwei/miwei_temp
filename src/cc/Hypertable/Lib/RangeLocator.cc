@@ -170,7 +170,7 @@ void RangeLocator::initialize() {
                                           OPEN_FLAG_READ, m_root_handler);
 
   while (true) {
-    String metadata_file = m_toplevel_dir + "/tables/" + TableIdentifier::METADATA_ID;
+    string metadata_file = m_toplevel_dir + "/tables/" + TableIdentifier::METADATA_ID;
 
     try {
       handle = m_hyperspace->open(metadata_file, OPEN_FLAG_READ);
@@ -275,8 +275,8 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   int error;
   Key key;
   RangeLocationInfo range_loc_info;
-  String start_row;
-  String end_row;
+  string start_row;
+  string end_row;
   CommAddress addr;
   RowInterval ri;
   bool inclusive = (row_key == 0 || *row_key == 0) ? true : false;
@@ -385,7 +385,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 
     if (!m_cache->lookup(TableIdentifier::METADATA_ID, meta_key,
                          rane_loc_infop, inclusive)) {
-      String err_msg = format("Unable to find metadata for row '%s' row_key=%s",
+      string err_msg = format("Unable to find metadata for row '%s' row_key=%s",
                               meta_keys.start, row_key);
       HT_INFOF("%s", err_msg.c_str());
       SAVE_ERR(Error::METADATA_NOT_FOUND, err_msg);
@@ -472,7 +472,7 @@ int RangeLocator::process_metadata_scanblocks(vector<ScanBlock> &scan_blocks, Ti
   ByteString value;
   Key key;
   const char *stripped_key;
-  String table_name;
+  string table_name;
   CommAddressSet connected;
 
   range_loc_info.start_row = "";
@@ -488,7 +488,7 @@ int RangeLocator::process_metadata_scanblocks(vector<ScanBlock> &scan_blocks, Ti
     while (scan_block.next(serkey, value)) {
 
       if (!key.load(serkey)) {
-        String err_msg = format("METADATA lookup for '%s' returned bad key",
+        string err_msg = format("METADATA lookup for '%s' returned bad key",
                                 serkey.str() + 1);
         HT_ERRORF("%s", err_msg.c_str());
         SAVE_ERR(Error::INVALID_METADATA, err_msg);
@@ -496,7 +496,7 @@ int RangeLocator::process_metadata_scanblocks(vector<ScanBlock> &scan_blocks, Ti
       }
 
       if ((stripped_key = strchr(key.row, ':')) == 0) {
-        String err_msg = format("Bad row key found in METADATA - '%s'", key.row);
+        string err_msg = format("Bad row key found in METADATA - '%s'", key.row);
         HT_ERRORF("%s", err_msg.c_str());
         SAVE_ERR(Error::INVALID_METADATA, err_msg);
         return Error::INVALID_METADATA;
@@ -506,7 +506,7 @@ int RangeLocator::process_metadata_scanblocks(vector<ScanBlock> &scan_blocks, Ti
       {
         const uint8_t *str;
         size_t len = value.decode_length(&str);
-        String tmp_str = String((const char *)str, len);
+        string tmp_str = String((const char *)str, len);
         HT_DEBUG_OUT << "Got key=" << key << ", stripped_key "
                      << stripped_key << ", value=" << tmp_str << " got start_row="
                      << got_start_row << ", got_end_row=" << got_end_row
@@ -610,7 +610,7 @@ int RangeLocator::process_metadata_scanblocks(vector<ScanBlock> &scan_blocks, Ti
 
 int RangeLocator::read_root_location(Timer &timer) {
   DynamicBuffer value(0);
-  String addr_str;
+  string addr_str;
   CommAddress addr;
   CommAddress old_addr;
 

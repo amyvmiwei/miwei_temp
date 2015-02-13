@@ -60,7 +60,7 @@ namespace Hypertable {
      * @param config_file name of configuration file
      * @param default_timeout_ms default method call timeout in milliseconds
      */
-    Client(const String &install_dir, const String &config_file,
+    Client(const std::string &install_dir, const std::string &config_file,
            uint32_t default_timeout_ms=0);
 
     /**
@@ -69,7 +69,7 @@ namespace Hypertable {
      * @param install_dir path to Hypertable installation directory
      * @param default_timeout_ms default method call timeout in milliseconds
      */
-    Client(const String &install_dir = String(), uint32_t default_timeout_ms=0);
+    Client(const std::string &install_dir = String(), uint32_t default_timeout_ms=0);
     ~Client() {}
 
     /**
@@ -81,7 +81,7 @@ namespace Hypertable {
      * @param create_intermediate if true then create all non-existent intermediate namespaces
      * @param if_not_exists don't throw an exception if namespace does exist
      */
-    void create_namespace(const String &name, Namespace *base=NULL,
+    void create_namespace(const std::string &name, Namespace *base=NULL,
                           bool create_intermediate=false,
                           bool if_not_exists=false);
 
@@ -93,7 +93,7 @@ namespace Hypertable {
      *        to base)
      * @return pointer to the Namespace object
      */
-    NamespacePtr open_namespace(const String &name, Namespace *base=NULL);
+    NamespacePtr open_namespace(const std::string &name, Namespace *base=NULL);
 
     /**
      * Checks if the namespace exists
@@ -103,7 +103,7 @@ namespace Hypertable {
      *        to base)
      * @return true if namespace exists false ow
      */
-    bool exists_namespace(const String &name, Namespace *base=NULL);
+    bool exists_namespace(const std::string &name, Namespace *base=NULL);
 
     /**
      * Removes a namespace.  This command instructs the Master to
@@ -115,7 +115,7 @@ namespace Hypertable {
      *        to base)
      * @param if_exists don't throw an exception if table does not exist
      */
-    void drop_namespace(const String &name, Namespace *base=NULL, bool if_exists=false);
+    void drop_namespace(const std::string &name, Namespace *base=NULL, bool if_exists=false);
 
     Hyperspace::SessionPtr& get_hyperspace_session();
 
@@ -145,12 +145,12 @@ namespace Hypertable {
     Lib::Master::ClientPtr m_master_client;
     RangeLocatorPtr         m_range_locator;
     uint32_t                m_timeout_ms;
-    String                  m_install_dir;
+    std::string                  m_install_dir;
     TableCachePtr           m_table_cache;
     NamespaceCachePtr       m_namespace_cache;
     Mutex                   m_mutex;
     bool                    m_hyperspace_reconnect;
-    String                  m_toplevel_dir;
+    std::string                  m_toplevel_dir;
   };
 
   typedef intrusive_ptr<Client> ClientPtr;

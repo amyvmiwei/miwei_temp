@@ -18,13 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
-#include "KeySpec.h"
 #include "StatsRangeServer.h"
 
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <Common/Serialization.h>
+
+#include <string>
+
 using namespace Hypertable;
+using namespace std;
 
 namespace {
   enum Group {
@@ -39,8 +44,8 @@ StatsRangeServer::StatsRangeServer() : StatsSerializable(RANGE_SERVER, 1), times
 
 StatsRangeServer::StatsRangeServer(PropertiesPtr &props) : StatsSerializable(RANGE_SERVER, 1), timestamp(TIMESTAMP_MIN) {
   const char *base, *ptr;
-  String datadirs = props->get_str("Hypertable.RangeServer.Monitoring.DataDirectories");
-  String dir;
+  string datadirs = props->get_str("Hypertable.RangeServer.Monitoring.DataDirectories");
+  string dir;
   std::vector<String> dirs;
 
   boost::trim_if(datadirs, boost::is_any_of(" \t\"'"));

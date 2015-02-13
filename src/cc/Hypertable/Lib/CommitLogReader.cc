@@ -70,7 +70,7 @@ namespace {
   };
 }
 
-CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir)
+CommitLogReader::CommitLogReader(FilesystemPtr &fs, const string &log_dir)
   : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256),
     m_revision(TIMESTAMP_MIN), m_last_fragment_id(-1) {
   if (get_bool("Hypertable.CommitLog.SkipErrors"))
@@ -79,7 +79,7 @@ CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir)
   reset();
 }
 
-CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir,
+CommitLogReader::CommitLogReader(FilesystemPtr &fs, const string &log_dir,
                                  const std::vector<int32_t> &fragment_filter)
   : CommitLogBase(log_dir), m_fs(fs), m_block_buffer(256),
     m_revision(TIMESTAMP_MIN),
@@ -130,7 +130,7 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
 
   if (header->check_magic(CommitLog::MAGIC_LINK)) {
     assert(header->get_compression_type() == BlockCompressionCodec::NONE);
-    String log_dir = (const char *)(infop->block_ptr + header->encoded_length());
+    string log_dir = (const char *)(infop->block_ptr + header->encoded_length());
     boost::trim_right_if(log_dir, boost::is_any_of("/"));
     m_linked_log_hashes.insert(md5_hash(log_dir.c_str()));
     m_linked_logs.insert(log_dir);
@@ -287,7 +287,7 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
 
   if (mark != -1) {
     if (m_fragment_queue.empty() || mark < (int)m_fragment_queue.front()->num) {
-      String mark_filename;
+      string mark_filename;
       try {
         mark_filename = log_dir + "/" + mark + ".mark";
         m_fs->remove(mark_filename);

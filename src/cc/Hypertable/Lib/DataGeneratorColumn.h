@@ -53,11 +53,11 @@ namespace Hypertable {
     QualifierSpec qualifier;
     int size {-1};
     int order {RANDOM};
-    String source;
-    String cooked_source;
-    String column_family;
+    std::string source;
+    std::string cooked_source;
+    std::string column_family;
     unsigned seed {1};
-    String distribution;
+    std::string distribution;
     bool word_stream {};
     bool to_stdout {};
     bool fixed {};
@@ -72,7 +72,7 @@ namespace Hypertable {
     }
     virtual ~Column() { }
     virtual bool next() = 0;
-    virtual String &qualifier() = 0;
+    virtual std::string &qualifier() = 0;
     virtual const char *value() = 0;
     virtual uint32_t value_len() = 0;
   protected:
@@ -85,7 +85,7 @@ namespace Hypertable {
     ColumnString(ColumnSpec &spec, bool keys_only = false)
       : Column(spec), m_keys_only(keys_only), m_first_offset(0), m_size(0),
         m_second_offset(0) {
-      String s = source;
+      std::string s = source;
       if (s.empty())
         s = cooked_source;
 
@@ -217,7 +217,7 @@ namespace Hypertable {
       return true;
     }
 
-    virtual String &qualifier() {
+    virtual std::string &qualifier() {
       if (m_qualifiers.empty())
         return m_qualifier;
       return m_qualifiers[m_next_qualifier]->get();
@@ -236,7 +236,7 @@ namespace Hypertable {
   private:
     bool m_keys_only;
     const char *m_value;
-    String m_qualifier;
+    std::string m_qualifier;
     boost::shared_array<char> m_render_buf;
     boost::shared_array<const char> m_value_data;
     const char *m_source;
@@ -244,7 +244,7 @@ namespace Hypertable {
     off_t m_first_offset;
     size_t m_size;
     off_t m_second_offset;
-    String m_cooked;
+    std::string m_cooked;
     WordStreamPtr m_word_stream;
   };
 

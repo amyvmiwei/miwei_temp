@@ -87,11 +87,11 @@ namespace Hypertable {
     const char *code_to_string(int var_code);
 
     /** Converts variable string to variable code.
-     * @param var_string String representation of variable
+     * @param var_string std::string representation of variable
      * @return Variable string corresponding to variable code or 0 if
      * <code>var_string</code> is invalid
      */
-    int string_to_code(const String &var_string);
+    int string_to_code(const std::string &var_string);
 
     /** Returns default value for given variable.
      * @param var_code The variable code
@@ -103,7 +103,7 @@ namespace Hypertable {
      * @param specs Vector of variable specifications
      * @return Textual representation of variable specifications
      */
-    String specs_to_string(const std::vector<Spec> &specs);
+    std::string specs_to_string(const std::vector<Spec> &specs);
 
     /** Returns encoded length of variable specs vector.
      * @param specs Vector of variable specs

@@ -49,7 +49,7 @@ void Header::decode(const uint8_t **bufp, size_t *remainp) {
 }
 
 
-void MetaLog::scan_log_directory(FilesystemPtr &fs, const String &path,
+void MetaLog::scan_log_directory(FilesystemPtr &fs, const string &path,
                                  std::vector<int32_t> &file_ids, int32_t *nextidp) {
   const char *ptr;
   int32_t id;

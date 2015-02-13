@@ -133,7 +133,7 @@ namespace Hypertable {
        * convert a %MetaLog into a human readable representation
        * @return Name of the entity
        */
-      virtual const String name() = 0;
+      virtual const std::string name() = 0;
 
       /** Returns the entity ID.
        * @return Entity ID from the 
@@ -229,7 +229,7 @@ namespace Hypertable {
        * This method returns the name of the entity ("Recover")
        * @return Name of the entity ("Recover")
        */
-      virtual const String name() { return "Recover"; }
+      virtual const std::string name() { return "Recover"; }
 
     private:
 

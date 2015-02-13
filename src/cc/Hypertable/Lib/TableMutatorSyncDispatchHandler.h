@@ -54,7 +54,7 @@ namespace Hypertable {
     struct ErrorResult {
       CommAddress addr;
       int error;
-      String msg;
+      std::string msg;
     };
 
     /**

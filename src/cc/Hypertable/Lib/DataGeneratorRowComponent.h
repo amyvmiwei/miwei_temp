@@ -54,14 +54,14 @@ namespace Hypertable {
     RowComponentSpec() : type(-1), order(-1), value_count(0), seed((unsigned)-1) { }
     int type {};
     int order {};
-    String format;
-    String min;
-    String max;
+    std::string format;
+    std::string min;
+    std::string max;
     unsigned length_min {};
     unsigned length_max {};
     uint64_t value_count {};
     unsigned seed {};
-    String distribution;
+    std::string distribution;
   };
 
   class RowComponent : public RowComponentSpec {

@@ -32,8 +32,11 @@
 #include <Common/Logger.h>
 #include <Common/Serialization.h>
 
+#include <string>
+
 using namespace Hypertable;
 using namespace Serialization;
+using namespace std;
 
 void RangeState::clear() {
   state = STEADY;
@@ -43,7 +46,7 @@ void RangeState::clear() {
 }
 
 String RangeState::get_text(uint8_t state) {
-  String str;
+  string str;
   switch (state & ~RangeState::PHANTOM) {
   case RangeState::STEADY:
     str = "STEADY";

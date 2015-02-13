@@ -40,7 +40,7 @@ bool ScanCells::add(EventPtr &event, int *scanner_id) {
 }
 
 bool
-ScanCells::load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
+ScanCells::load(SchemaPtr &schema, const string &end_row, bool end_inclusive,
 		ScanLimitState *limit_state, CstrSet &rowset,
 		int64_t *bytes_scanned, Key *lastkey) {
   SerializedKey serkey;

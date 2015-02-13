@@ -55,7 +55,7 @@ using namespace std;
  *
  */
 LoadDataSourceFileDfs::LoadDataSourceFileDfs(FsBroker::Lib::ClientPtr &client,
-  const String &fname, const String &header_fname, int row_uniquify_chars, int load_flags)
+  const string &fname, const string &header_fname, int row_uniquify_chars, int load_flags)
   : LoadDataSource(header_fname, row_uniquify_chars, load_flags), m_cur_offset(0) {
 
   HT_ASSERT(client);

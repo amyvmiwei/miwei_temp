@@ -116,7 +116,7 @@ namespace Hypertable {
       return m_cache->invalidate(table->id, row_key);
     }
 
-    void invalidate_host(const String &hostname) {
+    void invalidate_host(const std::string &hostname) {
       ScopedLock lock(m_mutex);
       CommAddress addr;
       addr.set_proxy(hostname);
@@ -184,7 +184,7 @@ namespace Hypertable {
     Mutex                  m_hyperspace_mutex;
     uint32_t               m_timeout_ms;
     RangeLocatorHyperspaceSessionCallback m_hyperspace_session_callback;
-    String                 m_toplevel_dir;
+    std::string                 m_toplevel_dir;
     uint32_t               m_metadata_readahead_count;
     uint32_t               m_max_error_queue_length;
     uint32_t               m_metadata_retry_interval;

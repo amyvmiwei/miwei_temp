@@ -95,7 +95,7 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
     m_scan_spec_builder.add_column_predicate(cp.column_family,
             cp.column_qualifier, cp.operation, cp.value, cp.value_len);
 
-  String family;
+  string family;
   const char *colon;
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
     colon = strchr(scan_spec.columns[i], ':');
@@ -268,7 +268,7 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
                 
     }
     catch (Exception &e) {
-      String msg = format("Problem creating scanner at %s on %s[%s..%s] - %s",
+      string msg = format("Problem creating scanner at %s on %s[%s..%s] - %s",
                           m_next_range_info.addr.to_str().c_str(), m_table_identifier.id,
                           range.start_row, range.end_row, e.what());
       reset_outstanding_status(true, false);

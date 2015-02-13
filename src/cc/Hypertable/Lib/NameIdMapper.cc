@@ -37,7 +37,7 @@ using namespace std;
 using namespace Hyperspace;
 
 
-NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir)
+NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const string &toplevel_dir)
   : m_hyperspace(hyperspace), m_toplevel_dir(toplevel_dir) {
 
   /*
@@ -61,22 +61,22 @@ NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &top
   m_hyperspace->mkdirs(m_ids_dir, init_attr);
 }
 
-bool NameIdMapper::name_to_id(const String &name, String &id, bool *is_namespacep) {
+bool NameIdMapper::name_to_id(const string &name, string &id, bool *is_namespacep) {
   ScopedLock lock(m_mutex);
   return do_mapping(name, false, id, is_namespacep);
 }
 
-bool NameIdMapper::id_to_name(const String &id, String &name, bool *is_namespacep) {
+bool NameIdMapper::id_to_name(const string &id, string &name, bool *is_namespacep) {
   ScopedLock lock(m_mutex);
   return do_mapping(id, true, name, is_namespacep);
 }
 
-void NameIdMapper::add_entry(const String &names_parent, const String &names_entry,
+void NameIdMapper::add_entry(const string &names_parent, const string &names_entry,
                              std::vector<uint64_t> &ids, bool is_namespace) {
   uint64_t id = 0;
-  String names_file = m_names_dir + names_parent + "/" + names_entry;
+  string names_file = m_names_dir + names_parent + "/" + names_entry;
 
-  String parent_ids_file = m_ids_dir;
+  string parent_ids_file = m_ids_dir;
   for (size_t i=0; i<ids.size(); i++)
     parent_ids_file += String("/") + ids[i];
 
@@ -99,7 +99,7 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
   }
 
   // At this point "id" is properly set
-  String ids_file = parent_ids_file + String("/") + id;
+  string ids_file = parent_ids_file + String("/") + id;
   std::vector<Attribute> attrs;
   attrs.push_back(Attribute("name", names_entry.c_str(), names_entry.length()));
   attrs.push_back(Attribute("nid", "0", 1));
@@ -145,7 +145,7 @@ void NameIdMapper::add_entry(const String &names_parent, const String &names_ent
   ids.push_back(id);
 }
 
-void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool ignore_exists) {
+void NameIdMapper::add_mapping(const string &name, string &id, int flags, bool ignore_exists) {
   ScopedLock lock(m_mutex);
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
   boost::char_separator<char> sep("/");
@@ -161,8 +161,8 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool i
 
   HT_ASSERT(!name_components.empty());
 
-  String names_parent = "";
-  String names_child = "";
+  string names_parent = "";
+  string names_child = "";
 
   listing.reserve(name_components.size());
   for (size_t i=0; i<name_components.size()-1; i++) {
@@ -170,7 +170,7 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool i
     names_child += String("/") + name_components[i];
 
     try {
-      String names_file = m_names_dir + names_child;
+      string names_file = m_names_dir + names_child;
       m_hyperspace->attr_get(names_file, "id", value_buf);
       if (flags & CREATE_INTERMEDIATE) {
         m_hyperspace->readpath_attr(names_file, "id", listing);
@@ -211,15 +211,15 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool i
     id += String("/") + id_components[i];
 }
 
-void NameIdMapper::rename(const String &curr_name, const String &next_name) {
+void NameIdMapper::rename(const string &curr_name, const string &next_name) {
   ScopedLock lock(m_mutex);
-  String id;
+  string id;
   int oflags = OPEN_FLAG_WRITE|OPEN_FLAG_EXCL|OPEN_FLAG_READ;
-  String old_name = curr_name;
-  String new_name = next_name;
-  String new_name_last_comp;
+  string old_name = curr_name;
+  string new_name = next_name;
+  string new_name_last_comp;
   size_t new_name_last_slash_pos;
-  String id_last_component;
+  string id_last_component;
   size_t id_last_component_pos;
 
   boost::trim_if(old_name, boost::is_any_of("/ "));
@@ -233,7 +233,7 @@ void NameIdMapper::rename(const String &curr_name, const String &next_name) {
 
   if (do_mapping(old_name, false, id, 0)) {
     // Set the name attribute of the id file to be the last path component of new_name
-    String id_file = m_ids_dir + "/" + id;
+    string id_file = m_ids_dir + "/" + id;
     m_hyperspace->attr_set(id_file, oflags, "name", new_name_last_comp.c_str(),
                            new_name_last_comp.length());
 
@@ -253,10 +253,10 @@ void NameIdMapper::rename(const String &curr_name, const String &next_name) {
 
 }
 
-void NameIdMapper::drop_mapping(const String &name) {
+void NameIdMapper::drop_mapping(const string &name) {
   ScopedLock lock(m_mutex);
-  String id;
-  String table_name = name;
+  string id;
+  string table_name = name;
 
   boost::trim_if(table_name, boost::is_any_of("/ "));
 
@@ -281,19 +281,19 @@ void NameIdMapper::drop_mapping(const String &name) {
   }
 }
 
-bool NameIdMapper::exists_mapping(const String &name, bool *is_namespace) {
-  String id;
-  String namespace_name = name;
+bool NameIdMapper::exists_mapping(const string &name, bool *is_namespace) {
+  string id;
+  string namespace_name = name;
   boost::trim_if(namespace_name, boost::is_any_of("/ "));
   return do_mapping(namespace_name, false, id, is_namespace);
 }
 
-bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
+bool NameIdMapper::do_mapping(const string &input, bool id_in, string &output,
                               bool *is_namespacep) {
   vector <DirEntryAttr> listing;
   int num_path_components = 0;
-  String hyperspace_file;
-  String attr;
+  string hyperspace_file;
+  string attr;
   output = (String)"";
 
   if (id_in) {
@@ -336,7 +336,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
   sort(listing.begin(), listing.end(), ascending);
 
   for (size_t ii=m_prefix_components; ii<listing.size(); ++ii) {
-    String attr_val((const char*)listing[ii].attr.base);
+    string attr_val((const char*)listing[ii].attr.base);
     output += attr_val + "/";
   }
 
@@ -353,10 +353,10 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
 
 }
 
-void NameIdMapper::id_to_sublisting(const String &id, bool include_sub_entries, vector<NamespaceListing> &listing) {
+void NameIdMapper::id_to_sublisting(const string &id, bool include_sub_entries, vector<NamespaceListing> &listing) {
   vector <DirEntryAttr> dir_listing;
-  String hyperspace_dir;
-  String attr;
+  string hyperspace_dir;
+  string attr;
 
   hyperspace_dir = m_ids_dir;
   attr = (String)"name";

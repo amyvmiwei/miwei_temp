@@ -90,7 +90,7 @@ namespace Hypertable {
        * @param path %Path to %MetaLog directory
        * @param initial_entities Initial set of entities to write into log
        */
-      Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
+      Writer(FilesystemPtr &fs, DefinitionPtr &definition, const std::string &path,
              std::vector<EntityPtr> &initial_entities);
 
       /** Destructor.
@@ -182,19 +182,19 @@ namespace Hypertable {
       DefinitionPtr m_definition;
 
       /// Path name of %MetaLog directory
-      String  m_path;
+      std::string  m_path;
 
       /// Full pathname of %MetaLog file open for writing
-      String  m_filename;
+      std::string  m_filename;
 
       /// File descriptor of %MetaLog file in FS
       int m_fd;
 
       /// Pathname of local log backup directory
-      String  m_backup_path;
+      std::string  m_backup_path;
 
       /// Pathname of local log backup file
-      String  m_backup_filename;
+      std::string  m_backup_filename;
 
       /// File descriptor of backup %MetaLog file in local filesystem
       int m_backup_fd;

@@ -73,10 +73,10 @@ namespace Hypertable {
     };
 
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-          NameIdMapperPtr &namemap, const String &name, int32_t flags=0);
+          NameIdMapperPtr &namemap, const std::string &name, int32_t flags=0);
     Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
           Hyperspace::SessionPtr &, ApplicationQueueInterfacePtr &, NameIdMapperPtr &,
-          const String &name, int32_t flags, uint32_t default_timeout_ms);
+          const std::string &name, int32_t flags, uint32_t default_timeout_ms);
     virtual ~Table();
 
     /**
@@ -138,7 +138,7 @@ namespace Hypertable {
       *table_id_p = m_table;
     }
 
-    String get_name() {
+    std::string get_name() {
       ScopedLock lock(m_mutex);
       return m_name;
     }
@@ -265,12 +265,12 @@ namespace Hypertable {
     RangeLocatorPtr        m_range_locator;
     ApplicationQueueInterfacePtr m_app_queue;
     NameIdMapperPtr        m_namemap;
-    String                 m_name;
+    std::string                 m_name;
     TableIdentifierManaged m_table;
     int32_t                m_flags;
     int                    m_timeout_ms;
     bool                   m_stale;
-    String                 m_toplevel_dir;
+    std::string                 m_toplevel_dir;
     size_t                 m_scanner_queue_size;
     TablePtr               m_index_table;
     TablePtr               m_qualifier_index_table;

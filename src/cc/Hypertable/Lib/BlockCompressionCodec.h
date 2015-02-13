@@ -90,7 +90,7 @@ namespace Hypertable {
     /// @param args Compressor specific arguments
     /// @throws Exception Code set to Error::BLOCK_COMPRESSOR_INVALID_ARG
     virtual void set_args(const Args &args) {
-      foreach_ht (const String &arg, args)
+      foreach_ht (const std::string &arg, args)
         HT_THROWF(Error::BLOCK_COMPRESSOR_INVALID_ARG, "Unrecognized argument "
                   "to %s codec: '%s'", get_compressor_name(get_type()),
                   arg.c_str());

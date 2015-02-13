@@ -84,7 +84,7 @@ namespace Hypertable {
      * @param init_log base log to pull fragments from
      * @param is_meta true for root, system and metadata logs
      */
-    CommitLog(FilesystemPtr &fs, const String &log_dir,
+    CommitLog(FilesystemPtr &fs, const std::string &log_dir,
               PropertiesPtr &props, CommitLogBase *init_log = 0,
               bool is_meta=true)
       : CommitLogBase(log_dir), m_fs(fs) {
@@ -98,7 +98,7 @@ namespace Hypertable {
      * @param log_dir directory of the commit log
      * @param is_meta true for root, system and metadata logs
      */
-    CommitLog(FilesystemPtr &fs, const String &log_dir, bool is_meta=true);
+    CommitLog(FilesystemPtr &fs, const std::string &log_dir, bool is_meta=true);
 
     virtual ~CommitLog();
 
@@ -148,7 +148,7 @@ namespace Hypertable {
      * @param trace Address of trace string to add trace info to if non-NULL
      */
     int purge(int64_t revision, StringSet &remove_ok_logs,
-              StringSet &removed_logs, String *trace);
+              StringSet &removed_logs, std::string *trace);
 
     /**
      * Fills up a map of cumulative fragment size data.  One entry per log
@@ -173,7 +173,7 @@ namespace Hypertable {
      * @param result reference to return stats string
      *
      */
-    void get_stats(const String &prefix, String &result);
+    void get_stats(const std::string &prefix, std::string &result);
 
     /**
      * Returns total size of commit log
@@ -187,7 +187,7 @@ namespace Hypertable {
       return total;
     }
 
-    String get_current_fragment_file() {
+    std::string get_current_fragment_file() {
       ScopedLock lock(m_mutex);
       return m_cur_fragment_fname;
     }
@@ -196,7 +196,7 @@ namespace Hypertable {
     static const char MAGIC_LINK[10];
 
   private:
-    void initialize(const String &log_dir,
+    void initialize(const std::string &log_dir,
                     PropertiesPtr &, CommitLogBase *init_log, bool is_meta);
     int roll(CommitLogFileInfo **clfip=0);
     int compress_and_write(DynamicBuffer &input, BlockHeader *header,
@@ -206,7 +206,7 @@ namespace Hypertable {
     FilesystemPtr           m_fs;
     std::set<CommitLogFileInfo *> m_reap_set;
     BlockCompressionCodec  *m_compressor;
-    String                  m_cur_fragment_fname;
+    std::string                  m_cur_fragment_fname;
     int64_t                 m_cur_fragment_length;
     int64_t                 m_max_fragment_size;
     uint32_t                m_cur_fragment_num;

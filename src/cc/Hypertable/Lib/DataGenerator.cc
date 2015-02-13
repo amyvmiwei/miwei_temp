@@ -126,9 +126,9 @@ DataGeneratorIterator& DataGeneratorIterator::operator++(int n) {
 
 DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(props), m_keys_only(keys_only) {
   int rowkey_order;
-  String rowkey_distribution;
+  string rowkey_distribution;
   unsigned int rowkey_seed;
-  String str;
+  string str;
   std::map<String, int> column_map;
 
   if (has("DataGenerator.MaxBytes"))
@@ -151,7 +151,7 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
   rowkey_seed = m_props->get_i32("rowkey.seed", 1);
 
   std::vector<String> names;
-  String name;
+  string name;
   m_props->get_names(names);
   long index = 0;
   char *ptr, *tptr;
@@ -321,7 +321,7 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
 }
 
 
-int DataGenerator::parse_order(const String &str) {
+int DataGenerator::parse_order(const string &str) {
   if (!strcasecmp(str.c_str(), "ascending"))
     return ASCENDING;
   else if (!strcasecmp(str.c_str(), "random"))

@@ -94,9 +94,9 @@ namespace Hypertable {
      * will include <code>|PHANTOM</code> as a suffix
      * (e.g. <code>SPLIT_SHRUNK|PHANTOM</code>).
      * @param state &Range state value
-     * @return String representation of range state value.
+     * @return std::string representation of range state value.
      */
-    static String get_text(uint8_t state);
+    static std::string get_text(uint8_t state);
 
     /// %Range state value (see StateType)
     uint8_t state;
@@ -258,7 +258,7 @@ namespace Hypertable {
      * to <code>m_transfer_log.c_str()</code>
      * @param tl Transfer log
      */
-    void set_transfer_log(const String &tl) {
+    void set_transfer_log(const std::string &tl) {
       m_transfer_log = tl;
       transfer_log = m_transfer_log.c_str();
     }
@@ -276,7 +276,7 @@ namespace Hypertable {
      * to <code>m_split_point.c_str()</code>
      * @param sp split point
      */
-    void set_split_point(const String &sp) {
+    void set_split_point(const std::string &sp) {
       m_split_point = sp;
       split_point = m_split_point.c_str();
     }
@@ -294,7 +294,7 @@ namespace Hypertable {
      * pointing to <code>m_old_boundary_row.c_str()</code>
      * @param obr old boundary row
      */
-    void set_old_boundary_row(const String &obr) {
+    void set_old_boundary_row(const std::string &obr) {
       m_old_boundary_row = obr;
       old_boundary_row = m_old_boundary_row.c_str();
     }
@@ -312,7 +312,7 @@ namespace Hypertable {
      * pointing to <code>m_source.c_str()</code>
      * @param src Source server name
      */
-    void set_source(const String &src) {
+    void set_source(const std::string &src) {
       m_source = src;
       source = m_source.c_str();
     }
@@ -337,16 +337,16 @@ namespace Hypertable {
 			 size_t *remainp) override;
 
     /// Transfer log string container
-    String m_transfer_log;
+    std::string m_transfer_log;
 
     /// Split point string container
-    String m_split_point;
+    std::string m_split_point;
 
     /// Old boundary row string container
-    String m_old_boundary_row;
+    std::string m_old_boundary_row;
 
     /// Source server string container
-    String m_source;
+    std::string m_source;
   };
 
   /// @}

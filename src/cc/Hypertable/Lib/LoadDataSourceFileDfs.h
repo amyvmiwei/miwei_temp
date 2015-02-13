@@ -44,8 +44,8 @@ namespace Hypertable {
   class LoadDataSourceFileDfs: public LoadDataSource {
 
   public:
-    LoadDataSourceFileDfs(FsBroker::Lib::ClientPtr &client, const String &fname,
-                          const String &header_fname,
+    LoadDataSourceFileDfs(FsBroker::Lib::ClientPtr &client, const std::string &fname,
+                          const std::string &header_fname,
                           int row_uniquify_chars = 0, int load_flags = 0);
 
     ~LoadDataSourceFileDfs() { delete m_source;};
@@ -55,8 +55,8 @@ namespace Hypertable {
   protected:
     void init_src();
     FsBroker::Lib::FileSource *m_source;
-    String m_fname;
-    String m_header_fname;
+    std::string m_fname;
+    std::string m_header_fname;
     unsigned long m_cur_offset;
   };
 

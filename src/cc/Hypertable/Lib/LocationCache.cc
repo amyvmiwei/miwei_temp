@@ -176,7 +176,7 @@ bool LocationCache::invalidate(const char *table_name, const char *rowkey) {
   return true;
 }
 
-void LocationCache::invalidate_host(const String &hostname) {
+void LocationCache::invalidate_host(const string &hostname) {
   ScopedLock lock(m_mutex);
   CommAddress addr;
 

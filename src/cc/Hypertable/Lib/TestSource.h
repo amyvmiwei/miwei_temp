@@ -36,7 +36,7 @@ namespace Hypertable {
   class TestSource {
 
   public:
-    TestSource(const String &fname, Schema *schema)
+    TestSource(const std::string &fname, Schema *schema)
       : m_schema(schema), m_fin(fname.c_str()), m_cur_line(0), m_key_buffer(0),
         m_value_buffer(0), m_min_timestamp(0) { }
 

@@ -55,7 +55,7 @@ namespace Parameters {
     /// <code>from</code> and #m_to to <code>to</code>.
     /// @param from Original file name
     /// @param to New file name
-    Rename(const String &from, const String &to) : m_from(from), m_to(to) {}
+    Rename(const std::string &from, const std::string &to) : m_from(from), m_to(to) {}
 
     /// Gets original file name
     /// @return Original file name
@@ -77,10 +77,10 @@ namespace Parameters {
 			 size_t *remainp) override;
 
     /// Original file name
-    String m_from;
+    std::string m_from;
 
     /// New file name
-    String m_to;
+    std::string m_to;
   };
 
   /// @}

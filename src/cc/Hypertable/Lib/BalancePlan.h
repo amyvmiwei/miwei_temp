@@ -37,7 +37,7 @@ namespace Hypertable {
   /// Balance plan
   class BalancePlan : public Serializable {
   public:
-    BalancePlan(const String &algorithm_ = String()) : algorithm(algorithm_) { }
+    BalancePlan(const std::string &algorithm_ = std::string()) : algorithm(algorithm_) { }
 
     BalancePlan(const BalancePlan &other);
 
@@ -49,7 +49,7 @@ namespace Hypertable {
     }
 
     std::vector<RangeMoveSpecPtr> moves;
-    String algorithm;
+    std::string algorithm;
     int32_t duration_millis {};
 
   private:

@@ -59,7 +59,7 @@ namespace {
 bool Writer::skip_recover_entry = false;
 
 
-Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
+Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const string &path,
                std::vector<EntityPtr> &initial_entities) :
   m_fs(fs), m_definition(definition), m_fd(-1), m_offset(0) {
 
@@ -136,7 +136,7 @@ void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_cou
 
   if (file_ids.size() > keep_count) {
     for (size_t i=keep_count; i< file_ids.size(); i++) {
-      String tmp_name;
+      string tmp_name;
 
       // remove from FS
       tmp_name = m_path + String("/") + file_ids[i];

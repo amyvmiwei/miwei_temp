@@ -44,7 +44,7 @@ namespace Hypertable {
   class LoadDataSourceFileLocal : public LoadDataSource {
 
   public:
-    LoadDataSourceFileLocal(const String &fname, const String &header_fname,
+    LoadDataSourceFileLocal(const std::string &fname, const std::string &header_fname,
                             int row_uniquify_chars = 0, int load_flags = 0);
 
     ~LoadDataSourceFileLocal() { };
@@ -54,8 +54,8 @@ namespace Hypertable {
   protected:
     void init_src();
     boost::iostreams::file_source m_source;
-    String m_fname;
-    String m_header_fname;
+    std::string m_fname;
+    std::string m_header_fname;
   };
 
 } // namespace Hypertable

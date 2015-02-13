@@ -55,7 +55,7 @@ const char CommitLog::MAGIC_LINK[10] =
     { 'C','O','M','M','I','T','L','I','N','K' };
 
 
-CommitLog::CommitLog(FilesystemPtr &fs, const String &log_dir, bool is_meta)
+CommitLog::CommitLog(FilesystemPtr &fs, const string &log_dir, bool is_meta)
   : CommitLogBase(log_dir), m_fs(fs) {
   initialize(log_dir, Config::properties, 0, is_meta);
 }
@@ -66,9 +66,9 @@ CommitLog::~CommitLog() {
 }
 
 void
-CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
+CommitLog::initialize(const string &log_dir, PropertiesPtr &props,
                       CommitLogBase *init_log, bool is_meta) {
-  String compressor;
+  string compressor;
 
   m_log_dir = log_dir;
   m_cur_fragment_num = 0;
@@ -201,7 +201,7 @@ int CommitLog::link_log(uint64_t cluster_id, CommitLogBase *log_base) {
   BlockHeaderCommitLog header(MAGIC_LINK, link_revision, cluster_id);
 
   DynamicBuffer input;
-  String &log_dir = log_base->get_log_dir();
+  string &log_dir = log_base->get_log_dir();
 
   if (m_linked_log_hashes.count(md5_hash(log_dir.c_str())) > 0) {
     HT_WARNF("Skipping log %s because it is already linked in", log_dir.c_str());
@@ -294,7 +294,7 @@ int CommitLog::close() {
 
 
 int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
-                     StringSet &removed_logs, String *trace) {
+                     StringSet &removed_logs, string *trace) {
   ScopedLock lock(m_mutex);
 
   if (m_fd == -1)
@@ -335,7 +335,7 @@ int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
       m_fragment_queue.pop_front();
     }
     else {
-      String msg = format("purge(%s,rev=%llu) breaking on %s",
+      string msg = format("purge(%s,rev=%llu) breaking on %s",
                           m_log_dir.c_str(), (Llu)revision,
                           fi->to_str(remove_ok_logs).c_str());
       HT_INFOF("%s", msg.c_str());
@@ -350,12 +350,12 @@ int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
 
 
 void CommitLog::remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs) {
-  String fname;
+  string fname;
 
   fi->verify();
 
   // Remove linked log directores
-  foreach_ht (const String &logdir, fi->purge_dirs) {
+  foreach_ht (const string &logdir, fi->purge_dirs) {
     try {
       HT_INFOF("Removing linked log directory '%s' because all fragments have been removed", logdir.c_str());
       removed_logs.insert(logdir);
@@ -527,7 +527,7 @@ void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map)
 }
 
 
-void CommitLog::get_stats(const String &prefix, String &result) {
+void CommitLog::get_stats(const string &prefix, string &result) {
   ScopedLock lock(m_mutex);
 
   if (m_fd == -1)

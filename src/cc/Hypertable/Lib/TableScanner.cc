@@ -98,7 +98,7 @@ void TableScanner::scan_ok(ScanCellsPtr &cells) {
   m_queue->add_cells(cells);
 }
 
-void TableScanner::scan_error(int error, const String &error_msg) {
+void TableScanner::scan_error(int error, const string &error_msg) {
   m_queue->set_error(error, error_msg);
 }
 

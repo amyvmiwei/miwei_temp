@@ -42,9 +42,9 @@ namespace Hypertable {
     int type;
     int order;
     int size;
-    String charset;
+    std::string charset;
     unsigned seed;
-    String distribution;
+    std::string distribution;
   };
 
   class Qualifier : public QualifierSpec {
@@ -52,7 +52,7 @@ namespace Hypertable {
     Qualifier(QualifierSpec &spec) : QualifierSpec(spec) { }
     virtual ~Qualifier() { }
     virtual bool next() = 0;
-    virtual String &get() = 0;
+    virtual std::string &get() = 0;
   };
 
   class QualifierString : public Qualifier {
@@ -71,10 +71,10 @@ namespace Hypertable {
       m_qualifier = m_render_buf.get();
       return false;
     }
-    virtual String &get() { return m_qualifier; }
+    virtual std::string &get() { return m_qualifier; }
   private:
     boost::shared_array<const char> m_render_buf;
-    String m_qualifier;
+    std::string m_qualifier;
   };
 
   class QualifierFactory {

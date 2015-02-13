@@ -32,8 +32,8 @@ namespace Hypertable {
   /// Holds range start and end row plus location.
   class RangeLocationInfo {
   public:
-    String start_row;
-    String end_row;
+    std::string start_row;
+    std::string end_row;
     CommAddress addr;
   };
 

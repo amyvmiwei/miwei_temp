@@ -49,9 +49,9 @@ namespace Hypertable {
     /**
      *
      */
-    TablePtr get(const String &table_name, int32_t flags);
+    TablePtr get(const std::string &table_name, int32_t flags);
 
-    TablePtr get_unlocked(const String &table_name, int32_t flags);
+    TablePtr get_unlocked(const std::string &table_name, int32_t flags);
 
     /**
      * @param table_name Name of table
@@ -59,7 +59,7 @@ namespace Hypertable {
      * @param with_ids if true return CF ids
      * @return false if table_name is not in cache
      */
-    bool get_schema_str(const String &table_name, String &output_schema, bool with_ids=false);
+    bool get_schema_str(const std::string &table_name, std::string &output_schema, bool with_ids=false);
 
     /**
      *
@@ -67,13 +67,13 @@ namespace Hypertable {
      * @param output_schema Schema object
      * @return false if table_name is not in cache
      */
-    bool get_schema(const String &table_name, SchemaPtr &output_schema);
+    bool get_schema(const std::string &table_name, SchemaPtr &output_schema);
 
     /**
      * @param table_name
      * @return false if entry is not in cache
      */
-    bool remove(const String &table_name);
+    bool remove(const std::string &table_name);
 
     void lock() { m_mutex.lock(); }
     void unlock() { m_mutex.unlock(); }

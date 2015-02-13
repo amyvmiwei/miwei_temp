@@ -98,9 +98,9 @@ namespace Hypertable {
     }
 
     /**
-     * Convenient helper for String values
+     * Convenient helper for std::string values
      */
-    void set(const KeySpec &key, const String &value) {
+    void set(const KeySpec &key, const std::string &value) {
       set(key, value.data(), value.length());
     }
 

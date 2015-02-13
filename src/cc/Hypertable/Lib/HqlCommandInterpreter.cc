@@ -78,7 +78,7 @@ namespace {
 
     virtual void on_parsed(ParserState &state) { command = state.command; }
 
-    virtual void on_return(const String &str) { cout << str << endl; }
+    virtual void on_return(const string &str) { cout << str << endl; }
 
     virtual void on_update(size_t total) {
       if (!normal_mode)
@@ -188,7 +188,7 @@ HqlCommandInterpreter::HqlCommandInterpreter(HqlInterpreter *interp)
 }
 
 
-int HqlCommandInterpreter::execute_line(const String &line) {
+int HqlCommandInterpreter::execute_line(const string &line) {
   CommandCallback cb(*this, m_profile);
   m_interp->execute(line, cb);
   return 0;

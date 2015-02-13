@@ -103,7 +103,7 @@ namespace Hypertable {
      * @param nextidp Reference to integer filled in with numeric file name
      * that can be used for the next %MetaLog file.
      */
-    void scan_log_directory(FilesystemPtr &fs, const String &path,
+    void scan_log_directory(FilesystemPtr &fs, const std::string &path,
                             std::vector<int32_t> &file_ids, int32_t *nextidp);
 
    }

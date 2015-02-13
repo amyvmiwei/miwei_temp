@@ -57,7 +57,7 @@ namespace Hypertable {
      * @param subject Command for which to return help text
      * @return Help text associated with command in <code>subject</code>
      */
-    static const char **get(const String &subject);
+    static const char **get(const std::string &subject);
 
     /** Installs help text for rsclient command interpreter.
      */

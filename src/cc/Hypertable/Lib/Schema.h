@@ -195,7 +195,7 @@ namespace Hypertable {
     /// @param table_name Name of table
     /// @return %String representation of schema as HQL
     /// <code>CREATE TABLE</code> statement.
-    const std::string render_hql(const String &table_name);
+    const std::string render_hql(const std::string &table_name);
 
     /// Gets generation.
     /// Returns the value of #m_generation.
@@ -235,7 +235,7 @@ namespace Hypertable {
     /// @param name Name of access group to return
     /// @return Access group specification corresponding to <code>name</code>,
     /// or nullptr if it does not exist.
-    AccessGroupSpec *get_access_group(const String &name) {
+    AccessGroupSpec *get_access_group(const std::string &name) {
       auto iter = m_access_group_map.find(name);
       if (iter != m_access_group_map.end())
         return iter->second;
@@ -252,7 +252,7 @@ namespace Hypertable {
     /// @param name Name of column family to return
     /// @return %Column family specification corresponding to <code>name</code>,
     /// or nullptr if it does not exist.
-    ColumnFamilySpec *get_column_family(const String &name) {
+    ColumnFamilySpec *get_column_family(const std::string &name) {
       auto iter = m_column_family_map.find(name);
       if (iter != m_column_family_map.end())
         return iter->second;
@@ -267,7 +267,7 @@ namespace Hypertable {
     /// it is returned, otherwise, nullptr is returned.
     /// @param name Name of column family to remove
     /// @return Removed column family
-    ColumnFamilySpec *remove_column_family(const String &name);
+    ColumnFamilySpec *remove_column_family(const std::string &name);
 
     /// Gets a column family specification given its ID.
     /// Searches #m_column_family_id_map for the column family with ID
@@ -312,7 +312,7 @@ namespace Hypertable {
     /// <i>true</i> if it is found.
     /// @param name Access group name
     /// @return <i>true</i> if access group exists, <i>false</i> otherwise
-    bool access_group_exists(const String &name) const;
+    bool access_group_exists(const std::string &name) const;
 
     /// Checks if column family exists.
     /// Checks if the column family with ID, <code>id</code>, exists by
@@ -397,7 +397,7 @@ namespace Hypertable {
     /// <code>buf</code> and them calls validate().
     /// @param buf Buffer holding XML schema string.
     /// @return Pointer to newly allocated Schema object.
-    static Schema *new_instance(const String &buf);
+    static Schema *new_instance(const std::string &buf);
 
   private:
 

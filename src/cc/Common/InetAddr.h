@@ -25,8 +25,8 @@
  * InetAddr class wraps the sockaddr_in structure.
  */
 
-#ifndef HYPERTABLE_INETADDR_H
-#define HYPERTABLE_INETADDR_H
+#ifndef Hypertable_Common_InetAddr_h
+#define Hypertable_Common_InetAddr_h
 
 #include <Common/String.h>
 
@@ -58,12 +58,15 @@ namespace Hypertable {
   std::ostream &operator<<(std::ostream &, const Endpoint &);
 
   /**
-   * Encapsulate an internet address
+   * Encapsulate an internet address.
    *
    * Note, deriving from sockaddr_in is just a path of least resistance
    * and should ,e changed to aggregation if we decide to support ipv6
    */
-  struct InetAddr : sockaddr_in {
+  class InetAddr : public sockaddr_in {
+
+  public:
+
     /** Constructor creates an empty internet address */
     InetAddr();
 
@@ -99,15 +102,6 @@ namespace Hypertable {
      * @throws Error::BAD_DOMAIN_NAME if the host cannot be resolved
      */
     InetAddr(const sockaddr_in &addr) { operator=(addr); }
-
-    /** Returns the encoded length of the serialized address */
-    size_t encoded_length() const;
-
-    /** Encodes/Serializes this object into a buffer */
-    void encode(uint8_t **bufp) const;
-
-    /** Decodes/Deserializes this object from a buffer */
-    void decode(const uint8_t **bufp, size_t *remainp);
 
     /** Assigns a unix sockaddr_in address structure to this object */
     InetAddr &operator=(const sockaddr_in &addr) {
@@ -234,6 +228,61 @@ namespace Hypertable {
      * @return A string with the formatted tuple
      */
     static String hex(const sockaddr_in &addr, int sep = ':');
+
+    /// Returns serialized object length.
+    /// Returns the serialized length of the object as encoded by encode().
+    /// @see encode() for encoding format
+    /// @return Overall serialized object length
+    size_t encoded_length() const;
+
+    /// Writes serialized representation of object to a buffer.
+    /// This function encodes a serialized representation of the object,
+    /// starting with a header that includes the encoding version and the
+    /// serialized length of the object.  After the header, the object per-se is
+    /// encoded with encode_internal().
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    void encode(uint8_t **bufp) const;
+
+    /// Reads serialized representation of object from a buffer.
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of remaining buffer
+    /// @see encode() for encoding format
+    /// @throws Exception with code Error::PROTOCOL_ERROR if version being
+    /// decoded is greater than that returned by encoding_version().
+    void decode(const uint8_t **bufp, size_t *remainp);
+
+    /// Deserializes object from legacy serialization format.
+    void legacy_decode(const uint8_t **bufp, size_t *remainp);
+
+  private:
+
+    /// Returns encoding version.
+    /// @return Encoding version
+    uint8_t encoding_version() const;
+
+    /// Returns internal serialized length.
+    /// This function is to be overridden by derived classes and should return
+    /// the length of the the serialized object per-se.
+    /// @return Internal serialized length
+    /// @see encode_internal() for encoding format
+    size_t encoded_length_internal() const;
+
+    /// Writes serialized representation of object to a buffer.
+    /// This function is to be overridden by derived classes and should encode
+    /// the object per-se.
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    void encode_internal(uint8_t **bufp) const;
+
+    /// Reads serialized representation of object from a buffer.
+    /// This function is to be overridden by derived classes and should decode
+    /// the object per-se as encoded with encode_internal().
+    /// @param version Encoding version
+    /// @param bufp Address of destination buffer pointer (advanced by call)
+    /// @param remainp Address of integer holding amount of serialized encoding remaining
+    /// @see encode_internal() for encoding format
+    void decode_internal(uint8_t version, const uint8_t **bufp, size_t *remainp);
+
+
   };
 
   /** Helper operator for streaming a sockaddr_in structure (or an InetAddr
@@ -242,6 +291,6 @@ namespace Hypertable {
 
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_INETADDR_H
+#endif // Hypertable_Common_InetAddr_h

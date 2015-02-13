@@ -52,13 +52,13 @@ namespace Hypertable {
      * @param name namespace name
      * @return NULL if the namespace doesn't exist, ow return a pointer to the Namespace
      */
-    NamespacePtr get(const String &name);
+    NamespacePtr get(const std::string &name);
 
     /**
      * @param name
      * @return false if entry is not in cache
      */
-    bool remove(const String &name);
+    bool remove(const std::string &name);
 
   private:
     typedef std::unordered_map<String, NamespacePtr> NamespaceMap;

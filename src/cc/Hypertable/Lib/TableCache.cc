@@ -43,13 +43,13 @@ TableCache::~TableCache() {
   m_hyperspace->remove_callback(this);
 }
 
-TablePtr TableCache::get(const String &table_name, int32_t flags) {
+TablePtr TableCache::get(const string &table_name, int32_t flags) {
   ScopedLock lock(m_mutex);
   return get_unlocked(table_name, flags);
 }
 
-TablePtr TableCache::get_unlocked(const String &table_name, int32_t flags) {
-  String id;
+TablePtr TableCache::get_unlocked(const string &table_name, int32_t flags) {
+  string id;
 
   TableMap::iterator it = m_table_map.find(table_name);
   if (it != m_table_map.end()) {
@@ -67,7 +67,7 @@ TablePtr TableCache::get_unlocked(const String &table_name, int32_t flags) {
   return table;
 }
 
-bool TableCache::get_schema_str(const String &table_name, String &schema, bool with_ids)
+bool TableCache::get_schema_str(const string &table_name, string &schema, bool with_ids)
 {
   ScopedLock lock(m_mutex);
   TableMap::const_iterator it = m_table_map.find(table_name);
@@ -78,7 +78,7 @@ bool TableCache::get_schema_str(const String &table_name, String &schema, bool w
   return true;
 }
 
-bool TableCache::get_schema(const String &table_name, SchemaPtr &output_schema) {
+bool TableCache::get_schema(const string &table_name, SchemaPtr &output_schema) {
   ScopedLock lock(m_mutex);
   TableMap::const_iterator it = m_table_map.find(table_name);
 
@@ -88,7 +88,7 @@ bool TableCache::get_schema(const String &table_name, SchemaPtr &output_schema) 
   return true;
 }
 
-bool TableCache::remove(const String &table_name) {
+bool TableCache::remove(const string &table_name) {
   ScopedLock lock(m_mutex);
   bool found = false;
   TableMap::iterator it = m_table_map.find(table_name);

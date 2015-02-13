@@ -34,9 +34,9 @@ using namespace std;
  */
 LoadDataSource *
 LoadDataSourceFactory::create(FsBroker::Lib::ClientPtr &dfs_client,
-    const String &input_fname, const int src,
-    const String &header_fname, const int header_src,
-    const std::vector<String> &key_columns, const String &timestamp_column,
+    const string &input_fname, const int src,
+    const string &header_fname, const int header_src,
+    const std::vector<String> &key_columns, const string &timestamp_column,
     char field_separator, int row_uniquify_chars, int load_flags) {
 
   LoadDataSource *lds;

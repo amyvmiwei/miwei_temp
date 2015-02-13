@@ -37,7 +37,7 @@ using namespace std;
 using namespace Hypertable;
 
 bool TestSource::next(ByteString &key, ByteString &value) {
-  String line;
+  string line;
   boost::shared_array<char> line_ptr;
   char *base, *ptr, *last;
   char *rowkey;

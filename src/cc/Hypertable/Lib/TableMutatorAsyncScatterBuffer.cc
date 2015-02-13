@@ -250,7 +250,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
   SerializedKey key;
   SendRec send_rec;
   size_t len;
-  String range_location;
+  string range_location;
 
   HT_ASSERT(!m_outstanding);
   m_completion_counter.set(m_buffer_map.size());

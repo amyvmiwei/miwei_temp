@@ -111,7 +111,7 @@ namespace Hypertable {
     typedef list<ResultPtr> ResultQueue;
 
     void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells);
-    void scan_error(TableScannerAsync *scanner, int error, const String &error_msg,
+    void scan_error(TableScannerAsync *scanner, int error, const std::string &error_msg,
                     bool eos);
     void update_ok(TableMutatorAsync *mutator);
     void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures);

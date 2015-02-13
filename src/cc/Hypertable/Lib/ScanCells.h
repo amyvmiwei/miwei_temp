@@ -105,7 +105,7 @@ namespace Lib {
      * @param lastkey Return pointer to last key in block
      * @return true if scan has reached end
      */
-    bool load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
+    bool load(SchemaPtr &schema, const std::string &end_row, bool end_inclusive,
               ScanLimitState *limit_state, CstrSet &rowset,
               int64_t *bytes_scanned, Key *lastkey);
 

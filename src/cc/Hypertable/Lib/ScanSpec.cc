@@ -425,7 +425,7 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
 }
 
 void
-ScanSpec::parse_column(const char *column_str, String &family, 
+ScanSpec::parse_column(const char *column_str, string &family, 
                        const char **qualifier, size_t *qualifier_len,
                        bool *has_qualifier, bool *is_regexp, bool *is_prefix)
 {

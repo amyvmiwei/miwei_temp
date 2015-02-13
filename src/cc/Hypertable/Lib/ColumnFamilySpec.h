@@ -180,8 +180,8 @@ namespace Hypertable {
      *   <TimeOrder>desc</TimeOrder>
      *   <Counter>false</Counter>
      * @endverbatim
-     * @param line_prefix String to prepend to each line of output
-     * @return String representing options in XML format
+     * @param line_prefix std::string to prepend to each line of output
+     * @return std::string representing options in XML format
      */
     const std::string render_xml(const std::string &line_prefix) const;
 
@@ -194,7 +194,7 @@ namespace Hypertable {
     /// <pre>
     /// MAX_VERSIONS 3 TTL 1398615345 TIME_ORDER desc
     /// </pre>
-    /// @return String representing options in HQL format
+    /// @return std::string representing options in HQL format
     const std::string render_hql() const;
 
     /// Equality operator.
@@ -375,9 +375,9 @@ namespace Hypertable {
        </Options>
      </ColumnFamily>
      @endverbatim
-     * @param line_prefix String to prepend to each line of output
+     * @param line_prefix std::string to prepend to each line of output
      * @param with_ids Include ID and Generation in output
-     * @return String representing spec in XML format
+     * @return std::string representing spec in XML format
      */
     const std::string render_xml(const std::string &line_prefix,
                                  bool with_ids=false) const;
@@ -404,7 +404,7 @@ namespace Hypertable {
     /// <pre>
     ///   foo MAX_VERSIONS 3 TTL 1398615345 TIME_ORDER desc, QUALIFIER INDEX foo
     /// </pre>
-    /// @return String representing column specification in HQL format
+    /// @return std::string representing column specification in HQL format
     const std::string render_hql() const;
 
     /// Returns reference to options structure.

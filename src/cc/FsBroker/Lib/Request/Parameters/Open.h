@@ -57,7 +57,7 @@ namespace Parameters {
     /// @param fname File name
     /// @param flags Open flags
     /// @param bufsz Buffer size
-    Open(const String &fname, uint32_t flags, int32_t bufsz)
+    Open(const std::string &fname, uint32_t flags, int32_t bufsz)
       : m_fname(fname), m_flags(flags), m_bufsz(bufsz) {}
 
     /// Gets file name
@@ -84,7 +84,7 @@ namespace Parameters {
 			 size_t *remainp) override;
 
     /// File name
-    String m_fname;
+    std::string m_fname;
 
     /// Open flags
     uint32_t m_flags;

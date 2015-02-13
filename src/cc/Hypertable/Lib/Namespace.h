@@ -61,7 +61,7 @@ namespace Hypertable {
      * Constructs the object
      *
      */
-    Namespace(const String &name, const String &id, PropertiesPtr &props,
+    Namespace(const std::string &name, const std::string &id, PropertiesPtr &props,
               ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
               ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap,
               Lib::Master::ClientPtr &master_client, RangeLocatorPtr &range_locator,
@@ -75,13 +75,13 @@ namespace Hypertable {
      */
     static void canonicalize(String *original);
 
-    String get_name() const {
-      String dstr = m_name;
+    std::string get_name() const {
+      std::string dstr = m_name;
       return dstr;
     }
 
-    String get_id() const {
-      String dstr = m_id;
+    std::string get_id() const {
+      std::string dstr = m_id;
       return dstr;
     }
 
@@ -91,7 +91,7 @@ namespace Hypertable {
      * @param flags Compaction flags
      *        (see RangeServerProtocol::CompactionFlags)
      */
-    void compact(const String &name, const String &row, uint32_t flags);
+    void compact(const std::string &name, const std::string &row, uint32_t flags);
 
     /** Creates a table.
      *
@@ -138,16 +138,16 @@ namespace Hypertable {
      * @param name name of the table
      * @param schema_str schema definition for the table
      */
-    void create_table(const String &name, const String &schema_str);
+    void create_table(const std::string &name, const std::string &schema_str);
 
-    void create_table(const String &name, SchemaPtr &schema);
+    void create_table(const std::string &name, SchemaPtr &schema);
 
     /** Alter table schema.
      * @param table_name Name of table to alter
      * @param schema Schema object holding alterations
      * @param force Force table alteration even if generation mismatch
      */
-    void alter_table(const String &table_name, SchemaPtr &schema, bool force);
+    void alter_table(const std::string &table_name, SchemaPtr &schema, bool force);
 
 #if 0
     /**
@@ -194,7 +194,7 @@ namespace Hypertable {
      * @param force Force table alteration even if generation mismatch
      */
 #endif
-    void alter_table(const String &table_name, const String &schema_str, bool force);
+    void alter_table(const std::string &table_name, const std::string &schema_str, bool force);
 
     /**
      * Opens a table
@@ -203,14 +203,14 @@ namespace Hypertable {
      * @param flags open flags
      * @return pointer to Table object
      */
-    TablePtr open_table(const String &name, int32_t flags = 0);
+    TablePtr open_table(const std::string &name, int32_t flags = 0);
 
     /**
      * Refreshes the cached table entry
      *
      * @param name name of the table
      */
-    void refresh_table(const String &name);
+    void refresh_table(const std::string &name);
 
     /**
      * Checks if the table exists
@@ -218,7 +218,7 @@ namespace Hypertable {
      * @param name name of table
      * @return true of table exists false ow
      */
-    bool exists_table(const String &name);
+    bool exists_table(const std::string &name);
 
     /**
      * Returns the table identifier for a table
@@ -226,7 +226,7 @@ namespace Hypertable {
      * @param name name of table
      * @return identifier string for the table
      */
-    String get_table_id(const String &name);
+    std::string get_table_id(const std::string &name);
 
     /**
      * Returns a smart ptr to a schema object for a table
@@ -234,7 +234,7 @@ namespace Hypertable {
      * @param name table name
      * @return schema object of table
      */
-    SchemaPtr get_schema(const String &name);
+    SchemaPtr get_schema(const std::string &name);
 
     /**
      * Returns the schema for a table
@@ -243,7 +243,7 @@ namespace Hypertable {
      * @param with_ids include generation and column family ID attributes
      * @return XML schema of table
      */
-    String get_schema_str(const String &name, bool with_ids=false);
+    std::string get_schema_str(const std::string &name, bool with_ids=false);
 
     /**
      * Returns a list of existing tables &  namesspaces
@@ -259,7 +259,7 @@ namespace Hypertable {
      * @param old_name old table name
      * @param new_name new table name
      */
-    void rename_table(const String &old_name, const String &new_name);
+    void rename_table(const std::string &old_name, const std::string &new_name);
 
     /**
      * Removes a table.  This command instructs the Master to
@@ -269,7 +269,7 @@ namespace Hypertable {
      * @param name table name
      * @param if_exists don't throw an exception if table does not exist
      */
-    void drop_table(const String &name, bool if_exists);
+    void drop_table(const std::string &name, bool if_exists);
 
     /// Rebuild a table's indices.
     /// Rebuilds the indices for table <code>table_name</code> by carrying out a
@@ -286,7 +286,7 @@ namespace Hypertable {
      * @param name table name
      * @param splits reference to TableSplitsContainer object
      */
-    void get_table_splits(const String &name, TableSplitsContainer &splits);
+    void get_table_splits(const std::string &name, TableSplitsContainer &splits);
 
     /**
      * Returns a pointer to the client object which created this Namespace
@@ -296,26 +296,26 @@ namespace Hypertable {
     }
 
   private:
-    String get_index_table_name(const String &table_name) {
-      String s="^";
+    std::string get_index_table_name(const std::string &table_name) {
+      std::string s="^";
       return (s+table_name);
     }
 
-    String get_qualifier_index_table_name(const String &table_name) {
-      String s="^^";
+    std::string get_qualifier_index_table_name(const std::string &table_name) {
+      std::string s="^^";
       return (s+table_name);
     }
 
-    void create_index_table(const String &primary_table_name);
+    void create_index_table(const std::string &primary_table_name);
 
     typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
-    String get_full_name(const String &sub_name);
+    std::string get_full_name(const std::string &sub_name);
 
     void initialize();
-    TablePtr _open_table(const String &full_name, int32_t flags = 0);
+    TablePtr _open_table(const std::string &full_name, int32_t flags = 0);
 
-    String                  m_name;
-    String                  m_id;
+    std::string                  m_name;
+    std::string                  m_id;
     PropertiesPtr           m_props;
     Comm                   *m_comm;
     ConnectionManagerPtr    m_conn_manager;
@@ -324,7 +324,7 @@ namespace Hypertable {
     NameIdMapperPtr         m_namemap;
     Lib::Master::ClientPtr m_master_client;
     RangeLocatorPtr         m_range_locator;
-    String                  m_toplevel_dir;
+    std::string                  m_toplevel_dir;
     bool                    m_hyperspace_reconnect;
     Mutex                   m_mutex;
     TableCachePtr           m_table_cache;

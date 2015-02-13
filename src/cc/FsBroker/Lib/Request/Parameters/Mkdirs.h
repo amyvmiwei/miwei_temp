@@ -54,7 +54,7 @@ namespace Parameters {
     /// Initializes with parameters for encoding.  Sets #m_dirname to
     /// <code>dirname</code>.
     /// @param dirname Directory name
-    Mkdirs(const String &dirname) : m_dirname(dirname) {}
+    Mkdirs(const std::string &dirname) : m_dirname(dirname) {}
 
     /// Gets directory name
     /// @return Directory name
@@ -72,7 +72,7 @@ namespace Parameters {
 			 size_t *remainp) override;
 
     /// Directory name
-    String m_dirname;
+    std::string m_dirname;
   };
 
   /// @}

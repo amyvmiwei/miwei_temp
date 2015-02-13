@@ -57,7 +57,7 @@ namespace Parameters {
     /// @param listen_port Listen port
     /// @param lock_held Lock held flag
     /// @param system_stats %System stats
-    RegisterServer(const String &location, uint16_t listen_port, bool lock_held,
+    RegisterServer(const std::string &location, uint16_t listen_port, bool lock_held,
                    StatsSystem &system_stats)
       : m_location(location), m_listen_port(listen_port),
         m_lock_held(lock_held), m_system_stats(system_stats) { }

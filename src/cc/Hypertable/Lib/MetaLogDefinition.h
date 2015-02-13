@@ -106,7 +106,7 @@ namespace Hypertable {
     private:
 
       /// Backup label of %MetaLog
-      String m_backup_label;
+      std::string m_backup_label;
     };
 
     /// Smart pointer to Definition

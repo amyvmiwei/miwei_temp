@@ -102,7 +102,7 @@ namespace Hypertable {
      * @param eos end of scan indicator
      */
     virtual void scan_error(TableScannerAsync *scanner, int error, 
-                            const String &error_msg, bool eos) {
+                            const std::string &error_msg, bool eos) {
       if (m_original_cb)
         m_original_cb->scan_error(scanner, error, error_msg, eos);
     }

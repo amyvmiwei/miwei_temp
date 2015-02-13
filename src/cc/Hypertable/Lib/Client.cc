@@ -57,7 +57,7 @@ using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Config;
 
-Client::Client(const String &install_dir, const String &config_file,
+Client::Client(const string &install_dir, const string &config_file,
                uint32_t default_timeout_ms)
   : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
   ScopedRecLock lock(rec_mutex);
@@ -69,7 +69,7 @@ Client::Client(const String &install_dir, const String &config_file,
   initialize();
 }
 
-Client::Client(const String &install_dir, uint32_t default_timeout_ms)
+Client::Client(const string &install_dir, uint32_t default_timeout_ms)
   : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
   ScopedRecLock lock(rec_mutex);
 
@@ -83,10 +83,10 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
   initialize();
 }
 
-void Client::create_namespace(const String &name, Namespace *base, bool create_intermediate, bool if_not_exists) {
+void Client::create_namespace(const string &name, Namespace *base, bool create_intermediate, bool if_not_exists) {
 
-  String full_name;
-  String sub_name = name;
+  string full_name;
+  string sub_name = name;
   int flags=0;
 
   if (create_intermediate)
@@ -103,9 +103,9 @@ void Client::create_namespace(const String &name, Namespace *base, bool create_i
   m_master_client->create_namespace(full_name, flags);
 }
 
-NamespacePtr Client::open_namespace(const String &name, Namespace *base) {
-  String full_name;
-  String sub_name = name;
+NamespacePtr Client::open_namespace(const string &name, Namespace *base) {
+  string full_name;
+  string sub_name = name;
 
   Namespace::canonicalize(&sub_name);
 
@@ -118,11 +118,11 @@ NamespacePtr Client::open_namespace(const String &name, Namespace *base) {
   return m_namespace_cache->get(full_name);
 }
 
-bool Client::exists_namespace(const String &name, Namespace *base) {
-  String id;
+bool Client::exists_namespace(const string &name, Namespace *base) {
+  string id;
   bool is_namespace = false;
-  String full_name;
-  String sub_name = name;
+  string full_name;
+  string sub_name = name;
 
   Namespace::canonicalize(&sub_name);
 
@@ -137,7 +137,7 @@ bool Client::exists_namespace(const String &name, Namespace *base) {
 
   // TODO: issue 11
 
-  String namespace_file = m_toplevel_dir + "/tables/" + id;
+  string namespace_file = m_toplevel_dir + "/tables/" + id;
 
   try {
     return m_hyperspace->exists(namespace_file);
@@ -147,9 +147,9 @@ bool Client::exists_namespace(const String &name, Namespace *base) {
   }
 }
 
-void Client::drop_namespace(const String &name, Namespace *base, bool if_exists) {
-  String full_name;
-  String sub_name = name;
+void Client::drop_namespace(const string &name, Namespace *base, bool if_exists) {
+  string full_name;
+  string sub_name = name;
 
   Namespace::canonicalize(&sub_name);
 

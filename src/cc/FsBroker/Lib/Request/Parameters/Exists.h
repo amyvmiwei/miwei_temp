@@ -54,7 +54,7 @@ namespace Parameters {
     /// Initializes with parameters for encoding.  Sets #m_fname to
     /// <code>fname</code>.
     /// @param fname File name
-    Exists(const String &fname) : m_fname(fname) {}
+    Exists(const std::string &fname) : m_fname(fname) {}
 
     /// Gets file name
     /// @return File name
@@ -72,7 +72,7 @@ namespace Parameters {
 			 size_t *remainp) override;
 
     /// File name
-    String m_fname;
+    std::string m_fname;
   };
 
   /// @}

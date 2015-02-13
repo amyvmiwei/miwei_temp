@@ -31,9 +31,11 @@
 #include <Common/StringExt.h>
 
 #include <iostream>
+#include <string>
 #include <unordered_map>
 
 using namespace Hypertable;
+using namespace std;
 
 namespace {
 
@@ -2146,7 +2148,7 @@ namespace {
 }
 
 
-const char **HqlHelpText::get(const String &subject) {
+const char **HqlHelpText::get(const string &subject) {
   HelpTextMap::const_iterator iter = text_map.find(subject);
   if (iter == text_map.end())
     return 0;

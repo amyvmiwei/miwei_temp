@@ -123,9 +123,6 @@ namespace Hypertable {
     /// Event queue
     std::queue<EventPtr> m_receive_queue;
 
-    /// Flag indicating if CONNECTION_ESTABLISHED event received
-    bool m_connected {};
-
   };
 
   /// Smart pointer to DispatchHandlerSynchronizer

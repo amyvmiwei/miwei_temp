@@ -60,7 +60,7 @@ namespace Parameters {
     /// @param bufsz Buffer size
     /// @param replication Replication factor
     /// @param blksz Block size
-    Create(const String &fname, uint32_t flags, int32_t bufsz,
+    Create(const string &fname, uint32_t flags, int32_t bufsz,
 	   int32_t replication, int64_t blksz)
       : m_fname(fname), m_flags(flags), m_bufsz(bufsz),
 	m_replication(replication), m_blksz(blksz) {}
@@ -97,7 +97,7 @@ namespace Parameters {
 			 size_t *remainp) override;
 
     /// File name
-    String m_fname;
+    string m_fname;
 
     /// Create flags
     uint32_t m_flags;

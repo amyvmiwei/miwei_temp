@@ -135,7 +135,7 @@ cmd_rename_table(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback 
 
 void
 cmd_exists_table(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
-  String exists = (String)"true";
+  string exists = (String)"true";
 
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
@@ -213,7 +213,7 @@ cmd_describe_table(NamespacePtr &ns, ParserState &state,
                    HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
-  String schema_str = ns->get_schema_str(state.table_name, state.with_ids);
+  string schema_str = ns->get_schema_str(state.table_name, state.with_ids);
   cb.on_return(schema_str);
   cb.on_finish();
 }
@@ -228,7 +228,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
-  String localfs = "file://";
+  string localfs = "file://";
   char fs = state.field_separator ? state.field_separator : '\t';
 
   table = ns->open_table(state.table_name);
@@ -399,7 +399,7 @@ cmd_dump_table(NamespacePtr &ns,
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
-  String localfs = "file://";
+  string localfs = "file://";
   char fs = state.field_separator ? state.field_separator : '\t';
 
   // verify parameters
@@ -760,7 +760,7 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
     }
   }
   else {
-    foreach_ht(const String &col, state.delete_columns) {
+    foreach_ht(const string &col, state.delete_columns) {
       ++cb.total_cells;
 
       key.column_family = col.c_str();
@@ -900,16 +900,16 @@ HqlInterpreter::HqlInterpreter(Client *client, ConnectionManagerPtr &conn_manage
 
 }
 
-void HqlInterpreter::set_namespace(const String &ns) {
+void HqlInterpreter::set_namespace(const string &ns) {
   if (m_namespace && m_immutable_namespace)
     HT_THROW(Error::BAD_NAMESPACE, (String)"Attempting to modify immutable namespace " +
              m_namespace->get_name() + " to " + ns);
   m_namespace = m_client->open_namespace(ns);
 }
 
-void HqlInterpreter::execute(const String &line, Callback &cb) {
+void HqlInterpreter::execute(const string &line, Callback &cb) {
   ParserState state(m_namespace.get());
-  String stripped_line = line;
+  string stripped_line = line;
 
   boost::trim(stripped_line);
 
