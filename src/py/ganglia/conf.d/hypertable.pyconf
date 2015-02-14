@@ -300,6 +300,10 @@ collection_group {
     name = "ht.rangeserver.queryCache.fill"
     title = "RangeServer Query Cache Fill"
   }
+  metric {
+    name = "ht.rangeserver.queryCache.waiters"
+    title = "RangeServer Query Cache Waiters"
+  }
 
 ##
 ## ThriftBroker

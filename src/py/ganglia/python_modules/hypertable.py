@@ -774,6 +774,17 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
 
+        d = {'name': 'ht.rangeserver.queryCache.waiters',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'waiters',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Query cache waiters',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
     ##
     ## ThriftBroker metrics
     ##

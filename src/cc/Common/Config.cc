@@ -426,6 +426,8 @@ void DefaultPolicy::init_options() {
         "Minimum size of block cache")
     ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(-1),
         "Maximum (target) size of block cache")
+    ("Hypertable.RangeServer.QueryCache.EnableMutexStatistics",
+     boo()->default_value(true), "Enable query cache mutex statistics")
     ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(50*M),
         "Maximum size of query cache")
     ("Hypertable.RangeServer.Range.RowSize.Unlimited", boo()->default_value(false),

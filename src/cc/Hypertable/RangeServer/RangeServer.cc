@@ -2450,12 +2450,14 @@ void
   uint64_t previous_query_cache_hits = m_stats->query_cache_hits;
   uint64_t previous_block_cache_accesses = m_stats->block_cache_accesses;
   uint64_t previous_block_cache_hits = m_stats->block_cache_hits;
+  int32_t query_cache_waiters {};
 
   if (m_query_cache)
     m_query_cache->get_stats(&m_stats->query_cache_max_memory,
                              &m_stats->query_cache_available_memory,
                              &m_stats->query_cache_accesses,
-                             &m_stats->query_cache_hits);
+                             &m_stats->query_cache_hits,
+                             &query_cache_waiters);
 
   if (Global::block_cache)
     Global::block_cache->get_stats(&m_stats->block_cache_max_memory,
@@ -2721,6 +2723,7 @@ void
     m_stats->query_cache_available_memory;
   m_ganglia_collector->update("queryCache.fill",
                             (float)query_cache_fill / 1000000000.0);
+  m_ganglia_collector->update("queryCache.waiters", query_cache_waiters);
 
   m_ganglia_collector->update("requestBacklog",(int32_t)m_app_queue->backlog());
 

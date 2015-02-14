@@ -22,21 +22,30 @@
 #include <Common/Compat.h>
 #include "QueryCache.h"
 
+#include <Common/Config.h>
+
 #include <cassert>
 #include <iostream>
 #include <vector>
 
 using namespace Hypertable;
+using namespace Hypertable::Config;
 using namespace std;
 
 #define OVERHEAD 64
+
+QueryCache::QueryCache(uint64_t max_memory)
+  : m_max_memory(max_memory), m_avail_memory(max_memory) {
+  if (Config::properties)
+    m_mutex.set_statistics_enabled(properties->get_bool("Hypertable.RangeServer.QueryCache.EnableMutexStatistics"));
+}
 
 bool
 QueryCache::insert(Key *key, const char *tablename, const char *row,
                    std::set<uint8_t> &columns, uint32_t cell_count,
                    boost::shared_array<uint8_t> &result,
                    uint32_t result_length) {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<MutexWithStatistics> lock(m_mutex);
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator lookup_iter;
   uint64_t length = result_length + OVERHEAD + strlen(row);
@@ -78,7 +87,7 @@ QueryCache::insert(Key *key, const char *tablename, const char *row,
 
 bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
 			uint32_t *lenp, uint32_t *cell_count) {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<MutexWithStatistics> lock(m_mutex);
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator iter;
 
@@ -111,17 +120,19 @@ bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
 }
 
 void QueryCache::get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
-                           uint64_t *total_lookupsp, uint64_t *total_hitsp)
+                           uint64_t *total_lookupsp, uint64_t *total_hitsp,
+                           int32_t *total_waiters)
 {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<MutexWithStatistics> lock(m_mutex);
   *total_lookupsp = m_total_lookup_count;
   *total_hitsp = m_total_hit_count;
   *max_memoryp = m_max_memory;
   *available_memoryp = m_avail_memory;
+  *total_waiters = m_mutex.get_waiting_threads();  
 }
 
 void QueryCache::invalidate(const char *tablename, const char *row, std::set<uint8_t> &columns) {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<MutexWithStatistics> lock(m_mutex);
   InvalidateHashIndex &hash_index = m_cache.get<2>();
   InvalidateHashIndex::iterator iter;
   RowKey row_key(tablename, row);

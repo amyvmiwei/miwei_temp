@@ -26,12 +26,15 @@
 #ifndef HYPERTABLE_MUTEX_H
 #define HYPERTABLE_MUTEX_H
 
+#include <Common/Logger.h>
+
 #include <boost/version.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
-#include "Common/Logger.h"
+#include <atomic>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -115,6 +118,18 @@ public:
   void unlock() { Ops::unlock(*this); }
 #endif
 };
+
+class MutexWithStatistics {
+ public:
+  void lock() { if (m_enabled) m_count++; m_mutex.lock();}
+  void unlock() { m_mutex.unlock(); if (m_enabled) m_count--; }
+  int32_t get_waiting_threads() {return (int32_t)((m_enabled && m_count>1) ? m_count-1 : 0);}
+  void set_statistics_enabled(bool val) { m_enabled = val; }
+ private:
+   std::atomic_int_fast32_t m_count;
+   std::mutex m_mutex;
+   bool m_enabled {true};
+ };
 
 /** @} */
 
