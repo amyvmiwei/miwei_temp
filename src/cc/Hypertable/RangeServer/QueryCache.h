@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <fstream>
 #include <set>
 
 namespace Hypertable {
@@ -172,6 +173,10 @@ namespace Hypertable {
     void get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
                    uint64_t *total_lookupsp, uint64_t *total_hitsp,
                    int32_t *total_waiters);
+
+    /// Dumps keys to output file.
+    /// @param out Output file to dump keys to
+    void dump_keys(std::ofstream &out);
 
   private:
 

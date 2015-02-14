@@ -22,6 +22,9 @@
 #include <Common/Compat.h>
 #include "QueryCache.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/SerializedKey.h>
+
 #include <Common/Config.h>
 
 #include <cassert>
@@ -129,6 +132,31 @@ void QueryCache::get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
   *max_memoryp = m_max_memory;
   *available_memoryp = m_avail_memory;
   *total_waiters = m_mutex.get_waiting_threads();  
+}
+
+void QueryCache::dump_keys(ofstream &out) {
+  std::lock_guard<MutexWithStatistics> lock(m_mutex);
+  Sequence &sequence_index = m_cache.get<0>();
+  out << "\nQuery Cache:\n";
+  for (auto &entry : sequence_index) {
+    out << entry.row_key.tablename << "['" << entry.row_key.row << "'] cols={";
+    bool first {true};
+    for (uint8_t cf : entry.columns) {
+      if (!first)
+        out << ",";
+      else
+        first = false;
+      out << (int)cf;
+    }
+    out << "} Length=" << entry.result_length << " CellCount=" << entry.cell_count;
+    if (entry.cell_count > 0) {
+      SerializedKey serkey;
+      serkey.ptr = (uint8_t *)(entry.result.get() + 4);
+      Hypertable::Key key(serkey);
+      out << " FirstKey=(" << key << ")";
+    }
+    out << "\n";
+  }
 }
 
 void QueryCache::invalidate(const char *tablename, const char *row, std::set<uint8_t> &columns) {

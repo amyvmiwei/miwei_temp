@@ -2165,7 +2165,7 @@ Apps::RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier &table
 }
 
 void Apps::RangeServer::dump(ResponseCallback *cb, const char *outfile,
-                       bool nokeys) {
+                             bool nokeys) {
   Ranges ranges;
   AccessGroup::MaintenanceData *ag_data;
   String str;
@@ -2191,6 +2191,10 @@ void Apps::RangeServer::dump(ResponseCallback *cb, const char *outfile,
         for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
           ag_data->ag->dump_keys(out);
     }
+
+    // Query Cache
+    if (m_query_cache)
+      m_query_cache->dump_keys(out);
 
     // Dump AccessGroup garbage tracker statistics
     out << "\nGarbage tracker statistics:\n";
