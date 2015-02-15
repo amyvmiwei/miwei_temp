@@ -60,6 +60,7 @@ namespace Master {
       COMMAND_COMPACT,
       COMMAND_SET_STATE,
       COMMAND_RECREATE_INDEX_TABLES,
+      COMMAND_SYSTEM_STATUS,
       COMMAND_MAX
     };
   };

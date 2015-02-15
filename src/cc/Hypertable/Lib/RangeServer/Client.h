@@ -356,6 +356,13 @@ namespace RangeServer {
      */
     void status(const CommAddress &addr, Status &status, Timer &timer);
 
+    /// Issues an asynchonous <i>status</i> request with timer.
+    /// @param addr Address of RangeServer
+    /// @param handler Response handler
+    /// @param timer Deadline timer
+    void status(const CommAddress &addr, DispatchHandler *handler,
+                Timer &timer);
+
     /** Issues a "wait_for_maintenance" request.  This call blocks until it receives a
      * response from the server or times out.
      * @param addr address of RangeServer

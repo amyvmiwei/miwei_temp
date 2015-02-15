@@ -28,6 +28,7 @@ GcWorker.cc
 DispatchHandlerOperation.cc
 DispatchHandlerOperationGetStatistics.cc
 DispatchHandlerOperationSetState.cc
+DispatchHandlerOperationSystemStatus.cc
 HyperspaceMasterFile.cc
 LoadBalancer.cc
 MetaLogDefinitionMaster.cc
@@ -56,6 +57,7 @@ OperationRelinquishAcknowledge.cc
 OperationRenameTable.cc
 OperationSetState.cc
 OperationStatus.cc
+OperationSystemStatus.cc
 OperationSystemUpgrade.cc
 OperationTimedBarrier.cc
 OperationToggleTableMaintenance.cc

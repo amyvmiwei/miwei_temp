@@ -45,6 +45,7 @@
 
 #include <Common/FailureInducer.h>
 #include <Common/ScopeGuard.h>
+#include <Common/StatusPersister.h>
 #include <Common/StringExt.h>
 #include <Common/md5.h>
 #include <Common/Time.h>
@@ -402,6 +403,45 @@ String root_range_location(ContextPtr &context) {
     HT_THROW(e.code(), e.what());
   }
   return location;
+}
+
+bool status(ContextPtr &context, Timer &timer, Status &status) {
+  if (context->startup_in_progress())
+    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_COMING_UP);
+  else if (context->shutdown_in_progress())
+    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_SHUTTING_DOWN);
+  else if (!context->master_file->lock_acquired())
+    status.set(Status::Code::OK, Status::Text::STANDBY);
+  else if (context->quorum_reached) {
+    size_t connected_servers = context->available_server_count();
+    size_t total_servers = context->rsc_manager->server_count();
+    if (connected_servers < total_servers) {
+      size_t failover_pct
+        = context->props->get_i32("Hypertable.Failover.Quorum.Percentage");
+      size_t quorum = ((total_servers * failover_pct) + 99) / 100;
+      if (connected_servers == 0)
+        status.set(Status::Code::CRITICAL,
+                   "RangeServer recovery blocked because 0 servers available.");
+      else if (connected_servers < quorum)
+        status.set(Status::Code::CRITICAL,
+                   format("RangeServer recovery blocked (%d servers "
+                          "available, quorum of %d is required)",
+                          (int)connected_servers, (int)quorum));
+      else
+        status.set(Status::Code::WARNING, "RangeServer recovery in progress");
+    }
+    else {
+      context->dfs->status(status, &timer);
+      Status::Code code;
+      string text;
+      status.get(&code, text);
+      if (code != Status::Code::OK)
+        status.set(code, format("FsBroker %s", text.c_str()));
+      else
+        StatusPersister::get(status);
+    }
+  }
+  return status.get() == Status::Code::OK;
 }
 
 }}

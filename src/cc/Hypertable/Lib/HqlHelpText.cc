@@ -59,6 +59,7 @@ namespace {
     "SELECT ............. Selects (and display) cells from a table",
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
     "SHOW TABLES ........ Displays only the list of tables in the current namespace",
+    "STATUS ............. Checks system status",
     "GET LISTING ........ Displays the list of tables and namespace in the current namespace",
     "SET ................ Set system state variables",
     "",
@@ -2103,6 +2104,21 @@ namespace {
     0
   };
 
+  const char *help_text_status[] = {
+    "",
+    "STATUS",
+    "======",
+    "",
+    "    STATUS",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The STATUS command performs a status check of Hypertable.",
+    "",
+    0
+  };
+
   typedef std::unordered_map<std::string, const char **>  HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
@@ -2141,6 +2157,7 @@ namespace {
     (*map)["rebuild"] = help_text_rebuild_indices;
     (*map)["rebuild indices"] = help_text_rebuild_indices;
     (*map)["set"] = help_text_set;
+    (*map)["status"] = help_text_status;
     return *map;
   }
 

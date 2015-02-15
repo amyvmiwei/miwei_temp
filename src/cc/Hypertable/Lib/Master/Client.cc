@@ -51,6 +51,7 @@
 #include "Request/Parameters/SetState.h"
 #include "Request/Parameters/Stop.h"
 #include "Response/Parameters/Status.h"
+#include "Response/Parameters/SystemStatus.h"
 
 #include <Hyperspace/Session.h>
 
@@ -725,6 +726,35 @@ void Master::Client::stop(const String &rsname, Timer *timer) {
 
   fetch_result(id, timer, event, label);
 }
+
+
+void Master::Client::system_status(Status &status, Timer *timer) {
+  Timer tmp_timer(m_timeout_ms);
+  EventPtr event;
+
+  initialize(timer, tmp_timer);
+
+  while (!timer->expired()) {
+
+    CommHeader header(Protocol::COMMAND_SYSTEM_STATUS);
+    CommBufPtr cbuf( new CommBuf(header, 0) );
+    if (!send_message(cbuf, timer, event, "system status"))
+      continue;
+
+    const uint8_t *ptr = event->payload + 4;
+    size_t remain = event->payload_len - 4;
+    Response::Parameters::SystemStatus params;
+    params.decode(&ptr, &remain);
+    status = params.status();
+    return;
+  }
+
+  ScopedLock lock(m_mutex);
+  HT_THROWF(Error::REQUEST_TIMEOUT,
+            "Client operation 'system status' to master %s failed",
+            m_master_addr.format().c_str());
+}
+
 
 void
 Master::Client::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,

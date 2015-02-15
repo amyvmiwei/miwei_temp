@@ -516,8 +516,16 @@ void Lib::RangeServer::Client::do_status(const CommAddress &addr, Status &status
     params.decode(&ptr, &remaining);
     status = params.status();
   }
-
 }
+
+void Lib::RangeServer::Client::status(const CommAddress &addr,
+                                      DispatchHandler *handler, Timer &timer) {
+  CommHeader header(Protocol::COMMAND_STATUS);
+  header.flags |= CommHeader::FLAGS_BIT_URGENT;
+  CommBufPtr cbuf(new CommBuf(header));
+  send_message(addr, cbuf, handler, timer.remaining());
+}
+
 
 void Lib::RangeServer::Client::wait_for_maintenance(const CommAddress &addr) {
   DispatchHandlerSynchronizer sync_handler;

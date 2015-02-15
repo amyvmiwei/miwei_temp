@@ -118,20 +118,19 @@ namespace Hypertable {
                    bool immutable_namespace=true);
 
     /** The main interface for the interpreter */
-    void execute(const std::string &str, Callback &);
+    int execute(const std::string &str, Callback &);
 
     /** A convenient method demonstrate the usage of the interface */
-    void
-    execute(const std::string &str, CellsBuilder &output, std::vector<String> &ret) {
+    int execute(const std::string &str, CellsBuilder &output, std::vector<String> &ret) {
       SmallCallback cb(output, ret);
-      execute(str, cb);
+      return execute(str, cb);
     }
 
     /** More convenient method for admin commands (create/drop table etc.) */
-    void execute(const std::string &cmd) {
+    int execute(const std::string &cmd) {
       CellsBuilder cb;
       std::vector<String> res;
-      execute(cmd, cb, res);
+      return execute(cmd, cb, res);
     }
 
     void set_namespace(const std::string &ns);

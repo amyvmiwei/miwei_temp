@@ -29,6 +29,7 @@
 #include "Status.h"
 
 #include <Common/Serialization.h>
+#include <Common/String.h>
 
 using namespace Hypertable;
 using namespace std;
@@ -71,4 +72,11 @@ void Status::decode_internal(uint8_t version, const uint8_t **bufp,
   lock_guard<mutex> lock(m_mutex);
   m_code = static_cast<Code>(Serialization::decode_i32(bufp, remainp));
   m_text = Serialization::decode_vstr(bufp, remainp);
+}
+
+std::string Status::format_output_line(const std::string &service) {
+  lock_guard<mutex> lock(m_mutex);
+  if (m_code == Code::OK && m_text.empty())
+    return format("%s OK", service.c_str());
+  return format("%s %s - %s", service.c_str(), code_to_string(m_code), m_text.c_str());
 }

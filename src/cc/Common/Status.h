@@ -120,6 +120,15 @@ namespace Hypertable {
       return m_code;
     }
 
+    /// Formats a Nagios-style output line.
+    /// Formats and returns a Nagios-style output line in the following format:
+    /// <pre>
+    /// SERVICE STATUS - status text
+    /// </pre>
+    /// @param service Service name
+    /// @return Nagios-style output line.
+    std::string format_output_line(const std::string &service);
+
   private:
 
     /// Returns encoding version.

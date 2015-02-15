@@ -48,6 +48,7 @@
 #include "OperationSetState.h"
 #include "OperationStatus.h"
 #include "OperationStop.h"
+#include "OperationSystemStatus.h"
 #include "OperationTimedBarrier.h"
 #include "RangeServerConnection.h"
 #include "ReferenceManager.h"
@@ -109,6 +110,16 @@ void ConnectionHandler::handle(EventPtr &event) {
                   (Llu)event->header.command);
 
       switch (event->header.command) {
+      case Lib::Master::Protocol::COMMAND_STATUS:
+        operation = make_shared<OperationStatus>(m_context, event);
+        m_context->response_manager->add_delivery_info(operation->id(), event);
+        m_context->op->add_operation(operation);
+        return;
+      case Lib::Master::Protocol::COMMAND_SYSTEM_STATUS:
+        operation = make_shared<OperationSystemStatus>(m_context, event);
+        m_context->response_manager->add_delivery_info(operation->id(), event);
+        m_context->op->add_operation(operation);
+        return;
       case Lib::Master::Protocol::COMMAND_COMPACT:
         operation = make_shared<OperationCompact>(m_context, event);
         break;
@@ -124,11 +135,6 @@ void ConnectionHandler::handle(EventPtr &event) {
       case Lib::Master::Protocol::COMMAND_RENAME_TABLE:
         operation = make_shared<OperationRenameTable>(m_context, event);
         break;
-      case Lib::Master::Protocol::COMMAND_STATUS:
-        operation = make_shared<OperationStatus>(m_context, event);
-        m_context->response_manager->add_delivery_info(operation->id(), event);
-        m_context->op->add_operation(operation);
-        return;
       case Lib::Master::Protocol::COMMAND_REGISTER_SERVER:
         operation = make_shared<OperationRegisterServer>(m_context, event);
         m_context->op->add_operation(operation);

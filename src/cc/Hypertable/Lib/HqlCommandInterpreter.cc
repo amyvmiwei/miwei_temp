@@ -190,7 +190,6 @@ HqlCommandInterpreter::HqlCommandInterpreter(HqlInterpreter *interp)
 
 int HqlCommandInterpreter::execute_line(const string &line) {
   CommandCallback cb(*this, m_profile);
-  m_interp->execute(line, cb);
-  return 0;
+  return m_interp->execute(line, cb);
 }
 

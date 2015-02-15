@@ -19,13 +19,16 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Tools/Lib/CommandShell.h"
+#include <Common/Compat.h>
 
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/HqlCommandInterpreter.h"
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/HqlCommandInterpreter.h>
+
+#include <Tools/Lib/CommandShell.h>
+
+#include <Common/ConsoleOutputSquelcher.h>
+#include <Common/Init.h>
 
 using namespace Hypertable;
 using namespace Config;
@@ -37,9 +40,11 @@ namespace {
       cmdline_desc().add_options()
         ("no-log-sync", boo()->default_value(false),
          "Don't sync rangeserver commit logs on autoflush")
+        ("output-only", "Display status output and exit with status 0")
         ("profile", "Send profiling output to stderr")
         ("namespace", str()->default_value(""),
          "Automatically use specified namespace when starting")
+        ("silent-startup", "Squelch output during startup")
         ;
       alias("no-log-sync", "Hypertable.HqlInterpreter.Mutator.NoLogSync");
     }
@@ -51,17 +56,25 @@ typedef Meta::list<AppPolicy, CommandShellPolicy, DefaultCommPolicy> Policies;
 
 
 int main(int argc, char **argv) {
-
   CommandShellPtr shell;
   CommandInterpreterPtr interp;
   Client *hypertable;
-  int status = 0;
+  int status {};
+  bool silent {};
+  bool output_only {};
 
   try {
     init_with_policies<Policies>(argc, argv);
     bool profile = has("profile");
+    output_only = has("output-only");
+    silent = has("silent") && get_bool("silent");
 
-    hypertable = new Hypertable::Client();
+    if (has("silent-startup")) {
+      ConsoleOutputSquelcher dummy;
+      hypertable = new Hypertable::Client();
+    }
+    else
+      hypertable = new Hypertable::Client();
     interp = new HqlCommandInterpreter(hypertable, profile);
     shell = new CommandShell("hypertable", "Hypertable", interp, properties);
     shell->set_namespace(get_str("namespace"));
@@ -71,8 +84,14 @@ int main(int argc, char **argv) {
     status = shell->run();
   }
   catch(Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    status = e.code();
+    if (!silent) {
+      cout << "Hypertable CRITICAL - " << Error::get_text(e.code());
+      const char *msg = e.what();
+      if (msg && *msg)
+        cout << " - " << msg;
+      cout << endl;
+    }
+    _exit(output_only ? 0 : 2);
   }
   _exit(status);
 }

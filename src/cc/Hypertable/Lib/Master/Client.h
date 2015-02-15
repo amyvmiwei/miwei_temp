@@ -160,6 +160,8 @@ namespace Master {
     void phantom_commit_complete(int64_t op_id, const String &location,
                                  int plan_generation, int32_t error, const String message);
 
+    void system_status(Status &status, Timer *timer=0);
+
 
   private:
     friend class ClientHyperspaceSessionCallback;

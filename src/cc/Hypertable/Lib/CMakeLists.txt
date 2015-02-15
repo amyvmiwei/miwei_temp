@@ -86,6 +86,7 @@ Master/Request/Parameters/SetState.cc
 Master/Request/Parameters/Stop.cc
 Master/Response/Parameters/RegisterServer.cc
 Master/Response/Parameters/Status.cc
+Master/Response/Parameters/SystemStatus.cc
 MetaLog.cc
 MetaLogEntity.cc
 MetaLogEntityHeader.cc

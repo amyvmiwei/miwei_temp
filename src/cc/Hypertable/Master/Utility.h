@@ -33,7 +33,9 @@
 #include <Hypertable/Lib/TableIdentifier.h>
 #include <Hypertable/Lib/TableParts.h>
 
+#include <Common/Status.h>
 #include <Common/StringExt.h>
+#include <Common/Timer.h>
 
 namespace Hypertable {
 
@@ -246,6 +248,14 @@ namespace Hypertable {
      * @return Location of root METADATA range.
      */
     extern String root_range_location(ContextPtr &context);
+
+    /// Runs a status check on the master.
+    /// @param context %Master context
+    /// @param timer Deadline timer
+    /// @param status Status output object
+    /// @return <i>true</i> if status is Status::Code::OK, <i>false</i>
+    /// otherwise
+    extern bool status(ContextPtr &context, Timer &timer, Status &status);
 
     /// @}
 

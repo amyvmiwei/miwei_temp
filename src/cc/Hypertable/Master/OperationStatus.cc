@@ -22,6 +22,7 @@
 #include <Common/Compat.h>
 
 #include "OperationStatus.h"
+#include "Utility.h"
 
 #include <Common/Error.h>
 #include <Common/Serialization.h>
@@ -39,43 +40,8 @@ OperationStatus::OperationStatus(ContextPtr &context, EventPtr &event)
 
 void OperationStatus::execute() {
   Status status;
-
-  if (m_context->startup_in_progress())
-    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_COMING_UP);
-  else if (m_context->shutdown_in_progress())
-    status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_SHUTTING_DOWN);
-  else if (!m_context->master_file->lock_acquired())
-    status.set(Status::Code::OK, Status::Text::STANDBY);
-  else if (m_context->quorum_reached) {
-    size_t connected_servers = m_context->available_server_count();
-    size_t total_servers = m_context->rsc_manager->server_count();
-    if (connected_servers < total_servers) {
-      size_t failover_pct
-        = m_context->props->get_i32("Hypertable.Failover.Quorum.Percentage");
-      size_t quorum = ((total_servers * failover_pct) + 99) / 100;
-      if (connected_servers == 0)
-        status.set(Status::Code::CRITICAL,
-                   "RangeServer recovery blocked because 0 servers available.");
-      else if (connected_servers < quorum)
-        status.set(Status::Code::CRITICAL,
-                   format("RangeServer recovery blocked (%d servers "
-                          "available, quorum of %d is required)",
-                          (int)connected_servers, (int)quorum));
-      else
-        status.set(Status::Code::WARNING, "RangeServer recovery in progress");
-    }
-    else {
-      Timer timer(m_event->header.timeout_ms, true);
-      m_context->dfs->status(status, &timer);
-      Status::Code code;
-      string text;
-      status.get(&code, text);
-      if (code != Status::Code::OK)
-        status.set(code, format("[fsbroker] %s", text.c_str()));
-      else
-        StatusPersister::get(status);
-    }
-  }
+  Timer timer(m_event->header.timeout_ms, true);
+  Utility::status(m_context, timer, status);
   m_params.set_status(status);
   complete_ok();
 }
