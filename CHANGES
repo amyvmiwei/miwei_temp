@@ -1,3 +1,36 @@
+Version 0.9.8.5:
+(2015-02-16)
+
+    Normalized script names to start with "ht-" and program names with "ht_"
+    Normalized names of client interface programs (fsbroker, master, rangeserver ...)
+    Changed ThriftBroker 'status' command to conform to Nagios plugin standard
+    Changed RangeServer 'status' command to conform to Nagios plugin standard
+    Changed Master 'status' command to conform to Nagios plugin standard
+    Added standard Nagios options to check scripts (e.g. --timeout & --hostname)
+    Added support for overall system status check ht-check.sh
+    Modified RangeServer::dump to include QueryCache
+    Added ht.rangeserver.queryCache.waiters Ganglia metric
+    Changed a few more classes to derive from Serializable
+    Merge pull request #19 from grewal/v0.9.8
+    Update the copyright year to 2015
+    Replaced intrusive_ptr with shared_ptr in AsyncComm
+    gh14: Removed spurious RangeServer log ERROR messages after schema change
+    Fixed MR connector output formats to support configurable ThriftBroker host/port
+    gh13: Fixed range movement problem surfaced with acknowledge_load timeout
+    Changed data structure encoding format to support forward compatibility
+    Added DISPLAY_REVISIONS option to SELECT statement
+    Reorganized and cleaned up FsBroker code
+    Set HDFS property dfs.client.read.shortcircuit.buffer.size to 128K if not set
+    issue 1318: Create Range hints file if none exists and no transfer log
+    Updated cmake/FindMaven.cmake to allow JDK > 1.6
+    issue 1255: Consolidate transfer log code and fixed double delete problem
+    Allow environment variable references in include: statement of cluster.def
+    Define PACKAGE_FILE in cluster.def using HYPERTABLE_VERSION variable
+    Enable slow query log by default
+    issue 1335: Improved ht_cluster --help text
+    issue 1333: Got rid of warning in TranslatorCode.cc
+    issue 1336: Fixed \$ escaping in ht_cluster task comments
+
 Version 0.9.8.4:
 (2014-11-23)
 
