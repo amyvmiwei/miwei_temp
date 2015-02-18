@@ -197,6 +197,10 @@ if (Boost_INCLUDE_DIR)
     FIND_BOOST_LIBRARY(BOOST_SYSTEM_LIB system ${Boost_PARENT} true)
   endif()
 
+  if (APPLE)
+    FIND_BOOST_LIBRARY(BOOST_SYSTEM_MT_LIB system-mt ${Boost_PARENT} false)
+  endif()
+
   if (NOT Boost_FIND_QUIETLY)
     message(STATUS "Boost thread lib: ${BOOST_THREAD_LIB}")
     message(STATUS "Boost program options lib: ${BOOST_PROGRAM_OPTIONS_LIB}")
@@ -217,7 +221,7 @@ if (Boost_INCLUDE_DIR)
       ${BOOST_FILESYSTEM_LIB} ${BOOST_THREAD_LIB})
 
   if(Boost_HAS_SYSTEM_LIB)
-    set(BOOST_LIBS ${BOOST_LIBS} ${BOOST_SYSTEM_LIB})
+    set(BOOST_LIBS ${BOOST_LIBS} ${BOOST_SYSTEM_LIB} ${BOOST_SYSTEM_MT_LIB})
   endif()
 
   if (NOT ${BOOST_CHRONO_LIB} MATCHES "NOTFOUND$")
