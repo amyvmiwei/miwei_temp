@@ -357,9 +357,30 @@ add_test(Secondary-Indices-tests indices_test)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
-
   install(FILES ${HEADERS}
-      DESTINATION include/Hypertable/Lib)
+        DESTINATION include/Hypertable/Lib)
+  file(GLOB HEADERS RangeServerRecovery/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/RangeServerRecovery)
+  file(GLOB HEADERS RangeServer/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/RangeServer)
+  file(GLOB HEADERS RangeServer/Request/Parameters/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/RangeServer/Request/Parameters)
+  file(GLOB HEADERS RangeServer/Response/Parameters/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/RangeServer/Response/Parameters)
+
+  file(GLOB HEADERS Master/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/Master)
+  file(GLOB HEADERS Master/Request/Parameters/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/Master/Request/Parameters)
+  file(GLOB HEADERS Master/Response/Parameters/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/Lib/Master/Response/Parameters)
   install(TARGETS Hypertable
       LIBRARY DESTINATION lib
       ARCHIVE DESTINATION lib)

@@ -171,6 +171,12 @@ if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/RangeServer)
+  file(GLOB HEADERS Request/Handler/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/RangeServer/Request/Handler)
+  file(GLOB HEADERS Response/Callback/*.h)
+  install(FILES ${HEADERS}
+          DESTINATION include/Hypertable/RangeServer/Response/Callback)
   install(TARGETS HyperRanger htRangeServer ht_csdump ht_csvalidate ht_count_stored
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
