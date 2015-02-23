@@ -373,6 +373,8 @@ void Apps::RangeServer::status(Response::Callback::Status *cb) {
     status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_COMING_UP);
   else if (m_shutdown)
     status.set(Status::Code::CRITICAL, Status::Text::SERVER_IS_SHUTTING_DOWN);
+  else if (!Global::range_initialization_complete)
+    status.set(Status::Code::WARNING, "Range initialization not yet complete");
   else {
     Timer timer(cb->event()->header.timeout_ms, true);
     Global::dfs->status(status, &timer);

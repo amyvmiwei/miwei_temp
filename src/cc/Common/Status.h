@@ -64,6 +64,7 @@ namespace Hypertable {
     };
 
     static const char *code_to_string(Code code);
+    static Code string_to_code(std::string str);
 
     /// Constructor.
     Status() { }

@@ -25,7 +25,6 @@ if [ "e$RUNTIME_ROOT" == "e" ]; then
   RUNTIME_ROOT=$HYPERTABLE_HOME
 fi
 
-
 die() {
   echo "$@"
   exit 1
@@ -152,37 +151,40 @@ wait_for_server_shutdown() {
   wait_for_server "shutdown" "$@"
 }
 
-wait_for_ok() {
+
+wait_for_ready() {
   server=$1; shift
   server_desc=$1; shift
   max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
   retries=${retries:-0}
+  ready_status=${ready_status:-1}
+  local STATUS_TEXT
+  local status
 
-  $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
-  ret=$?
-  while [ $ret -ge 2 ] && [ $retries -lt $max_retries ]; do
+  STATUS_TEXT=`$HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"`
+  status=$?
+
+  while [ ${status} -gt ${ready_status} ] && [ $retries -lt $max_retries ]; do
     sleep 1
     let retries=retries+1
     let report=retries%$report_interval
-    if [ $report == 0 ]; then
-        STATUS_TEXT=`$HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"`
-        ret=$?
-        if [ $ret -ge 2 ] && [[ $STATUS_TEXT == *"Server is coming up" ]] ; then
-           echo "Waiting for $server_desc to come up ..."
-        else
-           echo "$STATUS_TEXT"
-        fi
-    else
-        $HYPERTABLE_HOME/bin/ht-check-${server}.sh --silent "$@"
-        ret=$?
+    STATUS_TEXT=`$HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"`
+    status=$?
+    if [ $report == 0 ] && [ ${status} -gt ${ready_status} ]; then
+      local reason=`echo $STATUS_TEXT | cut -f2 -d- | sed -e 's/^[[:space:]]*//'`
+      echo "Waiting for $server_desc to come up ( $reason ) ..."
     fi
   done
-  $HYPERTABLE_HOME/bin/ht-check-${server}.sh "$@"
-  ret=$?
+  if [ ${status} -le ${ready_status} ]; then
+    echo "${server_desc} Started"
+    status=0
+  else
+    echo $STATUS_TEXT
+  fi
   [ -s $startlog ] && cat $startlog
   rm -f $startlog
-  return $ret
+  return $status
 }
 
 

@@ -154,17 +154,14 @@ string OperationSystemStatus::status_text_from_result(DispatchHandlerOperationSy
     else
       code = Status::Code::CRITICAL;
     if (!result.message.empty())
-      return format("Hypertable %s - RangeServer %s (%s) status failure (%s - %s)",
-                    Status::code_to_string(code), result.location.c_str(),
-                    address.c_str(), Error::get_text(result.error),
-                    result.message.c_str());
-    return format("Hypertable %s - RangeServer %s (%s) status failure (%s)",
-                  Status::code_to_string(code), result.location.c_str(),
+      return format("RangeServer %s (%s) %s - %s",
+                    result.location.c_str(), address.c_str(),
+                    Error::get_text(result.error), result.message.c_str());
+    return format("RangeServer %s (%s) %s", result.location.c_str(),
                   address.c_str(), Error::get_text(result.error));
   }
   string text;
   result.status.get(&code, text);
-  return format("Hypertable %s - RangeServer %s (%s) status failure (%s)",
-                Status::code_to_string(code), result.location.c_str(),
+  return format("RangeServer %s (%s) %s", result.location.c_str(),
                 address.c_str(), text.c_str());
 }

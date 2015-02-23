@@ -130,7 +130,7 @@ if [ $? != 0 ] ; then
     exit 1
   fi
 
-  wait_for_ok fsbroker "FS Broker ($FS)" "$@"
+  wait_for_ready fsbroker "FS Broker ($FS)" "$@"
 else
   echo "WARNING: FSBroker already running."
 fi

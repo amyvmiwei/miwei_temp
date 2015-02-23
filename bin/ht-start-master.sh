@@ -55,7 +55,7 @@ check_pidfile $pidfile && exit 0
 $HYPERTABLE_HOME/bin/ht-check-master.sh --silent "$@"
 if [ $? != 0 ] ; then
   exec_server htMaster --verbose "$@"
-  wait_for_ok master "Master" "$@"
+  wait_for_ready master "Master" "$@"
 else
   echo "WARNING: Master already running."
 fi

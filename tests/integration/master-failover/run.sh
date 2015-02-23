@@ -22,13 +22,13 @@ start_masters() {
     pidfile=$RUNTIME_ROOT/run/Master.15870.pid
     logfile="Master.15870.log"
     exec_server htMaster --verbose --Hypertable.Master.Port=15870 --Hypertable.Connection.Retry.Interval=3000 "$@"
-    wait_for_ok master "Master" --Hypertable.Master.Port=15870
+    wait_for_ready master "Master" --Hypertable.Master.Port=15870
 
     # Start master on port 15871
     pidfile=$RUNTIME_ROOT/run/Master.15871.pid
     logfile="Master.15871.log"
     exec_server htMaster --verbose --Hypertable.Master.Port=15871 --Hypertable.Connection.Retry.Interval=3000
-    wait_for_ok master "Master" --Hypertable.Master.Port=15871
+    wait_for_ready master "Master" --Hypertable.Master.Port=15871
 
     sleep 5
 }

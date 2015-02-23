@@ -108,6 +108,7 @@ namespace Hypertable {
     static int32_t        metrics_interval;
     static int32_t        merge_cellstore_run_length_threshold;
     static bool           ignore_clock_skew_errors;
+    static bool           range_initialization_complete;
     static ConnectionManagerPtr conn_manager;
     static std::vector<MetaLog::EntityTaskPtr> work_queue;
     static StringSet      immovable_range_set;

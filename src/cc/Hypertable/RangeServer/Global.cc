@@ -45,6 +45,7 @@ namespace Hypertable {
   bool                   Global::verbose = false;
   bool                   Global::row_size_unlimited = false;
   bool                   Global::ignore_cells_with_clock_skew = false;
+  bool                   Global::range_initialization_complete = false;
   CommitLog             *Global::user_log = 0;
   CommitLog             *Global::system_log = 0;
   CommitLog             *Global::metadata_log = 0;

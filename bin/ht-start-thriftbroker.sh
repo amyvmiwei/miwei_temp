@@ -56,7 +56,7 @@ $HYPERTABLE_HOME/bin/ht-check-thriftbroker.sh --silent "$@"
 if [ $? != 0 ] ; then
   exec_server htThriftBroker --verbose "$@"
   report_interval=8
-  wait_for_ok thriftbroker "ThriftBroker" "$@"
+  wait_for_ready thriftbroker "ThriftBroker" "$@"
 else
   echo "WARNING: ThriftBroker already running."
 fi

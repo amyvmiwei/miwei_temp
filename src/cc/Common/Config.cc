@@ -474,6 +474,8 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.Failover.FlushLimit.Aggregate",
      i64()->default_value(100*M), "Amount of updates (bytes) accumulated for "
         "all range to trigger a replay buffer flush")
+    ("Hypertable.RangeServer.ReadyStatus", str()->default_value("WARNING"),
+        "Status code indicating RangeServer is ready for operation")
     ("Hypertable.Metadata.Replication", i32()->default_value(-1),
         "Replication factor for commit log files")
     ("Hypertable.CommitLog.RollLimit", i64()->default_value(100*M),

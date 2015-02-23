@@ -31,6 +31,8 @@
 #include <Common/Serialization.h>
 #include <Common/String.h>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace Hypertable;
 using namespace std;
 
@@ -46,6 +48,19 @@ const char *Status::code_to_string(Code code) {
     break;
   }
   return "UNKNOWN";
+}
+
+Status::Code Status::string_to_code(std::string str) {
+  boost::trim_if(str, boost::is_any_of("'\""));
+  if (str == "OK")
+    return Code::OK;
+  else if (str == "WARNING")
+    return Code::WARNING;
+  else if (str == "CRITICAL")
+    return Code::CRITICAL;
+  else if (str == "UNKNOWN")
+    return Code::UNKNOWN;
+  HT_THROWF(Error::INVALID_ARGUMENT, "status code string '%s'", str.c_str());
 }
 
 uint8_t Status::encoding_version() const {

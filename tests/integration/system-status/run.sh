@@ -9,42 +9,65 @@ function on_exit() {
 
 trap on_exit EXIT
 
+status_string_to_code () {
+  if [ $1 == "OK" ]; then
+    return 0
+  elif [ $1 == "WARNING" ]; then
+    return 1
+  elif [ $1 == "CRITICAL" ]; then
+    return 2
+  elif [ $1 == "UNKNOWN" ]; then
+    return 3
+  fi
+  echo "Error - unknown status string: $1"
+  exit 1
+}
+
 \rm -f output
 $HT_HOME/bin/ht-destroy-database.sh
 
 $HT_HOME/bin/ht-check.sh >> output
-if [ $? -ne 2 ]; then
+ret=$?
+if [ $ret -ne 2 ]; then
   echo "(1) Status should be CRITICAL"
   exit 1
 fi
 
 $HT_HOME/bin/ht-start-hyperspace.sh
 $HT_HOME/bin/ht-check.sh >> output
-if [ $? -ne 2 ]; then
-  echo "(2) Status is $? when it should be CRITICAL"
+ret=$?
+if [ $ret -ne 2 ]; then
+  echo "(2) Status is $ret when it should be CRITICAL"
   exit 1
 fi
 
 $HT_HOME/bin/ht-start-fsbroker.sh local
 $HT_HOME/bin/ht-start-master.sh
 $HT_HOME/bin/ht-check.sh >> output
-if [ $? -ne 2 ]; then
-  echo "(3) Status is $? when it should be CRITICAL"
+ret=$?
+if [ $ret -ne 2 ]; then
+  echo "(3) Status is $ret when it should be CRITICAL"
   exit 1
 fi
 
+RS_READY_STATUS=`$HT_HOME/bin/ht get_property Hypertable.RangeServer.ReadyStatus | sed 's/"//g'`
+status_string_to_code $RS_READY_STATUS
+RS_READY_CODE=$?
+
 $HT_HOME/bin/ht-start-rangeserver.sh
 $HT_HOME/bin/ht-check.sh >> output
-if [ $? -ne 0 ]; then
-  echo "(4) Status is $? when it should be OK"
+ret=$?
+if [ $ret -gt $RS_READY_CODE ]; then
+  echo "(4) Status is $ret when it should be $RS_READY_STATUS"
   exit 1
 fi
 
 
 kill -STOP `cat $HT_HOME/run/RangeServer.pid`
 $HT_HOME/bin/ht-check.sh -t 7 >> output
-if [ $? -ne 1 ]; then
-  echo "(5) Status is $? when it should be WARNING"
+ret=$?
+if [ $ret -ne 1 ]; then
+  echo "(5) Status is $ret when it should be WARNING"
   exit 1
 fi
 kill -CONT `cat $HT_HOME/run/RangeServer.pid`
@@ -54,16 +77,18 @@ kill -CONT `cat $HT_HOME/run/RangeServer.pid`
 
 $HT_HOME/bin/ht-stop-rangeserver.sh
 $HT_HOME/bin/ht-check.sh
-if [ $? -ne 2 ]; then
-  echo "(6) Status is $? when it should be CRITICAL"
+ret=$?
+if [ $ret -ne 2 ]; then
+  echo "(6) Status is $ret when it should be CRITICAL"
   exit 1
 fi
 
 $HT_HOME/bin/ht-start-rangeserver.sh
 $HT_HOME/bin/ht-stop-fsbroker.sh
 $HT_HOME/bin/ht-check.sh
-if [ $? -ne 2 ]; then
-  echo "(7) Status is $? when it should be CRITICAL"
+ret=$?
+if [ $ret -ne 2 ]; then
+  echo "(7) Status is $ret when it should be CRITICAL"
   exit 1
 fi
 

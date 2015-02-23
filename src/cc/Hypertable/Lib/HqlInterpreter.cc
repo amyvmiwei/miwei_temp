@@ -868,15 +868,14 @@ int cmd_status(Client *client, ParserState &state, HqlInterpreter::Callback &cb)
     error = client->get_hyperspace_session()->status(status, &timer);
   }
   catch (Exception &e) {
-    cb.on_return(Hypertable::format("Hypertable CRITICAL - Hyperspace status "
-                                    "failure (%s - %s)",
+    cb.on_return(Hypertable::format("Hypertable CRITICAL - %s - %s",
                                     Error::get_text(e.code()), e.what()));
     return 2;
   }
 
   if (error != Error::OK) {
-    cb.on_return(Hypertable::format("Hypertable CRITICAL - Hyperspace status "
-                                    "failure (%s)", Error::get_text(error)));
+    cb.on_return(Hypertable::format("Hypertable CRITICAL - %s",
+                                    Error::get_text(error)));
     return 2;
   }
 
@@ -884,7 +883,7 @@ int cmd_status(Client *client, ParserState &state, HqlInterpreter::Callback &cb)
     Status::Code code;
     string text;
     status.get(&code, text);
-    cb.on_return(Hypertable::format("Hypertable %s - Hyperspace status failure (%s)",
+    cb.on_return(Hypertable::format("Hypertable %s - %s",
                                     Status::code_to_string(code), text.c_str()));
     return static_cast<int>(code);
   }
@@ -896,7 +895,7 @@ int cmd_status(Client *client, ParserState &state, HqlInterpreter::Callback &cb)
     Status::Code code;
     string text;
     status.get(&code, text);
-    cb.on_return(Hypertable::format("Hypertable %s - Master status failure (%s)",
+    cb.on_return(Hypertable::format("Hypertable %s - %s",
                                     Status::code_to_string(code), text.c_str()));
     return static_cast<int>(code);
   }

@@ -370,11 +370,15 @@ void MaintenanceScheduler::schedule() {
     HT_INFOF("Found load_acknowledged=false in %d ranges", (int)not_acknowledged);
   }
 
+  bool uninitialized_range_seen {};
+
   // if this is the first time around, just enqueue work that
   // was in progress
   if (!m_initialized) {
     uint32_t level = 0, priority = 0;
     foreach_ht (RangeData &rd, ranges.array) {
+      if (!rd.data->initialized)
+        uninitialized_range_seen = true;
       if (rd.data->state == RangeState::SPLIT_LOG_INSTALLED ||
           rd.data->state == RangeState::SPLIT_SHRUNK) {
         level = get_level(rd);
@@ -409,13 +413,15 @@ void MaintenanceScheduler::schedule() {
     uint32_t level = 0;
 
     foreach_ht (RangeData &rd, ranges_prioritized.array) {
-      if (!rd.data->initialized && !low_memory &&
-           initialization_created < m_initialization_per_interval) {
-        level = get_level(rd);
-        Global::maintenance_queue->add(new MaintenanceTaskDeferredInitialization(
-                                  level, rd.data->priority,
-                                  schedule_time, rd.range));
-        ++initialization_created;
+      if (!rd.data->initialized) {
+        uninitialized_range_seen = true;
+        if (!low_memory && initialization_created < m_initialization_per_interval) {
+          level = get_level(rd);
+          Global::maintenance_queue->add(new MaintenanceTaskDeferredInitialization(
+                                         level, rd.data->priority,
+                                         schedule_time, rd.range));
+          ++initialization_created;
+        }
       }
       if (rd.data->maintenance_flags & MaintenanceFlag::SPLIT) {
         level = get_level(rd);
@@ -466,6 +472,9 @@ void MaintenanceScheduler::schedule() {
       }
     }
   }
+
+  if (!Global::range_initialization_complete && !uninitialized_range_seen)
+    Global::range_initialization_complete = true;
 
   MaintenanceTaskWorkQueue *task = 0;
   {

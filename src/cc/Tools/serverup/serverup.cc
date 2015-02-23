@@ -292,6 +292,9 @@ namespace {
     HT_DEBUG_OUT <<"Checking rangeserver at "<< get_str("rs-host")
                  <<':'<< get_i16("rs-port") << HT_END;
 
+    Status::Code ready_status =
+      Status::string_to_code(properties->get_str("Hypertable.RangeServer.ReadyStatus"));
+
     if (properties->has("host"))
       properties->set("rs-host", properties->get_str("host"));
 
@@ -312,7 +315,7 @@ namespace {
     Status::Code code;
     string text;
     status.get(&code, text);
-    if (code != Status::Code::OK)
+    if (code > ready_status)
       HT_THROW(Error::FAILED_EXPECTATION, text);
   }
 

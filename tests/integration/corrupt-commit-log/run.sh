@@ -38,8 +38,8 @@ $HT_HOME/bin/ht-start-fsbroker.sh local
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 
-$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker
-$HT_HOME/bin/ht-check-rangeserver.sh
+$HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker --Hypertable.RangeServer.ReadyStatus=WARNING
+$HT_HOME/bin/ht-check-rangeserver.sh --Hypertable.RangeServer.ReadyStatus=WARNING
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
   exit 1
@@ -53,8 +53,8 @@ $HT_HOME/bin/ht-stop-rangeserver.sh
 dd bs=$OFFSET if=/tmp/0.good of=/tmp/0 count=1
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
-$HT_HOME/bin/ht-start-rangeserver.sh
-$HT_HOME/bin/ht-check-rangeserver.sh
+$HT_HOME/bin/ht-start-rangeserver.sh --Hypertable.RangeServer.ReadyStatus=WARNING
+$HT_HOME/bin/ht-check-rangeserver.sh --Hypertable.RangeServer.ReadyStatus=WARNING
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
   exit 1
@@ -69,8 +69,8 @@ let TRUNCATE_OFFSET=OFFSET+50
 dd bs=$TRUNCATE_OFFSET if=/tmp/0.good of=/tmp/0 count=1
 echo "rm /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
 echo "copyFromLocal /tmp/0 /hypertable/servers/rs1/log/user/0;" | $HT_HOME/bin/ht fsbroker --batch
-$HT_HOME/bin/ht-start-rangeserver.sh
-$HT_HOME/bin/ht-check-rangeserver.sh
+$HT_HOME/bin/ht-start-rangeserver.sh --Hypertable.RangeServer.ReadyStatus=WARNING
+$HT_HOME/bin/ht-check-rangeserver.sh --Hypertable.RangeServer.ReadyStatus=WARNING
 if [ $? -ne 1 ]; then
   echo "Error - RangeServer not reporting WARNING as it should"
   exit 1

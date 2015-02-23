@@ -27,7 +27,7 @@ $HT_HOME/bin/ht-stop-servers.sh
 $HT_HOME/bin/ht-start-test-servers.sh --no-thriftbroker
 
 $HT_HOME/bin/ht-check-rangeserver.sh
-if [ $? -ne 0 ]; then
+if [ $? -ge 2 ]; then
   RET=1
 fi
 

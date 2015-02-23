@@ -53,12 +53,15 @@ set_start_vars RangeServer
 check_pidfile $pidfile && exit 0
 
 $HYPERTABLE_HOME/bin/ht-check-rangeserver.sh --silent "$@"
-if [ $? != 0 ] ; then
+if [ $? -ne 0 ] ; then
   exec_server htRangeServer --verbose "$@"
   max_retries=3600
   report_interval=30
   retries=20
-  wait_for_ok rangeserver "RangeServer" "$@"
+  if [ `$HYPERTABLE_HOME/bin/ht get_property $@ Hypertable.RangeServer.ReadyStatus | sed 's/"//g'` == "OK" ]; then
+    ready_status=0
+  fi
+  wait_for_ready rangeserver "RangeServer" "$@"
 else
   echo "WARNING: RangeServer already running."
 fi
