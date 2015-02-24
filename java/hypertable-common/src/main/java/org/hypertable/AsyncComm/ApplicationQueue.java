@@ -28,8 +28,7 @@ import java.util.HashMap;
 
 public class ApplicationQueue {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.AsyncComm.ApplicationQueue");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     static private boolean ms_shutdown = false;
 

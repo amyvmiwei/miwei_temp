@@ -41,8 +41,7 @@ import org.hypertable.Common.Error;
  */
 public class ConnectionHandler implements DispatchHandler {
 
-  static final Logger log = Logger.getLogger(
-                                             "org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   public ConnectionHandler(Comm comm, ApplicationQueue appQueue,
                            Broker broker) {

@@ -42,7 +42,7 @@ import org.hypertable.Common.MetricsProcess;
  */
 public class MetricsHandler implements DispatchHandler {
 
-  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   /** Constructor.
    * Initializes #mCollectionInterval to the property

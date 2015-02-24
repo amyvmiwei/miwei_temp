@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 
 public class ResponseCallbackReaddir extends ResponseCallback {
 
-  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   ResponseCallbackReaddir(Comm comm, Event event) {
     super(comm, event);

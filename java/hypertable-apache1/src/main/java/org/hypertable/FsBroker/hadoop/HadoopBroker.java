@@ -72,8 +72,7 @@ public class HadoopBroker implements Broker {
     private static final int OPEN_FLAG_VERIFY_CHECKSUM = 0x00000004;
     private static final int MAX_RETRIES = 10;
 
-    static final Logger log = Logger.getLogger(
-                                 "org.hypertable.FsBroker.hadoop");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     protected static AtomicInteger msUniqueId = new AtomicInteger(0);
 

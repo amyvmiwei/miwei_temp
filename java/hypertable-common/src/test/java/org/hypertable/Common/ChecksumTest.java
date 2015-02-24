@@ -33,8 +33,7 @@ import static org.junit.Assert.*;
 
 public class ChecksumTest {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.Common.ChecksumTest");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     @Before public void setUp() {
     }

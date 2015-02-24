@@ -31,7 +31,7 @@ import org.hypertable.Common.Error;
 
 public class ConnectionManager implements Runnable, DispatchHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.AsyncComm");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     private static class ConnectionState {
         public boolean             connected;

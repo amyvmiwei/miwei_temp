@@ -39,8 +39,7 @@ import org.hypertable.FsBroker.Lib.ConnectionHandler;
 
 public class main {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.FsBroker.hadoop");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     static String usage[] = {
         "",

@@ -31,8 +31,7 @@ import static org.junit.Assert.*;
 
 public class CommTest {
 
-    static final Logger log = Logger.getLogger(
-        "org.hypertable.AsyncComm.CommTest");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     static final int DEFAULT_PORT = 32998;
     static final String DEFAULT_PORT_ARG = "--port=32998";

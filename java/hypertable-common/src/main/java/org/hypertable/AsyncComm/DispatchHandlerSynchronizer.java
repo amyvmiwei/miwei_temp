@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 public class DispatchHandlerSynchronizer implements DispatchHandler {
 
-    static final Logger log = Logger.getLogger("org.hypertable.AsyncComm");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     public DispatchHandlerSynchronizer(long timeoutSecs) {
         mTimeoutMs = timeoutSecs*1000;

@@ -30,7 +30,7 @@ import org.hypertable.AsyncComm.ResponseCallback;
 
 public class RequestHandlerStatus extends ApplicationHandler {
 
-  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   public RequestHandlerStatus(Comm comm, Broker broker, Event event) {
     super(event);

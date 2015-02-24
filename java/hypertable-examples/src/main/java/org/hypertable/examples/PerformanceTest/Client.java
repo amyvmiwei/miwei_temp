@@ -46,7 +46,7 @@ import org.hypertable.Common.Serialization;
 
 public class Client {
 
-  static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   static String usage[] = {
     "",

@@ -46,7 +46,7 @@ import org.hypertable.thrift.ThriftClient;
 
 public class DriverHBase extends Driver {
 
-  static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   public DriverHBase() throws IOException {
       this.conf = HBaseConfiguration.create();

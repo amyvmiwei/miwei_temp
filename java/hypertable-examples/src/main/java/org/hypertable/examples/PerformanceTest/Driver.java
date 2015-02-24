@@ -29,7 +29,7 @@ import org.hypertable.Common.DiscreteRandomGeneratorZipf;
 
 public abstract class Driver {
 
-  static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   public void setup(Setup setup) {
     mSetup = setup;

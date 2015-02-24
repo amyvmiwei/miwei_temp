@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
 
 public class HostSpecificationTest {
 
-  static final Logger log = Logger.getLogger("org.hypertable.Common.HostSpecificationTest");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   static private Vector<String> valid;
   static private Vector<String> invalid;

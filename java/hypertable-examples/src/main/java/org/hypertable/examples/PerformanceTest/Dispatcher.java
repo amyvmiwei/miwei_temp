@@ -66,7 +66,7 @@ import org.hypertable.AsyncComm.ReactorFactory;
 
 public class Dispatcher {
 
-  static final Logger log = Logger.getLogger("org.hypertable.examples");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   private static class RequestHandler implements DispatchHandler {
 

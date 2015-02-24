@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 
 public class ResponseCallbackStatus extends ResponseCallback {
 
-  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   ResponseCallbackStatus(Comm comm, Event event) {
     super(comm, event);

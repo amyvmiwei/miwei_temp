@@ -41,7 +41,7 @@ import org.hypertable.thrift.ThriftClient;
 
 public class DriverThreadHypertable extends Thread {
 
-  static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   public static final int CLIENT_BUFFER_SIZE = 1024*1024*12;
 

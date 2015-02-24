@@ -31,7 +31,7 @@ import org.hypertable.Common.Error;
 
 public class RequestHandlerExists extends ApplicationHandler {
 
-  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
+  static final Logger log = Logger.getLogger("org.hypertable");
 
   static final byte VERSION = 1;
 

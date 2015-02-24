@@ -29,6 +29,7 @@ import java.nio.BufferUnderflowException;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
@@ -71,13 +72,33 @@ import org.apache.hadoop.fs.FileStatus;
  */
 public class HadoopBroker implements Broker {
 
-    static final Logger log = Logger.getLogger(
-                                 "org.hypertable.FsBroker.hadoop");
+    static final Logger log = Logger.getLogger("org.hypertable");
 
     protected static AtomicInteger msUniqueId = new AtomicInteger(0);
 
     public HadoopBroker(Comm comm, Properties props) throws IOException {
         String str;
+
+        /*
+         * Set logging level
+         */
+        str = props.getProperty("Hypertable.Logging.Level");
+        if (str != null && !str.equalsIgnoreCase("info") &&
+            !str.equalsIgnoreCase("notice")) {
+          if (str.equalsIgnoreCase("debug"))
+            log.setLevel(Level.FINEST);
+          else if (str.equalsIgnoreCase("warn"))
+            log.setLevel(Level.WARNING);
+          else if (str.equalsIgnoreCase("error") ||
+                   str.equalsIgnoreCase("crit") ||
+                   str.equalsIgnoreCase("alert") ||
+                   str.equalsIgnoreCase("fatal"))
+            log.setLevel(Level.SEVERE);
+          else {
+            log.severe("Unrecognized logging level: " + str);
+            System.exit(1);
+          }
+        }
 
         mMetricsHandler = new MetricsHandler(comm, props);
 
