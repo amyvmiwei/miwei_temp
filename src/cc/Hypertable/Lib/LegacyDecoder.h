@@ -22,6 +22,7 @@
 #ifndef Hypertable_Lib_LegacyDecoder_h
 #define Hypertable_Lib_LegacyDecoder_h
 
+#include <Hypertable/Lib/BalancePlan.h>
 #include <Hypertable/Lib/QualifiedRangeSpec.h>
 #include <Hypertable/Lib/RangeMoveSpec.h>
 #include <Hypertable/Lib/RangeServerRecovery/Plan.h>
@@ -34,6 +35,8 @@
 namespace Hypertable {
 
   using namespace Lib::RangeServerRecovery;
+
+  extern void legacy_decode(const uint8_t **bufp, size_t *remainp, BalancePlan *plan);
 
   extern void legacy_decode(const uint8_t **bufp, size_t *remainp, TableIdentifier *tid);
 

@@ -23,6 +23,7 @@
 
 #include <Hypertable/Lib/CommitLog.h>
 #include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
 #include <FsBroker/Lib/Config.h>
@@ -159,7 +160,19 @@ namespace {
       ptr = base;
       end = base + len;
 
-      table_id.decode(&ptr, &len);
+      size_t len_saved = len;
+      try {
+        table_id.decode(&ptr, &len);
+      }
+      catch (Exception &e) {
+        if (e.code() == Error::PROTOCOL_ERROR) {
+          len = len_saved;
+          ptr = base;
+          legacy_decode(&ptr, &len, &table_id);
+        }
+        else
+          throw;
+      }
 
       while (ptr < end) {
 

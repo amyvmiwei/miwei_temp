@@ -30,6 +30,18 @@
 using namespace Hypertable;
 using namespace Hypertable::Lib::RangeServerRecovery;
 
+void Hypertable::legacy_decode(const uint8_t **bufp, size_t *remainp, BalancePlan *plan) {
+  plan->algorithm = Serialization::decode_vstr(bufp, remainp);
+  size_t length = Serialization::decode_i32(bufp, remainp);
+  plan->moves.reserve(length);
+  for (size_t i=0; i<length; i++) {
+    RangeMoveSpecPtr move_spec = make_shared<RangeMoveSpec>();
+    legacy_decode(bufp, remainp, move_spec.get());
+    plan->moves.push_back(move_spec);
+  }
+  plan->duration_millis = Serialization::decode_i32(bufp, remainp);
+}
+
 #define TABLE_IDENTIFIER_VERSION 2
 
 void Hypertable::legacy_decode(const uint8_t **bufp, size_t *remainp, TableIdentifier *tid) {

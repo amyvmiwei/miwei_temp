@@ -28,6 +28,7 @@
 #include "BalancePlanAuthority.h"
 
 #include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
 #include <Hypertable/Lib/TableScanner.h>
 
 #include <AsyncComm/ResponseCallback.h>
@@ -201,5 +202,5 @@ void OperationBalance::decode_state_old(uint8_t version,
                                         const uint8_t **bufp,
                                         size_t *remainp) {
   m_plan = make_shared<BalancePlan>();
-  m_plan->decode(bufp, remainp);
+  legacy_decode(bufp, remainp, m_plan.get());
 }

@@ -224,6 +224,7 @@ namespace Apps {
 
     void initialize(PropertiesPtr &);
     void local_recover();
+    void decode_table_id(const uint8_t **bufp, size_t *remainp, TableIdentifier *tid);
     typedef std::map<String, SchemaPtr> TableSchemaMap;
     void get_table_schemas(TableSchemaMap &table_schemas);
     static void map_table_schemas(const String &parent, const std::vector<DirEntryAttr> &listing,
