@@ -30,14 +30,11 @@
 #include <Common/Regex.h>
 #include <Common/String.h>
 
+#include <chrono>
 #include <cctype>
 
-extern "C" {
-#include <poll.h>
-}
-
 using namespace Hypertable;
-
+using namespace std;
 
 /**
  *
@@ -49,7 +46,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
   : m_bytes_scanned(0), m_current_scanner(0), m_outstanding(0), 
     m_error(Error::OK), m_cancelled(false), m_use_index(false)
 {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   ScanSpecBuilder primary_spec(scan_spec);
   ScanSpecBuilder index_spec;
   const ScanSpec *first_pass_spec;
@@ -422,19 +419,19 @@ TableScannerAsync::~TableScannerAsync() {
 }
 
 void TableScannerAsync::cancel() {
-  ScopedLock lock(m_cancel_mutex);
+  unique_lock<mutex> lock(m_cancel_mutex);
   m_cancelled = true;
 }
 
 bool TableScannerAsync::is_cancelled() {
-  ScopedLock lock(m_cancel_mutex);
+  unique_lock<mutex> lock(m_cancel_mutex);
   return m_cancelled;
 }
 
 void TableScannerAsync::handle_error(int scanner_id, int error, const string &error_msg,
                                      bool is_create) {
   bool cancelled = is_cancelled();
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   bool abort = false;
   bool next = false;
 
@@ -505,7 +502,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const string &er
 
 void TableScannerAsync::handle_timeout(int scanner_id, const string &error_msg, bool is_create) {
   bool cancelled = is_cancelled();
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   bool next;
 
   next = m_interval_scanners[scanner_id]->abort(is_create);
@@ -527,7 +524,7 @@ void TableScannerAsync::handle_timeout(int scanner_id, const string &error_msg, 
 void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_create) {
 
   bool cancelled = is_cancelled();
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   ScanCellsPtr cells;
 
   // abort interval scanners if we've seen an error previously or scanned has been cancelled
@@ -628,7 +625,7 @@ void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_cal
 }
 
 void TableScannerAsync::wait_for_completion() {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   while (m_outstanding != 0)
     m_cond.wait(lock);
 }
@@ -681,4 +678,3 @@ void TableScannerAsync::move_to_next_interval_scanner(int current_scanner) {
     m_current_scanner = (int)m_interval_scanners.size() - 1;
   }
 }
-

@@ -34,6 +34,8 @@
 #include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 
+#include <mutex>
+
 namespace Hypertable {
 
   using namespace Lib;

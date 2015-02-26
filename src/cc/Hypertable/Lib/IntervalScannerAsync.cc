@@ -30,11 +30,8 @@
 #include <Common/String.h>
 
 #include <cassert>
+#include <chrono>
 #include <vector>
-
-extern "C" {
-#include <poll.h>
-}
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
@@ -249,7 +246,7 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
   catch (Exception &e) {
     if (e.code() == Error::REQUEST_TIMEOUT)
       HT_THROW2(e.code(), e, e.what());
-    poll(0, 0, 1000);
+    this_thread::sleep_for(chrono::milliseconds(1000));
     if (m_create_timer.expired())
       HT_THROW(Error::REQUEST_TIMEOUT, e.what());
     goto try_again;
@@ -288,7 +285,7 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
                   "complete request within %d ms", (int)duration));
       }
 
-      poll(0, 0, 1000);
+      this_thread::sleep_for(chrono::milliseconds(1000));
 
       // try again, the hard way
       m_range_locator->find_loop(&m_table_identifier, row_key,
@@ -338,8 +335,8 @@ bool IntervalScannerAsync::is_destroyed_scanner(bool is_create) {
 }
 
 bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_create,
-      bool *move_to_next, int last_error) {
-  uint32_t wait_time = 3000;
+                                          bool *move_to_next, int last_error) {
+  uint32_t wait_time = 1000;
   reset_outstanding_status(is_create, false);
 
   if (m_eos) {
@@ -392,13 +389,8 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
   try {
     if (refresh)
       m_table->refresh(m_table_identifier, m_schema);
-    // if the range was not found then first check the location cache before
-    // sleeping
-    if (last_error == Error::RANGESERVER_RANGE_NOT_FOUND)
-      if (Error::OK != m_range_locator->find(&m_table_identifier, 
-                  m_create_scanner_row.c_str(), &m_next_range_info, 
-                  m_create_timer, false))
-        poll(0, 0, wait_time);
+    // wait a bit before kicking off the scan again
+    // this_thread::sleep_for(chrono::milliseconds(wait_time));
     find_range_and_start_scan(m_create_scanner_row.c_str(), hard);
   }
   catch (Exception &e) {

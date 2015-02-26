@@ -35,6 +35,8 @@
 
 #include <AsyncComm/DispatchHandlerSynchronizer.h>
 
+#include <condition_variable>
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -79,7 +81,7 @@ namespace Hypertable {
      *
      */
     bool is_complete() {
-      ScopedLock lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
       return m_outstanding == 0;
     }
     
@@ -131,7 +133,7 @@ namespace Hypertable {
     /// @param profile_data Reference to profile data object populated by this
     /// method
     void get_profile_data(ProfileDataScanner &profile_data) {
-      ScopedLock lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
       profile_data = m_profile_data;
     }
 
@@ -161,9 +163,9 @@ namespace Hypertable {
     ResultCallback     *m_cb;
     ProfileDataScanner m_profile_data;
     int                 m_current_scanner;
-    Mutex               m_mutex;
-    Mutex               m_cancel_mutex;
-    boost::condition    m_cond;
+    std::mutex m_mutex;
+    std::mutex m_cancel_mutex;
+    std::condition_variable m_cond;
     int                 m_outstanding;
     int                 m_error;
     std::string              m_error_msg;

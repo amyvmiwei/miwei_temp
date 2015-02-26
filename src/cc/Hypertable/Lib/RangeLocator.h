@@ -22,6 +22,7 @@
 #ifndef Hypertable_Lib_RangeLocator_h
 #define Hypertable_Lib_RangeLocator_h
 
+#include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/LocationCache.h>
 #include <Hypertable/Lib/RangeLocationInfo.h>
 #include <Hypertable/Lib/RangeServer/Client.h>
@@ -113,6 +114,8 @@ namespace Hypertable {
      * @return true if invalidated, false if not cached
      */
     bool invalidate(const TableIdentifier *table, const char *row_key) {
+      if (table->is_metadata() && (row_key == 0 || strcmp(row_key, Key::END_ROOT_ROW) <= 0))
+        m_root_stale = true;
       return m_cache->invalidate(table->id, row_key);
     }
 

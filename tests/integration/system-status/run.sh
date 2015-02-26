@@ -64,10 +64,10 @@ fi
 
 
 kill -STOP `cat $HT_HOME/run/RangeServer.pid`
-$HT_HOME/bin/ht-check.sh -t 7 >> output
+$HT_HOME/bin/ht-check.sh -t 12
 ret=$?
-if [ $ret -ne 1 ]; then
-  echo "(5) Status is $ret when it should be WARNING"
+if [ $ret -lt 1 ]; then
+  echo "(5) Status is $ret when it should be at least WARNING"
   exit 1
 fi
 kill -CONT `cat $HT_HOME/run/RangeServer.pid`
