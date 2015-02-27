@@ -1,3 +1,13 @@
+Version 0.9.8.6:
+(2015-02-27)
+
+    gh31: Fixed deadlock in Defects-issue783-offload1 test
+    Fixed MML and CommitLog backward compatibility problem
+    issue 1114: Made Hadoop broker respect Hypertable.Logging.Level property
+    issue 1345: Added RS startup option to wait for completion of Range initialization
+    Install missing header files from code reorganization
+    Added missing libboost_system-mt library on Mac (Yosemite)
+
 Version 0.9.8.5:
 (2015-02-16)
 
