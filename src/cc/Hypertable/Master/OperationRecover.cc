@@ -34,6 +34,7 @@
 #include <Hypertable/RangeServer/MetaLogEntityRange.h>
 #include <Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h>
 
+#include <Hypertable/Lib/LegacyDecoder.h>
 #include <Hypertable/Lib/MetaLogReader.h>
 
 #include <Common/Error.h>
@@ -548,5 +549,36 @@ void OperationRecover::decode_state(uint8_t version, const uint8_t **bufp, size_
 void OperationRecover::decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) {
   if (version == 0)
     Serialization::decode_i16(bufp, remainp);  // skip old version
-  decode_state(version, bufp, remainp);
+  m_location = Serialization::decode_vstr(bufp, remainp);
+  int nn;
+  QualifiedRangeSpec spec;
+  RangeState state;
+  nn = Serialization::decode_i32(bufp, remainp);
+  for (int ii = 0; ii < nn; ++ii) {
+    legacy_decode(bufp, remainp, &spec);
+    m_root_specs.push_back(QualifiedRangeSpec(m_arena, spec));
+    legacy_decode(bufp, remainp, &state);
+    m_root_states.push_back(RangeState(m_arena, state));
+  }
+  nn = Serialization::decode_i32(bufp, remainp);
+  for (int ii = 0; ii < nn; ++ii) {
+    legacy_decode(bufp, remainp, &spec);
+    m_metadata_specs.push_back(QualifiedRangeSpec(m_arena, spec));
+    legacy_decode(bufp, remainp, &state);
+    m_metadata_states.push_back(RangeState(m_arena, state));
+  }
+  nn = Serialization::decode_i32(bufp, remainp);
+  for (int ii = 0; ii < nn; ++ii) {
+    legacy_decode(bufp, remainp, &spec);
+    m_system_specs.push_back(QualifiedRangeSpec(m_arena, spec));
+    legacy_decode(bufp, remainp, &state);
+    m_system_states.push_back(RangeState(m_arena, state));
+  }
+  nn = Serialization::decode_i32(bufp, remainp);
+  for (int ii = 0; ii < nn; ++ii) {
+    legacy_decode(bufp, remainp, &spec);
+    m_user_specs.push_back(QualifiedRangeSpec(m_arena, spec));
+    legacy_decode(bufp, remainp, &state);
+    m_user_states.push_back(RangeState(m_arena, state));
+  }
 }

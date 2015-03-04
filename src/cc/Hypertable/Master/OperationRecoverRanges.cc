@@ -25,7 +25,8 @@
 #include "Common/PageArenaAllocator.h"
 #include "Common/FailureInducer.h"
 
-#include "Hypertable/Lib/CommitLogReader.h"
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
 
 #include "BalancePlanAuthority.h"
 #include "OperationMoveRange.h"
@@ -311,7 +312,7 @@ void OperationRecoverRanges::decode_state_old(uint8_t version, const uint8_t **b
   }
   m_type = Serialization::decode_i32(bufp, remainp);
   m_plan_generation = Serialization::decode_i32(bufp, remainp);
-  m_plan.decode(bufp, remainp);
+  legacy_decode(bufp, remainp, &m_plan);
 }
 
 void OperationRecoverRanges::decode_request(const uint8_t **bufp,
