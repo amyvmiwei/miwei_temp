@@ -185,6 +185,14 @@ namespace Hypertable {
     /// to be displayed to stdout.
     static void enable_debug();
 
+    /// Sets libssh logging verbosity level.
+    /// Parses <code>value</code> and sets #ms_libssh_verbosity accordingly.
+    /// The valid values for <code>value</code> are: none, warning, protocol,
+    /// packet, functions.  If <code>value</code> does not match
+    /// (case insensitively) any of the value values, then an error message is
+    /// written to the console and exit is called with status code 1.
+    static void set_libssh_verbosity(const std::string &value);
+
     /// Returns hostname
     /// @return Hostname
     const std::string hostname() const { return m_hostname; }
@@ -217,6 +225,9 @@ namespace Hypertable {
 
     /// Flag for enabling debugging output.
     static bool ms_debug_enabled;
+
+    /// Libssh logging verbosity level
+    static int ms_libssh_verbosity;
 
     /// %Mutex for serialzing access to members
     std::mutex m_mutex;

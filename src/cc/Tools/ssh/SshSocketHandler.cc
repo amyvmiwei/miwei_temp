@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2014 Hypertable, Inc.
+ * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -40,12 +40,15 @@
 
 #include <fcntl.h>
 #include <poll.h>
+#include <strings.h>
 #include <sys/ioctl.h>
 
 using namespace Hypertable;
 using namespace std;
 
 #define SSH_READ_PAGE_SIZE 8192
+
+#define LOG_PREFIX "[" << m_hostname << "] === SshSocketHandler.cc:" << __LINE__ << " === "
 
 namespace {
 
@@ -116,8 +119,26 @@ namespace {
 }
 
 bool SshSocketHandler::ms_debug_enabled {};
+int  SshSocketHandler::ms_libssh_verbosity {SSH_LOG_PROTOCOL};
 
 void SshSocketHandler::enable_debug() { ms_debug_enabled = true; }
+
+void SshSocketHandler::set_libssh_verbosity(const std::string &value) {
+  if (!strcasecmp(value.c_str(), "none"))
+    ms_libssh_verbosity = SSH_LOG_NOLOG;
+  else if (!strcasecmp(value.c_str(), "warning"))
+    ms_libssh_verbosity = SSH_LOG_WARNING;
+  else if (!strcasecmp(value.c_str(), "protocol"))
+    ms_libssh_verbosity = SSH_LOG_PROTOCOL;
+  else if (!strcasecmp(value.c_str(), "packet"))
+    ms_libssh_verbosity = SSH_LOG_PACKET;
+  else if (!strcasecmp(value.c_str(), "functions"))
+    ms_libssh_verbosity = SSH_LOG_FUNCTIONS;
+  else {
+    cout << "Unrecognized libssh logging level: " << value << endl;
+    _exit(1);
+  }
+}
 
 SshSocketHandler::SshSocketHandler(const string &hostname)
   : m_hostname(hostname), m_log_collector(1024),
@@ -189,8 +210,9 @@ bool SshSocketHandler::handle(int sd, int events) {
   int rc;
 
   if (ms_debug_enabled)
-    HT_INFOF("Entering handler (%s events=%s, state=%s)", m_hostname.c_str(),
-             PollEvent::to_string(events).c_str(), state_str(m_state));
+    cerr << LOG_PREFIX << "Entering handler (events="
+         << PollEvent::to_string(events) << ", state=" << state_str(m_state)
+         << ")\n";
 
   while (true) {
     switch (m_state) {
@@ -226,7 +248,7 @@ bool SshSocketHandler::handle(int sd, int events) {
         ssh_dir.append("/.ssh");
         ssh_options_set(m_ssh_session, SSH_OPTIONS_SSH_DIR, ssh_dir.c_str());
 
-        int verbosity = SSH_LOG_PROTOCOL;
+        int verbosity = ms_libssh_verbosity;
         ssh_options_set(m_ssh_session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
         ssh_options_set(m_ssh_session, SSH_OPTIONS_HOST, m_hostname.c_str());
@@ -261,8 +283,6 @@ bool SshSocketHandler::handle(int sd, int events) {
           return false;
         }
         else if (rc == SSH_AGAIN) {
-          if (socket_has_data())
-            continue;
           m_state = STATE_COMPLETE_CONNECTION;
           break;
         }
@@ -270,12 +290,8 @@ bool SshSocketHandler::handle(int sd, int events) {
 
     case (STATE_COMPLETE_CONNECTION):
       rc = ssh_connect(m_ssh_session);
-      if (rc == SSH_AGAIN) {
-        m_poll_interest = PollEvent::READ;
-        if (socket_has_data())
-          continue;
+      if (rc == SSH_AGAIN)
         break;
-      }
       else if (rc == SSH_ERROR) {
         m_error = string("ssh_connect() failed - ") + ssh_get_error(m_ssh_session);
         m_cond.notify_all();
@@ -435,9 +451,9 @@ bool SshSocketHandler::handle(int sd, int events) {
 	// If ssh_channel_get_exit_status() returns -1 and the exit status has not yet
 	/// been set, then we need to read again to get the exit status
         if (ms_debug_enabled)
-          HT_INFOF("At EOF (%s exit_status=%d, status_is_set=%s)",
-                   m_hostname.c_str(), exit_status,
-                   m_command_exit_status_is_set ? "true" : "false");
+          cerr << LOG_PREFIX << "At EOF (exit_status=" << exit_status
+               << ", status_is_set="
+               << (m_command_exit_status_is_set ? "true" : "false") << ")\n";
 	if (exit_status == -1 && !m_command_exit_status_is_set)
           break;
 	if (!m_command_exit_status_is_set) {
@@ -467,8 +483,9 @@ bool SshSocketHandler::handle(int sd, int events) {
   }
 
   if (ms_debug_enabled)
-    HT_INFOF("Leaving handler (%s poll_interest=%s, state=%s)", m_hostname.c_str(),
-             PollEvent::to_string(m_poll_interest).c_str(), state_str(m_state));
+    cerr << LOG_PREFIX << "Leaving handler (poll_interest="
+         << PollEvent::to_string(m_poll_interest)
+         << ", state=" << state_str(m_state) << ")\n";
   
   return true;
 }
@@ -481,7 +498,11 @@ void SshSocketHandler::deregister(int sd) {
 
 void SshSocketHandler::log_callback(ssh_session session, int priority, const char *message) {
   size_t len;
-  if (priority <= 1)
+  if (ms_debug_enabled) {
+    cerr << "[" << m_hostname << "] " << message << "\n";
+    return;
+  }
+  if (ms_libssh_verbosity <= SSH_LOG_PROTOCOL && priority <= 1)
     return;
   if (m_log_buffer.base == 0)
     m_log_buffer = m_log_collector.allocate_buffer();
@@ -505,16 +526,21 @@ void SshSocketHandler::log_callback(ssh_session session, int priority, const cha
 }
 
 int SshSocketHandler::auth_callback(const char *prompt, char *buf, size_t len, int echo, int verify) {
-  HT_INFOF("[auth] %s buflen=%d echo=%d verify=%d", prompt, (int)len, echo, verify);
+  if (ms_debug_enabled)
+    cerr << LOG_PREFIX << "auth_callback (" << prompt << ", buflen=" << len
+         << ", echo=" << echo << ", verify=" << verify << ")\n";
   return -1;
 }
 
 void SshSocketHandler::connect_status_callback(float status) {
-  // do nothing
+  if (ms_debug_enabled)
+    cerr << LOG_PREFIX << "connect_status_callback " << (int)(status*100.0) << "%\n";
 }
 
 void SshSocketHandler::global_request_callback(ssh_session session, ssh_message message) {
-  HT_INFO("[global request]");
+  if (ms_debug_enabled)
+    cerr << LOG_PREFIX << "global_request_callback (type=" << ssh_message_type(message)
+         << ", subtype=" << ssh_message_subtype(message) << ")\n";
 }
 
 void SshSocketHandler::set_exit_status(int exit_status) {

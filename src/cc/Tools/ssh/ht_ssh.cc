@@ -74,19 +74,23 @@ namespace {
   }
 
   void dump_usage_and_exit() {
-    cout << endl;
-    cout << "ht_ssh version " << version_string() << endl;
-    cout << endl;
-    cout << "This application uses libssh 0.6.3 (https://www.libssh.org/)" << endl;
-    cout << "libssh is licensed under the GNU Lesser General Public License" << endl;
-    cout << endl;
-    cout << "usage: ht_ssh [options] <hosts-specification> <command>" << endl;
-    cout << endl;
-    cout << "options:" << endl;
-    cout << "  --debug   Turn on verbose debugging output" << endl;
-    cout << "  --random-start-delay <millis>" << endl;
-    cout << "            Wait a random amount of time between 0 and <millis> " << endl;
-    cout << "            prior to starting each command" << endl;
+    cout << "\n";
+    cout << "ht_ssh version " << version_string() << "\n";
+    cout << "\n";
+    cout << "This application uses libssh 0.6.4 (https://www.libssh.org/)\n";
+    cout << "libssh is licensed under the GNU Lesser General Public License\n";
+    cout << "\n";
+    cout << "usage: ht_ssh [options] <hosts-specification> <command>\n";
+    cout << "\n";
+    cout << "options:\n";
+    cout << "  --debug   Turn on verbose debugging output\n";
+    cout << "  --random-start-delay <millis>\n";
+    cout << "            Wait a random amount of time between 0 and <millis>\n";
+    cout << "            prior to starting each command\n";
+    cout << "  --libssh-verbosity <level>\n";
+    cout << "            Set libssh verbosity level to <level>.  Valid values\n";
+    cout << "            are: none, warning, protocol, packet, and functions.\n";
+    cout << "            Default value is protocol.\n";
     cout << endl;
     _exit(1);
   }
@@ -106,10 +110,15 @@ int main(int argc, char **argv) {
   string command;
 
   int start_delay {};
-  bool debug {};
   for (int i=1; i<argc; i++) {
     if (!strcmp(argv[i], "--debug"))
-      debug = true;
+      SshSocketHandler::enable_debug();
+    else if (!strcmp(argv[i], "--libssh-verbosity")) {
+      i++;
+      if (i == argc)
+        dump_usage_and_exit();
+      SshSocketHandler::set_libssh_verbosity(argv[i]);
+    }
     else if (!strcmp(argv[i], "--random-start-delay")) {
       i++;
       if (i == argc)
@@ -146,11 +155,8 @@ int main(int argc, char **argv) {
 
   g_handlers.reserve(hosts.size());
 
-  for (auto & host : hosts) {
+  for (auto & host : hosts)
     g_handlers.push_back(make_shared<SshSocketHandler>(host));
-    if (debug)
-      g_handlers.back()->enable_debug();
-  }
 
   auto now = chrono::system_clock::now();
   auto deadline = now + std::chrono::seconds(30);
@@ -234,6 +240,8 @@ int main(int argc, char **argv) {
     cerr << endl << flush;
     _exit(2);
   }
+
+  cout << flush;
 
   _exit(0);
 }
