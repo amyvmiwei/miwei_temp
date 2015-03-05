@@ -252,6 +252,7 @@ bool SshSocketHandler::handle(int sd, int events) {
         ssh_options_set(m_ssh_session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
 
         ssh_options_set(m_ssh_session, SSH_OPTIONS_HOST, m_hostname.c_str());
+
         ssh_options_set(m_ssh_session, SSH_OPTIONS_FD, &m_sd);
 
         ssh_set_blocking(m_ssh_session, 0);
@@ -271,6 +272,15 @@ bool SshSocketHandler::handle(int sd, int events) {
 	  m_cond.notify_all();
           return false;
         }
+
+        // First load system config
+        if (FileUtils::exists("/etc/ssh/ssh_config"))
+          ssh_options_parse_config(m_ssh_session, "/etc/ssh/ssh_config");
+
+        // Then load ~/.ssh/config
+        string config_file = ssh_dir + "/config";
+        if (FileUtils::exists(config_file))
+          ssh_options_parse_config(m_ssh_session, config_file.c_str());
 
         rc = ssh_connect(m_ssh_session);
         if (rc == SSH_OK) {
