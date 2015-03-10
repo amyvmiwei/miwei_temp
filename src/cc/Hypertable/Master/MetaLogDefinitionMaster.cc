@@ -41,6 +41,7 @@
 #include "OperationToggleTableMaintenance.h"
 #include "RangeServerConnection.h"
 #include "BalancePlanAuthority.h"
+#include "RecoveredServers.h"
 #include "SystemState.h"
 
 #include <memory>
@@ -152,6 +153,8 @@ EntityPtr DefinitionMaster::create(const EntityHeader &header) {
       operation = make_shared<OperationRecreateIndexTables>(m_context, header);
     else if (header.type == EntityType::SYSTEM_STATE)
       return make_shared<SystemState>(header);
+    else if (header.type == EntityType::RECOVERED_SERVERS)
+      return make_shared<RecoveredServers>(header);
   }
 
   if (operation)

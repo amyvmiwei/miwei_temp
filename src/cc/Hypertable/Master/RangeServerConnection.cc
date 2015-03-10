@@ -26,6 +26,7 @@
 #include "RangeServerConnection.h"
 
 using namespace Hypertable;
+using namespace std;
 
 RangeServerConnection::RangeServerConnection(const String &location,
                                              const String &hostname,
@@ -139,6 +140,35 @@ CommAddress RangeServerConnection::get_comm_address() {
   ScopedLock lock(m_mutex);
   return m_comm_addr;
 }
+
+const string RangeServerConnection::to_str() {
+  string str("{RangeServerConnection ");
+  str.append(m_location);
+  str.append(" ");
+  str.append(m_hostname);
+  str.append(" ");
+  str.append(m_public_addr.format());
+  str.append(" (");
+  str.append(m_local_addr.format());
+  str.append(")");
+  if (m_state) {
+    str.append(" ");
+    bool continuation = false;
+    if (m_state & RangeServerConnectionFlags::REMOVED) {
+      str.append("REMOVED");
+      continuation = true;
+    }
+    if (m_state & RangeServerConnectionFlags::BALANCED) {
+      if (continuation)
+        str.append("|");
+      str.append("BALANCED");
+      continuation = true;
+    }
+  }
+  str.append("}");
+  return str;
+}
+
 
 void RangeServerConnection::display(std::ostream &os) {
   os << " " << m_location << " (" << m_hostname << ") state=";

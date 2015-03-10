@@ -19,64 +19,72 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
+#include <Common/Compat.h>
 
 #include "RangeServerConnectionManager.h"
+
+#include <Common/Config.h>
+
+#include <algorithm>
+#include <iterator>
 
 using namespace Hypertable;
 using namespace std;
 
-RangeServerConnectionManager::RangeServerConnectionManager()
-  : m_conn_count(0) {
-  comm = Comm::instance();
-  m_server_list_iter = m_server_list.end();
+RangeServerConnectionManager::RangeServerConnectionManager() {
+  m_connections_iter = m_connections.end();
   m_disk_threshold = Config::properties->get_i32("Hypertable.Master.DiskThreshold.Percentage");
 }
 
 void RangeServerConnectionManager::add_server(RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
+  lock_guard<mutex> lock(m_mutex);
 
-  pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
-
-  if (!insert_result.second) {
-    HT_INFOF("Tried to insert %s host=%s local=%s public=%s",
-            rsc->location().c_str(), rsc->hostname().c_str(),
-            rsc->local_addr().format().c_str(),
-            rsc->public_addr().format().c_str());
-    for (Sequence::iterator iter = m_server_list.begin();
-            iter != m_server_list.end(); ++iter) {
-      HT_INFOF("Contains %s host=%s local=%s public=%s",
-              iter->location().c_str(), iter->hostname().c_str(),
-              iter->local_addr().format().c_str(),
-              iter->public_addr().format().c_str());
-    }
-    HT_ASSERT(insert_result.second);
+  {
+    RangeServerConnectionPtr tmp_rsc;
+    if (find_server_by_location_unlocked(rsc->location(), tmp_rsc))
+      HT_FATALF("Attempt to add %s which conflicts with previously added %s",
+                rsc->to_str().c_str(), tmp_rsc->to_str().c_str());
   }
+
+  auto result = m_connections.push_back( RangeServerConnectionEntry(rsc) );
+  if (!result.second)
+    HT_FATALF("Attempt to add %s which conflicts with previously added entry",
+              rsc->to_str().c_str());
+}
+
+bool
+RangeServerConnectionManager::remove_server(const string &location,
+                                            RangeServerConnectionPtr &rsc) {
+  lock_guard<mutex> lock(m_mutex);
+
+  LocationIndex &hash_index = m_connections.get<1>();
+  auto iter = hash_index.find(location);
+  if (iter != hash_index.end()) {
+    rsc = iter->rsc;
+    rsc->set_removed();
+    hash_index.erase(iter);
+    m_connections_iter = m_connections.begin();
+    return true;
+  }
+  return false;
 }
 
 bool RangeServerConnectionManager::connect_server(RangeServerConnectionPtr &rsc,
         const String &hostname, InetAddr local_addr, InetAddr public_addr) {
-  ScopedLock lock(mutex);
-  LocationIndex &location_index = m_server_list.get<1>();
+  lock_guard<mutex> lock(m_mutex);
+  LocationIndex &location_index = m_connections.get<1>();
   LocationIndex::iterator orig_iter;
 
   HT_INFOF("connect_server(%s, '%s', local=%s, public=%s)",
            rsc->location().c_str(), hostname.c_str(),
            local_addr.format().c_str(), public_addr.format().c_str());
 
-  comm->set_alias(local_addr, public_addr);
-  comm->add_proxy(rsc->location(), hostname, public_addr);
-
   if ((orig_iter = location_index.find(rsc->location())) == location_index.end()) {
 
-    if (rsc->connect(hostname, local_addr, public_addr)) {
+    if (rsc->connect(hostname, local_addr, public_addr))
       m_conn_count++;
-      if (m_conn_count == 1)
-        cond.notify_all();
-    }
 
-    m_server_list.push_back(RangeServerConnectionEntry(rsc));
+    m_connections.push_back(RangeServerConnectionEntry(rsc));
   }
   else {
     bool needs_reindex = false;
@@ -110,23 +118,20 @@ bool RangeServerConnectionManager::connect_server(RangeServerConnectionPtr &rsc,
       needs_reindex = true;
     }
 
-    if (orig_iter->rsc->connect(hostname, local_addr, public_addr)) {
+    if (orig_iter->rsc->connect(hostname, local_addr, public_addr))
       m_conn_count++;
-      if (m_conn_count == 1)
-        cond.notify_all();
-    }
 
     if (needs_reindex) {
       location_index.erase(orig_iter);
-      m_server_list.push_back(RangeServerConnectionEntry(rsc));
-      m_server_list_iter = m_server_list.begin();
+      m_connections.push_back(RangeServerConnectionEntry(rsc));
+      m_connections_iter = m_connections.begin();
     }
   }
   return true;
 }
 
 bool RangeServerConnectionManager::disconnect_server(RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (rsc->disconnect()) {
     HT_ASSERT(m_conn_count > 0);
     m_conn_count--;
@@ -136,33 +141,27 @@ bool RangeServerConnectionManager::disconnect_server(RangeServerConnectionPtr &r
 }
 
 bool RangeServerConnectionManager::is_connected(const String &location) {
-  ScopedLock lock(mutex);
-  LocationIndex &location_index = m_server_list.get<1>();
+  lock_guard<mutex> lock(m_mutex);
+  LocationIndex &location_index = m_connections.get<1>();
   LocationIndex::iterator iter = location_index.find(location);
   if (iter != location_index.end() && iter->rsc->connected())
     return true;
   return false;
 }
 
-void RangeServerConnectionManager::wait_for_server() {
-  ScopedLock lock(mutex);
-  while (m_conn_count == 0)
-    cond.wait(lock);
-}
-
 bool RangeServerConnectionManager::find_server_by_location(const String &location,
         RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
+  lock_guard<mutex> lock(m_mutex);
   return find_server_by_location_unlocked(location, rsc);
 }
 
 bool RangeServerConnectionManager::find_server_by_location_unlocked(const String &location, RangeServerConnectionPtr &rsc) {
-  LocationIndex &hash_index = m_server_list.get<1>();
+  LocationIndex &hash_index = m_connections.get<1>();
   LocationIndex::iterator lookup_iter;
 
   if ((lookup_iter = hash_index.find(location)) == hash_index.end()) {
     //HT_DEBUG_OUT << "can't find server with location=" << location << HT_END;
-    //for (Sequence::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
+    //for (Sequence::iterator iter = m_connections.begin(); iter != m_connections.end(); ++iter) {
     //  HT_DEBUGF("Contains %s host=%s local=%s public=%s", iter->location().c_str(),
     //           iter->hostname().c_str(), iter->local_addr().format().c_str(),
     //           iter->public_addr().format().c_str());
@@ -177,8 +176,8 @@ bool RangeServerConnectionManager::find_server_by_location_unlocked(const String
 
 bool RangeServerConnectionManager::find_server_by_hostname(const String &hostname,
         RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
-  HostnameIndex &hash_index = m_server_list.get<2>();
+  lock_guard<mutex> lock(m_mutex);
+  HostnameIndex &hash_index = m_connections.get<2>();
 
   pair<HostnameIndex::iterator, HostnameIndex::iterator> p
       = hash_index.equal_range(hostname);
@@ -193,8 +192,8 @@ bool RangeServerConnectionManager::find_server_by_hostname(const String &hostnam
 
 bool RangeServerConnectionManager::find_server_by_public_addr(InetAddr addr,
         RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
-  PublicAddrIndex &hash_index = m_server_list.get<3>();
+  lock_guard<mutex> lock(m_mutex);
+  PublicAddrIndex &hash_index = m_connections.get<3>();
   PublicAddrIndex::iterator lookup_iter;
 
   if ((lookup_iter = hash_index.find(addr)) == hash_index.end()) {
@@ -207,8 +206,8 @@ bool RangeServerConnectionManager::find_server_by_public_addr(InetAddr addr,
 
 bool RangeServerConnectionManager::find_server_by_local_addr(InetAddr addr,
         RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
-  LocalAddrIndex &hash_index = m_server_list.get<4>();
+  lock_guard<mutex> lock(m_mutex);
+  LocalAddrIndex &hash_index = m_connections.get<4>();
 
   for (pair<LocalAddrIndex::iterator, LocalAddrIndex::iterator> p
           = hash_index.equal_range(addr);
@@ -221,56 +220,38 @@ bool RangeServerConnectionManager::find_server_by_local_addr(InetAddr addr,
   return false;
 }
 
-void RangeServerConnectionManager::erase_server(RangeServerConnectionPtr &rsc) {
-  ScopedLock lock(mutex);
-  LocationIndex &hash_index = m_server_list.get<1>();
-  LocationIndex::iterator iter;
-  PublicAddrIndex &public_addr_index = m_server_list.get<3>();
-  PublicAddrIndex::iterator public_addr_iter;
-
-  // Remove this connection if already exists
-  iter = hash_index.find(rsc->location());
-  if (iter != hash_index.end())
-    hash_index.erase(iter);
-  public_addr_iter = public_addr_index.find(rsc->public_addr());
-  if (public_addr_iter != public_addr_index.end())
-    public_addr_index.erase(public_addr_iter);
-  // reset server list iter
-  m_server_list_iter = m_server_list.begin();
-  
-}
 
 bool RangeServerConnectionManager::next_available_server(RangeServerConnectionPtr &rsc,
                                                          bool urgent) {
-  ScopedLock lock(mutex);
+  lock_guard<mutex> lock(m_mutex);
   double minimum_disk_use = 100;
   RangeServerConnectionPtr urgent_server;
 
-  if (m_server_list.empty())
+  if (m_connections.empty())
     return false;
 
-  if (m_server_list_iter == m_server_list.end())
-    m_server_list_iter = m_server_list.begin();
+  if (m_connections_iter == m_connections.end())
+    m_connections_iter = m_connections.begin();
 
-  ServerList::iterator saved_iter = m_server_list_iter;
+  auto saved_iter = m_connections_iter;
 
   do {
-    ++m_server_list_iter;
-    if (m_server_list_iter == m_server_list.end())
-      m_server_list_iter = m_server_list.begin();
-    if (m_server_list_iter->rsc->connected() &&
-        !m_server_list_iter->rsc->is_recovering()) {
-      if (m_server_list_iter->rsc->get_disk_fill_percentage() <
+    ++m_connections_iter;
+    if (m_connections_iter == m_connections.end())
+      m_connections_iter = m_connections.begin();
+    if (m_connections_iter->rsc->connected() &&
+        !m_connections_iter->rsc->is_recovering()) {
+      if (m_connections_iter->rsc->get_disk_fill_percentage() <
           (double)m_disk_threshold) {
-        rsc = m_server_list_iter->rsc;
+        rsc = m_connections_iter->rsc;
         return true;
       }
-      if (m_server_list_iter->rsc->get_disk_fill_percentage() < minimum_disk_use) {
-        minimum_disk_use = m_server_list_iter->rsc->get_disk_fill_percentage();
-        urgent_server = m_server_list_iter->rsc;
+      if (m_connections_iter->rsc->get_disk_fill_percentage() < minimum_disk_use) {
+        minimum_disk_use = m_connections_iter->rsc->get_disk_fill_percentage();
+        urgent_server = m_connections_iter->rsc;
       }
     }
-  } while (m_server_list_iter != saved_iter);
+  } while (m_connections_iter != saved_iter);
 
   if (urgent && urgent_server) {
     rsc = urgent_server;
@@ -281,94 +262,59 @@ bool RangeServerConnectionManager::next_available_server(RangeServerConnectionPt
 }
 
 size_t RangeServerConnectionManager::server_count() {
-  ScopedLock lock(mutex);
+  lock_guard<mutex> lock(m_mutex);
   size_t count = 0;
-  for (ServerList::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
-    if (!iter->removed())
+  for (auto &entry : m_connections) {
+    if (!entry.rsc->get_removed())
       count++;
   }
   return count;
 }
 
 
-void RangeServerConnectionManager::get_servers(std::vector<RangeServerConnectionPtr> &servers) {
-  ScopedLock lock(mutex);
-  for (ServerList::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
-    if (!iter->removed())
-      servers.push_back(iter->rsc);
+void RangeServerConnectionManager::get_servers(vector<RangeServerConnectionPtr> &servers) {
+  lock_guard<mutex> lock(m_mutex);
+  for (auto &entry : m_connections) {
+    if (!entry.rsc->get_removed())
+      servers.push_back(entry.rsc);
   }
 }
 
 void RangeServerConnectionManager::get_valid_connections(StringSet &locations,
-                                 std::vector<RangeServerConnectionPtr> &connections) {
-  ScopedLock lock(mutex);
-  LocationIndex &location_index = m_server_list.get<1>();
+                                 vector<RangeServerConnectionPtr> &connections) {
+  lock_guard<mutex> lock(m_mutex);
+  LocationIndex &location_index = m_connections.get<1>();
   LocationIndex::iterator iter;
 
-  foreach_ht (const String &location, locations) {
-    if ((iter = location_index.find(location)) != location_index.end())
+  for (auto &location : locations) {
+    auto iter = location_index.find(location);
+    if (iter != location_index.end() && !iter->rsc->is_recovering())
       connections.push_back(iter->rsc);
   }
 }
 
-
-size_t RangeServerConnectionManager::connected_server_count() {
-  ScopedLock lock(mutex);
-  size_t count=0;
-  for (ServerList::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
-    if (!iter->removed() && iter->connected())
-      ++count;
-  }
-  return count;
-}
-
-void RangeServerConnectionManager::get_connected_servers(StringSet &locations) {
-  ScopedLock lock(mutex);
-  for (ServerList::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
-    if (!iter->removed() && iter->connected())
-      locations.insert(iter->location());
-  }
-}
-
-void RangeServerConnectionManager::get_unbalanced_servers(StringSet &locations,
-      std::vector<RangeServerConnectionPtr> &unbalanced) {
-  ScopedLock lock(mutex);
-  LocationIndex &hash_index = m_server_list.get<1>();
-  LocationIndex::iterator lookup_iter;
-  RangeServerConnectionPtr rsc;
-
-  foreach_ht(const String &location, locations) {
-    if ((lookup_iter = hash_index.find(location)) == hash_index.end())
-      continue;
-    rsc = lookup_iter->rsc;
-    if (!rsc->get_removed() && !rsc->get_balanced())
-      unbalanced.push_back(rsc);
-  }
-}
-
-void RangeServerConnectionManager::set_servers_balanced(const std::vector<RangeServerConnectionPtr> &unbalanced) {
-  ScopedLock lock(mutex);
+void RangeServerConnectionManager::set_servers_balanced(const vector<RangeServerConnectionPtr> &unbalanced) {
+  lock_guard<mutex> lock(m_mutex);
   foreach_ht (const RangeServerConnectionPtr rsc, unbalanced) {
     rsc->set_balanced();
   }
 }
 
 bool RangeServerConnectionManager::exist_unbalanced_servers() {
-  ScopedLock lock(mutex);
-  for (ServerList::iterator iter = m_server_list.begin();
-       iter != m_server_list.end(); ++iter) {
-    if (!iter->removed() && !iter->rsc->get_balanced())
+  lock_guard<mutex> lock(m_mutex);
+  for (auto &entry : m_connections) {
+    if (!entry.rsc->get_removed() && !entry.rsc->is_recovering() && !entry.rsc->get_balanced())
       return true;
   }
   return false;
 }
 
-void RangeServerConnectionManager::set_range_server_state(std::vector<RangeServerState> &states) {
-  ScopedLock lock(mutex);
-  LocationIndex &hash_index = m_server_list.get<1>();
+void RangeServerConnectionManager::set_range_server_state(vector<RangeServerState> &states) {
+  lock_guard<mutex> lock(m_mutex);
+  LocationIndex &hash_index = m_connections.get<1>();
   LocationIndex::iterator lookup_iter;
 
-  foreach_ht (RangeServerState &state, states) {
+  for (auto &state : states) {
     if ((lookup_iter = hash_index.find(state.location)) == hash_index.end())
       continue;
     lookup_iter->rsc->set_disk_fill_percentage(state.disk_usage);

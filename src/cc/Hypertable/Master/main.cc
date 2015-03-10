@@ -201,6 +201,8 @@ int main(int argc, char **argv) {
             }
             else if (dynamic_cast<SystemState *>(entity.get()))
               context->system_state = dynamic_pointer_cast<SystemState>(entity);
+            else if (dynamic_cast<RecoveredServers *>(entity.get()))
+              context->recovered_servers = dynamic_pointer_cast<RecoveredServers>(entity);
             entities2.push_back(entity);
           }
         }
@@ -212,6 +214,9 @@ int main(int argc, char **argv) {
 
       if (!context->system_state)
         context->system_state = make_shared<SystemState>();
+
+      if (!context->recovered_servers)
+        context->recovered_servers = make_shared<RecoveredServers>();
 
       context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                                 log_dir, entities);

@@ -31,13 +31,13 @@
 
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/QualifiedRangeSpec.h>
 #include <Hypertable/Lib/RangeServer/Client.h>
+#include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableIdentifier.h>
 #include <Hypertable/Lib/TableMutator.h>
 #include <Hypertable/Lib/TableScanner.h>
-#include <Hypertable/Lib/TableIdentifier.h>
-#include <Hypertable/Lib/RangeSpec.h>
-#include <Hypertable/Lib/QualifiedRangeSpec.h>
 
 #include <Hyperspace/Session.h>
 
@@ -442,6 +442,15 @@ bool status(ContextPtr &context, Timer &timer, Status &status) {
     }
   }
   return status.get() == Status::Code::OK;
+}
+
+void shutdown_rangeserver(ContextPtr &context, CommAddress &addr) {
+  try {
+    Lib::RangeServer::Client rsc(context->comm);
+    rsc.shutdown(addr);
+  }
+  catch (Exception &e) {
+  }
 }
 
 }}

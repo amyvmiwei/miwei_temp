@@ -163,7 +163,7 @@ namespace Hypertable {
       void encode_entry(uint8_t **bufp);
 
       /// %Mutex for serializing access to members
-      Mutex m_mutex;
+      mutable Mutex m_mutex;
 
       /// %Entity header
       EntityHeader header;

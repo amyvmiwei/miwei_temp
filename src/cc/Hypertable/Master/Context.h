@@ -33,6 +33,7 @@
 #include "Monitoring.h"
 #include "RangeServerConnection.h"
 #include "RangeServerConnectionManager.h"
+#include "RecoveredServers.h"
 #include "RecoveryStepFuture.h"
 #include "SystemState.h"
 
@@ -151,6 +152,7 @@ namespace Hypertable {
     std::unique_ptr<HyperspaceMasterFile> master_file;
     LoadBalancer *balancer {};
     MonitoringPtr monitoring;
+    RecoveredServersPtr recovered_servers;
     std::unique_ptr<ReferenceManager> reference_manager;
     std::unique_ptr<Thread> response_manager_thread;
     std::unique_ptr<ResponseManager> response_manager;

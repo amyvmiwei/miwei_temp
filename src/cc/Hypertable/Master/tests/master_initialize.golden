@@ -3,10 +3,10 @@
 [initialize-INITIAL:throw:0] RangeServerConnection {rs3}
 [initialize-INITIAL:throw:0] RangeServerConnection {rs4}
 [initialize-INITIAL:throw:0] OperationInitialize {STARTED}
-[initialize-INITIAL:throw:0]   dependency: OperationInitialize subop OperationCreateNamespace 9
+[initialize-INITIAL:throw:0]   dependency: OperationInitialize subop OperationCreateNamespace 10
 [initialize-INITIAL:throw:0]   obstruction: INIT
 [initialize-INITIAL:throw:0] OperationCreateNamespace {INITIAL}
-[initialize-INITIAL:throw:0]   obstruction: OperationInitialize subop OperationCreateNamespace 9
+[initialize-INITIAL:throw:0]   obstruction: OperationInitialize subop OperationCreateNamespace 10
 [initialize-INITIAL:throw:0]   exclusivity: /sys
 
 [initialize-STARTED:throw:0] RangeServerConnection {rs1}
@@ -59,13 +59,13 @@
 [initialize-CREATE_RS_METRICS:throw:0] RangeServerConnection {rs3}
 [initialize-CREATE_RS_METRICS:throw:0] RangeServerConnection {rs4}
 [initialize-CREATE_RS_METRICS:throw:0] OperationInitialize {FINALIZE}
-[initialize-CREATE_RS_METRICS:throw:0]   dependency: OperationInitialize subop OperationCreateNamespace 17
-[initialize-CREATE_RS_METRICS:throw:0]   dependency: OperationInitialize subop OperationCreateTable 16
+[initialize-CREATE_RS_METRICS:throw:0]   dependency: OperationInitialize subop OperationCreateNamespace 18
+[initialize-CREATE_RS_METRICS:throw:0]   dependency: OperationInitialize subop OperationCreateTable 17
 [initialize-CREATE_RS_METRICS:throw:0]   obstruction: INIT
 [initialize-CREATE_RS_METRICS:throw:0] OperationCreateTable {INITIAL}
-[initialize-CREATE_RS_METRICS:throw:0]   obstruction: OperationInitialize subop OperationCreateTable 16
+[initialize-CREATE_RS_METRICS:throw:0]   obstruction: OperationInitialize subop OperationCreateTable 17
 [initialize-CREATE_RS_METRICS:throw:0] OperationCreateNamespace {INITIAL}
-[initialize-CREATE_RS_METRICS:throw:0]   obstruction: OperationInitialize subop OperationCreateNamespace 17
+[initialize-CREATE_RS_METRICS:throw:0]   obstruction: OperationInitialize subop OperationCreateNamespace 18
 [initialize-CREATE_RS_METRICS:throw:0]   exclusivity: /tmp
 
 [] RangeServerConnection {rs1}

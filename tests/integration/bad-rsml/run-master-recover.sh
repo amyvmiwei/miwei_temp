@@ -102,11 +102,56 @@ else
     echo "Test $TEST PASSED." >> report.txt
 fi
 
+sleep 5
+
 # Shut down range servers
 kill -9 `cat $HT_HOME/run/RangeServer.*.pid`
 \rm -f $HT_HOME/run/RangeServer.*.pid
 
 # Shut down remaining servers
+$HT_HOME/bin/ht-stop-servers.sh
+
+# Verify RecoveredServers entity
+$HT_HOME/bin/ht-start-fsbroker.sh local
+$HT_HOME/bin/ht metalog_dump /hypertable/servers/master/log/mml | grep RecoveredServers > mml.output
+cat mml.output \
+    | perl -e 'while (<>) { s/timestamp=.*?201\d,/timestamp=0,/g; print; }' \
+    | perl -e 'while (<>) { s/id=\d*,/id=0,/g; print; }' > mml.stripped
+diff mml.stripped ${SCRIPT_DIR}/mml.golden
+if [ $? != 0 ] ; then
+  echo "MML diff failed"
+  exit 1
+fi
+
+# Make sure system starts up again
+
+# Start servers (minus range server)
+$HT_HOME/bin/ht-start-test-servers.sh --no-rangeserver \
+    --no-thriftbroker --config=${SCRIPT_DIR}/test.cfg 
+
+# Start rs1
+$HT_HOME/bin/ht RangeServer \
+    --config=${SCRIPT_DIR}/test.cfg \
+    --verbose \
+    --pidfile=$HT_HOME/run/RangeServer.pid \
+    --Hypertable.RangeServer.ProxyName=rs1 \
+    --Hypertable.RangeServer.Port=15870 > rangeserver.rs1.output.2 &
+
+# dump keys
+$HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql \
+    | grep -v "hypertable" | grep -v "Waiting for connection to Hyperspace" > dbdump.output.2
+if [ $? != 0 ] ; then
+    echo "Problem dumping table 'failover-test', exiting ..."
+    exit 1
+fi
+
+$DIGEST < dbdump.output.2 > dbdump.md5.2
+diff golden_dump.md5 dbdump.md5.2 > out
+if [ $? != 0 ] ; then
+  echo "Second dump failed"
+  exit 1
+fi
+
 $HT_HOME/bin/ht-stop-servers.sh
 
 exit 0

@@ -56,9 +56,7 @@ using namespace std;
 OperationRecover::OperationRecover(ContextPtr &context, 
                                    RangeServerConnectionPtr &rsc, int flags)
   : Operation(context, MetaLog::EntityType::OPERATION_RECOVER_SERVER),
-    m_location(rsc->location()), m_rsc(rsc), m_hyperspace_handle(0), 
-    m_restart(flags==RESTART),
-    m_lock_acquired(false) {
+    m_location(rsc->location()), m_rsc(rsc), m_restart(flags==RESTART) {
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);
   m_dependencies.insert(Dependency::RECOVERY);
   m_dependencies.insert(String("RegisterServer ") + m_location);
@@ -70,8 +68,7 @@ OperationRecover::OperationRecover(ContextPtr &context,
 
 OperationRecover::OperationRecover(ContextPtr &context,
                                    const MetaLog::EntityHeader &header_)
-  : Operation(context, header_), m_hyperspace_handle(0),
-    m_restart(false), m_lock_acquired(false) {
+  : Operation(context, header_) {
 }
 
 
@@ -114,11 +111,18 @@ void OperationRecover::execute() {
       return;
     }
 
+    // This shouldn't be necessary, however we've seen Hyperspace declare a
+    // server to be dead when it was in fact still alive (see issue 1346).
+    // We'll leave this in place until Hyperspace gets overhauled.
+    {
+      CommAddress addr;
+      addr.set_proxy(m_location);
+      Utility::shutdown_rangeserver(m_context, addr);
+    }
+
     if (m_rsc) {
 
       m_rsc->set_recovering(true);
-
-      m_context->remove_available_server(m_location);
 
       m_context->rsc_manager->disconnect_server(m_rsc);
 
@@ -130,6 +134,8 @@ void OperationRecover::execute() {
       comm_addr.set_proxy(m_rsc->location());
       m_context->conn_manager->remove(comm_addr);
     }
+
+    m_context->remove_available_server(m_location);
 
     // Remove proxy from AsyncComm
     m_context->comm->remove_proxy(m_location);
@@ -208,14 +214,27 @@ void OperationRecover::execute() {
     break;
 
   case OperationState::FINALIZE:
+
     if (!validate_subops())
       break;
+
     // Once recovery is complete, the master blows away the RSML and CL for the
     // server being recovered then it unlocks the hyperspace file
     clear_server_state();
+
     HT_MAYBE_FAIL("recover-server-4");
+
     m_expiration_time.reset();  // force it to get removed immediately
-    complete_ok();
+
+    if (m_rsc) {
+      std::vector<MetaLog::EntityPtr> additional;
+      m_rsc->mark_for_removal();
+      additional.push_back(m_rsc);
+      complete_ok(additional);
+    }
+    else
+      complete_ok();
+
     // Send notification
     subject = format("NOTICE: Recovery of %s (%s) succeeded",
                      m_location.c_str(), m_hostname.c_str());
@@ -305,17 +324,11 @@ const String OperationRecover::label() {
 }
 
 void OperationRecover::clear_server_state() {
-  // remove this RangeServerConnection entry
-  //
-  // if m_rsc is NULL then it was already removed
-  if (m_rsc) {
-    m_context->mml_writer->record_removal(m_rsc);
-    m_context->rsc_manager->erase_server(m_rsc);
 
-    // drop server from monitor list
+  // if m_rsc is NULL then it was already removed
+  if (m_rsc)
     m_context->monitoring->drop_server(m_rsc->location());
-    HT_MAYBE_FAIL("recover-server-4");
-  }
+
   // unlock hyperspace file
   Hyperspace::close_handle_ptr(m_context->hyperspace, &m_hyperspace_handle);
   // delete balance plan

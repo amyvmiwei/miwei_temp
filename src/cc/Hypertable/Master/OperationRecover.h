@@ -113,9 +113,9 @@ namespace Hypertable {
     CharArena m_arena;
     RangeServerConnectionPtr m_rsc;
     String m_hostname;
-    uint64_t m_hyperspace_handle;
-    bool m_restart;
-    bool m_lock_acquired;
+    uint64_t m_hyperspace_handle {};
+    bool m_restart {};
+    bool m_lock_acquired {};
   };
 
   /** @}*/

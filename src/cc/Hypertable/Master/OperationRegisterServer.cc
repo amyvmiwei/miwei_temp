@@ -21,10 +21,12 @@
 
 #include <Common/Compat.h>
 
-#include "RangeServerHyperspaceCallback.h"
-#include "LoadBalancer.h"
 #include "OperationRegisterServer.h"
-#include "OperationProcessor.h"
+
+#include <Hypertable/Master/LoadBalancer.h>
+#include <Hypertable/Master/OperationProcessor.h>
+#include <Hypertable/Master/RangeServerHyperspaceCallback.h>
+#include <Hypertable/Master/Utility.h>
 
 #include <Hypertable/Lib/RangeServer/Client.h>
 #include <Hypertable/Lib/RangeServer/Protocol.h>
@@ -70,50 +72,29 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context,
 
 void OperationRegisterServer::execute() {
   std::vector<SystemVariable::Spec> specs;
-  uint64_t generation;
-  uint64_t handle = 0;
-  RangeServerHyperspaceCallback *hyperspace_callback = 0;
-  bool newly_created = false;
+  uint64_t generation {};
+  uint64_t handle {};
+  RangeServerHyperspaceCallback *hyperspace_callback {};
+  bool newly_created {};
 
-  if (m_location == "") {
-    if (!m_context->rsc_manager->find_server_by_hostname(m_params.system_stats().net_info.host_name, m_rsc))
-      m_context->rsc_manager->find_server_by_public_addr(m_public_addr, m_rsc);
-    if (m_rsc)
-      m_location = m_rsc->location();
-  }
-  else
-    m_context->rsc_manager->find_server_by_location(m_location, m_rsc);
+  if (!m_location.empty()) {
 
-
-  // If this connection has been marked for removal, return error
-  if (m_rsc) {
-    m_context->rsc_manager->disconnect_server(m_rsc);
-    // this connection has been marked for removal
-    if (m_rsc->get_removed()) {
-      String errstr = format("Detected RangeServer marked removed while"
-                             "registering server %s(%s), as location %s",
-                             m_params.system_stats().net_info.host_name.c_str(),
-                             m_public_addr.format().c_str(),
-                             m_location.c_str());
-      complete_error(Error::MASTER_RANGESERVER_IN_RECOVERY, errstr);
-      HT_ERROR_OUT << errstr << HT_END;
-      CommHeader header;
-      header.initialize_from_request_header(m_event->header);
-      header.command = Lib::RangeServer::Protocol::COMMAND_INITIALIZE;
-      m_context->system_state->get(specs, &generation);
-      CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
-                                                                 specs)));
-      encode_response(generation, specs, cbp->get_data_ptr_address());
-
-      int error = m_context->comm->send_response(m_event->addr, cbp);
-      if (error != Error::OK)
-        HT_ERRORF("Problem sending response (location=%s) back to %s",
-                  m_location.c_str(), m_event->addr.format().c_str());
+    // This shouldn't be necessary, however we've seen Hyperspace declare a
+    // server to be dead when it was in fact still alive (see issue 1346).
+    // We'll leave this in place until Hyperspace gets overhauled.
+    if (m_context->recovered_servers->contains(m_location)) {
+      CommAddress addr(m_local_addr);
+      Utility::shutdown_rangeserver(m_context, addr);
+      HT_WARNF("Attempt to register server %s that has been removed",
+               m_location.c_str());
+      complete_ok();
       return;
     }
-  }
 
-  if (m_location == "") {
+    m_context->rsc_manager->find_server_by_location(m_location, m_rsc);
+
+  }
+  else {
     uint64_t id = m_context->master_file->next_server_id();
     if (m_context->location_hash.empty())
       m_location = format("rs%llu", (Llu)id);
@@ -134,6 +115,8 @@ void OperationRegisterServer::execute() {
 
   if (!m_rsc)
     m_rsc = make_shared<RangeServerConnection>(m_location, m_params.system_stats().net_info.host_name, m_public_addr);
+  else
+    m_context->rsc_manager->disconnect_server(m_rsc);
 
   if (!m_rsc->get_hyperspace_handle(&handle, &hyperspace_callback)) {
     String fname = m_context->toplevel_dir + "/servers/" + m_location;
@@ -156,10 +139,10 @@ void OperationRegisterServer::execute() {
     CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
                                                                specs)));
     encode_response(generation, specs, cbp->get_data_ptr_address());
-    int error = m_context->comm->send_response(m_event->addr, cbp);
+    int error = m_context->comm->send_response(m_local_addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
-                m_location.c_str(), m_event->addr.format().c_str());
+                m_location.c_str(), m_local_addr.format().c_str());
     return;
   }
 
@@ -187,12 +170,10 @@ void OperationRegisterServer::execute() {
                                                                specs)));
 
     encode_response(generation, specs, cbp->get_data_ptr_address());
-    int error = m_context->comm->send_response(m_event->addr, cbp);
+    int error = m_context->comm->send_response(m_local_addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
-              m_location.c_str(), m_event->addr.format().c_str());
-    if (newly_created)
-      m_context->rsc_manager->erase_server(m_rsc);
+              m_location.c_str(), m_local_addr.format().c_str());
     m_context->op->unblock(m_location);
     m_context->op->unblock(Dependency::SERVERS);
     m_context->op->unblock(Dependency::RECOVERY_BLOCKER);
@@ -228,10 +209,10 @@ void OperationRegisterServer::execute() {
       CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation,
                                                                  specs)));
       encode_response(generation, specs, cbp->get_data_ptr_address());
-      int error = m_context->comm->send_response(m_event->addr, cbp);
+      int error = m_context->comm->send_response(m_local_addr, cbp);
       if (error != Error::OK)
         HT_ERRORF("Problem sending response (location=%s) back to %s",
-            m_location.c_str(), m_event->addr.format().c_str());
+            m_location.c_str(), m_local_addr.format().c_str());
     }
   }
 
@@ -245,18 +226,10 @@ void OperationRegisterServer::execute() {
                                         "lock on Hyperspace file",
                                         m_location.c_str());
       HT_WARNF("%s, sending shutdown request...", notification_body.c_str());
-      RangeServer::Client rsclient(m_context->comm);
-      try {
-        rsclient.shutdown(m_event->addr);
-        m_context->rsc_manager->disconnect_server(m_rsc);
 
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        notification_body += format("\nProblem shutting down %s: %s - %s",
-                                    m_location.c_str(),
-                                    Error::get_text(e.code()), e.what());
-      }
+      CommAddress addr(m_local_addr);
+      Utility::shutdown_rangeserver(m_context, addr);
+      m_context->rsc_manager->disconnect_server(m_rsc);
       String notification_subject =
         format("Server registration error for %s (%s)", m_location.c_str(),
                m_rsc->hostname().c_str());
@@ -278,7 +251,10 @@ void OperationRegisterServer::execute() {
   if (operation)
     operation->complete_ok();
 
-  m_context->rsc_manager->connect_server(m_rsc, m_params.system_stats().net_info.host_name, m_local_addr, m_public_addr);
+  string hostname(m_params.system_stats().net_info.host_name);
+  m_context->comm->set_alias(m_local_addr, m_public_addr);
+  m_context->comm->add_proxy(m_rsc->location(), hostname, m_public_addr);
+  m_context->rsc_manager->connect_server(m_rsc, hostname, m_local_addr, m_public_addr);
 
   m_context->add_available_server(m_location);
 

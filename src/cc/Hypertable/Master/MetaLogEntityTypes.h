@@ -24,8 +24,8 @@
  * This file contains MetaLog entity type constants for the %Master
  */
 
-#ifndef HYPERTABLE_MASTERMETALOGENTITYTYPES_H
-#define HYPERTABLE_MASTERMETALOGENTITYTYPES_H
+#ifndef Hypertable_Master_MetaLogEntityTypes_h
+#define Hypertable_Master_MetaLogEntityTypes_h
 
 namespace Hypertable {
 
@@ -96,12 +96,13 @@ namespace Hypertable {
         SYSTEM_STATE                         = 0x0003001C,
         OPERATION_REGISTER_SERVER_BLOCKER    = 0x0003001D,
         OPERATION_TOGGLE_TABLE_MAINTENANCE   = 0x0003001E,
-        OPERATION_RECREATE_INDEX_TABLES      = 0x0003001F
+        OPERATION_RECREATE_INDEX_TABLES      = 0x0003001F,
+        RECOVERED_SERVERS                    = 0x00030020
       };
     }
   }
 
-  /* @}*/
+  /** @}*/
 }
 
-#endif // HYPERTABLE_MASTERMETALOGENTITYTYPES_H
+#endif // Hypertable_Master_MetaLogEntityTypes_h

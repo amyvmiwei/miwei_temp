@@ -67,6 +67,7 @@ RangeServerConnection.cc
 RangeServerConnectionManager.cc
 ResponseManager.cc
 Utility.cc
+RecoveredServers.cc
 SystemState.cc
 )
 

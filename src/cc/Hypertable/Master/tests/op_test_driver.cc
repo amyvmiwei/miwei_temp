@@ -36,6 +36,7 @@
 #include <Hypertable/Master/OperationRenameTable.h>
 #include <Hypertable/Master/OperationSystemUpgrade.h>
 #include <Hypertable/Master/OperationToggleTableMaintenance.h>
+#include <Hypertable/Master/RecoveredServers.h>
 #include <Hypertable/Master/RangeServerConnectionManager.h>
 #include <Hypertable/Master/ReferenceManager.h>
 #include <Hypertable/Master/ResponseManager.h>
@@ -395,6 +396,8 @@ int main(int argc, char **argv) {
     MetaLog::EntityPtr entity;
     context->get_balance_plan_authority(entity);
     BalancePlanAuthorityPtr bpa = static_pointer_cast<BalancePlanAuthority>(entity);
+
+    context->recovered_servers = make_shared<RecoveredServers>();
 
     FailureInducer::instance = new FailureInducer();
     context->request_timeout = 600;

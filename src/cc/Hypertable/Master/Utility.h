@@ -33,6 +33,8 @@
 #include <Hypertable/Lib/TableIdentifier.h>
 #include <Hypertable/Lib/TableParts.h>
 
+#include <AsyncComm/CommAddress.h>
+
 #include <Common/Status.h>
 #include <Common/StringExt.h>
 #include <Common/Timer.h>
@@ -256,6 +258,11 @@ namespace Hypertable {
     /// @return <i>true</i> if status is Status::Code::OK, <i>false</i>
     /// otherwise
     extern bool status(ContextPtr &context, Timer &timer, Status &status);
+
+    /// Sends a shutdown command to a rangeserver.
+    /// @param context %Master context
+    /// @param addr Address of rangeserver to shut down
+    extern void shutdown_rangeserver(ContextPtr &context, CommAddress &addr);
 
     /// @}
 

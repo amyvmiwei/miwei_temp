@@ -435,10 +435,11 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
   {
     vector<MetaLog::EntityPtr> entities;
     RangeServerConnectionPtr rsc;
-    if (!m_context->rsc_manager->find_server_by_location(location, rsc))
+    if (!m_context->rsc_manager->remove_server(location, rsc))
       HT_FATALF("Unable to location RangeServerConnection object for %s", location.c_str());
-    rsc->set_removed();
+    m_context->recovered_servers->add(location);
     entities.push_back(shared_from_this());
+    entities.push_back(m_context->recovered_servers);
     entities.push_back(rsc);
     m_mml_writer->record_state(entities);
   }
