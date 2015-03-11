@@ -37,13 +37,13 @@ namespace Lib {
   class ScanLimitState {
   public:
     ScanLimitState(const ScanSpec &spec) 
-      : row_limit(spec.row_limit), rows_seen(0), cell_limit(spec.cell_limit),
-        cells_seen(0) { }
+      : row_limit(spec.row_limit), cell_limit(spec.cell_limit) { }
     std::string last_row;   //!< Last row processed
     size_t row_limit;  //!< Row limit
-    size_t rows_seen;  //!< Number of complete rows seen
+    size_t rows_encountered {};  //!< Number of unique rows seen
+    size_t rows_seen {};  //!< Number of complete rows seen
     size_t cell_limit; //!< Cell limit
-    size_t cells_seen; //!< Cells seen
+    size_t cells_seen {}; //!< Cells seen
   };
 
 }}

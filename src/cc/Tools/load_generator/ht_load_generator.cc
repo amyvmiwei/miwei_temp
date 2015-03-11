@@ -202,11 +202,8 @@ int main(int argc, char **argv) {
       _exit(1);
     }
 
-    if (generator_props->has("DataGenerator.DeletePercentage")) {
-      if (to_stdout)
-        HT_FATAL("DataGenerator.DeletePercentage not supported with stdout option");
+    if (generator_props->has("DataGenerator.DeletePercentage"))
       delete_pct = generator_props->get_i32("DataGenerator.DeletePercentage");
-    }
 
     if (load_type == "update" && parallel > 0)
       generate_update_load_parallel(generator_props, table, parallel, flush,
@@ -333,14 +330,23 @@ generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   if (to_stdout) {
-    cout << "rowkey\tcolumnkey\tvalue\n";
+    cout << "#row\tcolumn\tvalue\n";
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
-      if ((*iter).column_qualifier == 0 || *(*iter).column_qualifier == 0)
-        cout << (*iter).row_key << "\t" << (*iter).column_family
-             << "\t" << (const char *)(*iter).value << "\n";
-      else
-        cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
-             << (*iter).column_qualifier << "\t" << (const char *)(*iter).value << "\n";
+      if ((*iter).column_qualifier == 0 || *(*iter).column_qualifier == 0) {
+        if (delete_pct != 0 && (::random() % 100) < delete_pct)
+          cout << (*iter).row_key << "\t" << (*iter).column_family << "\t\tDELETE_CELL\n";
+        else
+          cout << (*iter).row_key << "\t" << (*iter).column_family
+               << "\t" << (const char *)(*iter).value << "\n";
+      }
+      else {
+        if (delete_pct != 0 && (::random() % 100) < delete_pct)
+          cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
+               << (*iter).column_qualifier << "\t\tDELETE_CELL\n";
+        else
+          cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
+               << (*iter).column_qualifier << "\t" << (const char *)(*iter).value << "\n";
+      }
     }
     cout << std::flush;
     return;

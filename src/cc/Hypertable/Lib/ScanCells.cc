@@ -88,13 +88,15 @@ ScanCells::load(SchemaPtr &schema, const string &end_row, bool end_inclusive,
 
       // check for row change and row limit
       if (strcmp(limit_state->last_row.c_str(), key.row)) {
-	if (!limit_state->last_row.empty()) {
+        if (!limit_state->last_row.empty() &&
+            limit_state->rows_seen < limit_state->rows_encountered) {
           limit_state->rows_seen++;
           if (limit_state->row_limit > 0 &&
               limit_state->rows_seen >= limit_state->row_limit)
             return true;
-	}
-	limit_state->last_row = key.row;
+        }
+        limit_state->rows_encountered++;
+        limit_state->last_row = key.row;
       }
 
       cell.row_key = key.row;
@@ -126,10 +128,16 @@ ScanCells::load(SchemaPtr &schema, const string &end_row, bool end_inclusive,
         return true;
     }
 
-    // If a row limit is set and scanblock is at EOS then check to see if unique
-    // row keys seen (limit_state->rows_seen+1) is equal to the limit
-    if (limit_state->row_limit > 0 && scanblock->eos() &&
-        (limit_state->rows_seen+1) >= limit_state->row_limit)
+    // If at end of scan make sure last row encountered is reflected in rows seen
+    if (scanblock->eos() &&
+        limit_state->rows_encountered > limit_state->rows_seen) {
+      limit_state->rows_seen++;
+      HT_ASSERT(limit_state->rows_encountered == limit_state->rows_seen);
+    }
+
+    // Check row limit
+    if (limit_state->row_limit > 0 &&
+        limit_state->rows_seen >= limit_state->row_limit)
       return true;
   }
 
