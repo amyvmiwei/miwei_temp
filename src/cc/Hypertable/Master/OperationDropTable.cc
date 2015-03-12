@@ -118,20 +118,19 @@ void OperationDropTable::execute() {
 
   case OperationState::DROP_VALUE_INDEX:
 
-    // maybe issue another request for an index table
+    set_state(OperationState::DROP_QUALIFIER_INDEX);
+
     if (m_parts.value_index() &&
         m_context->namemap->name_to_id(index_name, index_id)) {
       HT_INFOF("  Dropping index table %s (id %s)", 
                index_name.c_str(), index_id.c_str());
       stage_subop(make_shared<OperationDropTable>(m_context, index_name, false,
                                                   TableParts(TableParts::PRIMARY)));
-      set_state(OperationState::DROP_QUALIFIER_INDEX);
       HT_MAYBE_FAIL("drop-table-DROP_VALUE_INDEX-1");
       record_state();
       HT_MAYBE_FAIL("drop-table-DROP_VALUE_INDEX-2");
       break;
     }
-    set_state(OperationState::DROP_QUALIFIER_INDEX);
     // drop through ...
 
   case OperationState::DROP_QUALIFIER_INDEX:
@@ -139,7 +138,14 @@ void OperationDropTable::execute() {
     if (!validate_subops())
       break;
 
-    // ... and for the qualifier index
+    {
+      ScopedLock lock(m_mutex);
+      m_dependencies.clear();
+      m_dependencies.insert(Dependency::METADATA);
+      m_dependencies.insert(m_id + " move range");
+      m_state = OperationState::SCAN_METADATA;
+    }
+
     if (m_parts.qualifier_index() &&
         m_context->namemap->name_to_id(qualifier_index_name, 
                                        qualifier_index_id)) {
@@ -147,19 +153,13 @@ void OperationDropTable::execute() {
                qualifier_index_name.c_str(), qualifier_index_id.c_str());
       stage_subop(make_shared<OperationDropTable>(m_context, qualifier_index_name,
                                                   false, TableParts(TableParts::PRIMARY)));
-      set_state(OperationState::UPDATE_HYPERSPACE);
       HT_MAYBE_FAIL("drop-table-DROP_QUALIFIER_INDEX-1");
       record_state();
       HT_MAYBE_FAIL("drop-table-DROP_QUALIFIER_INDEX-2");
-      break;
     }
-    set_state(OperationState::UPDATE_HYPERSPACE);
-    if (!m_sub_ops.empty())
-      record_state();
+    break;
 
-    // drop through ...
-
-  case OperationState::UPDATE_HYPERSPACE:
+  case OperationState::SCAN_METADATA:
 
     if (!validate_subops())
       break;
@@ -169,29 +169,6 @@ void OperationDropTable::execute() {
       break;
     }
 
-    try {
-      m_context->namemap->drop_mapping(m_params.name());
-      string filename = m_context->toplevel_dir + "/tables/" + m_id;
-      m_context->hyperspace->unlink(filename.c_str());
-    }
-    catch (Exception &e) {
-      if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND &&
-          e.code() != Error::HYPERSPACE_BAD_PATHNAME)
-        HT_THROW2F(e.code(), e, "Error executing DropTable %s", 
-                m_params.name().c_str());
-    }
-    {
-      ScopedLock lock(m_mutex);
-      m_dependencies.clear();
-      m_dependencies.insert(Dependency::METADATA);
-      m_dependencies.insert(m_id + " move range");
-      m_state = OperationState::SCAN_METADATA;
-    }
-    HT_MAYBE_FAIL("drop-table-UPDATE_HYPERSPACE");
-    record_state();
-    break;
-
-  case OperationState::SCAN_METADATA:
     {
       StringSet servers;
       Utility::get_table_server_set(m_context, m_id, "", servers);
@@ -210,41 +187,59 @@ void OperationDropTable::execute() {
     HT_MAYBE_FAIL("drop-table-SCAN_METADATA");
     break;
 
-  case OperationState::ISSUE_REQUESTS: {
-    if (!m_context->test_mode) {
-      table.id = m_id.c_str();
-      table.generation = 0;
-      op_handler = make_shared<DispatchHandlerOperationDropTable>(m_context, table);
-      op_handler->start(m_servers);
-      if (!op_handler->wait_for_completion()) {
-        std::set<DispatchHandlerOperation::Result> results;
-        op_handler->get_results(results);
-        foreach_ht (const DispatchHandlerOperation::Result &result, results) {
-          if (result.error == Error::OK ||
-              result.error == Error::TABLE_NOT_FOUND) {
-            ScopedLock lock(m_mutex);
-            m_completed.insert(result.location);
+  case OperationState::ISSUE_REQUESTS:
+    {
+      if (!m_context->test_mode) {
+        table.id = m_id.c_str();
+        table.generation = 0;
+        op_handler = make_shared<DispatchHandlerOperationDropTable>(m_context, table);
+        op_handler->start(m_servers);
+        if (!op_handler->wait_for_completion()) {
+          std::set<DispatchHandlerOperation::Result> results;
+          op_handler->get_results(results);
+          foreach_ht (const DispatchHandlerOperation::Result &result, results) {
+            if (result.error == Error::OK ||
+                result.error == Error::TABLE_NOT_FOUND) {
+              ScopedLock lock(m_mutex);
+              m_completed.insert(result.location);
+            }
+            else
+              HT_WARNF("Drop table error at %s - %s (%s)", result.location.c_str(),
+                       Error::get_text(result.error), result.msg.c_str());
           }
-          else
-            HT_WARNF("Drop table error at %s - %s (%s)", result.location.c_str(),
-                     Error::get_text(result.error), result.msg.c_str());
+          {
+            ScopedLock lock(m_mutex);
+            m_servers.clear();
+            m_dependencies.insert(Dependency::METADATA);
+            m_dependencies.insert(m_id + " move range");
+            m_state = OperationState::SCAN_METADATA;
+          }
+          m_context->mml_writer->record_state(shared_from_this());
+          break;
         }
-        {
-          ScopedLock lock(m_mutex);
-          m_servers.clear();
-          m_dependencies.clear();
-          m_dependencies.insert(Dependency::METADATA);
-          m_dependencies.insert(m_id + " move range");
-          m_state = OperationState::SCAN_METADATA;
-        }
-        m_context->mml_writer->record_state(shared_from_this());
-        break;
+        m_context->monitoring->invalidate_id_mapping(m_id);
       }
-      m_context->monitoring->invalidate_id_mapping(m_id);
+      HT_MAYBE_FAIL("drop-table-ISSUE_REQUESTS");
+      set_state(OperationState::UPDATE_HYPERSPACE);
+      record_state();
+      break;
+    }
+
+  case OperationState::UPDATE_HYPERSPACE:
+
+    try {
+      m_context->namemap->drop_mapping(m_params.name());
+      string filename = m_context->toplevel_dir + "/tables/" + m_id;
+      m_context->hyperspace->unlink(filename.c_str());
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND &&
+          e.code() != Error::HYPERSPACE_BAD_PATHNAME)
+        HT_THROW2F(e.code(), e, "Error executing DropTable %s", 
+                m_params.name().c_str());
     }
     complete_ok();
     break;
-  }
 
   default:
     HT_FATALF("Unrecognized state %d", state);

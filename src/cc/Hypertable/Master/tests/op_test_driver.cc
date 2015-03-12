@@ -592,8 +592,8 @@ void drop_table_test(ContextPtr &context) {
   run_test2(context, entities, "drop-table-DROP_VALUE_INDEX-2:throw:0", out);
   run_test2(context, entities, "drop-table-DROP_QUALIFIER_INDEX-1:throw:0", out);
   run_test2(context, entities, "drop-table-DROP_QUALIFIER_INDEX-2:throw:0", out);
-  run_test2(context, entities, "drop-table-UPDATE_HYPERSPACE:throw:0", out);
   run_test2(context, entities, "drop-table-SCAN_METADATA:throw:0", out);
+  run_test2(context, entities, "drop-table-ISSUE_REQUESTS:throw:0", out);
   run_test2(context, entities, "", out);
 
   context->op->wait_for_empty();

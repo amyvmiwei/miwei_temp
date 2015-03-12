@@ -19,21 +19,18 @@
 
 [drop-table-DROP_QUALIFIER_INDEX-2:throw:0] RangeServerConnection {rs1}
 [drop-table-DROP_QUALIFIER_INDEX-2:throw:0] RangeServerConnection {rs2}
-[drop-table-DROP_QUALIFIER_INDEX-2:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0] OperationDropTable {SCAN_METADATA}
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   dependency: <tid> move range
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   dependency: METADATA
 [drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   dependency: OperationDropTable subop OperationDropTable 20
 [drop-table-DROP_QUALIFIER_INDEX-2:throw:0] OperationDropTable {INITIAL}
 [drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   obstruction: OperationDropTable subop OperationDropTable 20
 
-[drop-table-UPDATE_HYPERSPACE:throw:0] RangeServerConnection {rs1}
-[drop-table-UPDATE_HYPERSPACE:throw:0] RangeServerConnection {rs2}
-[drop-table-UPDATE_HYPERSPACE:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
-[drop-table-UPDATE_HYPERSPACE:throw:0]   dependency: OperationDropTable subop OperationDropTable 20
-[drop-table-UPDATE_HYPERSPACE:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
-[drop-table-UPDATE_HYPERSPACE:throw:0]   obstruction: OperationDropTable subop OperationDropTable 20
-
 [drop-table-SCAN_METADATA:throw:0] RangeServerConnection {rs1}
 [drop-table-SCAN_METADATA:throw:0] RangeServerConnection {rs2}
-[drop-table-SCAN_METADATA:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
+[drop-table-SCAN_METADATA:throw:0] OperationDropTable {SCAN_METADATA}
+[drop-table-SCAN_METADATA:throw:0]   dependency: <tid> move range
+[drop-table-SCAN_METADATA:throw:0]   dependency: METADATA
 [drop-table-SCAN_METADATA:throw:0]   dependency: OperationDropTable subop OperationDropTable 20
 [drop-table-SCAN_METADATA:throw:0] OperationDropTable {ISSUE_REQUESTS}
 [drop-table-SCAN_METADATA:throw:0]   dependency: <tid> move range
@@ -41,6 +38,19 @@
 [drop-table-SCAN_METADATA:throw:0]   dependency: rs1
 [drop-table-SCAN_METADATA:throw:0]   dependency: rs2
 [drop-table-SCAN_METADATA:throw:0]   obstruction: OperationDropTable subop OperationDropTable 20
+
+[drop-table-ISSUE_REQUESTS:throw:0] RangeServerConnection {rs1}
+[drop-table-ISSUE_REQUESTS:throw:0] RangeServerConnection {rs2}
+[drop-table-ISSUE_REQUESTS:throw:0] OperationDropTable {SCAN_METADATA}
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: <tid> move range
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: METADATA
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: OperationDropTable subop OperationDropTable 20
+[drop-table-ISSUE_REQUESTS:throw:0] OperationDropTable {ISSUE_REQUESTS}
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: <tid> move range
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: METADATA
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: rs1
+[drop-table-ISSUE_REQUESTS:throw:0]   dependency: rs2
+[drop-table-ISSUE_REQUESTS:throw:0]   obstruction: OperationDropTable subop OperationDropTable 20
 
 [] RangeServerConnection {rs1}
 [] RangeServerConnection {rs2}
