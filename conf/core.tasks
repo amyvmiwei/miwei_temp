@@ -430,7 +430,7 @@ task: verify_upgrade roles: source {
 # (${HYPERTABLE_VERSION}). This is accomplished with a call to ht-upgrade.sh
 task: upgrade_installation roles: master, hyperspace, slave, thriftbroker, spare {
   ssh: {
-    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/ht-upgrade.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/ht-upgrade.sh ${INSTALL_PREFIX}/current
   }
 }
 

@@ -1,23 +1,73 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright (C) 2007-2015 Hypertable, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This file is part of Hypertable.
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or any later version.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
+
+usage() {
+  local REAL_HOME=$HYPERTABLE_HOME
+  readlink $HYPERTABLE_HOME > /dev/null
+  if [ $? -eq 0 ]; then
+    REAL_HOME="`dirname $HYPERTABLE_HOME`/`readlink $HYPERTABLE_HOME`"
+  fi
+  echo
+  echo "usage: ht-java-run.sh [OPTIONS] <class-name> [<program-args>]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help               Display usage information"
+  echo "  --add-to-classpath <f>  Adds <f> to classpath"
+  echo "  --pidfile <f>           Write JVM process ID to file <f>"
+  echo "  --debug                 Run JVM with the follwoing debug options:"
+  echo
+  echo "  -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n -Xdebug"
+  echo
+  echo "This script runs a Java program with the Hypertable jar files added to"
+  echo "the classpath.  It first checks to see if the following file exists:"
+  echo
+  echo "  $REAL_HOME/conf/hadoop-distro"
+  echo
+  echo "If it does not exist, an error message will be written to the console"
+  echo "indicating that ht-set-hadoop-distro.sh needs to be run, and the script"
+  echo "will exit with status 1.  Otherwise, it checks the modification time"
+  echo "of the hadoop-distro file with the modification time of the first jar"
+  echo "file it finds in $REAL_HOME/lib/java/"
+  echo "If the modification time of the hadoop-distro file is newer, it assumes"
+  echo "that the Hadoop distro has changed and runs ht-set-hadoop-distro.sh to"
+  echo "make sure the appropriate Hadoop jar files are copied into"
+  echo "$REAL_HOME/lib/java/"
+  echo
+  echo "The script then populates a CLASSPATH variable by concatenating"
+  echo "all of the jar files supplied with the --add-to-classpath option"
+  echo "with all of the jar files found within the"
+  echo "$REAL_HOME/lib/java/ directory.  Once the CLASSPATH"
+  echo "variable is setup, the JVM is invoked in one of the following two"
+  echo "ways, depending on whether or not the JAVA_HOME environment variable"
+  echo "is set:"
+  echo
+  echo '  exec $JAVA_HOME/bin/java $DEBUG_ARGS -classpath "$CLASSPATH" "$@"'
+  echo
+  echo '  exec java $DEBUG_ARGS -classpath "$CLASSPATH" "$@"'
+  echo
+}
+
 
 # Parse and remove ht-java-run.sh specific arguments
 DEBUG_ARGS=
@@ -26,24 +76,33 @@ DEBUG_ARGS=
 CLASSPATH="${HYPERTABLE_HOME}"
 
 while [ $# -gt 1 ] ; do
-  if [ "--pidfile" = "$1" ] ; then
+  if [ "--pidfile" == "$1" ] ; then
     shift
     echo "$$" > $1
     shift
-  elif [ "--debug" = "$1" ] ; then
+  elif [ "--debug" == "$1" ] ; then
     DEBUG_ARGS="-Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n\
                 -Xdebug"
     shift
-  elif [ "--add-to-classpath" = "$1" ] ; then
+  elif [ "--add-to-classpath" == "$1" ] ; then
     shift
     CLASSPATH=${CLASSPATH}:$1
     shift
-  elif [ "--verbose" = "$1" ] ; then
+  elif [ "--verbose" == "$1" ] ; then
     shift
   else
     break
   fi
 done
+
+if [ $# == 1 ]; then
+  case $1 in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+  esac
+fi
 
 # Make sure configured for Hadoop distro
 DISTRO=

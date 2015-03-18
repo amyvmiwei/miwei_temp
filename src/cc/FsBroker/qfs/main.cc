@@ -29,6 +29,7 @@
 #include <AsyncComm/ApplicationQueue.h>
 #include <AsyncComm/Comm.h>
 
+#include <Common/Config.h>
 #include <Common/Init.h>
 #include <Common/FileUtils.h>
 #include <Common/System.h>
@@ -93,4 +94,9 @@ int main(int argc, char **argv) {
     HT_ERROR_OUT << e << HT_END;
     return 1;
   }
+
+  if (has("pidfile"))
+    FileUtils::unlink(get_str("pidfile"));
+
+  return 0;
 }

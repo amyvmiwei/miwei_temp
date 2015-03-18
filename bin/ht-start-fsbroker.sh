@@ -30,12 +30,65 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
-  echo ""
-  echo "usage: ht-start-fsbroker.sh [OPTIONS] (local|hadoop|mapr|ceph|qfs) [<global-args>]"
-  echo ""
+  local REAL_HOME=$HYPERTABLE_HOME
+  readlink $HYPERTABLE_HOME > /dev/null
+  if [ $? -eq 0 ]; then
+    REAL_HOME="`dirname $HYPERTABLE_HOME`/`readlink $HYPERTABLE_HOME`"
+  fi
+  echo
+  echo "usage: ht-start-fsbroker.sh [OPTIONS] <fs> [<global-options>]"
+  echo
   echo "OPTIONS:"
-  echo "  --valgrind  Run FS broker with valgrind"
-  echo ""
+  echo "  -h,--help   Display usage information"
+  echo
+  echo "Starts the filesystem broker.  This script starts the filesystem broker of type"
+  echo "<fs>.  Valid values for <fs> include \"local\", \"hadoop\", \"ceph\", \"mapr\", and"
+  echo "\"qfs\"."
+  echo
+  echo "To prevent problems arising from running Hypertable on one filesystem and then"
+  echo "inadvertently starting it on another, this script records the filesystem in the"
+  echo "following file:"
+  echo
+  echo "  $REAL_HOME/run/last-fs"
+  echo
+  echo "When it starts up, it verifies that the <fs> argument matches the contents of"
+  echo "the last-fs file and if not, it displays an error message to the console and"
+  echo "exits with status code 1.  Otherwise, it checks to see if the broker is already"
+  echo "running by comparing the process ID stored in \$HT_HOME/run/FsBroker.<fs>.pid"
+  echo "with the process IDs of the currently running processes.  If there's no match,"
+  echo "it then performs a second check with ht-check-fsbroker.sh.  If the broker"
+  echo "appears to be running, the script exits with status 0."
+  echo
+  echo "Most of the filesystem brokers are binary executable programs that follow the"
+  echo "naming convention of adding the prefix \"htFsBroker\" to the name of the"
+  echo "filesystem (e.g. htFsBrokerLocal).  The Hadoop broker is implemented as a Java"
+  echo "program located in the hypertable jar file and has class name"
+  echo "org.hypertable.FsBroker.hadoop.main.  It is launched with the ht-java-run.sh"
+  echo "script.  All brokers are passed the --verbose option and any <global-options>"
+  echo "that are supplied."
+  echo
+  echo "The output of the broker is piped into cronolog, a log rotation program, which"
+  echo "directs its output to the log subdirectory within the Hypertable installation"
+  echo "directory (HT_HOME).  The main log file is named FsBroker.<fs>.log and archives"
+  echo "are stored in the \$HT_HOME/log/archive directory.  The following illustrates"
+  echo "what the contents of the \$HT_HOME/log directory might look like for the"
+  echo "FsBroker (local) logs:"
+  echo
+  echo "  archive/2015-02/28/FsBroker.local.log"
+  echo "  archive/2015-03/01/FsBroker.local.log"
+  echo "  archive/2015-03/02/FsBroker.local.log"
+  echo "  FsBroker.local.log -> archive/2015-03/02/FsBroker.local.log"
+  echo
+  echo "After launching the filesystem broker, the ht-check-fsbroker.sh script is run"
+  echo "repeatedly until the status is OK at which point it displays a message such as"
+  echo "the followng to the console and the script exits with status code 0."
+  echo
+  echo "  FsBroker (local) Started"
+  echo
+  echo "If after 40 attempts (with a one second wait in between each), the status check"
+  echo "does not return OK, the status text will be written to the terminal and the"
+  echo "status code is returned as the exit status of the script."
+  echo
 }
 
 fs_conflict_error() {
@@ -130,7 +183,7 @@ if [ $? != 0 ] ; then
     exit 1
   fi
 
-  wait_for_ready fsbroker "FS Broker ($FS)" "$@"
+  wait_for_ready fsbroker "FsBroker ($FS)" "$@"
 else
   echo "WARNING: FSBroker already running."
 fi

@@ -2,24 +2,28 @@
 #
 # Copyright (C) 2007-2015 Hypertable, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This file is part of Hypertable.
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; version 3 of the
+# License, or any later version.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
 #
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-FORCE="false"
 only="false"
 
 STOP_FSBROKER="false"
@@ -29,7 +33,6 @@ STOP_THRIFTBROKER="false"
 STOP_HYPERSPACE="false"
 STOP_TESTCLIENT="false"
 STOP_TESTDISPATCHER="false"
-
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -80,33 +83,48 @@ if [ $only == "false" ]; then
 fi
 
 usage() {
-  echo ""
-  echo "usage: ht-stop-servers.sh [OPTIONS]"
-  echo ""
+  echo
+  echo "usage: ht-stop-servers.sh [OPTIONS] [<global-options>]"
+  echo
   echo "OPTIONS:"
-  echo "  --force                 kill processes to ensure they're stopped"
-  echo "  --no-fsbroker           do not stop the FS broker"
-  echo "  --no-master             do not stop the Hypertable master"
-  echo "  --no-rangeserver        do not stop the RangeServer"
-  echo "  --no-hyperspace         do not stop the Hyperspace master"
-  echo "  --no-thriftbroker       do not stop the ThriftBroker"
-  echo "  fsbroker                stops the FS broker"
-  echo "  master                  stops the Hypertable master"
-  echo "  rangeserver             stops the RangeServer"
-  echo "  hyperspace              stops the Hyperspace master"
-  echo "  thriftbroker            stops the ThriftBroker"
-  echo ""
+  echo "  -h,--help          Display usage information"
+  echo "  --no-fsbroker      Do not stop the FsBroker"
+  echo "  --no-master        Do not stop the Master"
+  echo "  --no-rangeserver   Do not stop the RangeServer"
+  echo "  --no-hyperspace    Do not stop the Hyperspace replica"
+  echo "  --no-thriftbroker  Do not stop the ThriftBroker"
+  echo "  fsbroker           Stop the FsBroker"
+  echo "  master             Stop the Master"
+  echo "  rangeserver        Stop the RangeServer"
+  echo "  hyperspace         Stop the Hyperspace replica"
+  echo "  thriftbroker       Stop the ThriftBroker"
+  echo
+  echo "Stops all Hypertable processes running on localhost.  The processes are stopped"
+  echo "in the following order:"
+  echo
+  echo "  ThriftBroker"
+  echo "  Master"
+  echo "  RangeServer"
+  echo "  FsBroker"
+  echo "  Hyperspace"
+  echo
+  echo "If any process specifier options are supplied (i.e. fsbroker, master,"
+  echo "rangeserver, hyperspace, thriftbroker), then the only processes stopped are the"
+  echo "ones that match the specifiers.  Otherwise, all processes are stopped except for"
+  echo "the ones specified with --no options."
+  echo
+  echo "The <global-options> are passed to the ht-stop-* scripts."
+  echo
+  echo "The exit status of the script is 0 if all specified processes were successfully"
+  echo "stopped, otherwise the script exits with status 1."
+  echo
 }
 
 while [ $# -gt 0 ]; do
   case $1 in
-    --force)
-      FORCE="true"
-      shift
-      ;;
-    --help)
+    -h|--help)
       usage
-      exit 1
+      exit 0
       ;;
     --no-fsbroker)
       STOP_FSBROKER="false"
@@ -132,43 +150,13 @@ while [ $# -gt 0 ]; do
       STOP_THRIFTBROKER="false"
       shift
       ;;
-    --only-dfsbroker)
-      STOP_FSBROKER="true"
-      shift
-      ;;
-    --only-fsbroker)
-      STOP_FSBROKER="true"
-      shift
-      ;;
-    --only-master)
-      STOP_MASTER="true"
-      shift
-      ;;
-    --only-rangeserver)
-      STOP_RANGESERVER="true"
-      shift
-      ;;
-    --only-hyperspace)
-      STOP_HYPERSPACE="true"
-      shift
-      ;;
-    --only-thriftbroker)
-      STOP_THRIFTBROKER="true"
-      shift
-      ;;
     *)
       break
       ;;
   esac
 done
 
-if [ ! -e $HYPERTABLE_HOME/bin/ht_master ] ; then
-  STOP_MASTER="false"
-fi
-
-if [ ! -e $HYPERTABLE_HOME/bin/ht_rangeserver ] ; then
-  STOP_RANGESERVER="false"
-fi
+RET=0
 
 #
 # Stop TestClient
@@ -189,6 +177,9 @@ fi
 #
 if [ $STOP_THRIFTBROKER == "true" ] ; then
   $HYPERTABLE_HOME/bin/ht-stop-thriftbroker.sh "$@"
+  if [ $? -ne 0 ]; then
+    RET=1
+  fi
 fi
 
 #
@@ -196,6 +187,9 @@ fi
 #
 if [ $STOP_MASTER == "true" ] ; then
   $HYPERTABLE_HOME/bin/ht-stop-master.sh "$@"
+  if [ $? -ne 0 ]; then
+    RET=1
+  fi
 fi
 
 #
@@ -203,43 +197,29 @@ fi
 #
 if [ $STOP_RANGESERVER == "true" ] ; then
   $HYPERTABLE_HOME/bin/ht-stop-rangeserver.sh "$@"
+  if [ $? -ne 0 ]; then
+    RET=1
+  fi
 fi
 
 #
-# Stop FS Broker
+# Stop FsBroker
 #
 if [ $STOP_FSBROKER == "true" ] ; then
-  $HYPERTABLE_HOME/bin/ht-stop-fsbroker.sh
+  $HYPERTABLE_HOME/bin/ht-stop-fsbroker.sh "$@"
+  if [ $? -ne 0 ]; then
+    RET=1
+  fi
 fi
 
 #
 # Stop Hyperspace
 #
 if [ $STOP_HYPERSPACE == "true" ] ; then
-  $HYPERTABLE_HOME/bin/ht-stop-hyperspace.sh
+  $HYPERTABLE_HOME/bin/ht-stop-hyperspace.sh "$@"
+  if [ $? -ne 0 ]; then
+    RET=1
+  fi
 fi
 
-sleep 1
-
-#
-# wait for thriftbroker shutdown
-#
-if [ $STOP_THRIFTBROKER == "true" ] ; then
-  wait_for_server_shutdown thriftbroker "thrift broker" "$@" &
-fi
-
-#
-# wait for master shutdown
-#
-if [ $STOP_MASTER == "true" ] ; then
-  wait_for_server_shutdown master "hypertable master" "$@" &
-fi
-
-#
-# wait for hyperspace shutdown
-#
-if [ $STOP_HYPERSPACE == "true" ] ; then
-    wait_for_server_shutdown hyperspace "hyperspace" "$@" &
-fi
-
-wait
+exit $RET

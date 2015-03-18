@@ -2,17 +2,20 @@
 #
 # Copyright (C) 2007-2015 Hypertable, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This file is part of Hypertable.
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or any later version.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
 # The installation directory
@@ -28,21 +31,44 @@ START_MASTER="true"
 START_THRIFTBROKER="true"
 
 usage() {
-  echo ""
-  echo "usage: ht-start-all-servers.sh [OPTIONS] <fs-choice> [<global-options>]"
-  echo ""
+  echo
+  echo "usage: ht-start-all-servers.sh [OPTIONS] <fs> [<global-options>]"
+  echo
   echo "OPTIONS:"
-  echo "  --heapcheck-rangeserver run RangeServer with tcmalloc heapcheck"
-  echo "  --valgrind-hyperspace   run Hyperspace with valgrind"
-  echo "  --valgrind-master       run Master with valgrind"
-  echo "  --valgrind-rangeserver  run RangeServer with valgrind"
-  echo "  --valgrind-thriftbroker run ThriftBroker with valgrind"
-  echo "  --no-rangeserver        do not launch the RangeServer"
-  echo "  --no-master             do not launch the Master"
-  echo "  --no-thriftbroker       do not launch the ThriftBroker"
-  echo ""
-  echo "FS choices: qfs, hadoop, mapr, local"
-  echo ""
+  echo "  -h,--help                Display usage information"
+  echo "  --no-master              Do not launch the Master"
+  echo "  --no-rangeserver         Do not launch the RangeServer"
+  echo "  --no-thriftbroker        Do not launch the ThriftBroker"
+  echo "  --valgrind-hyperspace    Pass --valgrind option to ht-start-hyperspace.sh"
+  echo "  --valgrind-master        Pass --valgrind option to ht-start-master.sh"
+  echo "  --heapcheck-rangeserver  Pass --heapcheck option to ht-start-rangeserver.sh"
+  echo "  --valgrind-rangeserver   Pass --valgrind option to ht-start-rangeserver.sh"
+  echo "  --valgrind-thriftbroker  Pass --valgrind option to ht-start-thriftbroker.sh"
+  echo
+  echo "Starts Hypertable processes on localhost.  By default, this script will start"
+  echo "all hypertable processes by running the service startup scripts in the following"
+  echo "order:"
+  echo
+  echo "  ht-start-hyperspace.sh"
+  echo "  ht-start-fsbroker.sh"
+  echo "  ht-start-master.sh"
+  echo "  ht-start-rangeserver.sh"
+  echo "  ht-start-thriftbroker.sh"
+  echo
+  echo "The required argument <fs> indicates which filesystem broker to start.  Valid"
+  echo "values include \"local\", \"hadoop\", \"ceph\", \"mapr\", and \"qfs\".  Typical usage of"
+  echo "this script is to start Hypertable in standalone mode on the local filesystem,"
+  echo "for example:"
+  echo
+  echo "  $ ht-start-all-servers.sh local"
+  echo "  FsBroker (local) Started"
+  echo "  Hyperspace Started"
+  echo "  Master Started"
+  echo "  RangeServer Started"
+  echo "  ThriftBroker Started"
+  echo
+  echo "The <global-options> arguments are passed to all startup scripts."
+  echo
 }
 
 while [ "$1" != "${1##[-+]}" ]; do

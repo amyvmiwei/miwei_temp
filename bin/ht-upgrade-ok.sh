@@ -25,42 +25,61 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
-  echo ""
-  echo "usage: ht-upgrade-ok.sh <from> <to>"
-  echo ""
-  echo "description:"
-  echo "  Determines whether or not the upgrade from Hypertable"
-  echo "  version <from> to version <to> is valid.  <from> and <to>"
-  echo "  are assumed to be Hypertable installation directories"
-  echo "  whose last path component is either a version number or"
-  echo "  the symbolic link \"current\" which points to a Hypertable"
-  echo "  installation directory whose last path component is a"
-  echo "  version number."
-  echo ""
-  echo "return:"
-  echo "  Zero if upgrade is OK, non-zero otherwise"
-  echo ""
+  echo
+  echo "usage: ht-upgrade-ok.sh [OPTIONS] <from> <to>"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help     Display usage information"
+  echo "  -v,--verbose  Display verbose output"
+  echo
+  echo "Determines whether or not the upgrade from Hypertable version <from> to version"
+  echo "<to> is valid.  <from> and <to> are assumed to be Hypertable installation"
+  echo "directories whose last path component is either a version number or the symbolic"
+  echo "link \"current\" which points to a Hypertable installation directory whose last"
+  echo "path component is a version number."
+  echo
+  echo "The script returns with exit status 0 if the upgrade is compatible, otherwise it"
+  echo "returns with exit status 1."
+  echo
 }
+
+VERBOSE=
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -v|--verbose)
+      VERBOSE=true
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 if [ $# != 2 ] ; then
   usage
-  exit 1
+  exit 0
 fi
 
-FROM=`basename $1 | awk -F'/' '{ print $NF; }'`
-TO=`echo $2 | awk -F'/' '{ print $NF; }'`
-
-if [ "$FROM" == "current" ] ; then
-  FROM=`/bin/ls -l $1 | tr -s " " | awk '{ print $NF; }' | awk -F'/' '{ print $NF; }'`
+FROM=`readlink $1`
+if [ $? -ne 0 ]; then
+  FROM=$1
 fi
+FROM=`basename $FROM`
 
-if [ "$TO" == "current" ] ; then
-  TO=`/bin/ls -l $2 | tr -s " " | awk '{ print $NF; }' | awk -F'/' '{ print $NF; }'`
+TO=`readlink $2`
+if [ $? -ne 0 ]; then
+  TO=$2
 fi
+TO=`basename $TO`
 
 if [ "$FROM" == "$TO" ] ; then
-    echo "Upgrading identical version: $FROM -> $TO"
-    exit 0
+  exit 0
 fi
 
 MAJOR=`echo $FROM | cut -d'.' -f1`
@@ -68,57 +87,38 @@ MINOR=`echo $FROM | cut -d'.' -f2`
 MICRO=`echo $FROM | cut -d'.' -f3`
 PATCH=`echo $FROM | cut -d'.' -f4`
 
-if [ "$MAJOR" == "" ] ||
-   [ "$MINOR" == "" ] ||
-   [ "$MICRO" == "" ] || 
-   [ "$PATCH" == "" ] ; then
+if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$MICRO" ] || [ -z "$PATCH" ] ; then
   echo "Unable to extract version number from <from> argument: $1"
   exit 1
 fi
 
-let FROM_PATCH=$PATCH
-let FROM_MICRO=($MICRO*1000)+$FROM_PATCH
-let FROM_MINOR=($MINOR*100000)+$FROM_MICRO
-let FROM_MAJOR=($MAJOR*10000000)+$FROM_MINOR
+let "FROM_NUMBER=(MAJOR*10000000)+(MINOR*100000)+(MICRO*1000)+PATCH"
 
 MAJOR=`echo $TO | cut -d'.' -f1`
 MINOR=`echo $TO | cut -d'.' -f2`
 MICRO=`echo $TO | cut -d'.' -f3`
 PATCH=`echo $TO | cut -d'.' -f4`
 
-if [ "$MAJOR" == "" ] ||
-   [ "$MINOR" == "" ] ||
-   [ "$MICRO" == "" ] || 
-   [ "$PATCH" == "" ] ; then
+if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$MICRO" ] || [ -z "$PATCH" ] ; then
   echo "Unable to extract version number from <from> argument: $1"
   exit 1
 fi
 
-let TO_PATCH=$PATCH
-let TO_MICRO=($MICRO*1000)+$TO_PATCH
-let TO_MINOR=($MINOR*100000)+$TO_MICRO
-let TO_MAJOR=($MAJOR*10000000)+$TO_MINOR
+let "TO_NUMBER=(MAJOR*10000000)+(MINOR*100000)+(MICRO*1000)+PATCH"
 
-if [ $TO_MINOR -le 1000000 ] && [ $TO_MINOR -ge 904000 ] ; then
-    if [ $FROM_MINOR -le 1000000 ] && [ $FROM_MINOR -ge 904000 ] ; then
-        exit 0
-    fi
-    echo "Incompatible upgrade a: $FROM -> $TO"
-    exit 1
-elif [ $TO_MAJOR -ge 1000000 ] ; then
-    if [ $FROM_MAJOR -le $TO_MAJOR ] ; then
-        exit 0
-    fi
-    echo "Incompatible upgrade b: $FROM -> $TO"
-    exit 1
-elif [ $TO_MAJOR -lt 1000000 ] ; then
-    if [ $FROM_MAJOR -lt 1000000 ] ; then
-        if [ $FROM_MICRO -eq $TO_MICRO ] ; then
-            exit 0
-        fi
-    fi
-    echo "Incompatible upgrade c: $FROM -> $TO"
-    exit 1
+if [ -n "$VERBOSE" ]; then
+  echo "FROM = $FROM ($FROM_NUMBER)"
+  echo "TO   = $TO ($TO_NUMBER)"
 fi
 
-exit 0
+RET=0
+
+if [ $FROM_NUMBER -ge 908005 ] && [ $TO_NUMBER -lt 908005 ]; then
+  RET=1
+fi
+
+if [ $RET -eq 1 ]; then
+  echo "Incompatible upgrade: $FROM -> $TO"
+fi
+
+exit $RET

@@ -1,30 +1,67 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Copyright (C) 2007-2015 Hypertable, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This file is part of Hypertable.
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or any later version.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+usage() {
+  local REAL_HOME=$HYPERTABLE_HOME
+  readlink $HYPERTABLE_HOME > /dev/null
+  if [ $? -eq 0 ]; then
+    REAL_HOME="`dirname $HYPERTABLE_HOME`/`readlink $HYPERTABLE_HOME`"
+  fi
+  echo
+  echo "usage: ht-destroy-hyperspace.sh [OPTIONS] [<server-options>]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help             Display usage information"
+  echo "  -i,--interactive      Displays a warning and waits for 10 seconds before"
+  echo "                        proceeding to give the operator a chance to hit"
+  echo "                        ctrl-c to exit"
+  echo
+  echo "This script shuts down the Hyperspace process running on localhost"
+  echo "and then recursively removes the contents of the following directory:"
+  echo
+  echo "  $REAL_HOME/hyperspace"
+  echo
+  echo "The <server-options> arguments are passed into the invocation of the"
+  echo "ht-stop-hyperspace.sh"
+  echo
+}
+
+if [ $# == 1 ]; then
+  case $1 in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+  esac
+fi
+
 confirm=y
 
 if tty > /dev/null && [ $# == 1 ]; then
   case $1 in
     -i|--interactive)
-      echo "Are you sure you want to clear the database (on default ports)?"
+      echo "Are you sure you want to destroy Hyperspace (on default ports)?"
       echo "Will proceed in 10 seconds, (Ctrl-C to quit)"
       shift
       sleep 10
@@ -33,7 +70,7 @@ if tty > /dev/null && [ $# == 1 ]; then
 fi
 
 # Stop hyperspace
-$HYPERTABLE_HOME/bin/ht-stop-hyperspace.sh
+$HYPERTABLE_HOME/bin/ht-stop-hyperspace.sh "$@"
 if [ $? -ne 0 ]; then
   exit 2
 fi

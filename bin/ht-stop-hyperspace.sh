@@ -25,9 +25,27 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
-  echo ""
-  echo "usage: ht-stop-hyperspace.sh [<server-options>]"
-  echo ""
+  echo
+  echo "usage: ht-stop-hyperspace.sh [OPTIONS] [<global-options>]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help  Display usage information"
+  echo
+  echo "Stops the Hyperspace process running on localhost.  The Hyperspace process,"
+  echo "whose process ID is found in the $HT_HOME/run/Hyperspace.pid file, is killed by"
+  echo "sending it the KILL signal.  It then runs ht-check-hyperspace.sh to verify"
+  echo "that the status is CRITICAL, after which it displays the following message to"
+  echo "the console:"
+  echo
+  echo "  Shutdown Hyperspace complete"
+  echo
+  echo "If ht-check-hyperspace.sh reports a status other than CRITICAL, the status text"
+  echo "is displayed to the terminal and the status code is returned as the exit status."
+  echo "The final status check is for cases where the .pid file was inadvertently"
+  echo "deleted so that the script will report that the process was not stopped."
+  echo
+  echo "The <global-options> are passed to ht-check-hyperspace.sh."
+  echo
 }
 
 while [ $# -gt 0 ]; do
@@ -43,5 +61,6 @@ while [ $# -gt 0 ]; do
 done
 
 stop_server hyperspace
+max_retries=1
 wait_for_critical hyperspace "Hyperspace" "$@"
 

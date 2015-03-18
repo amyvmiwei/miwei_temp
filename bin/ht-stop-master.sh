@@ -25,9 +25,26 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
-  echo ""
-  echo "usage: ht-stop-master.sh [<server-options>]"
-  echo ""
+  echo
+  echo "usage: ht-stop-master.sh [OPTIONS] [<global-options>]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help  Display usage information"
+  echo
+  echo "Stops the Master process.  This script attempts to stop the Master by"
+  echo "issuing the \"shutdown\" command to the Master CLI (ht master).  It then"
+  echo "repeatedly runs ht-check-master.sh until it reports status CRITICAL, after"
+  echo "which it displays the following message to the console:"
+  echo
+  echo "  Shutdown Master complete"
+  echo
+  echo "If after 40 attempts (with a one second wait in between each), the status check"
+  echo "does not return CRITICAL, the Master process, whose process ID is found in the "
+  echo "\$HT_HOME/run/Master.pid file, will be killed by sending it the KILL signal."
+  echo
+  echo "The <global-options> are passed to all programs run by this script and the exit"
+  echo "status is 0 under all circumstances."
+  echo
 }
 
 while [ $# -gt 0 ]; do

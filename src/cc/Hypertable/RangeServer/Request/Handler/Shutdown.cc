@@ -27,18 +27,23 @@
 
 #include <AsyncComm/ResponseCallback.h>
 
-extern "C" {
-#include <poll.h>
-}
+#include <Common/Config.h>
+
+#include <chrono>
+#include <thread>
 
 using namespace Hypertable;
+using namespace Config;
 using namespace Hypertable::RangeServer::Request::Handler;
+using namespace std;
 
 void Shutdown::run() {
   ResponseCallback cb(m_comm, m_event);
   m_range_server->shutdown();
   cb.response_ok();
-  poll(0, 0, 2000);
+  this_thread::sleep_for(chrono::milliseconds(2000));
   HT_INFO("Exiting RangeServer.");
+  if (has("pidfile"))
+    FileUtils::unlink(get_str("pidfile"));
   _exit(0);
 }

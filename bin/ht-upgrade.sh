@@ -30,17 +30,98 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 etchome=/etc/opt/hypertable
 varhome=/var/opt/hypertable
+verbose=
 
 usage() {
-  echo ""
-  echo "usage: $0 <from> <to>"
-  echo ""
-  echo "description:"
-  echo ""
-  echo "  Upgrades the <dir> directory in <from> to <to>"
-  echo "  Copies files or uses symlinks from <from> to <to>."
-  echo ""
-  echo ""
+  echo
+  echo "usage: ht-upgrade.sh [OPTIONS] <old-install-dir>"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help     Display usage information"
+  echo "  -v,--verbose  Display verbose output"
+  echo
+  echo "Upgrades the Hypertable installation on localhost.  The ht-upgrade.sh script"
+  echo "should be run from the new installation and takes a single argument that is the"
+  echo "absolute path of the top-level directory of the old installation.  For example,"
+  echo "if upgrading from Hypertable version 0.9.8.6 to 0.9.8.7, you would issue the"
+  echo "following command to perform the upgrade:"
+  echo
+  echo "  /opt/hypertable/0.9.8.7/bin/ht-upgrade.sh /opt/hypertable/0.9.8.6"
+  echo
+  echo "If the \"current\" link points to the old installation directory, the upgrade can"
+  echo "alternatively be performed with:"
+  echo
+  echo "  /opt/hypertable/0.9.8.7/bin/ht-upgrade.sh /opt/hypertable/current"
+  echo
+  echo "This script updates the following subdirectories in the new installation:"
+  echo
+  echo "  conf"
+  echo "  run"
+  echo "  fs"
+  echo "  hyperspace"
+  echo "  log"
+  echo
+  echo "Each subdirectory is set up independently in the new installation directory"
+  echo "according to the following three rules:"
+  echo
+  echo "1. Subdirectory exists in the old installation and is a symbolic link"
+  echo
+  echo "  The symbolic link is recreated in the new installation exactly as it exists in"
+  echo "  the old installation."
+  echo
+  echo "2. Subdirectory exists in the old installation and is not a symbolic link"
+  echo
+  echo "  The subdirectory is recursively copied from the old installation to the new"
+  echo "  installation."
+  echo
+  echo "3. Subdirectory does not exist in the old installation"
+  echo
+  echo "  A symbolic link is setup for the subdirectory in the new installation"
+  echo "  directory as shown below.  The link will only be created if the destination"
+  echo "  directory exists."
+  echo
+  echo "  conf -> /etc/opt/hypertable"
+  echo "  run -> /var/opt/hypertable/run"
+  echo "  fs -> /var/opt/hypertable/fs"
+  echo "  hyperspace -> /var/opt/hypertable/hyperspace"
+  echo "  log -> /var/opt/hypertable/log"
+  echo
+  echo "The conf subdirectory is handled slightly differently to allow certain files to"
+  echo "be upgraded.  During the upgrade of the conf directory, the following files are"
+  echo "copied from new installation into the resulting conf directory, thereby picking"
+  echo "up any changes made to them in the new release."
+  echo
+  echo "  cluster.def-EXAMPLE"
+  echo "  METADATA.xml"
+  echo "  RS_METRICS.xml"
+  echo "  notification-hook.tmpl"
+  echo "  *.tasks"
+  status_msg=
+}
+
+canonicalize() {
+  local CANONICAL=$1
+  readlink $1 > /dev/null
+  if [ $? -eq 0 ]; then
+    local LINK=`readlink $1`
+    if [[ $LINK == "/"* ]]; then
+      CANONICAL=$LINK
+    else
+      CANONICAL="`dirname $1`/$LINK"
+    fi
+  fi
+  pushd . > /dev/null
+  cd `dirname $CANONICAL`
+  CANONICAL="`pwd`/`basename $CANONICAL`"
+  popd > /dev/null
+  echo $CANONICAL
+}
+
+run_command() {
+  $@
+  if [ -n "$verbose" ]; then
+    echo "$@"
+  fi
 }
 
 upgrade_dir() {
@@ -48,10 +129,9 @@ upgrade_dir() {
   fhs_default_target=$2
   link_only=$3
   target=0
-  
-  cwd=`pwd`
-  old_dir=${HYPERTABLE_HOME}/../${FROM}/$dir
-  new_dir=${HYPERTABLE_HOME}/$dir
+
+  old_dir=${FROM}/$dir
+  new_dir=${TO}/$dir
 
   status_msg="$status_msg [UPGRADE '$dir' STARTED]"
   if [ -e ${old_dir} ] ; then
@@ -61,29 +141,29 @@ upgrade_dir() {
       target=${ls_out#*-> }
       status_msg="$status_msg :: '${old_dir}' symlinked to '${target}'. Setting up '${new_dir}' to link to '${target}'"
       if [ $dir == "conf" ] ; then
-        cp $new_dir/METADATA.xml $target  
-        cp $new_dir/RS_METRICS.xml $target
-        cp $new_dir/notification-hook.tmpl $target
-        cp $new_dir/*.tasks $target
+        run_command cp $new_dir/cluster.def-EXAMPLE $target
+        run_command cp $new_dir/METADATA.xml $target
+        run_command cp $new_dir/RS_METRICS.xml $target
+        run_command cp $new_dir/notification-hook.tmpl $target
+        run_command cp $new_dir/*.tasks $target
       fi
-      cd $HYPERTABLE_HOME 
-      rm -rf $dir 
-      ln -s $target $dir
+      run_command rm -rf $new_dir
+      run_command ln -s $target $new_dir
     else 
       if [ $link_only -eq 0 ] ; then
         #copy stuff over
         status_msg="$status_msg :: '$old_dir' is not a symlink. Copying contents into '$new_dir'."
         target="$new_dir.tmp"
-        cp -dpR $old_dir $target
+        run_command cp -dpR $old_dir $target
         if [ $dir == "conf" ] ; then
-          cp $new_dir/METADATA.xml $target 
-          cp $new_dir/RS_METRICS.xml $target
-          cp $new_dir/notification-hook.tmpl $target
-          cp $new_dir/*.tasks $target
+          run_command cp $new_dir/cluster.def-EXAMPLE $target
+          run_command cp $new_dir/METADATA.xml $target 
+          run_command cp $new_dir/RS_METRICS.xml $target
+          run_command cp $new_dir/notification-hook.tmpl $target
+          run_command cp $new_dir/*.tasks $target
         fi
-        cd $HYPERTABLE_HOME 
-        rm -rf $new_dir 
-        mv $target $new_dir
+        run_command rm -rf $new_dir 
+        run_command mv $target $new_dir
       else
         status_msg="$status_msg :: '$old_dir' is not a symlink. Skipping content copy into $new_dir."
       fi
@@ -96,35 +176,49 @@ upgrade_dir() {
       target=$fhs_default_target
       status_msg="$status_msg :: '${fhs_default_target}' found. Setting up '${new_dir}' to link to '${target}'"
       if [ $dir == "conf" ] ; then
-        cp $new_dir/METADATA.xml $target 
-        cp $new_dir/RS_METRICS.xml $target
-        cp $new_dir/notification-hook.tmpl $target
-        cp $new_dir/*.tasks $target
+        run_command cp $new_dir/cluster.def-EXAMPLE $target
+        run_command cp $new_dir/METADATA.xml $target
+        run_command cp $new_dir/RS_METRICS.xml $target
+        run_command cp $new_dir/notification-hook.tmpl $target
+        run_command cp $new_dir/*.tasks $target
       fi
-      cd $HYPERTABLE_HOME 
-      rm -rf $dir 
-      ln -s $target $dir
+      run_command rm -rf $new_dir 
+      run_command ln -s $target $new_dir
     else
       status_msg="$status_msg :: $fhs_default_target' doesn't exist. Nothing to upgrade."
     fi
   fi
-  cd $cwd
   status_msg="$status_msg [UPGRADE '$dir' FINISHED]"
 }
 
-if [ $# != 2 ] ; then
+
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h|--help)
+      usage;
+      exit 0
+      ;;
+    -v|--verbose)
+      verbose=true
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [ $# -eq 0 ] ; then
   usage
-  return 0
-fi
-FROM=`echo $1 | awk -F'/' '{ print $NF; }'`
-TO=`echo $2 | awk -F'/' '{ print $NF; }'`
-
-if [ "$FROM" == "current" ] ; then
-  FROM=`/bin/ls -l $1 | tr -s " " | awk '{ print $NF; }' | awk -F'/' '{ print $NF; }'`
+  exit 0
 fi
 
-if [ "$TO" == "current" ] ; then
-  TO=`/bin/ls -l $2 | tr -s " " | awk '{ print $NF; }' | awk -F'/' '{ print $NF; }'`
+FROM=`canonicalize $1`
+TO=`canonicalize $HYPERTABLE_HOME`
+
+if [ -n "$verbose" ]; then
+  echo "FROM = $FROM"
+  echo "TO   = $TO"
 fi
 
 if [ "$FROM" == "$TO" ]; then

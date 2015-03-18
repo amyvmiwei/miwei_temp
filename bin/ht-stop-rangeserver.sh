@@ -25,9 +25,27 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
-  echo ""
-  echo "usage: ht-stop-rangeserver.sh [<server-options>]"
-  echo ""
+  echo
+  echo "usage: ht-stop-rangeserver.sh [OPTIONS] [<global-options>]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help  Display usage information"
+  echo
+  echo "Stops the RangeServer process.  This script attempts to stop the RangeServer by"
+  echo "issuing the \"shutdown\" command to the RangeServer CLI (ht rangeserver).  It"
+  echo "then repeatedly runs ht-check-rangeserver.sh until it reports status CRITICAL,"
+  echo "after which it displays the following message to the console:"
+  echo
+  echo "  Shutdown RangeServer complete"
+  echo
+  echo "If after 40 attempts (with a one second wait in between each), the status check"
+  echo "does not return CRITICAL, the RangeServer process, whose process ID is found in"
+  echo "the \$HT_HOME/run/RangeServer.pid file, will be killed by sending it the KILL"
+  echo "signal."
+  echo
+  echo "The <global-options> are passed to all programs run by this script and the exit"
+  echo "status is 0 under all circumstances."
+  echo
 }
 
 while [ $# -gt 0 ]; do

@@ -26,13 +26,44 @@ if [ "e$RUNTIME_ROOT" == "e" ]; then
 fi
 
 usage() {
-  echo ""
+  echo
   echo "usage: ht-check.sh [OPTIONS] [<server-options>]"
-  echo ""
+  echo
   echo "OPTIONS:"
   echo "  -h,--help             Display usage information"
   echo "  -t,--timeout <sec>    Timeout after <sec> seconds (default = 20)"
-  echo ""
+  echo
+  echo "Checks the overall status Hypertable.  This script is Nagios plugin"
+  echo "compliant and communicates the status of the system by returning one of"
+  echo "the codes in the following table as its exit status."
+  echo
+  echo "  Code  Status    Description"
+  echo "  ----  ------    -----------"
+  echo "  0     OK        Up and operating properly"
+  echo "  1     WARNING   Up and operating, but needs attention"
+  echo "  2     CRITICAL  Down or not working properly"
+  echo "  3     UNKNOWN   Unable to determine status"
+  echo
+  echo "In addition to the exit status, this script will also write a human-readable"
+  echo "description of the status to the terminal in the following format:"
+  echo
+  echo "  Hypertable <status> - <description>"
+  echo
+  echo "This script performs an overall Hypertable status check, which includes"
+  echo "checks of the following processes:"
+  echo
+  echo "  Hyperspace"
+  echo "  Master (active)"
+  echo "  RangeServers"
+  echo "  FsBrokers (on active Master and all RangeServers)"
+  echo
+  echo "The status check will stop on the first non-OK status it encounters and will"
+  echo "report that status, along with its description, as the Hypertable status."
+  echo
+  echo "NOTE: This script does not perform checks on the ThriftBrokers."
+  echo "To perform checks on the ThriftBroker processes, the ht-check-thrifbroker.sh"
+  echo "script should be run on each ThriftBroker machine independently."
+  echo
 }
 
 TIMEOUT_OPTION="--timeout 20000"

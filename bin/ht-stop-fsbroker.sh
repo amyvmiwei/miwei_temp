@@ -25,9 +25,27 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 usage() {
-  echo ""
-  echo "usage: ht-stop-fsbroker.sh [<server-options>]"
-  echo ""
+  echo
+  echo "usage: ht-stop-fsbroker.sh [OPTIONS] [<global-options>]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h,--help  Display usage information"
+  echo
+  echo "Stops the filesystem broker.  This script attempts to stop the FsBroker by"
+  echo "issuing the \"shutdown\" command to the FsBroker CLI (ht fsbroker).  It then"
+  echo "repeatedly runs ht-check-fsbroker.sh until it reports status CRITICAL, after"
+  echo "which it displays the following message to the console:"
+  echo
+  echo "  Shutdown FsBroker complete"
+  echo
+  echo "If after 40 attempts (with a one second wait in between each), the status check"
+  echo "does not return CRITICAL, the FsBroker process, whose process ID is found in the "
+  echo "\$HT_HOME/run/FsBroker.<fs>.pid file, will be killed by sending it the KILL"
+  echo "signal."
+  echo
+  echo "The <global-options> are passed to all programs run by this script and the exit"
+  echo "status is 0 under all circumstances."
+  echo
 }
 
 while [ $# -gt 0 ]; do
@@ -43,9 +61,10 @@ while [ $# -gt 0 ]; do
 done
 
 echo 'shutdown' | $HYPERTABLE_HOME/bin/ht fsbroker --nowait --batch --silent $@
-wait_for_critical fsbroker "FS Broker" "$@"
-if [ $? -ne 0 ]; then
+wait_for_critical fsbroker "FsBroker" "$@"
+if [ $? -eq 0 ]; then
+  pidfile=`server_pidfile fsbroker`
+  \rm -f $pidfile
+else
   stop_server fsbroker
 fi
-
-

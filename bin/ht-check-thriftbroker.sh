@@ -26,14 +26,31 @@ if [ "e$RUNTIME_ROOT" == "e" ]; then
 fi
 
 usage() {
-  echo ""
+  echo
   echo "usage: ht-check-thriftbroker.sh [OPTIONS] [<server-options>]"
-  echo ""
+  echo
   echo "OPTIONS:"
   echo "  -h,--help             Display usage information"
   echo "  -t,--timeout <sec>    Timeout after <sec> seconds (default = 5)"
   echo "  -H,--hostname <addr>  Hostname or IP address of service (default = localhost)"
-  echo ""
+  echo
+  echo "Checks the status of the ThriftBroker process.  This script is Nagios plugin"
+  echo "compliant and communicates the status of the process by returning one of"
+  echo "the codes in the following table as its exit status."
+  echo
+  echo "  Code  Status    Description"
+  echo "  ----  ------    -----------"
+  echo "  0     OK        Up and operating properly"
+  echo "  1     WARNING   Up and operating, but needs attention"
+  echo "  2     CRITICAL  Down or not working properly"
+  echo "  3     UNKNOWN   Unable to determine status"
+  echo
+  echo "In addition to the exit status, this script will also write a human-"
+  echo "readable description of the status to the terminal in the following"
+  echo "format:"
+  echo
+  echo "  ThriftBroker <status> - <description>"
+  echo
 }
 
 TIMEOUT_OPTION="--timeout 5000"
