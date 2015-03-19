@@ -327,6 +327,7 @@ bool NameIdMapper::do_mapping(const string &input, bool id_in, string &output,
       HT_DEBUG_OUT << "Can't map " << input << HT_END;
       return false;
     }
+    throw;
   }
 
   if (listing.size() != (size_t) num_path_components || listing.size() == 0)
