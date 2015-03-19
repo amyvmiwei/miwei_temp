@@ -134,7 +134,7 @@ endforeach ()
 
 # copy cronolog to the /bin directory
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
-      ${CMAKE_INSTALL_PREFIX}/bin)
+      ${CMAKE_INSTALL_PREFIX}/sbin)
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)

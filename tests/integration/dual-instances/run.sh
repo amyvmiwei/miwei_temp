@@ -21,6 +21,7 @@ echo "executing rm -rf $ALT_HOME in $CURPWD"
 rm -rf $ALT_HOME
 mkdir -p $ALT_HOME
 cp -r $HT_HOME/bin $ALT_HOME
+cp -r $HT_HOME/sbin $ALT_HOME
 ln -s $HT_HOME/conf $ALT_HOME/conf
 ln -s $HT_HOME/lib $ALT_HOME/lib
 
