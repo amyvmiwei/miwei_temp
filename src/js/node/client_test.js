@@ -1,6 +1,6 @@
-const hypertable = require('hypertable'),
-  util = require('util'),
-  async = require('async');
+const hypertable = require('hypertable');
+const util = require('util');
+const async = require('async');
 
 /**
  * Hypertable client
@@ -13,6 +13,21 @@ var client = hypertable.thriftClient.create("localhost", 15867);
  * @type {Int64}
  */
 var testNamespace;
+
+
+function callbackNoResult (callback, error, results) {
+  if (error) {
+    console.log(error);
+  }
+  callback(null);
+}
+
+function callbackWithResult (callback, result, error, results) {
+  if (error) {
+    console.log(error);
+  }
+  callback(null, result);
+}
 
 /**
  * This callback type is called `requestCallback` and is displayed as a global
@@ -29,9 +44,9 @@ var testNamespace;
  */
 var openNamespaceTest = function (callback) {
   console.log('[openNamespaceTest]');
-  client.namespace_open("test", function (err, result) {
-    if (err)
-      console.log(util.format('%s: %s', err.name, err.message));
+  client.namespace_open("test", function (error, result) {
+    if (error)
+      console.log(util.format('%s: %s', error.name, error.message));
     else
       testNamespace = result;
     callback(null, 'openNamespaceTest');
@@ -46,9 +61,9 @@ var openNamespaceTest = function (callback) {
  */
 var badNamespaceTest = function (callback) {
   console.log('[badNamespaceTest]');
-  client.namespace_open("bad", function (err, result) {
-      if (err)
-        console.log(util.format('%s: %s', err.name, err.message));
+  client.namespace_open("bad", function (error, result) {
+      if (error)
+        console.log(util.format('%s: %s', error.name, error.message));
       else
         assert(false, "Namespace 'bad' should not exist!");
       callback(null, 'badNamespaceTest');
@@ -80,12 +95,8 @@ var showTablesTest = function(callback) {
     function closeNamespace (responsee, callback) {
       callback(null);
     }
-  ], function (error) {
-      if (error) {
-        console.log(error);
-     }
-     callback(null, 'showTablesTest');
-  });
+    ],
+    callbackWithResult.bind(null, callback, 'showTablesTest'));
 }
 
 /**
@@ -106,12 +117,8 @@ var selectTestTable = function(callback) {
       }
       callback(null);
     }
-  ], function (error) {
-      if (error) {
-        console.log(error);
-     }
-     callback(null, 'selectTestTable');
-  });
+  ],
+  callbackWithResult.bind(null, callback, 'selectTestTable'));
 }
 
 /**
@@ -135,12 +142,8 @@ var mutatorTest = function (callback) {
     function closeMutator(mutator, callback) {
       client.mutator_close(theMutator, callback);
     }
-  ], function (error) {
-      if (error) {
-        console.log(error);
-     }
-     callback(null, 'mutatorTest');
-  });
+  ],
+  callbackWithResult.bind(null, callback, 'mutatorTest'));
 }
 
 /**
@@ -173,12 +176,8 @@ var sharedMutatorTest = function (callback) {
     function processResult(result, callback) {
       setTimeout(function() { callback(null); }, 2000);
     }
-  ], function (error) {
-      if (error) {
-        console.log(error);
-      }
-      callback(null, 'sharedMutatorTest');
-  });
+  ],
+  callbackWithResult.bind(null, callback, 'sharedMutatorTest'));
 }
 
 /**
@@ -207,14 +206,115 @@ var scannerTest = function (callback) {
     function handleCloseMutatorResult(result, callback) {
       callback(null);
     }
-  ], function (error) {
-      if (error) {
-        console.log(error);
-      }
-      callback(null, 'scannerTest');
-  });
+  ],
+  callbackWithResult.bind(null, callback, 'scannerTest'));
 }
 
+var asyncMutatorPipeline = function(future, keyPrefix, callback) {
+  var mutator;
+  async.waterfall([
+    function createAsyncMutator1(callback) {
+      client.async_mutator_open(testNamespace, "thrift_test", future, 0, callback);
+    },
+    function asyncMutate1(result, callback) {
+      mutator = result;
+      var key = new hypertable.Key({row: keyPrefix, column_family: "col"});
+      client.async_mutator_set_cell(mutator,
+                                    new hypertable.Cell({key: key, value: keyPrefix+"-async"}),
+                                    callback);
+    },
+    function asyncMutatorFlush1(result, callback) {
+      client.async_mutator_flush(mutator, callback);
+    },
+    function handleAsyncMutatorFlushResult1(result, callback) {
+      callback(null);
+    }
+  ],
+  callbackWithResult.bind(null, callback, mutator));
+}
+
+
+
+var asyncMutatorTest = function (callback) {
+  console.log('[asyncMutatorTest]');
+  var future;
+  var asyncMutator1;
+  var asyncMutator2;
+  async.waterfall([
+    function createFuture(callback) {
+      client.future_open(0, callback);
+    },
+    function runAsyncMutators(result, callback) {
+      future = result;
+      async.parallel([
+        function mutatorPipeline1(callback) {
+          async.waterfall([
+            function runMutatorPipeline1(callback) {
+              asyncMutatorPipeline(future, "js-k1", callback);
+            },
+            function fetchMutator1(result, callback) {
+              asyncMutator1 = result;
+              callback(null)
+            }
+          ],
+          callbackNoResult.bind(null, callback))
+        },
+        function mutatorPipeline2(callback) {
+          async.waterfall([
+            function runMutatorPipeline1(callback) {
+              asyncMutatorPipeline(future, "js-k2", callback);
+            },
+            function fetchMutator1(result, callback) {
+              asyncMutator2 = result;
+              callback(null)
+            }
+          ],
+          callbackNoResult.bind(null, callback))
+        }
+      ],
+      callbackNoResult.bind(null, callback))
+    },
+    function fetchResults (callback) {
+      var numResults=0;
+      var futureResult;
+      async.doWhilst(
+        function (callback) {
+          async.waterfall([
+            function fetchFutureResult(callback) {
+              client.future_get_result(future, 10000, callback);
+            },
+            function processFutureResult(result, callback) {
+              futureResult = result;
+              if (!futureResult.is_empty) {
+                numResults++;
+                if (futureResult.is_error || futureResult.is_scan)
+                  callback(new Error('Unexpected result'));
+                else
+                  callback(null);
+              }
+              else
+                callback(null);
+            }
+          ],
+          callbackNoResult.bind(null, callback));
+        },
+        function () { return !futureResult.is_empty; },
+        function (err) {
+          if (numResults != 2)
+            callback(new Error('Expected 2 results, got ' + numResults));
+          else
+            callback(null);
+        }                     
+      );
+    },
+    function closeMutators (callback) {
+      // Implement me!
+      callback(null);
+    }
+  ],
+  callbackWithResult.bind(null, callback, 'asyncMutatorTest'));
+}
+    
 
 console.log("HQL examples");
 
@@ -225,10 +325,11 @@ async.series([
   selectTestTable,
   mutatorTest,
   sharedMutatorTest,
-  scannerTest
+  scannerTest,
+  asyncMutatorTest
   ],
-  function(err, results) {
-    if (err) {
+  function(error, results) {
+    if (error) {
       console.log(error);
     }
     console.dir(results);
