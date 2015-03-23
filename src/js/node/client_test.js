@@ -227,42 +227,29 @@ var asyncMutatorPipeline = function(future, keyPrefix, callback) {
 var asyncTest = function (callback) {
   console.log('[asyncTest]');
   var future;
-  var asyncMutator1;
-  var asyncMutator2;
+  var asyncMutator = [];
   var asyncScanner = [];
   async.waterfall([
-    function createFuture(callback) {
+    function (callback) {
       client.future_open(0, callback);
     },
-    function runAsyncMutators(result, callback) {
+    function (result, callback) {
       future = result;
+      callback();
+    },
+    function runAsyncMutators(callback) {
       async.parallel([
-        function mutatorPipeline1(callback) {
-          async.waterfall([
-            function runMutatorPipeline1(callback) {
-              asyncMutatorPipeline(future, "js-k1", callback);
-            },
-            function fetchMutator1(result, callback) {
-              asyncMutator1 = result;
-              callback(null)
-            }
-          ],
-          function(error) { callback(error); });
+        function (callback) {
+          asyncMutatorPipeline(future, "js-k1", callback);
         },
-        function mutatorPipeline2(callback) {
-          async.waterfall([
-            function runMutatorPipeline1(callback) {
-              asyncMutatorPipeline(future, "js-k2", callback);
-            },
-            function fetchMutator1(result, callback) {
-              asyncMutator2 = result;
-              callback(null)
-            }
-          ],
-          function(error) { callback(error); });
+        function (callback) {
+          asyncMutatorPipeline(future, "js-k2", callback);
         }
       ],
-      function(error) { callback(error); });
+      function(error, results) {
+        asyncMutator = results;
+        callback(error);
+      });
     },
     function fetchResults (callback) {
       var numResults=0;
@@ -297,57 +284,46 @@ var asyncTest = function (callback) {
         }                     
       );
     },
-    function futureIsCancelled (callback) {
-      client.future_is_cancelled(future, callback);
+    function validateFuture (callback) {
+      async.parallel([
+        function (callback) {
+          client.future_is_cancelled(future, callback);
+        },
+        function (callback) {
+          client.future_is_full(future, callback);
+        },
+        function (callback) {
+          client.future_is_empty(future, callback);
+        },
+        function (callback) {
+          client.future_has_outstanding(future, callback);
+        },
+      ],
+      function (error, results) {
+        if (error)
+          callback(error);
+        else if (results[0])
+          callback(new Error('Future was cancelled'));
+        else if (results[1])
+          callback(new Error('Future is full'));
+        else if (!results[2])
+          callback(new Error('Future is not empty'));
+        else if (results[3])
+          callback(new Error('Future has outstanding'));
+        else
+          callback();
+      });
     },
-    function futureIsFull (result, callback) {
-      if (result)
-        callback(new Error('Future was cancelled'));
-      else 
-        client.future_is_full(future, callback);
-    },
-    function futureIsEmpty (result, callback) {
-      if (result)
-        callback(new Error('Future is full'));
-      else 
-        client.future_is_empty(future, callback);
-    },
-    function futureHasOutstanding (result, callback) {
-      if (!result)
-        callback(new Error('Future is not empty'));
-      else 
-        client.future_has_outstanding(future, callback);
-    },
-    function closeMutators (result, callback) {
-      if (result)
-        callback(new Error('Future has outstanding'));
-      else {
-        async.parallel([
-          function closeAsyncMutator1 (callback) {
-            async.waterfall([
-              function closeAsyncMutator(callback) {
-                client.async_mutator_close(asyncMutator1, callback);
-              },
-              function processAsyncMutatorClose(result, callback) {
-                callback();
-              }
-            ],
-            function(error) { callback(error); });
-          },
-          function closeAsyncMutator2 (callback) {
-            async.waterfall([
-              function closeAsyncMutator(callback) {
-                client.async_mutator_close(asyncMutator2, callback);
-              },
-              function processAsyncMutatorClose(result, callback) {
-                callback();
-              }
-            ],
-            function(error) { callback(error); });
-          }
-        ],
-        function(error) { callback(error); });
-      }
+    function closeMutators (callback) {
+      async.parallel([
+        function (callback) {
+          client.async_mutator_close(asyncMutator[0], callback);
+        },
+        function (callback) {
+          client.async_mutator_close(asyncMutator[1], callback);
+        }
+      ],
+      function(error) { callback(error); });
     },
     function createScanners (callback) {
       async.parallel([
@@ -377,46 +353,101 @@ var asyncTest = function (callback) {
     },
     function fetchScanResults (callback) {
       var num_cells = 0;
-      async.series([
+      async.doWhilst(
         function (callback) {
+          async.waterfall([
+            function (callback) {
+              client.future_get_result(future, 10000, callback);
+            },
+            function (result, callback) {
+              if (result.is_empty || result.is_error || !result.is_scan)
+                callback(new Error('Unexpected result'));
+              else {
+                for (var i = 0; i < result.cells.length; i++)
+                  hypertable.printCell(result.cells[i]);
+                num_cells += result.cells.length;
+                callback();
+              }
+            }
+          ],
+          function(error) { callback(error); });
+        },
+        function () { return num_cells < 6; },
+        function (err) {
+          callback(err);
+        }
+      );
+    },
+    function cancelFuture (callback) {
+      async.waterfall([
+        function (callback) {
+          client.future_cancel(future, callback);
+        },
+        function (result, callback) {
+          client.future_is_cancelled(future, callback);
+        },
+        function (result, callback) {
+          if (!result)
+            callback(new Error('Expected future to be cancelled'));
+          else
+            callback();
+        }
+      ],
+      function(error) { callback(error); });
+    },
+    function asyncScannerRegex (callback) {
+      var scanner;
+      async.waterfall([
+        function (callback) {
+          var scanSpec =
+            new hypertable.ScanSpec({versions: 1, columns: ["col"],
+                                     row_regexp: "k", value_regexp: "v[24]"});
+          client.scanner_open(testNamespace, "thrift_test", scanSpec, callback);
+        },
+        function (result, callback) {
+          scanner = result;
+          var emptyResults = false;
           async.doWhilst(
             function (callback) {
               async.waterfall([
                 function (callback) {
-                  client.future_get_result(future, 10000, callback);
+                  client.scanner_get_cells(scanner, callback);
                 },
-                function (result, callback) {
-                  if (result.is_empty || result.is_error || !result.is_scan)
-                    callback(new Error('Unexpected result'));
-                  else {
-                    for (var i = 0; i < result.cells.length; i++)
-                      hypertable.printCell(result.cells[i]);
-                    num_cells += result.cells.length;
-                    callback();
-                  }
+                function (cells, callback) {
+                  if (cells.length == 0)
+                    emptyResults=true;
+                  callback();
                 }
               ],
               function(error) { callback(error); });
             },
-            function () { return num_cells < 6; },
+            function () { return !emptyResults;; },
             function (err) {
               callback(err);
             }
           );
         },
-        function cancelFuture (callback) {
-          async.waterfall([
+        function (callback) {
+          client.async_scanner_close(scanner, callback);
+        }
+      ],
+      function(error) { callback(error); });
+    },
+    function cleanup (callback) {
+      async.series([
+        function (callback) {
+          client.future_close(future, callback);
+        },
+        function (callback) {
+          async.parallel([
             function (callback) {
-              client.future_cancel(future, callback);
+              client.async_scanner_close(asyncScanner[0], callback);
             },
-            function (result, callback) {
-              client.future_is_cancelled(future, callback);
+            function (callback) {
+              client.async_scanner_close(asyncScanner[1], callback);
             },
-            function (result, callback) {
-              if (!result)
-                callback(new Error('Expected future to be cancelled'));
-              else
-                callback();
+            function (callback) {
+              client.async_scanner_close(asyncScanner[2], callback);
             }
           ],
           function(error) { callback(error); });
@@ -429,6 +460,17 @@ var asyncTest = function (callback) {
 }
     
 
+/**
+ * Closes the 'test' namespace.  Namespace ID is held in {@link testNamespace}.  
+ * @param {requestCallback} callback - Callback object used for chaining
+ */
+var closeNamespaceTest = function (callback) {
+  console.log('[closeNamespaceTest]');
+  client.namespace_close(testNamespace, function (error, result) {
+    testNamespace = 0;
+    callback(error, 'closeNamespaceTest');
+  });
+}
 
 console.log("HQL examples");
 
@@ -440,12 +482,12 @@ async.series([
   mutatorTest,
   sharedMutatorTest,
   scannerTest,
-  asyncTest
+  asyncTest,
+  closeNamespaceTest
   ],
   function(error, results) {
-    if (error) {
+    if (error)
       console.log(util.format('%s: %s', error.name, error.message));
-    }
     client.closeConnection();
   }
 );
