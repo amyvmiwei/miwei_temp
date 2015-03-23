@@ -1,6 +1,15 @@
-const hypertable = require('hypertable');
-const util = require('util');
-const async = require('async');
+'use strict';
+var hypertable = require('hypertable');
+var util = require('util');
+var async = require('async');
+
+/**
+ * This callback type is called `requestCallback` and is displayed as a global
+ * symbol.
+ * @callback requestCallback
+ * @param {Object} exception Exception object
+ * @param {string} responseMessage Response message
+ */
 
 /**
  * Hypertable client
@@ -14,28 +23,6 @@ var client = hypertable.thriftClient.create("localhost", 15867);
  */
 var testNamespace;
 
-
-function callbackNoResult (callback, error, results) {
-  if (error) {
-    console.log(error);
-  }
-  callback(null);
-}
-
-function callbackWithResult (callback, result, error, results) {
-  if (error) {
-    console.log(error);
-  }
-  callback(null, result);
-}
-
-/**
- * This callback type is called `requestCallback` and is displayed as a global
- * symbol.
- * @callback requestCallback
- * @param {Object} exception Exception object
- * @param {string} responseMessage Response message
- */
 
 /**
  * Opens the 'test' namespace.  Assigns the returned namespace ID to the
@@ -87,16 +74,16 @@ var showTablesTest = function(callback) {
       client.hql_query(ns, "SHOW TABLES", callback);
     },
     function processGetListingResponse (response, callback) {
-      for (i = 0; i < response.results.length; i++) {
+      for (var i = 0; i < response.results.length; i++) {
         console.log(util.format('%s', response.results[i]));
       }
       client.namespace_close(namespace, callback);
     },
     function closeNamespace (responsee, callback) {
-      callback(null);
+      callback();
     }
     ],
-    callbackWithResult.bind(null, callback, 'showTablesTest'));
+    function(error) { callback(error, 'showTablesTest'); });
 }
 
 /**
@@ -112,13 +99,13 @@ var selectTestTable = function(callback) {
                        callback);
     },
     function processGetListingResponse (response, callback) {
-      for (i = 0; i < response.cells.length; i++) {
+      for (var i = 0; i < response.cells.length; i++) {
         hypertable.printCell(response.cells[i]);
       }
       callback(null);
     }
   ],
-  callbackWithResult.bind(null, callback, 'selectTestTable'));
+  function(error) { callback(error, 'selectTestTable'); });
 }
 
 /**
@@ -143,7 +130,7 @@ var mutatorTest = function (callback) {
       client.mutator_close(theMutator, callback);
     }
   ],
-  callbackWithResult.bind(null, callback, 'mutatorTest'));
+  function(error) { callback(error, 'mutatorTest'); });
 }
 
 /**
@@ -177,7 +164,7 @@ var sharedMutatorTest = function (callback) {
       setTimeout(function() { callback(null); }, 2000);
     }
   ],
-  callbackWithResult.bind(null, callback, 'sharedMutatorTest'));
+  function(error) { callback(error, 'sharedMutatorTest'); });
 }
 
 /**
@@ -198,7 +185,7 @@ var scannerTest = function (callback) {
       client.scanner_get_cells(scanner, callback);
     },
     function processCells(result, callback) {
-      for (i = 0; i < result.length; i++) {
+      for (var i = 0; i < result.length; i++) {
         hypertable.printCell(result[i]);
       }
       client.scanner_close(scanner, callback);
@@ -207,7 +194,8 @@ var scannerTest = function (callback) {
       callback(null);
     }
   ],
-  callbackWithResult.bind(null, callback, 'scannerTest'));
+  function(error) { callback(error, 'scannerTest'); });
+
 }
 
 var asyncMutatorPipeline = function(future, keyPrefix, callback) {
@@ -227,19 +215,21 @@ var asyncMutatorPipeline = function(future, keyPrefix, callback) {
       client.async_mutator_flush(mutator, callback);
     },
     function handleAsyncMutatorFlushResult1(result, callback) {
-      callback(null);
+      callback();
     }
   ],
-  callbackWithResult.bind(null, callback, mutator));
+  function (error, result) {
+    callback(error, mutator);
+  });
 }
 
 
-
-var asyncMutatorTest = function (callback) {
-  console.log('[asyncMutatorTest]');
+var asyncTest = function (callback) {
+  console.log('[asyncTest]');
   var future;
   var asyncMutator1;
   var asyncMutator2;
+  var asyncScanner = [];
   async.waterfall([
     function createFuture(callback) {
       client.future_open(0, callback);
@@ -257,7 +247,7 @@ var asyncMutatorTest = function (callback) {
               callback(null)
             }
           ],
-          callbackNoResult.bind(null, callback))
+          function(error) { callback(error); });
         },
         function mutatorPipeline2(callback) {
           async.waterfall([
@@ -269,10 +259,10 @@ var asyncMutatorTest = function (callback) {
               callback(null)
             }
           ],
-          callbackNoResult.bind(null, callback))
+          function(error) { callback(error); });
         }
       ],
-      callbackNoResult.bind(null, callback))
+      function(error) { callback(error); });
     },
     function fetchResults (callback) {
       var numResults=0;
@@ -296,7 +286,7 @@ var asyncMutatorTest = function (callback) {
                 callback(null);
             }
           ],
-          callbackNoResult.bind(null, callback));
+          function(error) { callback(error); });
         },
         function () { return !futureResult.is_empty; },
         function (err) {
@@ -307,14 +297,138 @@ var asyncMutatorTest = function (callback) {
         }                     
       );
     },
-    function closeMutators (callback) {
-      // Implement me!
-      callback(null);
+    function futureIsCancelled (callback) {
+      client.future_is_cancelled(future, callback);
+    },
+    function futureIsFull (result, callback) {
+      if (result)
+        callback(new Error('Future was cancelled'));
+      else 
+        client.future_is_full(future, callback);
+    },
+    function futureIsEmpty (result, callback) {
+      if (result)
+        callback(new Error('Future is full'));
+      else 
+        client.future_is_empty(future, callback);
+    },
+    function futureHasOutstanding (result, callback) {
+      if (!result)
+        callback(new Error('Future is not empty'));
+      else 
+        client.future_has_outstanding(future, callback);
+    },
+    function closeMutators (result, callback) {
+      if (result)
+        callback(new Error('Future has outstanding'));
+      else {
+        async.parallel([
+          function closeAsyncMutator1 (callback) {
+            async.waterfall([
+              function closeAsyncMutator(callback) {
+                client.async_mutator_close(asyncMutator1, callback);
+              },
+              function processAsyncMutatorClose(result, callback) {
+                callback();
+              }
+            ],
+            function(error) { callback(error); });
+          },
+          function closeAsyncMutator2 (callback) {
+            async.waterfall([
+              function closeAsyncMutator(callback) {
+                client.async_mutator_close(asyncMutator2, callback);
+              },
+              function processAsyncMutatorClose(result, callback) {
+                callback();
+              }
+            ],
+            function(error) { callback(error); });
+          }
+        ],
+        function(error) { callback(error); });
+      }
+    },
+    function createScanners (callback) {
+      async.parallel([
+        function (callback) {
+          client.async_scanner_open(testNamespace, "FruitColor", future,
+                                    new hypertable.ScanSpec({versions: 1}),
+                                    callback);
+
+        },
+        function (callback) {
+          client.async_scanner_open(testNamespace, "FruitLocation", future,
+                                    new hypertable.ScanSpec({versions: 1}),
+                                    callback);
+
+        },
+        function (callback) {
+          client.async_scanner_open(testNamespace, "FruitEnergy", future,
+                                    new hypertable.ScanSpec({versions: 1}),
+                                    callback);
+
+        }
+      ],
+      function(error, results) {
+        asyncScanner = results;
+        callback(error);
+      });
+    },
+    function fetchScanResults (callback) {
+      var num_cells = 0;
+      async.series([
+        function (callback) {
+          async.doWhilst(
+            function (callback) {
+              async.waterfall([
+                function (callback) {
+                  client.future_get_result(future, 10000, callback);
+                },
+                function (result, callback) {
+                  if (result.is_empty || result.is_error || !result.is_scan)
+                    callback(new Error('Unexpected result'));
+                  else {
+                    for (var i = 0; i < result.cells.length; i++)
+                      hypertable.printCell(result.cells[i]);
+                    num_cells += result.cells.length;
+                    callback();
+                  }
+                }
+              ],
+              function(error) { callback(error); });
+            },
+            function () { return num_cells < 6; },
+            function (err) {
+              callback(err);
+            }
+          );
+        },
+        function cancelFuture (callback) {
+          async.waterfall([
+            function (callback) {
+              client.future_cancel(future, callback);
+            },
+            function (result, callback) {
+              client.future_is_cancelled(future, callback);
+            },
+            function (result, callback) {
+              if (!result)
+                callback(new Error('Expected future to be cancelled'));
+              else
+                callback();
+            }
+          ],
+          function(error) { callback(error); });
+        }
+      ],
+      function(error) { callback(error); });
     }
   ],
-  callbackWithResult.bind(null, callback, 'asyncMutatorTest'));
+  function(error) { callback(error, 'asyncTest'); });
 }
     
+
 
 console.log("HQL examples");
 
@@ -326,13 +440,12 @@ async.series([
   mutatorTest,
   sharedMutatorTest,
   scannerTest,
-  asyncMutatorTest
+  asyncTest
   ],
   function(error, results) {
     if (error) {
-      console.log(error);
+      console.log(util.format('%s: %s', error.name, error.message));
     }
-    console.dir(results);
     client.closeConnection();
   }
 );
