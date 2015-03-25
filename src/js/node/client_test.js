@@ -100,7 +100,7 @@ var selectTestTable = function(callback) {
     },
     function processGetListingResponse (response, callback) {
       for (var i = 0; i < response.cells.length; i++) {
-        hypertable.printCell(response.cells[i]);
+        console.log(response.cells[i].toString());
       }
       callback(null);
     }
@@ -186,7 +186,7 @@ var scannerTest = function (callback) {
     },
     function processCells(result, callback) {
       for (var i = 0; i < result.length; i++) {
-        hypertable.printCell(result[i]);
+        console.log(result[i].toString());
       }
       client.scanner_close(scanner, callback);
     },
@@ -364,7 +364,7 @@ var asyncTest = function (callback) {
                 callback(new Error('Unexpected result'));
               else {
                 for (var i = 0; i < result.cells.length; i++)
-                  hypertable.printCell(result.cells[i]);
+                  console.log(result.cells[i].toString());
                 num_cells += result.cells.length;
                 callback();
               }
