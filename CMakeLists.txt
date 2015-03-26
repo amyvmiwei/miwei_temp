@@ -321,3 +321,4 @@ else ()
 endif ()
 
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION sbin)
+install(PROGRAMS "${NODEJS_EXECUTABLE}" DESTINATION sbin)

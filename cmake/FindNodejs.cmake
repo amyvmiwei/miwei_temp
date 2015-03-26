@@ -17,15 +17,21 @@
 #
 
 # - Find Node.js
-#  NODEJS_FOUND       - True if node.js found
+#  NODEJS_FOUND      - True if node.js found
+#  NODEJS_EXECUTABLE - Path to node.js executable
 
-exec_program(env ARGS node --version OUTPUT_VARIABLE NODEJS_VERSION_STRING
+exec_program(env ARGS which node OUTPUT_VARIABLE NODEJS_EXECUTABLE
              RETURN_VALUE NODEJS_RETURN)
 
 if (NODEJS_RETURN STREQUAL "0")
+
+  exec_program(env ARGS ${NODEJS_EXECUTABLE} --version OUTPUT_VARIABLE NODEJS_VERSION_STRING
+               RETURN_VALUE NODEJS_RETURN)
   message(STATUS "Node.js Version: ${NODEJS_VERSION_STRING}")
   set(NODEJS_FOUND TRUE)
 else ()
   message(STATUS "Node.js: not found")
   set(NODEJS_FOUND FALSE)
 endif ()
+
+mark_as_advanced(CNODEJS_EXECUTABLE)

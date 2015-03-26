@@ -132,9 +132,11 @@ foreach(thrift_dep ${Libssh_LIB_DEPENDENCIES_LIST})
   HT_INSTALL_LIBS(lib ${thrift_dep})
 endforeach ()
 
-# copy cronolog to the /bin directory
-install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
-      ${CMAKE_INSTALL_PREFIX}/sbin)
+# copy cronolog and node to the /sbin directory
+install(PROGRAMS "${CRONOLOG_DIR}/cronolog"
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/sbin)
+install(PROGRAMS "${NODEJS_EXECUTABLE}"
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/sbin)
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)

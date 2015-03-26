@@ -36,7 +36,7 @@ if (NODEJS_FOUND)
 
   add_test(NAME ThriftClient-nodejs
            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/node
-           COMMAND node ./client_test.js)
+           COMMAND ${NODEJS_EXECUTABLE} ./client_test.js)
 
   if (NOT HT_COMONENT_INSTALL OR PACKAGE_THRIFTBROKER)
     install(DIRECTORY node DESTINATION lib/js)
