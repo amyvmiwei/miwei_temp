@@ -16,13 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "SerializedCellsReader.h"
 #include "SerializedCellsFlag.h"
+
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 
@@ -44,10 +47,15 @@ bool SerializedCellsReader::next() {
 
   if (m_flag & SerializedCellsFlag::HAVE_TIMESTAMP)
     m_timestamp = Serialization::decode_i64(&m_ptr, &remaining);
+  else if (m_flag & SerializedCellsFlag::AUTO_TIMESTAMP)
+    m_timestamp = AUTO_ASSIGN;
 
-  if ((m_flag & SerializedCellsFlag::HAVE_REVISION) &&
-      (m_flag & SerializedCellsFlag::REV_IS_TS) == 0)
+  if (m_flag & SerializedCellsFlag::REV_IS_TS)
+    m_revision = m_timestamp;
+  else if (m_flag & SerializedCellsFlag::HAVE_REVISION)
     m_revision = Serialization::decode_i64(&m_ptr, &remaining);
+  else
+    m_revision = TIMESTAMP_NULL;
 
   // row; if empty then use the previous row
   m_row = (const char *)m_ptr;
@@ -94,8 +102,8 @@ bool SerializedCellsReader::next() {
 
   m_cell_flag = *m_ptr++;
 
-  if (m_cell_flag == FLAG_DELETE_ROW && !*m_column_family)
-    m_column_family = 0;
+  if (m_cell_flag == FLAG_DELETE_ROW)
+    m_column_family = m_column_qualifier = "";
 
   return true;
 }
