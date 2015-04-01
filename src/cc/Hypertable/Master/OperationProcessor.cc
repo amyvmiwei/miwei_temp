@@ -276,6 +276,9 @@ void OperationProcessor::Worker::operator()() {
       {
         ScopedLock lock(m_context.mutex);
 
+        if (m_context.shutdown)
+          return;
+
         while (m_context.current_iter == m_context.current.end()) {
 
           if (m_context.need_order_recompute) {
