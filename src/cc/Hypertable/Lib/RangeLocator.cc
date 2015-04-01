@@ -190,9 +190,9 @@ void RangeLocator::initialize() {
       m_hyperspace->attr_get(handle, "schema", valbuf);
       break;
     }
-    catch (Exception &e) {
+    catch (Exception &) {
       if (timer.expired()) {
-	m_hyperspace->close(handle);
+        m_hyperspace->close_nowait(handle);
         throw;
       }
       poll(0, 0, 3000);

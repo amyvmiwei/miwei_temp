@@ -123,9 +123,9 @@ Master::Client::Client(Comm *comm, InetAddr &addr, uint32_t timeout_ms)
 
 Master::Client::~Client() {
   if (m_hyperspace) {
-    if (m_master_file_handle != 0)
-      m_hyperspace->close(m_master_file_handle);
     m_hyperspace->remove_callback(&m_hyperspace_session_callback);
+    if (m_master_file_handle != 0)
+      m_hyperspace->close_nowait(m_master_file_handle);
   }
 }
 

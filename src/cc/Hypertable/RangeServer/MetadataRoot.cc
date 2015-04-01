@@ -53,7 +53,7 @@ MetadataRoot::MetadataRoot(SchemaPtr &schema) : m_next(0) {
 
 MetadataRoot::~MetadataRoot() {
   try {
-    Global::hyperspace->close(m_handle);
+    Global::hyperspace->close_nowait(m_handle);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
