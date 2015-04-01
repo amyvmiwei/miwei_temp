@@ -133,6 +133,7 @@ set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 
 find_package(Threads REQUIRED)
 message(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
+find_package(Nodejs)
 find_package(Python)
 find_package(Boost REQUIRED)
 find_package(BerkeleyDB REQUIRED)
@@ -320,3 +321,4 @@ else ()
 endif ()
 
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION sbin)
+install(PROGRAMS "${NODEJS_EXECUTABLE}" DESTINATION sbin)

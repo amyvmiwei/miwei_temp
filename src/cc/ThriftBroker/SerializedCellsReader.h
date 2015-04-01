@@ -31,17 +31,11 @@ namespace Hypertable {
   class SerializedCellsReader {
   public:
 
-    SerializedCellsReader(void *buf, uint32_t len)
-      : m_row(0), m_column_family(0), m_column_qualifier(0),
-        m_timestamp(AUTO_ASSIGN), m_value(0), m_value_len(0),
-        m_cell_flag(FLAG_INSERT), m_flag(0), m_eob(false), m_previous_row(0) {
+    SerializedCellsReader(void *buf, uint32_t len) {
       init((uint8_t *)buf, len);
     }
 
-    SerializedCellsReader(const char *buf, uint32_t len)
-      : m_row(0), m_column_family(0), m_column_qualifier(0),
-        m_timestamp(AUTO_ASSIGN), m_value(0), m_value_len(0),
-        m_cell_flag(FLAG_INSERT), m_flag(0), m_eob(false), m_previous_row(0) {
+    SerializedCellsReader(const char *buf, uint32_t len) {
       init((uint8_t *)buf, len);
     }
 
@@ -54,7 +48,7 @@ namespace Hypertable {
       key.column_qualifier = m_column_qualifier;
       key.column_qualifier_len = m_column_qualifier ? strlen(m_column_qualifier) : 0;
       key.timestamp = m_timestamp;
-      key.revision = AUTO_ASSIGN;
+      key.revision = m_revision;
     }
 
     void get(Cell &cell) {
@@ -62,7 +56,7 @@ namespace Hypertable {
       cell.column_family = m_column_family;
       cell.column_qualifier = m_column_qualifier;
       cell.timestamp = m_timestamp;
-      cell.revision = AUTO_ASSIGN;
+      cell.revision = m_revision;
       cell.value = (uint8_t*)m_value;
       cell.value_len = m_value_len;
       cell.flag = m_cell_flag;
@@ -97,20 +91,20 @@ namespace Hypertable {
         HT_THROW(Error::SERIALIZATION_VERSION_MISMATCH, "");
     }
 
-    const uint8_t *m_base;
-    const uint8_t *m_ptr;
-    const uint8_t *m_end;
-    const char *m_row;
-    const char *m_column_family;
-    const char *m_column_qualifier;
-    int64_t     m_timestamp;
-    int64_t     m_revision;
-    const void *m_value;
-    uint32_t    m_value_len;
-    uint8_t     m_cell_flag;
-    uint8_t     m_flag;
-    bool        m_eob;
-    const char *m_previous_row;
+    const uint8_t *m_base {};
+    const uint8_t *m_ptr {};
+    const uint8_t *m_end {};
+    const char *m_row {};
+    const char *m_column_family {};
+    const char *m_column_qualifier {};
+    int64_t m_timestamp {TIMESTAMP_NULL};
+    int64_t m_revision {TIMESTAMP_NULL};
+    const void *m_value {};
+    uint32_t m_value_len {};
+    uint8_t m_cell_flag {FLAG_INSERT};
+    uint8_t m_flag {};
+    bool m_eob {};
+    const char *m_previous_row {};
   };
 
 }

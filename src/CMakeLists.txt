@@ -15,6 +15,7 @@ add_subdirectory(rb/Monitoring)
 
 if (Thrift_FOUND)
   add_subdirectory(cc/ThriftBroker)
+  add_subdirectory(js)
   add_subdirectory(rb/ThriftClient)
   add_subdirectory(perl/ThriftClient)
   add_subdirectory(py/ThriftClient)

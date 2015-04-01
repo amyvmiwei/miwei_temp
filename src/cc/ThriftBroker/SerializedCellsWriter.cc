@@ -32,7 +32,7 @@ using namespace Hypertable;
 bool SerializedCellsWriter::add(const char *row, const char *column_family,
                                 const char *column_qualifier, int64_t timestamp,
                                 const void *value, int32_t value_length,
-								uint8_t cell_flag) {
+                                uint8_t cell_flag) {
   int32_t row_length = strlen(row);
   int32_t column_family_length = column_family ? strlen(column_family) : 0;
   int32_t column_qualifier_length = column_qualifier ? strlen(column_qualifier) : 0;
