@@ -1,3 +1,21 @@
+Version 0.9.8.7:
+(2015-04-02)
+
+    gh49: Eliminated execution order problem after OperationProcessor shutdown
+    Added non-blocking Hyperspace session close
+    Added Node.js binding
+    Fixed unhandled exception in NameIdMapper
+    Moved cronolog to sbin directory
+    Removed ht-backtrace.sh
+    Added detailed help to all scripts with --help option
+    issue 1283: Moved UPDATE_HYPERSPACE after ISSUE_REQUESTS in OperationDropTable
+    issue 956: Fixed SELECT ... LIMIT 1 returning empty result set
+    issue 1346: Eliminated double RangeServer recovery problem
+    Added support for /etc/ssh/config and ~/.ssh/config to ht_ssh
+    Fixed decoding problem with legacy OperationRecover* entities
+    gh37: Fixed asynchronous connection establishment problem in ht_ssh
+    gh38: Changed example cluster.def file to include core.tasks relatively
+
 Version 0.9.8.6:
 (2015-02-27)
 
