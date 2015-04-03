@@ -24,6 +24,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 
 import org.apache.hadoop.io.RawComparator;
@@ -118,6 +119,25 @@ public class Serialization {
   }
 
   /**
+   * Write ByteBuffer with a WritableableUtils.vint prefix.
+   * @param out
+   * @param buf
+   * @throws IOException
+   */
+  public static void writeByteBuffer(final DataOutput out, ByteBuffer buf)
+  throws IOException {
+    if (buf == null || buf.limit() == 0) {
+      WritableUtils.writeVInt(out, 0);
+    } else {
+      buf.mark();
+      byte [] data = new byte [ buf.remaining() ];
+      buf.get(data);
+      writeByteArray(out, data);
+      buf.reset();
+    }
+  }
+
+  /**
    * Converts a string to a UTF-8 byte array.
    * @param s
    * @return the byte array
@@ -206,6 +226,15 @@ public class Serialization {
       e.printStackTrace();
     }
     return result.toString();
+  }
+
+  public static String toStringBinary(ByteBuffer buf) {
+    buf.mark();
+    byte [] data = new byte [ buf.remaining() ];
+    buf.get(data);
+    String str = toStringBinary(data);
+    buf.reset();
+    return str;
   }
 
   /**

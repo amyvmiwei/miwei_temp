@@ -68,12 +68,16 @@ module Hypertable
       START_INCLUSIVE = 2
       END_ROW = 3
       END_INCLUSIVE = 4
+      START_ROW_BINARY = 5
+      END_ROW_BINARY = 6
 
       FIELDS = {
         START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
         START_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'start_inclusive', :default => true, :optional => true},
         END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
-        END_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true}
+        END_INCLUSIVE => {:type => ::Thrift::Types::BOOL, :name => 'end_inclusive', :default => true, :optional => true},
+        START_ROW_BINARY => {:type => ::Thrift::Types::STRING, :name => 'start_row_binary', :binary => true, :optional => true},
+        END_ROW_BINARY => {:type => ::Thrift::Types::STRING, :name => 'end_row_binary', :binary => true, :optional => true}
       }
 
       def struct_fields; FIELDS; end
@@ -620,8 +624,8 @@ module Hypertable
       HOSTNAME = 5
 
       FIELDS = {
-        START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
-        END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
+        START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :binary => true, :optional => true},
+        END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :binary => true, :optional => true},
         LOCATION => {:type => ::Thrift::Types::STRING, :name => 'location', :optional => true},
         IP_ADDRESS => {:type => ::Thrift::Types::STRING, :name => 'ip_address', :optional => true},
         HOSTNAME => {:type => ::Thrift::Types::STRING, :name => 'hostname', :optional => true}

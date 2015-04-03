@@ -313,9 +313,14 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
     hss.and_column_predicates = tss.and_column_predicates;
 
   // shallow copy
-  foreach_ht(const ThriftGen::RowInterval &ri, tss.row_intervals)
-    hss.row_intervals.push_back(Hypertable::RowInterval(ri.start_row.c_str(),
-        ri.start_inclusive, ri.end_row.c_str(), ri.end_inclusive));
+  const char *start_row;
+  const char *end_row;
+  foreach_ht(const ThriftGen::RowInterval &ri, tss.row_intervals) {
+    start_row = (!ri.start_row.empty()) ? ri.start_row.c_str() : ri.start_row_binary.c_str();
+    end_row = (!ri.end_row.empty()) ? ri.end_row.c_str() : ri.end_row_binary.c_str();
+    hss.row_intervals.push_back(Hypertable::RowInterval(start_row,
+        ri.start_inclusive, end_row, ri.end_inclusive));
+  }
 
   foreach_ht(const ThriftGen::CellInterval &ci, tss.cell_intervals)
     hss.cell_intervals.push_back(Hypertable::CellInterval(
@@ -388,10 +393,14 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpecBuilder &s
     ssb.add_column(col);
 
   // row intervals
+  const char *start_row;
+  const char *end_row;
   ssb.reserve_rows(tss.row_intervals.size());
-  for (auto & ri : tss.row_intervals)
-    ssb.add_row_interval(ri.start_row, ri.start_inclusive,
-                         ri.end_row, ri.end_inclusive);
+  for (auto & ri : tss.row_intervals) {
+    start_row = (!ri.start_row.empty()) ? ri.start_row.c_str() : ri.start_row_binary.c_str();
+    end_row = (!ri.end_row.empty()) ? ri.end_row.c_str() : ri.end_row_binary.c_str();
+    ssb.add_row_interval(start_row, ri.start_inclusive, end_row, ri.end_inclusive);
+  }
 
   // cell intervals
   ssb.reserve_cells(tss.cell_intervals.size());

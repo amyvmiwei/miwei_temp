@@ -4556,8 +4556,8 @@ typedef struct _ClientService_scanner_open_args__isset {
 class ClientService_scanner_open_args {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
   ClientService_scanner_open_args(const ClientService_scanner_open_args&);
   ClientService_scanner_open_args& operator=(const ClientService_scanner_open_args&);
@@ -4603,8 +4603,8 @@ class ClientService_scanner_open_args {
 class ClientService_scanner_open_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
 
   virtual ~ClientService_scanner_open_pargs() throw();
@@ -4698,8 +4698,8 @@ typedef struct _ClientService_open_scanner_args__isset {
 class ClientService_open_scanner_args {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
   ClientService_open_scanner_args(const ClientService_open_scanner_args&);
   ClientService_open_scanner_args& operator=(const ClientService_open_scanner_args&);
@@ -4745,8 +4745,8 @@ class ClientService_open_scanner_args {
 class ClientService_open_scanner_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
 
   virtual ~ClientService_open_scanner_pargs() throw();
@@ -4841,8 +4841,8 @@ typedef struct _ClientService_async_scanner_open_args__isset {
 class ClientService_async_scanner_open_args {
  public:
 
-  static const char* ascii_fingerprint; // = "0C9A4BB8DAF577B3D413C0589EC12F37";
-  static const uint8_t binary_fingerprint[16]; // = {0x0C,0x9A,0x4B,0xB8,0xDA,0xF5,0x77,0xB3,0xD4,0x13,0xC0,0x58,0x9E,0xC1,0x2F,0x37};
+  static const char* ascii_fingerprint; // = "A7E545307C136F0831419371CA743285";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0xE5,0x45,0x30,0x7C,0x13,0x6F,0x08,0x31,0x41,0x93,0x71,0xCA,0x74,0x32,0x85};
 
   ClientService_async_scanner_open_args(const ClientService_async_scanner_open_args&);
   ClientService_async_scanner_open_args& operator=(const ClientService_async_scanner_open_args&);
@@ -4893,8 +4893,8 @@ class ClientService_async_scanner_open_args {
 class ClientService_async_scanner_open_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "0C9A4BB8DAF577B3D413C0589EC12F37";
-  static const uint8_t binary_fingerprint[16]; // = {0x0C,0x9A,0x4B,0xB8,0xDA,0xF5,0x77,0xB3,0xD4,0x13,0xC0,0x58,0x9E,0xC1,0x2F,0x37};
+  static const char* ascii_fingerprint; // = "A7E545307C136F0831419371CA743285";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0xE5,0x45,0x30,0x7C,0x13,0x6F,0x08,0x31,0x41,0x93,0x71,0xCA,0x74,0x32,0x85};
 
 
   virtual ~ClientService_async_scanner_open_pargs() throw();
@@ -4990,8 +4990,8 @@ typedef struct _ClientService_open_scanner_async_args__isset {
 class ClientService_open_scanner_async_args {
  public:
 
-  static const char* ascii_fingerprint; // = "0C9A4BB8DAF577B3D413C0589EC12F37";
-  static const uint8_t binary_fingerprint[16]; // = {0x0C,0x9A,0x4B,0xB8,0xDA,0xF5,0x77,0xB3,0xD4,0x13,0xC0,0x58,0x9E,0xC1,0x2F,0x37};
+  static const char* ascii_fingerprint; // = "A7E545307C136F0831419371CA743285";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0xE5,0x45,0x30,0x7C,0x13,0x6F,0x08,0x31,0x41,0x93,0x71,0xCA,0x74,0x32,0x85};
 
   ClientService_open_scanner_async_args(const ClientService_open_scanner_async_args&);
   ClientService_open_scanner_async_args& operator=(const ClientService_open_scanner_async_args&);
@@ -5042,8 +5042,8 @@ class ClientService_open_scanner_async_args {
 class ClientService_open_scanner_async_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "0C9A4BB8DAF577B3D413C0589EC12F37";
-  static const uint8_t binary_fingerprint[16]; // = {0x0C,0x9A,0x4B,0xB8,0xDA,0xF5,0x77,0xB3,0xD4,0x13,0xC0,0x58,0x9E,0xC1,0x2F,0x37};
+  static const char* ascii_fingerprint; // = "A7E545307C136F0831419371CA743285";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0xE5,0x45,0x30,0x7C,0x13,0x6F,0x08,0x31,0x41,0x93,0x71,0xCA,0x74,0x32,0x85};
 
 
   virtual ~ClientService_open_scanner_async_pargs() throw();
@@ -7969,8 +7969,8 @@ typedef struct _ClientService_get_cells_args__isset {
 class ClientService_get_cells_args {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
   ClientService_get_cells_args(const ClientService_get_cells_args&);
   ClientService_get_cells_args& operator=(const ClientService_get_cells_args&);
@@ -8016,8 +8016,8 @@ class ClientService_get_cells_args {
 class ClientService_get_cells_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
 
   virtual ~ClientService_get_cells_pargs() throw();
@@ -8111,8 +8111,8 @@ typedef struct _ClientService_get_cells_as_arrays_args__isset {
 class ClientService_get_cells_as_arrays_args {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
   ClientService_get_cells_as_arrays_args(const ClientService_get_cells_as_arrays_args&);
   ClientService_get_cells_as_arrays_args& operator=(const ClientService_get_cells_as_arrays_args&);
@@ -8158,8 +8158,8 @@ class ClientService_get_cells_as_arrays_args {
 class ClientService_get_cells_as_arrays_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
 
   virtual ~ClientService_get_cells_as_arrays_pargs() throw();
@@ -8253,8 +8253,8 @@ typedef struct _ClientService_get_cells_serialized_args__isset {
 class ClientService_get_cells_serialized_args {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
   ClientService_get_cells_serialized_args(const ClientService_get_cells_serialized_args&);
   ClientService_get_cells_serialized_args& operator=(const ClientService_get_cells_serialized_args&);
@@ -8300,8 +8300,8 @@ class ClientService_get_cells_serialized_args {
 class ClientService_get_cells_serialized_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "86DA1FD448798172BC0EDD3A37E55A3B";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0xDA,0x1F,0xD4,0x48,0x79,0x81,0x72,0xBC,0x0E,0xDD,0x3A,0x37,0xE5,0x5A,0x3B};
+  static const char* ascii_fingerprint; // = "5B3CBF63F626F4BD4B93EC5FCC0FC235";
+  static const uint8_t binary_fingerprint[16]; // = {0x5B,0x3C,0xBF,0x63,0xF6,0x26,0xF4,0xBD,0x4B,0x93,0xEC,0x5F,0xCC,0x0F,0xC2,0x35};
 
 
   virtual ~ClientService_get_cells_serialized_pargs() throw();

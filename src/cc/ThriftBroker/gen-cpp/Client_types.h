@@ -123,22 +123,24 @@ class Status;
 class ClientException;
 
 typedef struct _RowInterval__isset {
-  _RowInterval__isset() : start_row(false), start_inclusive(true), end_row(false), end_inclusive(true) {}
+  _RowInterval__isset() : start_row(false), start_inclusive(true), end_row(false), end_inclusive(true), start_row_binary(false), end_row_binary(false) {}
   bool start_row :1;
   bool start_inclusive :1;
   bool end_row :1;
   bool end_inclusive :1;
+  bool start_row_binary :1;
+  bool end_row_binary :1;
 } _RowInterval__isset;
 
 class RowInterval {
  public:
 
-  static const char* ascii_fingerprint; // = "E1A4BCD94F003EFF8636F1C98591705A";
-  static const uint8_t binary_fingerprint[16]; // = {0xE1,0xA4,0xBC,0xD9,0x4F,0x00,0x3E,0xFF,0x86,0x36,0xF1,0xC9,0x85,0x91,0x70,0x5A};
+  static const char* ascii_fingerprint; // = "94035177F728BFA7000F99B3A3B223A6";
+  static const uint8_t binary_fingerprint[16]; // = {0x94,0x03,0x51,0x77,0xF7,0x28,0xBF,0xA7,0x00,0x0F,0x99,0xB3,0xA3,0xB2,0x23,0xA6};
 
   RowInterval(const RowInterval&);
   RowInterval& operator=(const RowInterval&);
-  RowInterval() : start_row(), start_inclusive(true), end_row(), end_inclusive(true) {
+  RowInterval() : start_row(), start_inclusive(true), end_row(), end_inclusive(true), start_row_binary(), end_row_binary() {
   }
 
   virtual ~RowInterval() throw();
@@ -146,6 +148,8 @@ class RowInterval {
   bool start_inclusive;
   std::string end_row;
   bool end_inclusive;
+  std::string start_row_binary;
+  std::string end_row_binary;
 
   _RowInterval__isset __isset;
 
@@ -156,6 +160,10 @@ class RowInterval {
   void __set_end_row(const std::string& val);
 
   void __set_end_inclusive(const bool val);
+
+  void __set_start_row_binary(const std::string& val);
+
+  void __set_end_row_binary(const std::string& val);
 
   bool operator == (const RowInterval & rhs) const
   {
@@ -174,6 +182,14 @@ class RowInterval {
     if (__isset.end_inclusive != rhs.__isset.end_inclusive)
       return false;
     else if (__isset.end_inclusive && !(end_inclusive == rhs.end_inclusive))
+      return false;
+    if (__isset.start_row_binary != rhs.__isset.start_row_binary)
+      return false;
+    else if (__isset.start_row_binary && !(start_row_binary == rhs.start_row_binary))
+      return false;
+    if (__isset.end_row_binary != rhs.__isset.end_row_binary)
+      return false;
+    else if (__isset.end_row_binary && !(end_row_binary == rhs.end_row_binary))
       return false;
     return true;
   }
@@ -369,8 +385,8 @@ typedef struct _ScanSpec__isset {
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "E832747BA3A08125D187174C984AAD63";
-  static const uint8_t binary_fingerprint[16]; // = {0xE8,0x32,0x74,0x7B,0xA3,0xA0,0x81,0x25,0xD1,0x87,0x17,0x4C,0x98,0x4A,0xAD,0x63};
+  static const char* ascii_fingerprint; // = "4EE9E1400F577912865B8356468C09E0";
+  static const uint8_t binary_fingerprint[16]; // = {0x4E,0xE9,0xE1,0x40,0x0F,0x57,0x79,0x12,0x86,0x5B,0x83,0x56,0x46,0x8C,0x09,0xE0};
 
   ScanSpec(const ScanSpec&);
   ScanSpec& operator=(const ScanSpec&);

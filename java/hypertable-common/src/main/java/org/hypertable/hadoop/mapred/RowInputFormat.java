@@ -278,10 +278,8 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
       try {
         int pos=0;
         for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
-          byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
-          byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
-
-          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row,
+          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"),
+                                            ts.start_row, ts.end_row,
                                             ts.ip_address);
           splits[pos++] = (InputSplit)split;
         }

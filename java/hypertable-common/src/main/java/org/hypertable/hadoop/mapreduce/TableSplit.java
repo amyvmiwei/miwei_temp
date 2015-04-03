@@ -25,6 +25,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 
 import org.hypertable.hadoop.util.Serialization;
 
@@ -40,15 +45,13 @@ import org.apache.hadoop.mapreduce.InputSplit;
 public class TableSplit extends InputSplit
 implements Writable, Comparable<TableSplit> {
 
-  private byte [] m_tablename;
-  private byte [] m_startrow;
-  private byte [] m_endrow;
-  private String m_hostname;
+  private byte [] m_tablename = null;
+  private ByteBuffer m_startrow = null;
+  private ByteBuffer m_endrow = null;
+  private String m_hostname = null;
 
-  /** Default constructor. */
-  public TableSplit() {
-      this(new byte [0], new byte [0], new byte [0], "");
-  }
+  /** Empty constructor. */
+  public TableSplit() { }
 
   /**
    * Constructs a new instance while assigning all variables.
@@ -58,15 +61,15 @@ implements Writable, Comparable<TableSplit> {
    * @param endRow  The end row of the split.
    * @param hostname  The hostname of the range.
    */
-  public TableSplit(byte [] tableName, byte [] startRow, byte [] endRow,
+  public TableSplit(byte [] tableName, ByteBuffer startRow, ByteBuffer endRow,
       final String hostname) {
     this.m_tablename = tableName;
     this.m_startrow = startRow;
     this.m_endrow = endRow;
     this.m_hostname = hostname;
     // Check for END_ROW marker
-    if (endRow != null && endRow.length == 2 &&
-        endRow[0] == (byte)0xff && endRow[1] == (byte)0xff)
+    if (endRow != null && endRow.limit() == 2 &&
+        endRow.get(0) == (byte)0xff && endRow.get(1) == (byte)0xff)
       this.m_endrow = null;
   }
 
@@ -84,7 +87,7 @@ implements Writable, Comparable<TableSplit> {
    *
    * @return The start row.
    */
-  public byte [] getStartRow() {
+  public ByteBuffer getStartRow() {
     return m_startrow;
   }
 
@@ -93,7 +96,7 @@ implements Writable, Comparable<TableSplit> {
    *
    * @return The end row.
    */
-  public byte [] getEndRow() {
+  public ByteBuffer getEndRow() {
     return m_endrow;
   }
 
@@ -144,36 +147,39 @@ implements Writable, Comparable<TableSplit> {
 
     try {
 
-      if(m_startrow != null && m_startrow.length > 0) {
-        interval.setStart_row(new String(m_startrow, "UTF-8"));
-        interval.setStart_rowIsSet(true);
+      if(m_startrow != null && m_startrow.limit() > 0) {
+        interval.setStart_row_binary(m_startrow);
         interval.setStart_inclusive(false);
         interval.setStart_inclusiveIsSet(true);
       }
 
-      if(m_endrow != null && m_endrow.length > 0) {
-        interval.setEnd_row(new String(m_endrow, "UTF-8"));
-        interval.setEnd_rowIsSet(true);
+      if(m_endrow != null && m_endrow.limit() > 0) {
+        interval.setEnd_row_binary(m_endrow);
         interval.setEnd_inclusive(true);
         interval.setEnd_inclusiveIsSet(true);
       }
 
+      ByteBuffer riStartRow;
+      ByteBuffer riEndRow;
+      Charset charset = Charset.forName("UTF-8");
+      CharsetEncoder encoder = charset.newEncoder();
+
       if (base_spec.isSetRow_intervals()) {
         for (RowInterval ri : base_spec.getRow_intervals()) {
-          if (ri.isSetStart_row()) {
-            if (m_startrow == null || m_startrow.length == 0 ||
-                ri.getStart_row().compareTo(new String(m_startrow, "UTF-8")) > 0) {
-              interval.setStart_row(ri.getStart_row());
-              interval.setStart_rowIsSet(true);
+          riStartRow = (ri != null && ri.isSetStart_row()) ? encoder.encode(CharBuffer.wrap(ri.getStart_row())) : null;
+          riEndRow = (ri != null && ri.isSetEnd_row()) ? encoder.encode(CharBuffer.wrap(ri.getEnd_row())) : null;
+          if (riStartRow != null) {
+            if (m_startrow == null || m_startrow.limit() == 0 ||
+                riStartRow.compareTo(m_startrow) > 0) {
+              interval.setStart_row_binary(riStartRow);
               interval.setStart_inclusive( ri.isStart_inclusive() );
               interval.setStart_inclusiveIsSet(true);
             }
           }
-          if (ri.isSetEnd_row()) {
-            if (m_endrow == null || m_endrow.length == 0 ||
-                ri.getEnd_row().compareTo(new String(m_endrow, "UTF-8")) < 0) {
-              interval.setEnd_row(ri.getEnd_row());
-              interval.setEnd_rowIsSet(true);
+          if (riEndRow != null) {
+            if (m_endrow == null || m_endrow.limit() == 0 ||
+                riEndRow.compareTo(m_endrow) < 0) {
+              interval.setEnd_row_binary(riEndRow);
               interval.setEnd_inclusive( ri.isEnd_inclusive() );
               interval.setEnd_inclusiveIsSet(true);
             }
@@ -182,14 +188,13 @@ implements Writable, Comparable<TableSplit> {
           break;
         }
       }
-      
     }
-    catch (UnsupportedEncodingException e) {
+    catch (CharacterCodingException e) {
       e.printStackTrace();
       System.exit(-1);
     }
     
-    if(interval.isSetStart_row() || interval.isSetEnd_row()) {
+    if(interval.isSetStart_row_binary() || interval.isSetEnd_row_binary()) {
       scan_spec.addToRow_intervals(interval);
       scan_spec.setRow_intervalsIsSet(true);
     }
@@ -206,8 +211,8 @@ implements Writable, Comparable<TableSplit> {
   @Override
   public void readFields(DataInput in) throws IOException {
     m_tablename = Serialization.readByteArray(in);
-    m_startrow = Serialization.readByteArray(in);
-    m_endrow = Serialization.readByteArray(in);
+    m_startrow = ByteBuffer.wrap(Serialization.readByteArray(in));
+    m_endrow = ByteBuffer.wrap(Serialization.readByteArray(in));
     m_hostname = Serialization.toString(Serialization.readByteArray(in));
   }
 
@@ -220,8 +225,8 @@ implements Writable, Comparable<TableSplit> {
   @Override
   public void write(DataOutput out) throws IOException {
     Serialization.writeByteArray(out, m_tablename);
-    Serialization.writeByteArray(out, m_startrow);
-    Serialization.writeByteArray(out, m_endrow);
+    Serialization.writeByteBuffer(out, m_startrow);
+    Serialization.writeByteBuffer(out, m_endrow);
     Serialization.writeByteArray(out, Serialization.toBytes(m_hostname));
   }
 
@@ -254,7 +259,7 @@ implements Writable, Comparable<TableSplit> {
    */
   @Override
   public int compareTo(TableSplit split) {
-    return Serialization.compareTo(getStartRow(), split.getStartRow());
+    return m_startrow.compareTo(split.getStartRow());
   }
 
   @Override
@@ -263,8 +268,8 @@ implements Writable, Comparable<TableSplit> {
       return false;
     }
     return Serialization.equals(m_tablename, ((TableSplit)o).m_tablename) &&
-      Serialization.equals(m_startrow, ((TableSplit)o).m_startrow) &&
-      Serialization.equals(m_endrow, ((TableSplit)o).m_endrow) &&
+      m_startrow.compareTo(((TableSplit)o).getStartRow()) == 0 &&
+      m_endrow.compareTo(((TableSplit)o).getEndRow()) == 0 &&
       m_hostname.equals(((TableSplit)o).m_hostname);
   }
 }

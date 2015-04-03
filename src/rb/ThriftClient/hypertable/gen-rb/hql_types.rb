@@ -5,7 +5,6 @@
 #
 
 require 'thrift'
-#require 'hypertable/thrift_gen/client_types'
 require 'client_types'
 
 

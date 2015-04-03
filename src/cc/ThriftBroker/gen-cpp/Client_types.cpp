@@ -100,8 +100,18 @@ void RowInterval::__set_end_inclusive(const bool val) {
 __isset.end_inclusive = true;
 }
 
-const char* RowInterval::ascii_fingerprint = "E1A4BCD94F003EFF8636F1C98591705A";
-const uint8_t RowInterval::binary_fingerprint[16] = {0xE1,0xA4,0xBC,0xD9,0x4F,0x00,0x3E,0xFF,0x86,0x36,0xF1,0xC9,0x85,0x91,0x70,0x5A};
+void RowInterval::__set_start_row_binary(const std::string& val) {
+  this->start_row_binary = val;
+__isset.start_row_binary = true;
+}
+
+void RowInterval::__set_end_row_binary(const std::string& val) {
+  this->end_row_binary = val;
+__isset.end_row_binary = true;
+}
+
+const char* RowInterval::ascii_fingerprint = "94035177F728BFA7000F99B3A3B223A6";
+const uint8_t RowInterval::binary_fingerprint[16] = {0x94,0x03,0x51,0x77,0xF7,0x28,0xBF,0xA7,0x00,0x0F,0x99,0xB3,0xA3,0xB2,0x23,0xA6};
 
 uint32_t RowInterval::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -155,6 +165,22 @@ uint32_t RowInterval::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->start_row_binary);
+          this->__isset.start_row_binary = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 6:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readBinary(this->end_row_binary);
+          this->__isset.end_row_binary = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -192,6 +218,16 @@ uint32_t RowInterval::write(::apache::thrift::protocol::TProtocol* oprot) const 
     xfer += oprot->writeBool(this->end_inclusive);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.start_row_binary) {
+    xfer += oprot->writeFieldBegin("start_row_binary", ::apache::thrift::protocol::T_STRING, 5);
+    xfer += oprot->writeBinary(this->start_row_binary);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.end_row_binary) {
+    xfer += oprot->writeFieldBegin("end_row_binary", ::apache::thrift::protocol::T_STRING, 6);
+    xfer += oprot->writeBinary(this->end_row_binary);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -204,6 +240,8 @@ void swap(RowInterval &a, RowInterval &b) {
   swap(a.start_inclusive, b.start_inclusive);
   swap(a.end_row, b.end_row);
   swap(a.end_inclusive, b.end_inclusive);
+  swap(a.start_row_binary, b.start_row_binary);
+  swap(a.end_row_binary, b.end_row_binary);
   swap(a.__isset, b.__isset);
 }
 
@@ -212,6 +250,8 @@ RowInterval::RowInterval(const RowInterval& other0) {
   start_inclusive = other0.start_inclusive;
   end_row = other0.end_row;
   end_inclusive = other0.end_inclusive;
+  start_row_binary = other0.start_row_binary;
+  end_row_binary = other0.end_row_binary;
   __isset = other0.__isset;
 }
 RowInterval& RowInterval::operator=(const RowInterval& other1) {
@@ -219,6 +259,8 @@ RowInterval& RowInterval::operator=(const RowInterval& other1) {
   start_inclusive = other1.start_inclusive;
   end_row = other1.end_row;
   end_inclusive = other1.end_inclusive;
+  start_row_binary = other1.start_row_binary;
+  end_row_binary = other1.end_row_binary;
   __isset = other1.__isset;
   return *this;
 }
@@ -229,6 +271,8 @@ std::ostream& operator<<(std::ostream& out, const RowInterval& obj) {
   out << ", " << "start_inclusive="; (obj.__isset.start_inclusive ? (out << to_string(obj.start_inclusive)) : (out << "<null>"));
   out << ", " << "end_row="; (obj.__isset.end_row ? (out << to_string(obj.end_row)) : (out << "<null>"));
   out << ", " << "end_inclusive="; (obj.__isset.end_inclusive ? (out << to_string(obj.end_inclusive)) : (out << "<null>"));
+  out << ", " << "start_row_binary="; (obj.__isset.start_row_binary ? (out << to_string(obj.start_row_binary)) : (out << "<null>"));
+  out << ", " << "end_row_binary="; (obj.__isset.end_row_binary ? (out << to_string(obj.end_row_binary)) : (out << "<null>"));
   out << ")";
   return out;
 }
@@ -691,8 +735,8 @@ void ScanSpec::__set_and_column_predicates(const bool val) {
 __isset.and_column_predicates = true;
 }
 
-const char* ScanSpec::ascii_fingerprint = "E832747BA3A08125D187174C984AAD63";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0xE8,0x32,0x74,0x7B,0xA3,0xA0,0x81,0x25,0xD1,0x87,0x17,0x4C,0x98,0x4A,0xAD,0x63};
+const char* ScanSpec::ascii_fingerprint = "4EE9E1400F577912865B8356468C09E0";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0x4E,0xE9,0xE1,0x40,0x0F,0x57,0x79,0x12,0x86,0x5B,0x83,0x56,0x46,0x8C,0x09,0xE0};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -2515,7 +2559,7 @@ uint32_t TableSplit::read(::apache::thrift::protocol::TProtocol* iprot) {
     {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->start_row);
+          xfer += iprot->readBinary(this->start_row);
           this->__isset.start_row = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2523,7 +2567,7 @@ uint32_t TableSplit::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->end_row);
+          xfer += iprot->readBinary(this->end_row);
           this->__isset.end_row = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2572,12 +2616,12 @@ uint32_t TableSplit::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   if (this->__isset.start_row) {
     xfer += oprot->writeFieldBegin("start_row", ::apache::thrift::protocol::T_STRING, 1);
-    xfer += oprot->writeString(this->start_row);
+    xfer += oprot->writeBinary(this->start_row);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.end_row) {
     xfer += oprot->writeFieldBegin("end_row", ::apache::thrift::protocol::T_STRING, 2);
-    xfer += oprot->writeString(this->end_row);
+    xfer += oprot->writeBinary(this->end_row);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.location) {

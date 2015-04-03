@@ -24,6 +24,11 @@ package org.hypertable.hadoop.mapreduce;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -375,15 +380,23 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       List<org.hypertable.thriftgen.TableSplit> tsplits =
           m_client.table_get_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
+
+      ByteBuffer riStartRow;
+      ByteBuffer riEndRow;
+      Charset charset = Charset.forName("UTF-8");
+      CharsetEncoder encoder = charset.newEncoder();
+
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
+        riStartRow = (ri != null && ri.isSetStart_row()) ? encoder.encode(CharBuffer.wrap(ri.getStart_row())) : null;
+        riEndRow = (ri != null && ri.isSetEnd_row()) ? encoder.encode(CharBuffer.wrap(ri.getEnd_row())) : null;
         if (ri == null ||
-            ((!ri.isSetStart_row() || ts.end_row == null || ts.end_row.compareTo(ri.getStart_row()) > 0 ||
-              (ts.end_row.compareTo(ri.getStart_row()) == 0 && ri.isStart_inclusive())) &&
-             (!ri.isSetEnd_row() || ts.start_row == null || ts.start_row.compareTo(ri.getEnd_row()) <= 0))) {
-          byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
-          byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
-          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row,
-                                            end_row, ts.hostname);
+            ((riStartRow == null || ts.end_row == null
+              || ts.end_row.compareTo(riStartRow) > 0
+              || (ts.end_row.compareTo(riStartRow) == 0
+                  && ri.isStart_inclusive())) &&
+             (riEndRow == null || ts.start_row == null
+              || ts.start_row.compareTo(riEndRow) <= 0))) {
+          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), ts.start_row, ts.end_row, ts.hostname);
           splits.add(split);
         }
       }

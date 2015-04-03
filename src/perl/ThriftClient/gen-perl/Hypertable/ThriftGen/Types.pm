@@ -33,7 +33,7 @@ use constant CRITICAL => 2;
 use constant UNKNOWN => 3;
 package Hypertable::ThriftGen::RowInterval;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::RowInterval->mk_accessors( qw( start_row start_inclusive end_row end_inclusive ) );
+Hypertable::ThriftGen::RowInterval->mk_accessors( qw( start_row start_inclusive end_row end_inclusive start_row_binary end_row_binary ) );
 
 sub new {
   my $classname = shift;
@@ -43,6 +43,8 @@ sub new {
   $self->{start_inclusive} = 1;
   $self->{end_row} = undef;
   $self->{end_inclusive} = 1;
+  $self->{start_row_binary} = undef;
+  $self->{end_row_binary} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{start_row}) {
       $self->{start_row} = $vals->{start_row};
@@ -55,6 +57,12 @@ sub new {
     }
     if (defined $vals->{end_inclusive}) {
       $self->{end_inclusive} = $vals->{end_inclusive};
+    }
+    if (defined $vals->{start_row_binary}) {
+      $self->{start_row_binary} = $vals->{start_row_binary};
+    }
+    if (defined $vals->{end_row_binary}) {
+      $self->{end_row_binary} = $vals->{end_row_binary};
     }
   }
   return bless ($self, $classname);
@@ -103,6 +111,18 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^5$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{start_row_binary});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{end_row_binary});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -133,6 +153,16 @@ sub write {
   if (defined $self->{end_inclusive}) {
     $xfer += $output->writeFieldBegin('end_inclusive', TType::BOOL, 4);
     $xfer += $output->writeBool($self->{end_inclusive});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{start_row_binary}) {
+    $xfer += $output->writeFieldBegin('start_row_binary', TType::STRING, 5);
+    $xfer += $output->writeString($self->{start_row_binary});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{end_row_binary}) {
+    $xfer += $output->writeFieldBegin('end_row_binary', TType::STRING, 6);
+    $xfer += $output->writeString($self->{end_row_binary});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
