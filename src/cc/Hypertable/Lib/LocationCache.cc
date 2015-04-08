@@ -112,36 +112,30 @@ LocationCache::~LocationCache() {
  */
 bool
 LocationCache::lookup(const char * table_name, const char *rowkey,
-                      RangeLocationInfo *rane_loc_infop, bool inclusive) {
+                      RangeLocationInfo *range_loc_infop, bool inclusive) {
   ScopedLock lock(m_mutex);
-  LocationMap::iterator iter;
-  LocationCacheKey key;
 
-  assert(table_name);
-
-  key.table_name = table_name;
-  key.end_row = rowkey;
-
-  if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
+  Value* cacheval;
+  if (!lookup(table_name, rowkey, cacheval, inclusive))
     return false;
 
-  if (strcmp((*iter).first.table_name, table_name))
+  range_loc_infop->start_row = cacheval->start_row;
+  range_loc_infop->end_row   = cacheval->end_row;
+  range_loc_infop->addr      = *cacheval->addrp;
+
+  return true;
+}
+
+bool
+LocationCache::lookup(const char * table_name, const char *rowkey,
+                      RangeAddrInfo *range_addr_infop, bool inclusive) {
+  ScopedLock lock(m_mutex);
+
+  Value* cacheval;
+  if (!lookup(table_name, rowkey, cacheval, inclusive))
     return false;
 
-  if (inclusive) {
-    if (strcmp(rowkey, (*iter).second->start_row.c_str()) < 0)
-      return false;
-  }
-  else {
-    if (strcmp(rowkey, (*iter).second->start_row.c_str()) <= 0)
-      return false;
-  }
-
-  move_to_head((*iter).second);
-
-  rane_loc_infop->start_row = (*iter).second->start_row;
-  rane_loc_infop->end_row   = (*iter).second->end_row;
-  rane_loc_infop->addr      = *(*iter).second->addrp;
+  range_addr_infop->addr = *cacheval->addrp;
 
   return true;
 }
@@ -200,6 +194,37 @@ void LocationCache::display(std::ostream &out) {
   for (Value *value = m_head; value; value = value->prev)
     out << "DUMP: end=" << value->end_row << " start=" << value->start_row
         << endl;
+}
+
+bool LocationCache::lookup(const char * table_name, const char *rowkey,
+                           Value*& cacheval, bool inclusive) {
+  LocationMap::iterator iter;
+  LocationCacheKey key;
+
+  assert(table_name);
+
+  key.table_name = table_name;
+  key.end_row = rowkey;
+
+  if ((iter = m_location_map.lower_bound(key)) == m_location_map.end())
+    return false;
+
+  if (strcmp((*iter).first.table_name, table_name))
+    return false;
+
+  if (inclusive) {
+    if (strcmp(rowkey, (*iter).second->start_row.c_str()) < 0)
+      return false;
+  }
+  else {
+    if (strcmp(rowkey, (*iter).second->start_row.c_str()) <= 0)
+      return false;
+  }
+
+  cacheval = (*iter).second;
+  move_to_head(cacheval);
+
+  return true;
 }
 
 

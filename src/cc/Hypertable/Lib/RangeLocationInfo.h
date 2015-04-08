@@ -29,12 +29,17 @@ namespace Hypertable {
   /// @addtogroup libHypertable
   /// @{
 
+  /// Holds range location.
+  class RangeAddrInfo {
+  public:
+    CommAddress addr;
+  };
+
   /// Holds range start and end row plus location.
-  class RangeLocationInfo {
+  class RangeLocationInfo : public RangeAddrInfo {
   public:
     std::string start_row;
     std::string end_row;
-    CommAddress addr;
   };
 
   /// @}

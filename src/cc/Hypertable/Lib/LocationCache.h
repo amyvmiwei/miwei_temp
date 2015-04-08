@@ -103,7 +103,9 @@ namespace Hypertable {
     void insert(const char * table_name, RangeLocationInfo &range_loc_info,
                 bool pegged=false);
     bool lookup(const char *table_name, const char *rowkey,
-                RangeLocationInfo *rane_loc_infop, bool inclusive=false);
+                RangeLocationInfo *range_loc_infop, bool inclusive=false);
+    bool lookup(const char *table_name, const char *rowkey,
+                RangeAddrInfo *range_addr_infop, bool inclusive=false);
     bool invalidate(const char *table_name, const char *rowkey);
 
     void invalidate_host(const std::string &hostname);
@@ -111,6 +113,8 @@ namespace Hypertable {
     void display(std::ostream &);
 
   private:
+    bool lookup(const char *table_name, const char *rowkey,
+                Value*& cacheval, bool inclusive);
     void move_to_head(Value *cacheval);
     void remove(Value *cacheval);
 
