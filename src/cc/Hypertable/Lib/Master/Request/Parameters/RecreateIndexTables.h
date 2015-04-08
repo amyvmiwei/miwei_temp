@@ -61,11 +61,11 @@ namespace Parameters {
 
     /// Gets name of table to create.
     /// @return Name of table to create
-    string name() { return m_name; }
+    const string& name() const { return m_name; }
 
     /// Gets table parts.
     /// @return %Table parts
-    TableParts parts() { return m_parts; }
+    const TableParts& parts() const { return m_parts; }
 
   private:
 

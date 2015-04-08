@@ -75,14 +75,12 @@ namespace Hypertable {
      */
     static void canonicalize(String *original);
 
-    std::string get_name() const {
-      std::string dstr = m_name;
-      return dstr;
+    const std::string& get_name() const {
+      return m_name;
     }
 
-    std::string get_id() const {
-      std::string dstr = m_id;
-      return dstr;
+    const std::string& get_id() const {
+      return m_id;
     }
 
     /** Performs a manual compaction.

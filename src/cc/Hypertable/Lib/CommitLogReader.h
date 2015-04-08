@@ -80,7 +80,7 @@ namespace Hypertable {
 
     const std::map<uint32_t, uint32_t> &get_error_map() { return m_error_map; }
 
-    std::string last_fragment_fname() { return m_last_fragment_fname; }
+    const std::string& last_fragment_fname() const { return m_last_fragment_fname; }
 
     int32_t last_fragment_id() { return m_last_fragment_id; }
 

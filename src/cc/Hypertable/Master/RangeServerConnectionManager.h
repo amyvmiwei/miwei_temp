@@ -82,7 +82,7 @@ namespace Hypertable {
     void get_servers(std::vector<RangeServerConnectionPtr> &servers);
     void get_valid_connections(StringSet &locations,
                                std::vector<RangeServerConnectionPtr> &connections);
-    size_t connection_count() { ScopedLock lock(mutex); return m_conn_count; }
+    size_t connection_count() { std::lock_guard<std::mutex> lock(m_mutex); return m_conn_count; }
     void set_range_server_state(std::vector<RangeServerState> &states);
 
   private:
@@ -95,8 +95,8 @@ namespace Hypertable {
     public:
       RangeServerConnectionEntry(RangeServerConnectionPtr &_rsc) : rsc(_rsc) { }
       RangeServerConnectionPtr rsc;
-      String location() const { return rsc->location(); }
-      String hostname() const { return rsc->hostname(); }
+      const String& location() const { return rsc->location(); }
+      const String& hostname() const { return rsc->hostname(); }
       InetAddr public_addr() const { return rsc->public_addr(); }
       InetAddr local_addr() const { return rsc->local_addr(); }
       bool connected() const { return rsc->connected(); }
@@ -112,9 +112,9 @@ namespace Hypertable {
       RangeServerConnectionEntry,
       indexed_by<
         sequenced<>,
-        hashed_unique<const_mem_fun<RangeServerConnectionEntry, String,
+        hashed_unique<const_mem_fun<RangeServerConnectionEntry, const String&,
             &RangeServerConnectionEntry::location> >,
-        hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, String,
+        hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, const String&,
             &RangeServerConnectionEntry::hostname> >,
         hashed_unique<const_mem_fun<RangeServerConnectionEntry, InetAddr,
             &RangeServerConnectionEntry::public_addr>, InetAddrHash>,

@@ -59,7 +59,7 @@ namespace Parameters {
 
     /// Gets name of namespace to create.
     /// @return Name of namespace to create
-    string name() { return m_name; }
+    const string& name() const { return m_name; }
 
     /// Gets create flags
     /// @return Create flags

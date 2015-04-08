@@ -67,7 +67,7 @@ namespace Parameters {
 
     /// Gets proxy name of %RangeServer whose log is being replayed
     /// @return Proxy name of %RangeServer whose log is being replayed
-    string location() { return m_location; }
+    const string& location() const { return m_location; }
 
     /// Gets recovery plan generation
     /// @return Recovery plan generation

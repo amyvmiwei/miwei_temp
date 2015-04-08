@@ -41,7 +41,7 @@ namespace Hypertable {
       m_location(location), m_range(range) {
       m_addr.set_proxy(location);
     }
-    String get_location() const {return m_location; }
+    const String& get_location() const {return m_location; }
     size_t memory_used() const { return m_accum.fill(); }
     size_t add(SerializedKey &key, ByteString &value);
     void get_updates(StaticBuffer &updates) { updates = m_accum; }

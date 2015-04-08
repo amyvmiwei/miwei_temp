@@ -58,7 +58,7 @@ namespace Parameters {
 
     /// Gets name of %RangeServer to be stopped.
     /// @return Name of %RangeServer to be stopped.
-    string server() { return m_server; }
+    const string& server() const { return m_server; }
 
   private:
 

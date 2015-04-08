@@ -64,7 +64,7 @@ namespace Parameters {
 
     /// Gets location (proxy name)
     /// @return Location (proxy name)
-    string location() { return m_location; }
+    const string& location() const { return m_location; }
 
     /// Gets listen port
     /// @return Listen port
@@ -76,7 +76,7 @@ namespace Parameters {
 
     /// Gets system stats
     /// @return %System stats
-    const StatsSystem &system_stats() { return m_system_stats; }
+    const StatsSystem &system_stats() const { return m_system_stats; }
 
     /// Gets server current time
     /// @return Server current time

@@ -70,7 +70,7 @@ namespace Hypertable {
     virtual void execute();
     virtual const String name();
     virtual const String label();
-    virtual const String location() { return m_location; }
+    const String& location() const { return m_location; }
 
     virtual void display_state(std::ostream &os);
     uint8_t encoding_version_state() const override;

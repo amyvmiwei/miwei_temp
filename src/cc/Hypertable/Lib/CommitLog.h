@@ -187,7 +187,7 @@ namespace Hypertable {
       return total;
     }
 
-    std::string get_current_fragment_file() {
+    const std::string& get_current_fragment_file() {
       ScopedLock lock(m_mutex);
       return m_cur_fragment_fname;
     }

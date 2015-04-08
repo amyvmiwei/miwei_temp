@@ -59,11 +59,11 @@ namespace Parameters {
 
     /// Gets original table name.
     /// @return Original table name.
-    string from() { return m_from; }
+    const string& from() const { return m_from; }
 
     /// Gets new table name.
     /// @return New table name
-    string to() { return m_to; }
+    const string& to() const { return m_to; }
 
   private:
 

@@ -66,7 +66,7 @@ namespace Parameters {
 
     /// Gets location (proxy name)
     /// @return Location (proxy name)
-    string location() { return m_location; }
+    const string& location() const { return m_location; }
 
     /// Gets system state generation
     /// @return %System state generation

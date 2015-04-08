@@ -59,11 +59,11 @@ namespace Parameters {
 
     /// Gets name of table to create.
     /// @return Name of table to create
-    string name() { return m_name; }
+    const string& name() const { return m_name; }
 
     /// Gets table schema.
     /// @return Table schema
-    string schema() { return m_schema; }
+    const string& schema() const { return m_schema; }
 
   private:
 

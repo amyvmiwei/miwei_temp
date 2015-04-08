@@ -71,7 +71,7 @@ namespace Parameters {
 
     /// Gets name of source %RangeServer.
     /// @return Name of source %RangeServer.
-    string source() const { return m_source; }
+    const string& source() const { return m_source; }
 
     /// Gets range MetaLog entry identifier
     /// @return Range MetaLog entry identifier
@@ -87,7 +87,7 @@ namespace Parameters {
 
     /// Gets transfer log.
     /// @return Transfer log
-    string transfer_log() const { return m_transfer_log; }
+    const string& transfer_log() const { return m_transfer_log; }
 
     /// Gets soft limit.
     /// @return Soft limit

@@ -131,7 +131,7 @@ namespace Hypertable {
       id = m_name.c_str();
     }
 
-    std::string get_id() const {
+    const std::string& get_id() const {
       return m_name;
     }
 

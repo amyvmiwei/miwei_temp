@@ -239,7 +239,7 @@ namespace Hypertable {
     /** Gets the proxy name for this connection.
      * @return Proxy name for this connection.
      */
-    String get_proxy() {
+    const String& get_proxy() {
       ScopedLock lock(m_mutex);
       return m_proxy;
     }

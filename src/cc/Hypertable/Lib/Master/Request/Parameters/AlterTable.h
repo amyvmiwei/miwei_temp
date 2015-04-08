@@ -61,11 +61,11 @@ namespace Parameters {
 
     /// Gets name of table to alter.
     /// @return Name of table to alter
-    string name() { return m_name; }
+    const string& name() const { return m_name; }
 
     /// Gets table schema.
     /// @return Table schema
-    string schema() { return m_schema; }
+    const string& schema() const { return m_schema; }
 
     /// Gets force flag.
     /// @return Force flag

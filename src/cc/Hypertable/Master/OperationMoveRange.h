@@ -52,7 +52,7 @@ namespace Hypertable {
     void decode_state_old(uint8_t version, const uint8_t **bufp, size_t *remainp) override;
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
-    String get_location() { return m_destination; }
+    const String& get_location() const { return m_destination; }
     void set_destination(const String &new_dest) { m_destination=new_dest; }
 
     static int64_t hash_code(const TableIdentifier &table, const RangeSpec &range,

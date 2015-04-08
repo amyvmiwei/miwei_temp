@@ -138,7 +138,7 @@ namespace Hypertable {
       *table_id_p = m_table;
     }
 
-    std::string get_name() {
+    const std::string& get_name() {
       ScopedLock lock(m_mutex);
       return m_name;
     }

@@ -69,8 +69,8 @@ namespace Hypertable {
 
     CommAddress get_comm_address();
 
-    const String location() const { return m_location; }
-    const String hostname() const { return m_hostname; }
+    const String& location() const { return m_location; }
+    const String& hostname() const { return m_hostname; }
     InetAddr local_addr() const { return m_local_addr; }
     InetAddr public_addr() const { return m_public_addr; }
 

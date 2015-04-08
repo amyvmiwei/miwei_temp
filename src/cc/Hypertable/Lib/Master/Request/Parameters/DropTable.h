@@ -60,7 +60,7 @@ namespace Parameters {
 
     /// Gets name of table to drop.
     /// @return Name of table to drop
-    string name() { return m_name; }
+    const string& name() const { return m_name; }
 
     /// Gets <i>if exists</i> flag
     /// @return <i>if exists</i> flag

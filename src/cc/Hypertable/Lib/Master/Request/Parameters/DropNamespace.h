@@ -59,7 +59,7 @@ namespace Parameters {
 
     /// Gets name of namespace to drop.
     /// @return Name of namespace to drop
-    string name() { return m_name; }
+    const string& name() const { return m_name; }
 
     /// Gets drop flags
     /// @return Drop flags

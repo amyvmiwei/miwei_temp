@@ -62,11 +62,11 @@ namespace Parameters {
 
     /// Gets name of table to compact.
     /// @return Name of table to compact
-    std::string table_name() { return m_table_name; }
+    const std::string& table_name() const { return m_table_name; }
 
     /// Gets row identifying range to be compacted.
     /// @return Row identifying range to be compacted.
-    std::string row() { return m_row; }
+    const std::string& row() const { return m_row; }
 
     /// Gets range types to be compacted.
     /// @return Range types to be compacted.
