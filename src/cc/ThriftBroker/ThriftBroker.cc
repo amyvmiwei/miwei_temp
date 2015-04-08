@@ -2466,7 +2466,7 @@ public:
 
     if (hresult->is_scan()) {
       tresult.is_scan = true;
-      tresult.id = get_object_id(hresult->get_scanner());
+      tresult.id = try_get_object_id(hresult->get_scanner());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -2482,7 +2482,7 @@ public:
     }
     else {
       tresult.is_scan = false;
-      tresult.id = get_object_id(hresult->get_mutator());
+      tresult.id = try_get_object_id(hresult->get_mutator());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -2500,7 +2500,7 @@ public:
 
     if (hresult->is_scan()) {
       tresult.is_scan = true;
-      tresult.id = get_object_id(hresult->get_scanner());
+      tresult.id = try_get_object_id(hresult->get_scanner());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -2526,7 +2526,7 @@ public:
 
     if (hresult->is_scan()) {
       tresult.is_scan = true;
-      tresult.id = get_object_id(hresult->get_scanner());
+      tresult.id = try_get_object_id(hresult->get_scanner());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -2727,6 +2727,12 @@ public:
     int64_t id = reinterpret_cast<int64_t>(co.get());
     m_object_map.insert(make_pair(id, co)); // no overwrite
     return id;
+  }
+
+  int64_t try_get_object_id(ClientObject* co) {
+    ScopedLock lock(m_mutex);
+    int64_t id = reinterpret_cast<int64_t>(co);
+    return m_object_map.find(id) != m_object_map.end() ? id : 0;
   }
 
   int64_t get_scanner_id(TableScanner *scanner, ScannerInfoPtr &info) {
