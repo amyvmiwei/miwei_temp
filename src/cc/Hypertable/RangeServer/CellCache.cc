@@ -19,22 +19,46 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
-#include <iostream>
-
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
-
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "Config.h"
 #include "CellCache.h"
 #include "CellCacheScanner.h"
 #include "Global.h"
 
+#include <Hypertable/Lib/Key.h>
+
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+
 using namespace Hypertable;
 using namespace std;
+
+namespace {
+
+  struct CounterKeyCompare {
+    bool operator()(const CellCache::Value lhs, const CellCache::Value rhs) {
+      const uint8_t *ptr1, *ptr2;
+      int len1 = lhs.first.decode_length(&ptr1);
+      int len2 = rhs.first.decode_length(&ptr2);
+
+      // Strip timestamp & revision from key length (see Key.h)
+      if (*ptr1 >= 0x80)
+        len1 -= (*ptr1 & Key::REV_IS_TS) ? 8 : 16;
+      if (*ptr2 >= 0x80)
+        len2 -= (*ptr2 & Key::REV_IS_TS) ? 8 : 16;
+
+      int len = (len1 < len2) ? len1 : len2;
+      int cmp = memcmp(ptr1+1, ptr2+1, len-1);
+      return (cmp==0) ? len1 - len2 : cmp;
+    }
+  };
+
+}
 
 
 CellCache::CellCache()
@@ -80,6 +104,7 @@ void CellCache::add(const Key &key, const ByteString value) {
 /**
  */
 void CellCache::add_counter(const Key &key, const ByteString value) {
+  const uint8_t *ptr;
 
   // Check for counter reset
   if (*value.ptr == 9) {
@@ -95,14 +120,17 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 
   HT_ASSERT(*value.ptr == 8);
 
-  CellMap::iterator iter = m_cell_map.lower_bound(key.serial);
+  CounterKeyCompare comp;
+  Value lookup_value(key.serial, 0);
+  auto range = equal_range(m_cell_map.begin(), m_cell_map.end(), lookup_value, comp);
 
-  if (iter == m_cell_map.end()) {
+  // If no matching key, do a normal add
+  if (range.first == range.second) {
     add(key, value);
     return;
   }
 
-  const uint8_t *ptr;
+  auto iter = range.first;
 
   size_t len = (*iter).first.decode_length(&ptr);
 
@@ -130,11 +158,24 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
     return;
   }
 
-  /*
-   * copy timestamp/revision info from insert key to the one in the map
-   */
+  // If new timestamp is less than or equal to existing timestamp, assume the
+  // increment was already accumulated, so skip it
   size_t offset = (key.flag_ptr-((const uint8_t *)key.serial.ptr)) + 1;
   len = (*iter).second - offset;
+  ptr = ((uint8_t *)(*iter).first.ptr) + offset;
+
+#if 0
+  // If key timestamp is not auto-assigned, assume that the timestamp uniquely
+  // identifies increments and that they come in timestamp order, so skip the
+  // increment if it's timestamp is <= the timestamp of the accumulated counter
+  if ((key.control & Key::REV_IS_TS) == 0) {
+    int64_t existing_ts = Key::decode_ts64(&ptr);
+    if (key.timestamp <= existing_ts)
+      return;
+  }
+#endif
+
+  // Copy timestamp/revision info from insert key to the one in the map
   memcpy(((uint8_t *)(*iter).first.ptr) + offset, key.flag_ptr+1, len);
 
   // read old value
