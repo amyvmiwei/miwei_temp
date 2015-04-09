@@ -17,7 +17,9 @@
 # 02110-1301, USA.
 #
 
-HT_GLOB(GenRb_SRCS hypertable/gen-rb/*.rb)
+HT_GLOB(GenRb_SRCS hypertable/gen-rb/client*.rb
+                   hypertable/gen-rb/hql_constants.rb
+                   hypertable/gen-rb/hql_service.rb)
 
 add_custom_command(
   OUTPUT    ${GenRb_SRCS}
@@ -29,7 +31,16 @@ add_custom_command(
   COMMENT   "thrift2rb"
 )
 
-add_custom_target(ThriftGenRb ALL DEPENDS ${GenRb_SRCS})
+add_custom_command(
+  OUTPUT    ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/hql_types.rb
+  COMMAND   sed
+  ARGS      -i 's/hypertable\\/thrift_gen\\/client_types/client_types/g'
+            ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/hql_types.rb
+  DEPENDS   ${GenRb_SRCS}
+  COMMENT   "rbPostProcess"
+)
+
+add_custom_target(ThriftGenRb ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/hypertable/gen-rb/hql_types.rb)
 
 if (RUBYTHRIFT_FOUND)
   add_test(ThriftClient-ruby ruby -I ${INSTALL_DIR}/lib/rb
