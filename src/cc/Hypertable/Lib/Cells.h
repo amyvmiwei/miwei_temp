@@ -23,9 +23,11 @@
 #define HYPERTABLE_CELLS_H
 
 #include <vector>
+#include <set>
 
 #include "Common/ReferenceCount.h"
 #include "Common/PageArenaAllocator.h"
+#include <Common/StringExt.h>
 #include "Cell.h"
 
 namespace Hypertable {
@@ -38,7 +40,18 @@ typedef std::vector<FailedMutation> FailedMutations;
 class CellsBuilder : public ReferenceCount {
 public:
   CellsBuilder(size_t size_hint = 128)
-    : m_cells(CellAlloc(m_arena)), m_size_hint(size_hint) {}
+    : m_size_hint(size_hint) {
+      // initialization in the initializer list it will fail on dtor
+      m_cells = Cells(CellAlloc(m_arena));
+      m_str_set = CstrSet(CstrSetAlloc(m_arena));
+      m_cells.reserve(size_hint);
+  }
+
+  ~CellsBuilder() {
+    m_str_set.clear();
+    m_cells.clear();
+    m_arena.free();
+  }
 
   size_t size() const {
     return m_cells.size();
@@ -53,10 +66,6 @@ public:
   }
 
   void add(const Cell &cell, bool own = true) {
-
-    if (!m_cells.capacity())
-      m_cells.reserve(m_size_hint);
-
     if (!own) {
       m_cells.push_back(cell);
       return;
@@ -68,10 +77,10 @@ public:
       copy.row_key = m_arena.dup(cell.row_key);
 
     if (cell.column_family)
-      copy.column_family = m_arena.dup(cell.column_family);
+      copy.column_family = get_or_add(cell.column_family);
 
     if (cell.column_qualifier)
-      copy.column_qualifier = m_arena.dup(cell.column_qualifier);
+      copy.column_qualifier = get_or_add(cell.column_qualifier);
 
     copy.timestamp = cell.timestamp;
     copy.revision = cell.revision;
@@ -88,10 +97,11 @@ public:
   Cells &get() { return m_cells; }
   const Cells &get() const { return m_cells; }
 
-  void clear() { 
+  void clear() {
+    m_str_set.clear();
     m_cells.clear();
     m_arena.free();
-    Cells(CellAlloc(m_arena)).swap(m_cells);
+    m_cells.reserve(m_size_hint);
   }
 
   void copy_failed_mutations(const FailedMutations &src, FailedMutations &dst) {
@@ -105,9 +115,21 @@ public:
     }
   }
 protected:
+  typedef PageArenaAllocator<const char*> CstrSetAlloc;
+  typedef std::set<const char*, LtCstr, CstrSetAlloc> CstrSet;
+
   CharArena m_arena;
   Cells m_cells;
+  CstrSet m_str_set;
   size_t m_size_hint;
+
+  inline const char* get_or_add(const char* s) {
+    CstrSet::iterator it = m_str_set.find(s);
+    if (it == m_str_set.end()) {
+      it = m_str_set.insert(m_arena.dup(s)).first;
+    }
+    return *it;
+  }
 };
 
 typedef intrusive_ptr<CellsBuilder> CellsBuilderPtr;
