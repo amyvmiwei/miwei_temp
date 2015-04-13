@@ -212,9 +212,9 @@ namespace Hypertable {
     friend class IndexMutatorCallback;
     void update_without_index(const Cell &cell);
 
-    void update_without_index(Key &full_key, const Cell &cell);
+    void update_without_index(const Key &full_key, const ColumnFamilySpec *cf, const Cell &cell);
 
-    void update_without_index(Key &full_key, const void *value, 
+    void update_without_index(const Key &full_key, const ColumnFamilySpec *cf, const void *value,
             size_t value_len);
 
     enum Operation {
@@ -256,8 +256,8 @@ namespace Hypertable {
 
     bool key_uses_index(Key &key);
 
-    void update_with_index(Key &key, const void *value, uint32_t value_len, 
-                           ColumnFamilySpec *cf);
+    void update_with_index(Key &key, const ColumnFamilySpec *cf, const void *value,
+                           uint32_t value_len);
 
     typedef std::map<uint32_t, TableMutatorAsyncScatterBufferPtr> ScatterBufferAsyncMap;
 

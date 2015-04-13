@@ -155,13 +155,18 @@ namespace Hypertable {
     return os;
   }
 
-  void create_key_and_append(DynamicBuffer &dst_buf, const char *row);
+  void create_key_and_append(DynamicBuffer &dst_buf, const char *row,
+                             bool time_order_asc = true);
 
   void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag,
                              const char *row, uint8_t column_family_code,
                              const char *column_qualifier,
                              int64_t timestamp = AUTO_ASSIGN,
-                             int64_t revision = AUTO_ASSIGN);
+                             int64_t revision = AUTO_ASSIGN,
+                             bool time_order_asc = true);
+
+  void create_key_and_append(DynamicBuffer &dst_buf, const Key& key,
+                             bool time_order_asc = true);
 
 } // namespace Hypertable
 

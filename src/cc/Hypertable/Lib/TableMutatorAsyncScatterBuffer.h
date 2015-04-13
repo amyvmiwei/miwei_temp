@@ -68,7 +68,8 @@ namespace Hypertable {
                                    uint32_t timeout_ms,
                                    uint32_t id);
     virtual ~TableMutatorAsyncScatterBuffer();
-    void set(const Key &, const void *value, uint32_t value_len, size_t incr_mem);
+    void set(const Key &, const ColumnFamilySpec *cf, const void *value,
+             uint32_t value_len, size_t incr_mem);
     void set_delete(const Key &key, size_t incr_mem);
     void set(SerializedKey key, ByteString value, size_t incr_mem);
     bool full() { ScopedLock lock(m_mutex); return m_full; }

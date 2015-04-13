@@ -69,9 +69,8 @@ TableMutatorAsyncScatterBuffer::~TableMutatorAsyncScatterBuffer() {
 
 
 void
-TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t value_len,
-    size_t incr_mem) {
-
+TableMutatorAsyncScatterBuffer::set(const Key &key, const ColumnFamilySpec *cf, const void *value,
+    uint32_t value_len, size_t incr_mem) {
   RangeAddrInfo range_info;
   TableMutatorAsyncSendBufferMap::const_iterator iter;
   bool counter_reset = false;
@@ -87,25 +86,31 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
   {
     ScopedLock lock(m_mutex);
 
+    bool is_counter = false;
+    if (key.column_family_code) {
+      if (!cf)
+        cf = m_schema->get_column_family(key.column_family_code);
+      is_counter = cf->get_option_counter();
+    }
+
     // counter? make sure that a valid integer was specified and re-encode
     // it as a 64bit value
-    if (key.column_family_code
-	&& m_schema->get_column_family(key.column_family_code)->get_option_counter()) {
+    if (is_counter) {
       const char *ascii_value = (const char *)value;
       char *endptr;
       m_counter_value.clear();
       m_counter_value.ensure(value_len+1);
       if (value_len > 0 && (*ascii_value == '=' || *ascii_value == '+')) {
-	counter_reset = (*ascii_value == '=');
-	m_counter_value.add_unchecked(ascii_value+1, value_len-1);
+        counter_reset = (*ascii_value == '=');
+        m_counter_value.add_unchecked(ascii_value+1, value_len-1);
       }
       else
-	m_counter_value.add_unchecked(value, value_len);
+        m_counter_value.add_unchecked(value, value_len);
       m_counter_value.add_unchecked((const void *)"\0",1);
       int64_t val = strtoll((const char *)m_counter_value.base, &endptr, 0);
       if (*endptr)
-	HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
-		  (char*)m_counter_value.base, key.row);
+        HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
+      (char*)m_counter_value.base, key.row);
       m_counter_value.clear();
       Serialization::encode_i64(&m_counter_value.ptr, val);
     }
@@ -119,18 +124,16 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
     }
 
     (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
-    create_key_and_append((*iter).second->accum, key.flag, key.row,
-			  key.column_family_code, key.column_qualifier, key.timestamp);
+    create_key_and_append((*iter).second->accum, key);
 
     // now append the counter
-    if (key.column_family_code
-	&& m_schema->get_column_family(key.column_family_code)->get_option_counter()) {
+    if (is_counter) {
       if (counter_reset) {
-	*m_counter_value.ptr++ = '=';
-	append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
+        *m_counter_value.ptr++ = '=';
+        append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
       }
       else
-	append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
+        append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
     }
     else
       append_as_byte_string((*iter).second->accum, value, value_len);
@@ -178,8 +181,7 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
     }
   }
 
-  create_key_and_append((*iter).second->accum, key.flag, key.row,
-      key.column_family_code, key.column_qualifier, key.timestamp);
+  create_key_and_append((*iter).second->accum, key);
   append_as_byte_string((*iter).second->accum, 0, 0);
   if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;

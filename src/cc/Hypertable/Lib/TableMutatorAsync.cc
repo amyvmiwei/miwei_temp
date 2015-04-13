@@ -161,8 +161,8 @@ void TableMutatorAsync::wait_for_completion() {
 }
 
 void
-TableMutatorAsync::update_with_index(Key &key, const void *value, 
-        uint32_t value_len, ColumnFamilySpec *cf) {
+TableMutatorAsync::update_with_index(Key &key, const ColumnFamilySpec *cf,
+        const void *value, uint32_t value_len) {
   HT_ASSERT(m_use_index == true);
   HT_ASSERT(cf && (cf->get_value_index() || cf->get_qualifier_index()));
 
@@ -204,14 +204,19 @@ TableMutatorAsync::set(const KeySpec &key, const void *value,
       Key full_key;
       to_full_key(key, full_key, &cf);
 
+      // ensures row len
+      if (key.row_len)
+        full_key.row_len = key.row_len;
+      else if (full_key.row)
+        full_key.row_len = strlen(full_key.row);
+
       // if there's an index: buffer the key and update the index
-      full_key.row_len = key.row_len;
       if (key.flag == FLAG_INSERT && m_use_index && 
           cf && (cf->get_value_index() || cf->get_qualifier_index())) {
-        update_with_index(full_key, value, value_len, cf);
+        update_with_index(full_key, cf, value, value_len);
       }
       else {
-        update_without_index(full_key, value, value_len);
+        update_without_index(full_key, cf, value, value_len);
       }
     }
     catch (...) {
@@ -234,13 +239,6 @@ TableMutatorAsync::set(const KeySpec &key, const void *value,
 void
 TableMutatorAsync::update_without_index(const Cell &cell)
 {
-  size_t row_key_len = 0;
-  if (cell.row_key)
-    row_key_len = strlen(cell.row_key);
-  size_t column_qualifier_len = 0;
-  if (cell.column_qualifier)
-    column_qualifier_len = strlen(cell.column_qualifier);
-
   // the cell.column_family string contains the numeric ID of the
   // column family
   int cf_id = (int)strtoul(cell.column_family, 0, 0);
@@ -250,11 +248,11 @@ TableMutatorAsync::update_without_index(const Cell &cell)
   Key k;
   k.flag = cell.flag;
   k.column_family_code = cf_id;
-  k.row_key_set = true;
   k.row = cell.row_key;
   k.column_qualifier = cell.column_qualifier;
-  k.row_len = row_key_len;
-  k.column_qualifier_len = column_qualifier_len;
+  k.row_len = cell.row_key ? strlen(cell.row_key) : 0;
+  k.column_qualifier_len =
+    cell.column_qualifier ? strlen(cell.column_qualifier) : 0;
   k.timestamp = cell.timestamp;
   k.revision = cell.revision;
 
@@ -266,20 +264,21 @@ TableMutatorAsync::update_without_index(const Cell &cell)
   else {
     size_t incr_mem = 20 + k.row_len + k.column_qualifier_len
       + cell.value_len;
-    m_current_buffer->set(k, cell.value, cell.value_len, incr_mem);
+    m_current_buffer->set(k, 0, cell.value, cell.value_len, incr_mem);
     m_memory_used += incr_mem;
   }
 }
 
 void
-TableMutatorAsync::update_without_index(Key &full_key, const Cell &cell)
+TableMutatorAsync::update_without_index(const Key &full_key, const ColumnFamilySpec *cf,
+       const Cell &cell)
 {
-  update_without_index(full_key, cell.value, cell.value_len);
+  update_without_index(full_key, cf, cell.value, cell.value_len);
 }
 
 void
-TableMutatorAsync::update_without_index(Key &full_key, const void *value, 
-        size_t value_len)
+TableMutatorAsync::update_without_index(const Key &full_key, const ColumnFamilySpec *cf,
+        const void *value, size_t value_len)
 {
   if (full_key.flag != FLAG_INSERT) {
     size_t incr_mem = 20 + full_key.row_len + full_key.column_qualifier_len;
@@ -289,7 +288,7 @@ TableMutatorAsync::update_without_index(Key &full_key, const void *value,
   else {
     size_t incr_mem = 20 + full_key.row_len + full_key.column_qualifier_len 
       + value_len;
-    m_current_buffer->set(full_key, value, value_len, incr_mem);
+    m_current_buffer->set(full_key, cf, value, value_len, incr_mem);
     m_memory_used += incr_mem;
   }
 }
@@ -327,10 +326,10 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
         // if there's an index: buffer the key and update the index
         if (cell.flag == FLAG_INSERT && m_use_index 
             && cf && (cf->get_value_index() || cf->get_qualifier_index())) {
-          update_with_index(full_key, cell.value, cell.value_len, cf);
+          update_with_index(full_key, cf, cell.value, cell.value_len);
         }
         else {
-          update_without_index(full_key, cell);
+          update_without_index(full_key, cf, cell);
         }
       }
     }
@@ -370,13 +369,19 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
       else {
         to_full_key(key, full_key, &cf);
       }
-  
+
+      // ensures row len
+      if (key.row_len)
+        full_key.row_len = key.row_len;
+      else if (full_key.row)
+        full_key.row_len = strlen(full_key.row);
+
       // if there's an index: buffer the key and update the index
       if (m_use_index && cf && (cf->get_value_index() || cf->get_qualifier_index())) {
-        update_with_index(full_key, 0, 0, cf);
+        update_with_index(full_key, cf, 0, 0);
       }
       else {
-        update_without_index(full_key, 0, 0);
+        update_without_index(full_key, cf, 0, 0);
       }
     }
     catch (...) {
@@ -440,7 +445,8 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
   full_key.revision = revision;
   full_key.flag = flag;
 
-  *pcf = cf;
+  if (pcf)
+    *pcf = cf;
 }
 
 void TableMutatorAsync::cancel() {
