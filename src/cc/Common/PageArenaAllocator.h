@@ -57,19 +57,31 @@ struct PageArenaAllocator : public ArenaAllocatorBase<T, ArenaT> {
   PageArenaAllocator(ArenaT &arena) : Base(arena) {}
 
   /** Copy constructor */
-  template <typename U>
-  PageArenaAllocator(const PageArenaAllocator<U, ArenaT> &copy) {
-    Base::set_arena(copy.arena());
+  template <typename U> inline
+  PageArenaAllocator(const PageArenaAllocator<U, ArenaT> &copy) : Base(copy) {}
+
+  /** Assignment operator; copies the memory arena */
+  template <typename U> inline
+  PageArenaAllocator& operator =(const PageArenaAllocator<U, ArenaT> &other) {
+    Base::operator =(other);
+    return *this;
   }
 
-  pointer allocate(size_type sz) {
-    Base::check_allocate_size(sz);
+  /**
+   * Allocate an array of objects
+   *
+   * @param sz Number of elements in the allocated array
+   * @return A pointer to the allocated array
+   */
+  inline pointer allocate(size_type sz) {
+    if (HT_UNLIKELY(sz > Base::max_size()))
+      HT_THROW_(Error::BAD_MEMORY_ALLOCATION);
 
-    if (HT_LIKELY(Base::arena() != NULL))
-      return (pointer)(Base::arena()->alloc(sz * sizeof(T)));
-
-    return Base::default_allocate(sz);
+    return Base::arena() ?
+      reinterpret_cast<pointer>(Base::arena()->alloc(sz * sizeof(T))) :
+      Base::allocate(sz);
   }
+
 };
 
 /** @} */

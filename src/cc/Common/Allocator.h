@@ -28,6 +28,7 @@
 
 #include "Error.h"
 
+#include <memory>
 #include <utility>
 
 namespace Hypertable {
@@ -37,167 +38,35 @@ namespace Hypertable {
  */
 
 /**
- * helper functions which call the destructor of an object; destructor
- * is not called on POD types (using template specialization)
- *
- * There used to be std::destroy's, but they never made it into the final
- * standard.
- */
-inline void destruct(char *) {}
-inline void destruct(unsigned char *) {}
-inline void destruct(short *) {}
-inline void destruct(unsigned short *) {}
-inline void destruct(int *) {}
-inline void destruct(unsigned int *) {}
-inline void destruct(long *) {}
-inline void destruct(unsigned long *) {}
-inline void destruct(long long *) {}
-inline void destruct(unsigned long long *) {}
-inline void destruct(float *) {}
-inline void destruct(double *) {}
-inline void destruct(long double *) {}
-
-template <typename T>
-inline void destruct(T *p) { p->~T(); }
-
-
-/** Convenience function returning a size aligned to 8 or 4 bytes,
- * depending on the system's architecture */
-inline size_t get_align_offset(void *p) {
-  if (sizeof(void *) == 8)
-    return 8 - (((uint64_t)p) & 0x7);
-
-  return 4 - (((uint64_t)p) & 0x3);
-}
-
-
-/**
- * Base classes for all Allocator classes.
- * The template parameter T is the type of object that is allocated
- */
-template <typename T>
-struct AllocatorBase {
-  typedef size_t size_type;
-  typedef ptrdiff_t difference_type;
-  typedef T* pointer;
-  typedef const T* const_pointer;
-  typedef T& reference;
-  typedef const T& const_reference;
-  typedef T value_type;
-
-  /** Returns a pointer to an object of type T
-   *
-   * @param x A reference to the object
-   * @return The address of x (of type T*)
-   */
-  pointer address(reference x) const { return &x; }
-
-  /** Returns a const pointer to an object of type T
-   *
-   * @param x A reference to the object
-   * @return The address of x (of type const T*)
-   */
-  const_pointer address(const_reference x) const { return &x; }
-
-  // implement the following 2 methods
-  // pointer allocate(size_type sz);
-  // void deallocate(pointer p, size_type n);
-
-  /** Returns the maximum number of objects that this Allocator can allocate;
-   * used to check for bad allocations
-   */
-  size_type max_size() const throw() {
-    return size_t(-1) / sizeof(value_type);
-  }
-
-  /** Creates a new object instance using placement new and the copy
-   * constructor
-   *
-   * @param p A pointer to the memory area where the new object will be
-   *        constructed
-   * @param args Arguments
-   */
-  template< class U, class... Args >
-    void construct( U* p, Args&&... args ) {
-    ::new((void *)p) U(std::forward<Args>(args)...);
-  }
-
-  /** Creates a new object instance using placement new and the default
-   * constructor
-   *
-   * @param p A pointer to the memory area where the new object will be
-   *        constructed
-   */
-  void construct(pointer p) {
-    new(static_cast<void*>(p)) T();
-  }
-
-  /** Calls the destructor of an object (unless it's a POD) */
-  void destroy(pointer p) { destruct(p); }
-};
-
-
-/**
- * Disallow AllocatorBase for the type 'void' by generating a compiler error
- * if it's used
- */
-template <>
-struct AllocatorBase<void> {
-  typedef size_t size_type;
-  typedef ptrdiff_t difference_type;
-  typedef void *pointer;
-  typedef const void *const_pointer;
-  // reference to void members are impossible.
-  typedef void value_type;
-};
-
-/**
  * Specialized Allocator class using a Memory Arena which manages the allocated
  * memory; see PageArenaAllocator.h for an actual implementation
  */
 template <typename T, class ArenaT>
-class ArenaAllocatorBase : public AllocatorBase<T> {
-  typedef AllocatorBase<T> Base;
+class ArenaAllocatorBase : public std::allocator<T> {
+  typedef std::allocator<T> Base;
 
   ArenaT *m_arenap;
 
- public:
+  public:
   typedef typename Base::pointer pointer;
   typedef typename Base::size_type size_type;
 
   /** Default constructor; creates an empty object */
-  ArenaAllocatorBase() : m_arenap(NULL) {}
+  ArenaAllocatorBase() : m_arenap(0) {}
 
   /** Constructor; takes ownership of a pointer to a memory arena */
   ArenaAllocatorBase(ArenaT &arena) { m_arenap = &arena; }
 
   /** Copy Constructor; copies the memory arena */
-  template <typename U>
+  template <typename U> inline
   ArenaAllocatorBase(const ArenaAllocatorBase<U, ArenaT> &copy)
-    : m_arenap(copy.m_arenap) {}
+    : m_arenap(copy.arena()) {}
 
-  // arena allocators only needs to implement
-  // pointer allocate(size_type sz);
-
-  /** Sanity check the size of the requested buffer; if it's too large
-   * then most likely this is a bug in the application
-   *
-   * @param sz Size of the requested buffer
-   * @throws Error::BAD_MEMORY_ALLOCATION If the size is too large
-   */
-  inline void check_allocate_size(size_type sz) const {
-    if (HT_UNLIKELY(sz > Base::max_size()))
-      HT_THROW_(Error::BAD_MEMORY_ALLOCATION);
-  }
-
-  /**
-   * Allocate an array of objects using the regular operator new
-   *
-   * @param sz Number of elements in the allocated array
-   * @return A pointer to the allocated array
-   */
-  inline pointer default_allocate(size_type sz) {
-    return (pointer)(::operator new(sz * sizeof(T)));
+  /** Assignment operator; copies the memory arena */
+  template <typename U> inline
+  ArenaAllocatorBase& operator =(const ArenaAllocatorBase<U, ArenaT> &other) {
+    m_arenap = other.arena();
+    return *this;
   }
 
   /**
@@ -207,7 +76,10 @@ class ArenaAllocatorBase : public AllocatorBase<T> {
    * @param p Pointer to the object
    * @param sz Unused parameter, ignored
    */
-  void deallocate(pointer p, size_type sz) { if (!m_arenap) delete p; }
+  inline void deallocate(pointer p, size_type sz) {
+    if (!m_arenap)
+      Base::deallocate(p, sz);
+  }
 
   /** operator == returns true if the arena pointers are equal
    *
@@ -215,7 +87,7 @@ class ArenaAllocatorBase : public AllocatorBase<T> {
    */
   template <typename U>
   bool operator==(const ArenaAllocatorBase<U, ArenaT> &x) const {
-    return m_arenap == x.m_arenap;
+    return m_arenap == x.arena();
   }
 
   /** operator != returns true if the arena pointers are not equal
@@ -224,7 +96,7 @@ class ArenaAllocatorBase : public AllocatorBase<T> {
    */
   template <typename U>
   bool operator!=(const ArenaAllocatorBase<U, ArenaT> &x) const {
-    return m_arenap != x.m_arenap;
+    return m_arenap != x.arena();
   }
 
   /** Swaps the memory arena from another allocator with the arena
@@ -234,22 +106,14 @@ class ArenaAllocatorBase : public AllocatorBase<T> {
    */
   template <typename U>
   void swap(ArenaAllocatorBase<U, ArenaT> &other) {
-    ArenaT *tmp = m_arenap;
-    m_arenap = other.m_arenap;
-    other.m_arenap = tmp;
+    std::swap(m_arenap, other.arena());
   }
 
   /** Returns a pointer to the Arena
    *
    * @return Pointer to this allocator's arena; can be NULL
    */
-  ArenaT *arena() const { return m_arenap; }
-
-  /** Sets the Arena pointer
-   *
-   * @param arena Pointer to the arena allocator
-   */
-  void set_arena(ArenaT *arena) { m_arenap = arena; }
+  inline ArenaT *arena() const { return m_arenap; }
 };
 
 /** @}*/
