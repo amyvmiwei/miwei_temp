@@ -168,8 +168,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
     if (maintenance_threads < 2)
       maintenance_threads = 2;
     maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
-    cout << "drive count = " << disk_count << "\nmaintenance threads = "
-        << maintenance_threads << endl;
+    HT_INFOF("drive count = %d, maintenance threads = %d", disk_count, maintenance_threads);
   }
 
   Global::toplevel_dir = props->get_str("Hypertable.Directory");
@@ -244,7 +243,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
 
   if (block_cache_max > 0)
     Global::block_cache = new FileBlockCache(block_cache_min, block_cache_max,
-					     cfg.get_bool("BlockCache.Compressed"));
+                        cfg.get_bool("BlockCache.Compressed"));
 
   int64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
   if (query_cache_memory > 0) {
@@ -321,11 +320,12 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
 
   // Create Master client
   int timeout = props->get_i32("Hypertable.Request.Timeout");
-  ApplicationQueueInterfacePtr aq = m_app_queue;
   m_master_connection_handler
     = make_shared<ConnectionHandler>(m_context->comm, m_app_queue, this);
+  ApplicationQueueInterfacePtr aq = Global::app_queue;
   m_master_client = new Lib::Master::Client(m_conn_manager, m_hyperspace,
-                                            Global::toplevel_dir, timeout, aq,
+                                            Global::toplevel_dir, timeout,
+                                            aq,
                                             m_master_connection_handler,
                                             Global::location_initializer);
   Global::master_client = m_master_client;
@@ -552,7 +552,7 @@ namespace {
         return;
       Global::log_dfs->readdir(logdir, listing);
     }
-    catch (Hypertable::Exception &e) {
+    catch (Hypertable::Exception &) {
       HT_FATALF("Unable to read log directory '%s'", logdir.c_str());
     }
 
@@ -573,7 +573,7 @@ namespace {
         else
           listing2.push_back(entry);
       }
-      catch (Hypertable::Exception &e) {
+      catch (Hypertable::Exception &) {
         HT_FATALF("Unable to check fragment file '%s'", fragment_file.c_str());
       }
     }
@@ -592,7 +592,7 @@ namespace {
       Global::log_dfs->append(fd, buf);
       Global::log_dfs->close(fd);
     }
-    catch (Hypertable::Exception &e) {
+    catch (Hypertable::Exception &) {
       HT_FATALF("Unable to create file '%s'", mark_filename.c_str());
     }
   }
@@ -1001,10 +1001,10 @@ Apps::RangeServer::replay_load_range(TableInfoMap &replay_map,
       if (!Global::range_locator)
         Global::range_locator = new Hypertable::RangeLocator(m_props,
                 m_conn_manager, Global::hyperspace, timeout_ms);
-      ApplicationQueueInterfacePtr aq = m_app_queue;
+      ApplicationQueueInterfacePtr aq = Global::app_queue;
       Global::metadata_table = new Table(m_props, Global::range_locator,
-              m_conn_manager, Global::hyperspace, aq, m_namemap,
-                           TableIdentifier::METADATA_NAME, 0, timeout_ms);
+              m_conn_manager, Global::hyperspace, aq,
+              m_namemap, TableIdentifier::METADATA_NAME, 0, timeout_ms);
     }
 
     schema = table_info->get_schema();
@@ -1298,10 +1298,16 @@ Apps::RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
     ScopedLock lock(Global::mutex);
     // double-check locking (works fine on x86 and amd64 but may fail
     // on other archs without using a memory barrier
-    if (!Global::metadata_table)
-      Global::metadata_table = new Table(m_props, m_conn_manager,
-                                         Global::hyperspace, m_namemap,
-                                         TableIdentifier::METADATA_NAME);
+    if (!Global::metadata_table) {
+      uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+      if (!Global::range_locator)
+        Global::range_locator = new Hypertable::RangeLocator(m_props,
+                m_conn_manager, Global::hyperspace, timeout_ms);
+      ApplicationQueueInterfacePtr aq = Global::app_queue;
+      Global::metadata_table = new Table(m_props, Global::range_locator,
+              m_conn_manager, Global::hyperspace, aq,
+              m_namemap, TableIdentifier::METADATA_NAME, 0, timeout_ms);
+    }
   }
 
   if (!columns.empty()) {
@@ -1750,10 +1756,16 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
       ScopedLock lock(Global::mutex);
       // double-check locking (works fine on x86 and amd64 but may fail
       // on other archs without using a memory barrier
-      if (!Global::metadata_table)
-        Global::metadata_table = new Table(m_props, m_conn_manager,
-                                           Global::hyperspace, m_namemap,
-                                           TableIdentifier::METADATA_NAME);
+      if (!Global::metadata_table) {
+        uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+        if (!Global::range_locator)
+          Global::range_locator = new Hypertable::RangeLocator(m_props,
+                  m_conn_manager, Global::hyperspace, timeout_ms);
+        ApplicationQueueInterfacePtr aq = Global::app_queue;
+        Global::metadata_table = new Table(m_props, Global::range_locator,
+                m_conn_manager, Global::hyperspace, aq,
+                m_namemap, TableIdentifier::METADATA_NAME, 0, timeout_ms);
+      }
     }
 
     /**
@@ -2498,10 +2510,10 @@ void
         if (!Global::range_locator)
           Global::range_locator = new Hypertable::RangeLocator(m_props, m_conn_manager,
                                                                Global::hyperspace, timeout_ms);
-        ApplicationQueueInterfacePtr aq = m_app_queue;
+        ApplicationQueueInterfacePtr aq = Global::app_queue;
         Global::rs_metrics_table = new Table(m_props, Global::range_locator, m_conn_manager,
-                                             Global::hyperspace, aq, m_namemap,
-                                             "sys/RS_METRICS", 0, timeout_ms);
+                                             Global::hyperspace, aq,
+                                             m_namemap, "sys/RS_METRICS", 0, timeout_ms);
       }
       catch (Hypertable::Exception &e) {
         HT_ERRORF("Unable to open 'sys/RS_METRICS' - %s (%s)",
@@ -3206,10 +3218,16 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
         ScopedLock lock(Global::mutex);
         // TODO double-check locking (works fine on x86 and amd64 but may fail
         // on other archs without using a memory barrier
-        if (!Global::metadata_table)
-          Global::metadata_table = new Table(m_props, m_conn_manager,
-                                             Global::hyperspace, m_namemap,
-                                             TableIdentifier::METADATA_NAME);
+        if (!Global::metadata_table) {
+          uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+          if (!Global::range_locator)
+            Global::range_locator = new Hypertable::RangeLocator(m_props,
+                    m_conn_manager, Global::hyperspace, timeout_ms);
+          ApplicationQueueInterfacePtr aq = Global::app_queue;
+          Global::metadata_table = new Table(m_props, Global::range_locator,
+                  m_conn_manager, Global::hyperspace, aq,
+                  m_namemap, TableIdentifier::METADATA_NAME, 0, timeout_ms);
+        }
       }
 
       // if we're about to move a root range: make sure that the location
@@ -3641,12 +3659,12 @@ void Apps::RangeServer::do_maintenance() {
     boost::xtime_get(&now, TIME_UTC_);
     if (xtime_diff_millis(m_last_control_file_check, now) >= (int64_t)m_control_file_check_interval) {
       if (FileUtils::exists(System::install_dir + "/run/query-profile")) {
-	if (!m_profile_query) {
+        if (!m_profile_query) {
           ScopedLock lock(m_profile_mutex);
-	  String output_fname = System::install_dir + "/run/query-profile.output";
-	  m_profile_query_out.open(output_fname.c_str(), ios_base::out|ios_base::app);
-	  m_profile_query = true;
-	}
+          String output_fname = System::install_dir + "/run/query-profile.output";
+          m_profile_query_out.open(output_fname.c_str(), ios_base::out|ios_base::app);
+          m_profile_query = true;
+        }
       }
       else {
 	if (m_profile_query) {

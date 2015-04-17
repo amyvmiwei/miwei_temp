@@ -199,8 +199,10 @@ void IndexUpdaterFactory::clear_cache() {
 
 Table *IndexUpdaterFactory::load_table(const String &table_name)
 {
-  return new Table(Config::properties, Global::conn_manager,
-                       Global::hyperspace, ms_namemap, table_name);
+  ApplicationQueueInterfacePtr aq = Global::app_queue;
+  return new Table(Config::properties, Global::range_locator, Global::conn_manager,
+                   Global::hyperspace, aq,
+                   ms_namemap, table_name);
 }
 
 Mutex IndexUpdaterFactory::ms_mutex;

@@ -160,9 +160,7 @@ void OperationInitialize::execute() {
 
   case OperationState::WRITE_METADATA:
     // Write METADATA entry for 2nd level METADATA range
-    m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
-                                          m_context->hyperspace, m_context->namemap,
-                                          TableIdentifier::METADATA_NAME);
+    m_context->metadata_table = m_context->new_table(TableIdentifier::METADATA_NAME);
     Utility::create_table_write_metadata(m_context, &m_table);
     {
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
@@ -178,9 +176,7 @@ void OperationInitialize::execute() {
 
   case OperationState::CREATE_RS_METRICS:
     if (!m_context->metadata_table)
-      m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
-                                            m_context->hyperspace, m_context->namemap,
-                                            TableIdentifier::METADATA_NAME);
+      m_context->metadata_table = m_context->new_table(TableIdentifier::METADATA_NAME);
     filename = System::install_dir + "/conf/RS_METRICS.xml";
     schema = FileUtils::file_to_string(filename);
     stage_subop(make_shared<OperationCreateTable>(m_context, "/sys/RS_METRICS", schema,
@@ -197,13 +193,9 @@ void OperationInitialize::execute() {
       break;
 
     if (!m_context->metadata_table)
-      m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
-                                            m_context->hyperspace, m_context->namemap,
-                                            TableIdentifier::METADATA_NAME);
+      m_context->metadata_table = m_context->new_table(TableIdentifier::METADATA_NAME);
     if (!m_context->rs_metrics_table)
-      m_context->rs_metrics_table = new Table(m_context->props, m_context->conn_manager,
-                                              m_context->hyperspace, m_context->namemap,
-                                              "sys/RS_METRICS");
+      m_context->rs_metrics_table = m_context->new_table("sys/RS_METRICS");
 
     complete_ok();
     break;
@@ -268,9 +260,7 @@ void OperationInitialize::decode_result(const uint8_t **bufp, size_t *remainp) {
   // state until we're decoding and if the state is COMPLETE,
   // this method is called instead of decode_state
   if (m_context) {
-    m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
-                                          m_context->hyperspace, m_context->namemap,
-                                          TableIdentifier::METADATA_NAME);
+    m_context->metadata_table = m_context->new_table(TableIdentifier::METADATA_NAME);
   }
   Operation::decode_result(bufp, remainp);
 }

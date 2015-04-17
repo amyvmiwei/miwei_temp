@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
     Global::conn_manager = conn_manager;
 
     int worker_count = get_i32("Hypertable.RangeServer.Workers");
-    ApplicationQueuePtr app_queue = make_shared<ApplicationQueue>(worker_count);
+    Global::app_queue = make_shared<ApplicationQueue>(worker_count);
 
     /**
      * Connect to Hyperspace
@@ -102,10 +102,10 @@ int main(int argc, char **argv) {
     ClusterId cluster_id(Global::hyperspace);
     
     Apps::RangeServerPtr range_server
-      = std::make_shared<Apps::RangeServer>(properties, conn_manager, app_queue,
-					    Global::hyperspace);
+      = std::make_shared<Apps::RangeServer>(properties, conn_manager,
+          Global::app_queue, Global::hyperspace);
 
-    app_queue->join();
+    Global::app_queue->join();
 
     IndexUpdaterFactory::close();
 

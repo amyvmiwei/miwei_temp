@@ -72,11 +72,9 @@ namespace Hypertable {
       MUTATOR_FLAG_NO_LOG_SYNC = Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC
     };
 
-    Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-          NameIdMapperPtr &namemap, const std::string &name, int32_t flags=0);
     Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
           Hyperspace::SessionPtr &, ApplicationQueueInterfacePtr &, NameIdMapperPtr &,
-          const std::string &name, int32_t flags, uint32_t default_timeout_ms);
+          const std::string &name, int32_t flags = 0, uint32_t default_timeout_ms = 0);
     virtual ~Table();
 
     /**

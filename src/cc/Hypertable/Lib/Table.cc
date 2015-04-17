@@ -45,22 +45,6 @@ using namespace Hypertable;
 using namespace Hyperspace;
 
 
-Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
-             Hyperspace::SessionPtr &hyperspace, NameIdMapperPtr &namemap,
-             const string &name, int32_t flags)
-  : m_props(props), m_comm(conn_manager->get_comm()),
-    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_namemap(namemap),
-    m_name(name), m_flags(flags), m_stale(true), m_namespace(0) {
-  m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
-  initialize();
-
-  m_range_locator = new RangeLocator(props, m_conn_manager, m_hyperspace,
-                                     m_timeout_ms);
-
-  m_app_queue = make_shared<ApplicationQueue>(props->get_i32("Hypertable.Client.Workers"));
-}
-
-
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
              ConnectionManagerPtr &conn_manager, 
              Hyperspace::SessionPtr &hyperspace, ApplicationQueueInterfacePtr &app_queue,
@@ -71,6 +55,10 @@ Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     m_range_locator(range_locator), m_app_queue(app_queue), m_namemap(namemap),
     m_name(name), m_flags(flags), m_timeout_ms(timeout_ms), m_stale(true),
     m_namespace(0) {
+
+  if (!m_timeout_ms)
+    m_timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+
   initialize();
 }
 

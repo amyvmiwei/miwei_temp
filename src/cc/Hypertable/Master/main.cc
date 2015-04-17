@@ -283,15 +283,11 @@ int main(int argc, char **argv) {
         operations.push_back(init_op);
       }
       else {
-        if (context->metadata_table == 0)
-          context->metadata_table = new Table(context->props,
-                                              context->conn_manager, context->hyperspace, context->namemap,
-                                              TableIdentifier::METADATA_NAME);
+        if (!context->metadata_table)
+          context->metadata_table = context->new_table(TableIdentifier::METADATA_NAME);
 
-        if (context->rs_metrics_table == 0)
-          context->rs_metrics_table = new Table(context->props,
-                                                context->conn_manager, context->hyperspace, context->namemap,
-                                                "sys/RS_METRICS");
+        if (!context->rs_metrics_table)
+          context->rs_metrics_table = context->new_table("sys/RS_METRICS");
       }
 
       // Add PERPETUAL operations

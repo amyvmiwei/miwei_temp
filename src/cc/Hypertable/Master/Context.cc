@@ -76,6 +76,9 @@ Context::Context(PropertiesPtr &p, Hyperspace::SessionPtr hs) : props(p), hypers
   metrics_handler = std::make_shared<MetricsHandler>(props);
   metrics_handler->start_collecting();
 
+  int worker_count = props->get_i32("Hypertable.Client.Workers");
+  app_queue = make_shared<ApplicationQueue>(worker_count);
+
   if (hyperspace) {
     namemap = new NameIdMapper(hyperspace, toplevel_dir);
     master_file = make_unique<HyperspaceMasterFile>(props, hyperspace);
@@ -191,6 +194,14 @@ void Context::get_balance_plan_authority(MetaLog::EntityPtr &entity) {
   if (!m_balance_plan_authority)
     m_balance_plan_authority = make_shared<BalancePlanAuthority>(this, mml_writer);
   entity = m_balance_plan_authority;
+}
+
+Table* Context::new_table(const std::string &name) {
+  if (!range_locator)
+    range_locator = new RangeLocator(props, conn_manager, hyperspace, request_timeout * 1000);
+  ApplicationQueueInterfacePtr aq = app_queue;
+  return new Table(props, range_locator, conn_manager,
+                    hyperspace, aq, namemap, name);
 }
 
 void Context::replay_status(EventPtr &event) {

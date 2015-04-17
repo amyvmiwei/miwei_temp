@@ -32,6 +32,7 @@
 #include "Common/TimeWindow.h"
 
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/ApplicationQueue.h"
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Master/Client.h"
@@ -55,14 +56,13 @@ namespace Hypertable {
 
   using namespace Lib;
 
-  class ApplicationQueue;
-
   class Global {
   public:
     static Mutex          mutex;
     static Hyperspace::SessionPtr hyperspace;
     static Hypertable::FilesystemPtr dfs;
     static Hypertable::FilesystemPtr log_dfs;
+    static Hypertable::ApplicationQueuePtr app_queue;
     static Hypertable::MaintenanceQueuePtr maintenance_queue;
     static Hypertable::Lib::Master::ClientPtr master_client;
     static Hypertable::RangeLocatorPtr range_locator;

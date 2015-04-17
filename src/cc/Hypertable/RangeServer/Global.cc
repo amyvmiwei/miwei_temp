@@ -22,8 +22,6 @@
 #include "Common/Compat.h"
 #include <cassert>
 
-#include "AsyncComm/ApplicationQueue.h"
-
 #include "Global.h"
 
 using namespace Hypertable;
@@ -35,6 +33,7 @@ namespace Hypertable {
   SessionPtr             Global::hyperspace = 0;
   FilesystemPtr          Global::dfs;
   FilesystemPtr          Global::log_dfs;
+  ApplicationQueuePtr    Global::app_queue;
   MaintenanceQueuePtr    Global::maintenance_queue;
   Lib::Master::ClientPtr        Global::master_client;
   RangeLocatorPtr        Global::range_locator = 0;

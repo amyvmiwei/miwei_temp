@@ -83,15 +83,11 @@ void OperationSystemUpgrade::execute() {
   switch (state) {
 
   case OperationState::INITIAL:
-    if (update_schema("/sys/METADATA",   "/conf/METADATA.xml"))
-      m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
-                                            m_context->hyperspace, m_context->namemap,
-                                            TableIdentifier::METADATA_NAME);
-      
+    if (update_schema("/sys/METADATA", "/conf/METADATA.xml"))
+      m_context->metadata_table = m_context->new_table(TableIdentifier::METADATA_NAME);
+
     if (update_schema("/sys/RS_METRICS", "/conf/RS_METRICS.xml"))
-      m_context->rs_metrics_table = new Table(m_context->props, m_context->conn_manager,
-                                              m_context->hyperspace, m_context->namemap,
-                                              "sys/RS_METRICS");
+      m_context->rs_metrics_table = m_context->new_table("sys/RS_METRICS");
 
     complete_ok();
     break;
