@@ -77,6 +77,7 @@ done
 
 ## Restart Master
 kill `cat $HT_HOME/run/Master.pid`
+\rm -f $HT_HOME/run/Master.pid
 $HT_HOME/bin/ht-start-master.sh --config=${SCRIPT_DIR}/test.cfg
 
 # dump keys
