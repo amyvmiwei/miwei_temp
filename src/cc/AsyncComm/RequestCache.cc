@@ -104,7 +104,8 @@ bool RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
                                     DispatchHandler *&dh,
                                     boost::xtime *next_timeout) {
 
-  while (m_head && xtime_cmp(m_head->expire, now) <= 0) {
+  bool handler_removed = false;
+  while (m_head && !handler_removed && xtime_cmp(m_head->expire, now) <= 0) {
 
     IdHandlerMap::iterator iter = m_id_map.find(m_head->id);
     assert (iter != m_id_map.end());
@@ -121,8 +122,7 @@ bool RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
     if (node->handler != 0) {
       handlerp = node->handler;
       dh = node->dh;
-      delete node;
-      return true;
+      handler_removed = true;
     }
     delete node;
   }
@@ -132,7 +132,7 @@ bool RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
   else
     memset(next_timeout, 0, sizeof(boost::xtime));
 
-  return false;
+  return handler_removed;
 }
 
 
