@@ -26,6 +26,7 @@
 
 #include <string>
 #include <sstream>
+#include <limits>
 
 namespace Hypertable {
 
@@ -138,6 +139,114 @@ namespace Hypertable {
     *output_len = input_len - 2;
     return true;
   }
+
+  /** The fast numeric formatters, very much inspired from http://cppformat.github.io/ */
+  class NumericFormatterDigits {
+  protected:
+    static const char DIGITS[];
+  };
+
+  template<class T>
+  class NumericFormatter : public NumericFormatterDigits {
+  public:
+
+    /**
+      Returns the number of characters written to the output buffer.
+      */
+    size_t size() const { return buf - s + BUFFER_SIZE - 1; }
+
+    /**
+      Returns a pointer to the output buffer content. No terminating null
+      character is appended.
+      */
+    const char *data() const { return str; }
+
+    /**
+      Returns a pointer to the output buffer content with terminating null
+      character appended.
+      */
+    const char *c_str() const {
+      return s;
+    }
+
+    /**
+      Returns the content of the output buffer as an `std::string`.
+      */
+    std::string str() const { return std::string(s, size()); }
+
+    /**
+      Appends the converted number to the buffer specified, returns the forwarded pointer.
+      */
+    char* append_to(char* p) const {
+      memcpy(p, s, size());
+      return p + size();
+    }
+
+  protected:
+
+    NumericFormatter() {
+      buf[BUFFER_SIZE - 1] = '\0';
+    }
+    void format_unsigned(T value) {
+      s = buf + BUFFER_SIZE - 1;
+      while (value >= 100) {
+        // Integer division is slow so do it for a group of two digits instead
+        // of for every digit. The idea comes from the talk by Alexandrescu
+        // "Three Optimization Tips for C++". See speed-test for a comparison.
+        unsigned index = (value % 100) * 2;
+        value /= 100;
+        *--s = DIGITS[index + 1];
+        *--s = DIGITS[index];
+      }
+      if (value < 10) {
+        *--s = static_cast<char>('0' + value);
+        return;
+      }
+      unsigned index = static_cast<unsigned>(value * 2);
+      *--s = DIGITS[index + 1];
+      *--s = DIGITS[index];
+    }
+
+    void format_signed(T value) {
+      if (value >= 0)
+        format_unsigned(value);
+      else {
+        format_unsigned(-value);
+        *--s = '-';
+      }
+    }
+
+  private:
+    enum { BUFFER_SIZE = std::numeric_limits<T>::digits10 + 3 };
+    char buf[BUFFER_SIZE];
+    char* s;
+  };
+
+  template<class T>
+  class NumericSignedFormatter : public NumericFormatter<T> {
+  public:
+    explicit NumericSignedFormatter(T value) {
+      NumericFormatter<T>::format_signed(value);
+    }
+  };
+
+  template<class T>
+  class NumericUnsignedFormatter : public NumericFormatter<T> {
+  public:
+    explicit NumericUnsignedFormatter(T value) {
+      NumericFormatter<T>::format_unsigned(value);
+    }
+  };
+
+  typedef NumericUnsignedFormatter<uint8_t> UInt8Formatter;
+  typedef NumericUnsignedFormatter<uint16_t> UInt16Formatter;
+  typedef NumericUnsignedFormatter<uint32_t> UInt32Formatter;
+  typedef NumericUnsignedFormatter<uint64_t> UInt64Formatter;
+
+  typedef NumericSignedFormatter<int8_t> Int8Formatter;
+  typedef NumericSignedFormatter<int16_t> Int16Formatter;
+  typedef NumericSignedFormatter<int32_t> Int32Formatter;
+  typedef NumericSignedFormatter<int64_t> Int64Formatter;
 
   /** @} */
 

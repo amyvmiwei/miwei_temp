@@ -21,7 +21,8 @@
  * A String class based on std::string.
  */
 
-#include "Compat.h"
+#include "Common/Compat.h"
+
 #include <cstdarg>
 #include <cstdio>
 #include <algorithm>
@@ -110,5 +111,12 @@ format_bytes(size_t n, const void *buf, size_t len, const char *trailer) {
   }
   return "<null>";
 }
+
+const char NumericFormatterDigits::DIGITS[] =
+  "0001020304050607080910111213141516171819"
+  "2021222324252627282930313233343536373839"
+  "4041424344454647484950515253545556575859"
+  "6061626364656667686970717273747576777879"
+  "8081828384858687888990919293949596979899";
 
 } // namespace Hypertable

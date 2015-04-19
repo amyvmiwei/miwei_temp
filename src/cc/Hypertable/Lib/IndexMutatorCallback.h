@@ -64,16 +64,15 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
 
       // to avoid Schema lookups: use the numeric ID as the column family
-      char tmp[32];
-      sprintf(tmp, "%d", key.column_family_code);
+      UInt8Formatter tmp(key.column_family_code);
 
       // create a cell and add it to the cell-buffer
-      Cell cell(key.row, &tmp[0], key.column_qualifier,
+      Cell cell(key.row, tmp.c_str(), key.column_qualifier,
               key.timestamp, key.revision, (uint8_t *)value, 
               value_len, key.flag);
       m_cellbuffer.add(cell, true);
       m_used_memory += (2*sizeof(Cell)) + sizeof(char *) + (4*sizeof(void *)) +
-        strlen(key.row) + strlen(&tmp[0]) + 20 + value_len;
+        strlen(key.row) + tmp.size() + 20 + value_len;
       if (key.column_qualifier)
         m_used_memory += strlen(key.column_qualifier);
 

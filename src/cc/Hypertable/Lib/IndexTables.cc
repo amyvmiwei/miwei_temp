@@ -69,8 +69,9 @@ void IndexTables::add(const Key &key, uint8_t flag,
     //std::cout << escaped_value << std::endl;
     StaticBuffer sb(4 + escaped_value_len + escaped_qualifier_len + escaped_row_len + 3);
     char *p = (char *)sb.base;
-    sprintf(p, "%d,", (int)key.column_family_code);
-    p     += strlen(p);
+    UInt8Formatter tmp(key.column_family_code);
+    p = tmp.append_to(p);
+    *p++  = ',';
     memcpy(p, escaped_value, escaped_value_len);
     p     += escaped_value_len;
     *p++  = '\t';
@@ -91,8 +92,9 @@ void IndexTables::add(const Key &key, uint8_t flag,
   if (qualifier_index_mutator) {
     StaticBuffer sb(4 + key.column_qualifier_len + escaped_row_len + 2);
     char *p = (char *)sb.base;
-    sprintf(p, "%d,", (int)key.column_family_code);
-    p += strlen(p);
+    UInt8Formatter tmp(key.column_family_code);
+    p = tmp.append_to(p);
+    *p++  = ',';
     if (key.column_qualifier_len) {
       memcpy(p, key.column_qualifier, key.column_qualifier_len);
       p += key.column_qualifier_len;

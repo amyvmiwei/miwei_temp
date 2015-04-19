@@ -59,37 +59,32 @@ typedef std::map<const char *, int64_t, LtCstr> CstrToInt64MapT;
 
 /** Append operator for shorts */ 
 inline String operator+(const String &s1, short sval) {
-  char cbuf[8];
-  sprintf(cbuf, "%d", sval);
-  return s1 + cbuf;
+  return s1 + Int16Formatter(sval).c_str();
+}
+
+/** Append operator for ushorts */
+inline String operator+(const String &s1, uint16_t sval) {
+  return s1 + UInt16Formatter(sval).c_str();
 }
 
 /** Append operator for integers */ 
 inline String operator+(const String &s1, int ival) {
-  char cbuf[16];
-  sprintf(cbuf, "%d", ival);
-  return s1 + cbuf;
+  return s1 + Int32Formatter(ival).c_str();
 }
 
 /** Append operator for unsigned integers */ 
 inline String operator+(const String &s1, uint32_t ival) {
-  char cbuf[16];
-  sprintf(cbuf, "%d", ival);
-  return s1 + cbuf;
+  return s1 + UInt32Formatter(ival).c_str();
 }
 
 /** Append operator for 64bit integers */ 
 inline String operator+(const String &s1, int64_t llval) {
-  char cbuf[32];
-  sprintf(cbuf, "%lld", (long long int)llval);
-  return s1 + cbuf;
+  return s1 + Int64Formatter(llval).c_str();
 }
 
 /** Append operator for 64bit unsigned integers */ 
 inline String operator+(const String &s1, uint64_t llval) {
-  char cbuf[32];
-  sprintf(cbuf, "%llu", (long long unsigned int)llval);
-  return s1 + cbuf;
+  return s1 + UInt64Formatter(llval).c_str();
 }
 
 /** @} */

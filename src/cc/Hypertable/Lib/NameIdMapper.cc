@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include <cstdlib>
+#include "Common/Compat.h"
 
 #include "NameIdMapper.h"
 #include "Common/ScopeGuard.h"
@@ -90,9 +90,8 @@ void NameIdMapper::add_entry(const string &names_parent, const string &names_ent
       id = strtoll((const char *)dbuf.base, 0, 0);
     else {
       id = m_hyperspace->attr_incr(parent_ids_file, "nid");
-      char buf[16];
-      sprintf(buf, "%llu", (Llu)id);
-      m_hyperspace->attr_set(names_file, "id", buf, strlen(buf));
+      UInt64Formatter buf(id);
+      m_hyperspace->attr_set(names_file, "id", buf.c_str(), buf.size());
     }
     ids.push_back(id);
     return;
@@ -129,18 +128,17 @@ void NameIdMapper::add_entry(const string &names_parent, const string &names_ent
   // At this point the ID file exists, we now need to
   // create the names file/dir and update the "id" attribute
 
-  char buf[16];
-  sprintf(buf, "%llu", (Llu)id);
+  UInt64Formatter buf(id);
 
   if (is_namespace) {
     std::vector<Attribute> init_attr;
-    init_attr.push_back(Attribute("id", buf, strlen(buf)));
+    init_attr.push_back(Attribute("id", buf.c_str(), buf.size()));
     m_hyperspace->mkdir(names_file, init_attr);
   }
   else {
     // Set the "id" attribute of the names file
     m_hyperspace->attr_set(names_file, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE|OPEN_FLAG_EXCL,
-                           "id", buf, strlen(buf));
+                           "id", buf.c_str(), buf.size());
   }
   ids.push_back(id);
 }
