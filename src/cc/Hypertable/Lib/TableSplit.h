@@ -58,23 +58,23 @@ public:
   TableSplitBuilder(CharArena &a) : m_arena(a) { }
 
   void set_start_row(const std::string &row) { 
-    m_table_split.start_row = m_arena.dup(row.c_str());
+    m_table_split.start_row = m_arena.dup(row);
   }
 
   void set_end_row(const std::string &row) { 
-    m_table_split.end_row = m_arena.dup(row.c_str());
+    m_table_split.end_row = m_arena.dup(row);
   }
 
   void set_location(const std::string &loc) { 
-    m_table_split.location = m_arena.dup(loc.c_str());
+    m_table_split.location = m_arena.dup(loc);
   }
 
   void set_ip_address(const std::string &ip) { 
-    m_table_split.ip_address = m_arena.dup(ip.c_str());
+    m_table_split.ip_address = m_arena.dup(ip);
   }
 
   void set_hostname(const std::string &h) { 
-    m_table_split.hostname = m_arena.dup(h.c_str());
+    m_table_split.hostname = m_arena.dup(h);
   }
 
   void clear() { m_table_split.clear(); }

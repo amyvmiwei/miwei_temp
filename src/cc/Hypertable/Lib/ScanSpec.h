@@ -146,7 +146,7 @@ namespace Lib {
     }
 
     void add_column(CharArena &arena, const string &str) {
-      columns.push_back(arena.dup(str.c_str()));
+      columns.push_back(arena.dup(str));
     }
 
     /**
@@ -170,7 +170,7 @@ namespace Lib {
         HT_THROW(Error::BAD_SCAN_SPEC, "cell spec excludes rows");
 
       RowInterval ri;
-      ri.start = ri.end = arena.dup(str.c_str());
+      ri.start = ri.end = arena.dup(str);
       ri.start_inclusive = ri.end_inclusive = true;
       row_intervals.push_back(ri);
     }
@@ -194,9 +194,9 @@ namespace Lib {
         HT_THROW(Error::BAD_SCAN_SPEC, "cell spec excludes rows");
 
       RowInterval ri;
-      ri.start = arena.dup(start.c_str());
+      ri.start = arena.dup(start);
       ri.start_inclusive = start_inclusive;
-      ri.end = arena.dup(end.c_str());
+      ri.end = arena.dup(end);
       ri.end_inclusive = end_inclusive;
       row_intervals.push_back(ri);
     }
@@ -206,8 +206,8 @@ namespace Lib {
         HT_THROW(Error::BAD_SCAN_SPEC, "row spec excludes cells");
 
       CellInterval ci;
-      ci.start_row = ci.end_row = arena.dup(row.c_str());
-      ci.start_column = ci.end_column = arena.dup(column.c_str());
+      ci.start_row = ci.end_row = arena.dup(row);
+      ci.start_column = ci.end_column = arena.dup(column);
       ci.start_inclusive = ci.end_inclusive = true;
       cell_intervals.push_back(ci);
     }
@@ -220,11 +220,11 @@ namespace Lib {
         HT_THROW(Error::BAD_SCAN_SPEC, "row spec excludes cells");
 
       CellInterval ci;
-      ci.start_row = arena.dup(start_row.c_str());
-      ci.start_column = arena.dup(start_column.c_str());
+      ci.start_row = arena.dup(start_row);
+      ci.start_column = arena.dup(start_column);
       ci.start_inclusive = start_inclusive;
-      ci.end_row = arena.dup(end_row.c_str());
-      ci.end_column = arena.dup(end_column.c_str());
+      ci.end_row = arena.dup(end_row);
+      ci.end_column = arena.dup(end_column);
       ci.end_inclusive = end_inclusive;
       cell_intervals.push_back(ci);
     }
@@ -240,7 +240,7 @@ namespace Lib {
         HT_THROW(Error::FAILED_EXPECTATION, "Column predicate limit of 32 has been exceeded!");
 
       ColumnPredicate cp;
-      cp.column_family = arena.dup(column_family.c_str());
+      cp.column_family = arena.dup(column_family);
       cp.column_qualifier = arena.dup(column_qualifier);
       cp.column_qualifier_len = column_qualifier ? strlen(column_qualifier) : 0;
       cp.operation = operation;

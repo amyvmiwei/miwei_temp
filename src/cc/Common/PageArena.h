@@ -35,6 +35,7 @@
 #include <cassert>
 #include <algorithm>
 #include <set>
+#include <string>
 
 #include <boost/noncopyable.hpp>
 #include <boost/static_assert.hpp>
@@ -278,6 +279,15 @@ class PageArena : boost::noncopyable {
     CharT *copy = alloc(len);
     memcpy(copy, s, len);
     return copy;
+  }
+
+  /** Duplicate a std::string; memory is allocated from the pool.
+   *
+   * @param s The original string which is duplicated
+   * @return The new string
+   */
+  CharT *dup(const std::string& s) {
+    return dup(s.c_str(), s.length() + 1);
   }
 
   /** Duplicate a buffer of size @a len; memory is allocated from the pool.
