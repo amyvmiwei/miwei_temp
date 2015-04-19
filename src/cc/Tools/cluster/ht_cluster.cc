@@ -23,6 +23,7 @@
 
 #include "ClusterCommandInterpreter.h"
 #include "ClusterDefinition/Compiler.h"
+#include "ClusterDefinition/ToJson.h"
 #include "ClusterDefinition/TokenizerTools.h"
 
 #include <Tools/Lib/CommandShell.h>
@@ -147,7 +148,10 @@ namespace {
     "",
     "options:",
     "  --clear-cache         Clear command script cache directory (~/.cluster)",
-    "  --display-script      Display script compiled from cluster definition file",
+    "  --display-json        Display JSON representation of cluster definition",
+    "                        file",
+    "  --display-script      Display script compiled from cluster definition",
+    "                        file",
     "  -e, --explain <task>  Display long description for <task>",
     "  -f <fname>            Use <fname> for the cluster definition file",
     "  --help                Display this help message",
@@ -194,6 +198,7 @@ int main(int argc, char **argv) {
     string definition_file;
     vector<string> arguments;
     bool display_script {};
+    bool display_json {};
 
     System::initialize();
     Config::properties = make_shared<Properties>();
@@ -233,6 +238,9 @@ int main(int argc, char **argv) {
       else if (!strcmp(argv[i], "--display-script")) {
         display_script = true;
       }
+      else if (!strcmp(argv[i], "--display-json")) {
+        display_json = true;
+      }
       else if (!is_environment_setting(argv[i]))
         break;
       environment.push_back(argv[i]);
@@ -256,6 +264,10 @@ int main(int argc, char **argv) {
         quick_exit(EXIT_FAILURE);
       }
       quick_exit(EXIT_SUCCESS);
+    }
+    else if (display_json) {
+      cout << ToJson(definition_file).str() << endl;
+      _exit(0);
     }
 
     Compiler compiler(definition_file);

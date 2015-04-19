@@ -24,6 +24,7 @@ set(cluster_SRCS
 ht_cluster.cc
 ClusterCommandInterpreter.cc
 ClusterDefinition/Compiler.cc
+ClusterDefinition/ToJson.cc
 ClusterDefinition/Token.cc
 ClusterDefinition/Tokenizer.cc
 ClusterDefinition/TokenizerTools.cc
