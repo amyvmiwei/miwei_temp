@@ -75,7 +75,10 @@ namespace {
  * Assumes src_schema has been checked for validity
  */
 Schema::Schema(const Schema &other)
+  : m_arena(1024)
 {
+  m_access_group_map = CstrAccessGroupMap(LtCstr(), CstrAlloc(m_arena));
+  m_column_family_map = CstrColumnFamilyMap(LtCstr(), CstrAlloc(m_arena));
 
   // Set schema attributes
   m_generation = other.m_generation;
@@ -112,7 +115,7 @@ Schema::Schema(const Schema &other)
     for (auto src_cf : src_ag->columns())
       ag->add_column(new ColumnFamilySpec(*src_cf));
 
-    m_access_group_map.insert(make_pair(ag->get_name(), ag));
+    m_access_group_map.insert(make_pair(m_arena.dup(ag->get_name()), ag));
     m_access_groups.push_back(ag);
 
   }
@@ -174,7 +177,7 @@ namespace {
       if (!strcasecmp(name, "AccessGroup")) {
         AccessGroupSpec *ag_spec = new AccessGroupSpec();
         try { ag_spec->parse_xml(s, len); }
-        catch (Exception &e) { delete ag_spec; throw; }
+        catch (Exception &) { delete ag_spec; throw; }
         m_schema->add_access_group(ag_spec);
       }
       else if (!strcasecmp(name, "AccessGroupDefaults")) {
@@ -203,7 +206,7 @@ Schema *Schema::new_instance(const string &buf) {
     parser.parse();
     schema->validate();
   }
-  catch (Exception &e) {
+  catch (Exception &) {
     delete schema;
     throw;
   }
@@ -351,7 +354,8 @@ TableParts Schema::get_table_parts() {
 void Schema::add_access_group(AccessGroupSpec *ag) {
 
   // Add to access group map
-  auto res = m_access_group_map.insert(make_pair(ag->get_name(), ag));
+  auto res = m_access_group_map.insert(
+    make_pair(m_arena.dup(ag->get_name()), ag));
   if (!res.second)
     HT_THROWF(Error::BAD_SCHEMA,
               "Attempt to add access group '%s' which already exists",
@@ -390,10 +394,10 @@ void Schema::add_access_group(AccessGroupSpec *ag) {
 }
 
 ColumnFamilySpec *Schema::remove_column_family(const string &name) {
-  auto iter = m_column_family_map.find(name);
+  auto iter = m_column_family_map.find(name.c_str());
   if (iter != m_column_family_map.end()) {
     ColumnFamilySpec *cf = iter->second;
-    auto ag_map_iter = m_access_group_map.find(cf->get_access_group());
+    auto ag_map_iter = m_access_group_map.find(cf->get_access_group().c_str());
     HT_ASSERT(ag_map_iter != m_access_group_map.end());
     ag_map_iter->second->remove_column(name);
     if (cf->get_id()) {
@@ -409,7 +413,7 @@ ColumnFamilySpec *Schema::remove_column_family(const string &name) {
 
 AccessGroupSpec *Schema::replace_access_group(AccessGroupSpec *new_ag) {
   AccessGroupSpec *old_ag {};
-  auto iter = m_access_group_map.find(new_ag->get_name());
+  auto iter = m_access_group_map.find(new_ag->get_name().c_str());
   if (iter != m_access_group_map.end()) {
     old_ag = iter->second;
     m_access_group_map.erase(iter);
@@ -436,7 +440,7 @@ bool Schema::column_family_exists(int32_t id, bool get_deleted) const
 
 bool Schema::access_group_exists(const string &name) const
 {
-  auto ag_iter = m_access_group_map.find(name);
+  auto ag_iter = m_access_group_map.find(name.c_str());
   return (ag_iter != m_access_group_map.end());
 }
 
@@ -444,7 +448,7 @@ void Schema::rename_column_family(const string &old_name, const string &new_name
   ColumnFamilySpec *cf;
 
   // update key and ColumnFamily in m_column_family_map
-  auto cf_map_it = m_column_family_map.find(old_name);
+  auto cf_map_it = m_column_family_map.find(old_name.c_str());
   if (cf_map_it == m_column_family_map.end())
     HT_THROWF(Error::INVALID_OPERATION,
               "Source column '%s' of rename does not exist", old_name.c_str());
@@ -453,18 +457,19 @@ void Schema::rename_column_family(const string &old_name, const string &new_name
     cf = cf_map_it->second;
     cf->set_name(new_name);
     cf->set_generation(0);
-    auto res = m_column_family_map.insert(make_pair(cf->get_name(), cf));
+    auto res = m_column_family_map.insert(
+      make_pair(m_arena.dup(cf->get_name()), cf));
     if (!res.second)
     HT_THROWF(Error::INVALID_OPERATION,
               "Destination column '%s' of rename already exists",
               cf->get_name().c_str());
-    m_column_family_map.erase(old_name);
+    m_column_family_map.erase(cf_map_it);
   }
 }
 
 void Schema::drop_column_family(const string &name) {
 
-  auto cf_map_it = m_column_family_map.find(name);
+  auto cf_map_it = m_column_family_map.find(name.c_str());
   if (cf_map_it == m_column_family_map.end())
     HT_THROWF(Error::INVALID_OPERATION,
               "Column family to drop (%s) does not exist",
@@ -472,7 +477,7 @@ void Schema::drop_column_family(const string &name) {
 
   ColumnFamilySpec *cf = cf_map_it->second;
 
-  auto ag_it = m_access_group_map.find(cf->get_access_group());
+  auto ag_it = m_access_group_map.find(cf->get_access_group().c_str());
   if (ag_it == m_access_group_map.end())
     HT_THROWF(Error::SCHEMA_PARSE_ERROR,
               "Invalid access group '%s' for column family '%s'",
@@ -495,7 +500,6 @@ void Schema::drop_column_family(const string &name) {
   ag_it->second->drop_column(name);
 
   m_column_family_map.erase(cf_map_it);
-  m_column_family_map[cf->get_name()] = cf;  
 }
 
 void Schema::validate() {
@@ -521,11 +525,11 @@ void Schema::validate() {
                   "Column '%s' assigned to two access groups (%s & %s)",
                   cf_spec->get_name().c_str(), iter->second.c_str(),
                   ag_spec->get_name().c_str());
-      column_to_ag_map[cf_spec->get_name()] = ag_spec->get_name();
+      column_to_ag_map.insert(make_pair(cf_spec->get_name(), ag_spec->get_name()));
       m_column_families.push_back(cf_spec);
-      m_column_family_map[cf_spec->get_name()] = cf_spec;
+      m_column_family_map.insert(make_pair(m_arena.dup(cf_spec->get_name()), cf_spec));
       if (cf_spec->get_id()) {
-        m_column_family_id_map[cf_spec->get_id()] = cf_spec;
+        m_column_family_id_map.insert(make_pair(cf_spec->get_id(), cf_spec));
         if (cf_spec->get_option_counter())
           m_counter_mask[cf_spec->get_id()] = true;
       }

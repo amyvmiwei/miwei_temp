@@ -229,15 +229,11 @@ namespace {
 
   struct SendRec {
     SerializedKey key;
-    uint64_t offset;
     const char* row;
   };
 
   inline bool operator<(const SendRec &sr1, const SendRec &sr2) {
-    int rval = strcmp(sr1.row, sr2.row);
-    if (rval == 0)
-      return sr1.offset < sr2.offset;
-    return rval < 0;
+    return strcmp(sr1.row, sr2.row) < 0;
   }
 }
 
@@ -277,10 +273,8 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
     else {
       send_vec.clear();
       send_vec.reserve(send_buffer->key_offsets.size());
-      for (size_t i=0; i<send_buffer->key_offsets.size(); i++) {
-        send_rec.key.ptr = send_buffer->accum.base
-          + send_buffer->key_offsets[i];
-        send_rec.offset = send_buffer->key_offsets[i];
+      for (auto it = send_buffer->key_offsets.begin(); it != send_buffer->key_offsets.end(); ++it) {
+        send_rec.key.ptr = send_buffer->accum.base + *it;
         send_rec.row = send_rec.key.row();
         send_vec.push_back(send_rec);
       }
@@ -288,12 +282,12 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
 
       ptr = send_buffer->pending_updates.base;
 
-      for (size_t i=0; i<send_vec.size(); i++) {
-        key = send_vec[i].key;
+      for (auto it = send_vec.begin(); it != send_vec.end(); ++it) {
+        key = it->key;
         key.next();  // skip key
         key.next();  // skip value
-        memcpy(ptr, send_vec[i].key.ptr, key.ptr - send_vec[i].key.ptr);
-        ptr += key.ptr - send_vec[i].key.ptr;
+        memcpy(ptr, it->key.ptr, key.ptr - it->key.ptr);
+        ptr += key.ptr - it->key.ptr;
       }
       HT_ASSERT((size_t)(ptr-send_buffer->pending_updates.base)==len);
       send_buffer->dispatch_handler =
@@ -303,7 +297,8 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
       send_buffer->send_count = send_buffer->key_offsets.size();
     }
 
-    send_buffer->accum.free();
+    // clear and re-use the allocated memory
+    send_buffer->accum.clear();
     send_buffer->key_offsets.clear();
 
     /**

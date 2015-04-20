@@ -30,6 +30,8 @@
 #include <Common/Mutex.h>
 #include <Common/ReferenceCount.h>
 #include <Common/Properties.h>
+#include "Common/PageArenaAllocator.h"
+#include <Common/StringExt.h>
 
 #include <Hypertable/Lib/AccessGroupSpec.h>
 #include <Hypertable/Lib/ColumnFamilySpec.h>
@@ -52,7 +54,10 @@ namespace Hypertable {
   public:
 
     /// Default constructor.
-    Schema() : m_counter_mask(256) {}
+    Schema() : m_arena(1024), m_counter_mask(256) {
+      m_access_group_map = CstrAccessGroupMap(LtCstr(), CstrAlloc(m_arena));
+      m_column_family_map = CstrColumnFamilyMap(LtCstr(), CstrAlloc(m_arena));
+    }
 
     /// Copy constructor.
     /// Copies contents of <code>other</code> schema into this one and then
@@ -236,6 +241,9 @@ namespace Hypertable {
     /// @return Access group specification corresponding to <code>name</code>,
     /// or nullptr if it does not exist.
     AccessGroupSpec *get_access_group(const std::string &name) {
+      return get_access_group(name.c_str());
+    }
+    AccessGroupSpec *get_access_group(const char* name) {
       auto iter = m_access_group_map.find(name);
       if (iter != m_access_group_map.end())
         return iter->second;
@@ -253,6 +261,9 @@ namespace Hypertable {
     /// @return %Column family specification corresponding to <code>name</code>,
     /// or nullptr if it does not exist.
     ColumnFamilySpec *get_column_family(const std::string &name) {
+      return get_column_family(name.c_str());
+    }
+    ColumnFamilySpec *get_column_family(const char* name) {
       auto iter = m_column_family_map.find(name);
       if (iter != m_column_family_map.end())
         return iter->second;
@@ -411,6 +422,10 @@ namespace Hypertable {
     /// merged
     void merge_table_defaults(AccessGroupSpec *ag_spec);
 
+    //  Page arena allocator
+    typedef PageArenaAllocator<const char*> CstrAlloc;
+    CharArena m_arena;
+
     /// Generation
     int64_t m_generation {};
 
@@ -430,16 +445,18 @@ namespace Hypertable {
     AccessGroupSpecs m_access_groups;
 
     /// Map of access group specifications
-    std::unordered_map<std::string, AccessGroupSpec *> m_access_group_map;
+    typedef std::map<const char*, AccessGroupSpec*, LtCstr, CstrAlloc> CstrAccessGroupMap;
+    CstrAccessGroupMap m_access_group_map;
 
     /// &Column family specifications
     ColumnFamilySpecs m_column_families;
 
     /// Map of column family specifications (key == name)
-    std::unordered_map<std::string, ColumnFamilySpec *> m_column_family_map;
+    typedef std::map<const char*, ColumnFamilySpec*, LtCstr, CstrAlloc> CstrColumnFamilyMap;
+    CstrColumnFamilyMap m_column_family_map;
 
     /// Map of column family specifications (key == ID)
-    std::unordered_map<int32_t, ColumnFamilySpec *> m_column_family_id_map;
+    std::map<int32_t, ColumnFamilySpec *> m_column_family_id_map;
 
     /// Bitmask describing which column families are counters
     std::vector<bool> m_counter_mask;
