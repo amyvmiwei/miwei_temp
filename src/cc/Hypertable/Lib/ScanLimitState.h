@@ -38,10 +38,10 @@ namespace Lib {
   public:
     ScanLimitState(const ScanSpec &spec) 
       : row_limit(spec.row_limit), cell_limit(spec.cell_limit) { }
-    std::string last_row;   //!< Last row processed
+    std::string last_row;   //!< Last row processed, only populated if row_limit > 0
     size_t row_limit;  //!< Row limit
-    size_t rows_encountered {};  //!< Number of unique rows seen
-    size_t rows_seen {};  //!< Number of complete rows seen
+    size_t rows_encountered {};  //!< Number of unique rows seen, only populated if row_limit > 0
+    size_t rows_seen {};  //!< Number of complete rows seen, only populated if row_limit > 0
     size_t cell_limit; //!< Cell limit
     size_t cells_seen {}; //!< Cells seen
   };

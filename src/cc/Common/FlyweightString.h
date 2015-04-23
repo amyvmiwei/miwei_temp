@@ -27,7 +27,9 @@
 #define HYPERTABLE_FLYWEIGHTSTRING_H
 
 #include <set>
+#include <string>
 
+#include "Common/PageArenaAllocator.h"
 #include "StringExt.h"
 
 namespace Hypertable {
@@ -40,6 +42,11 @@ namespace Hypertable {
    */
   class FlyweightString {
   public:
+
+    FlyweightString() {
+      m_strings = CstrSet(LtCstr(), CstrSetAlloc(m_arena));
+    }
+
     /** The destructor deletes all internal pointers and clears the set;
      * pointers retrieved with @sa get() are invalidated.
      */
@@ -56,12 +63,23 @@ namespace Hypertable {
       if (str == 0)
         return 0;
       CstrSet::iterator iter = m_strings.find(str);
-      if (iter != m_strings.end())
-        return *iter;
-      char *constant_str = new char [strlen(str) + 1];
-      strcpy(constant_str, str);
-      m_strings.insert(constant_str);
-      return constant_str;
+      if (iter == m_strings.end())
+        iter = m_strings.insert(m_arena.dup(str)).first;
+      return *iter;
+    }
+
+    /** Returns a copy of the string; this string is valid till the
+     * FlyweightString set is destructed. Duplicate strings are not inserted
+     * twice.
+     *
+     * @param str The string to insert
+     * @return A copy of the inserted string
+     */
+    const char *get(const std::string& str) {
+      CstrSet::iterator iter = m_strings.find(str.c_str());
+      if (iter == m_strings.end())
+        iter = m_strings.insert(m_arena.dup(str)).first;
+      return *iter;
     }
 
     /** Returns a copy of the string; this string is valid till the
@@ -75,28 +93,27 @@ namespace Hypertable {
     const char *get(const char *str, size_t len) {
       if (str == 0)
         return 0;
-      char *new_str = new char [ len + 1 ];
-      memcpy(new_str, str, len);
-      new_str[len] = 0;
-      CstrSet::iterator iter = m_strings.find(new_str);
-      if (iter != m_strings.end()) {
-        delete [] new_str;
-        return *iter;
-      }
-      m_strings.insert(new_str);
-      return new_str;
+      CstrSet::iterator iter = m_strings.find(str);
+      if (iter == m_strings.end())
+        iter = m_strings.insert(m_arena.dup(str, len)).first;
+      return *iter;
     }
 
     /// Clears and deallocates the set of strings.
     /// This function walks through #m_strings, deallocating each string it
     /// finds, and then clears #m_strings.
     void clear() {
-      for (CstrSet::iterator it=m_strings.begin(); it!=m_strings.end(); ++it)
-        delete [] *it;
       m_strings.clear();
+      m_arena.free();
+      m_strings = CstrSet(LtCstr(), CstrSetAlloc(m_arena));
     }
 
   private:
+    typedef PageArenaAllocator<const char*> CstrSetAlloc;
+    typedef std::set<const char*, LtCstr, CstrSetAlloc> CstrSet;
+
+    /// The page arena
+    CharArena m_arena;
 
     /// The std::set holding the strings
     CstrSet m_strings;

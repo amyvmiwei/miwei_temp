@@ -87,16 +87,18 @@ ScanCells::load(SchemaPtr &schema, const string &end_row, bool end_inclusive,
       }
 
       // check for row change and row limit
-      if (strcmp(limit_state->last_row.c_str(), key.row)) {
-        if (!limit_state->last_row.empty() &&
-            limit_state->rows_seen < limit_state->rows_encountered) {
-          limit_state->rows_seen++;
-          if (limit_state->row_limit > 0 &&
-              limit_state->rows_seen >= limit_state->row_limit)
-            return true;
+      if (limit_state->row_limit > 0) {
+        if (strcmp(limit_state->last_row.c_str(), key.row)) {
+          if (!limit_state->last_row.empty() &&
+              limit_state->rows_seen < limit_state->rows_encountered) {
+            limit_state->rows_seen++;
+            if (limit_state->row_limit > 0 &&
+                limit_state->rows_seen >= limit_state->row_limit)
+              return true;
+          }
+          limit_state->rows_encountered++;
+          limit_state->last_row = key.row;
         }
-        limit_state->rows_encountered++;
-        limit_state->last_row = key.row;
       }
 
       cell.row_key = key.row;

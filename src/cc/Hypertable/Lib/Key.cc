@@ -148,61 +148,61 @@ namespace Hypertable {
     assert(dst_buf.fill() <= dst_buf.size);
   }
 
-  Key::Key(SerializedKey key) {
+  Key::Key(const SerializedKey& key) {
     HT_EXPECT(load(key), Error::BAD_KEY);
   }
 
   /**
    * TODO: Re-implement below function in terms of this function
    */
-  bool Key::load(SerializedKey key) {
+  bool Key::load(const SerializedKey& key) {
     serial = key;
+    const uint8_t* ptr = serial.ptr;
+    size_t len = Serialization::decode_vi32(&ptr);
 
-    size_t len = Serialization::decode_vi32(&key.ptr);
+    length = len + (ptr - serial.ptr);
 
-    length = len + (key.ptr - serial.ptr);
+    const uint8_t *end_ptr = ptr + len;
 
-    const uint8_t *end_ptr = key.ptr + len;
+    control = *ptr++;
+    row = (const char *)ptr;
 
-    control = *key.ptr++;
-    row = (const char *)key.ptr;
+    while (ptr < end_ptr && *ptr != 0)
+      ptr++;
 
-    while (key.ptr < end_ptr && *key.ptr != 0)
-      key.ptr++;
-
-    row_len = key.ptr - (uint8_t *)row;
+    row_len = ptr - (uint8_t *)row;
     assert(strlen(row) == row_len);
-    key.ptr++;
+    ptr++;
 
-    if (key.ptr >= end_ptr) {
+    if (ptr >= end_ptr) {
       cerr << "row decode overrun" << endl;
       return false;
     }
 
-    column_family_code = *key.ptr++;
-    column_qualifier = (const char *)key.ptr;
+    column_family_code = *ptr++;
+    column_qualifier = (const char *)ptr;
 
-    while (key.ptr < end_ptr && *key.ptr != 0)
-      key.ptr++;
+    while (ptr < end_ptr && *ptr != 0)
+      ptr++;
 
-    column_qualifier_len = key.ptr - (uint8_t *)column_qualifier;
+    column_qualifier_len = ptr - (uint8_t *)column_qualifier;
     assert(strlen(column_qualifier) == column_qualifier_len);
-    key.ptr++;
+    ptr++;
 
-    if (key.ptr >= end_ptr) {
+    if (ptr >= end_ptr) {
       cerr << "qualifier decode overrun" << endl;
       return false;
     }
 
-    flag_ptr = key.ptr;
-    flag = *key.ptr++;
+    flag_ptr = ptr;
+    flag = *ptr++;
 
     if (control & HAVE_TIMESTAMP) {
-      timestamp = decode_ts64((const uint8_t **)&key.ptr, 
-              control&TS_CHRONOLOGICAL ? false : true);
+      timestamp = decode_ts64((const uint8_t **)&ptr,
+              (control&TS_CHRONOLOGICAL) == 0);
       if (control & REV_IS_TS) {
         revision = timestamp;
-        assert(key.ptr == end_ptr);
+        assert(ptr == end_ptr);
         return true;
       }
     }
@@ -214,12 +214,12 @@ namespace Hypertable {
     }
 
     if (control & HAVE_REVISION)
-      revision = decode_ts64((const uint8_t **)&key.ptr,
-                             control&TS_CHRONOLOGICAL ? false : true);
+      revision = decode_ts64((const uint8_t **)&ptr,
+                             (control&TS_CHRONOLOGICAL) == 0);
     else
       revision = AUTO_ASSIGN;
 
-    assert(key.ptr == end_ptr);
+    assert(ptr == end_ptr);
 
     return true;
   }
