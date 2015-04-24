@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.BufferUnderflowException;
+import java.util.EnumSet;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,9 +34,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
@@ -450,10 +453,14 @@ public class HadoopBroker implements Broker {
             if (blockSize == -1)
                 blockSize = mFilesystem.getDefaultBlockSize(toplevelPath);
 
-            boolean overwrite = (flags & OPEN_FLAG_OVERWRITE) != 0;
+            EnumSet<CreateFlag> create_flags = EnumSet.of(CreateFlag.CREATE, CreateFlag.SYNC_BLOCK);
+            if ((flags & OPEN_FLAG_OVERWRITE) != 0)
+              create_flags.add(CreateFlag.OVERWRITE);
 
-            ofd.os = mFilesystem.create(new Path(fileName), overwrite,
-                                        bufferSize, replication, blockSize);
+            ofd.os = mFilesystem.create(new Path(fileName),
+                                        FsPermission.getFileDefault().applyUMask(FsPermission.getUMask(mConf)),
+                                        create_flags,
+                                        bufferSize, replication, blockSize, null);
             ofd.pathname = fileName;
 
             if (mVerbose)
