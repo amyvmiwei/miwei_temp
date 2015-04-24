@@ -245,8 +245,9 @@ namespace Lib {
       cp.column_qualifier_len = column_qualifier ? strlen(column_qualifier) : 0;
       cp.operation = operation;
       if (value) {
-        cp.value = arena.dup(value);
+        // if value_len have not been specified assume zero terminating string
         cp.value_len = value_len ? value_len : strlen(value);
+        cp.value = arena.dup(value, value_len ? value_len : cp.value_len + 1);
       }
       column_predicates.push_back(cp);
     }

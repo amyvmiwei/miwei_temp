@@ -421,7 +421,7 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
 
   foreach_ht(const ColumnPredicate &cp, ss.column_predicates)
     add_column_predicate(arena, cp.column_family, cp.column_qualifier,
-                         cp.operation, cp.value);
+                         cp.operation, cp.value, cp.value_len);
 }
 
 void
