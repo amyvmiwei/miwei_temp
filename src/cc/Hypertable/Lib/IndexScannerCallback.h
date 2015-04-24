@@ -64,7 +64,6 @@ namespace {
 
 namespace Hypertable {
 
-static std::string last;
   static const char *tmp_schema_outer=
         "<Schema>"
           "<AccessGroup name=\"default\">"
@@ -94,22 +93,25 @@ static std::string last;
 #if defined (TEST_SSB_QUEUE)
     static const size_t TMP_CUTOFF = 1;
 #else
-    static const size_t TMP_CUTOFF = 1024*1024;
+    static const size_t TMP_CUTOFF = 16*1024*1024; // FIXME: Config property?
 #endif
 
   public:
 
-    IndexScannerCallback(TablePtr primary_table, const ScanSpec &primary_spec, 
+    IndexScannerCallback(TableScannerAsync* primary_scanner, TablePtr primary_table,
+                         const ScanSpec &primary_spec,
                          std::vector<CellPredicate> &cell_predicates,
                          ResultCallback *original_cb, uint32_t timeout_ms, 
-                         bool qualifier_scan)
-      : ResultCallback(), m_primary_table(primary_table), 
-        m_primary_spec(primary_spec),
+                         bool qualifier_scan,
+                         bool row_intervals_applied)
+      : ResultCallback(), m_primary_scanner(primary_scanner),
+        m_primary_table(primary_table), m_primary_spec(primary_spec),
         m_original_cb(original_cb), m_timeout_ms(timeout_ms), m_mutator(0), 
         m_row_limit(0), m_cell_limit(0), m_cell_count(0), m_row_offset(0), 
         m_cell_offset(0), m_row_count(0), m_cell_limit_per_family(0), 
         m_eos(false), m_limits_reached(false), m_readahead_count(0), 
         m_cur_matching(0), m_all_matching(0), m_qualifier_scan(qualifier_scan),
+        m_row_intervals_applied(row_intervals_applied),
         m_tmp_cutoff(0), m_final_decrement(false), m_shutdown(false) {
       atomic_set(&m_outstanding_scanners, 0);
       m_original_cb->increment_outstanding();
@@ -209,7 +211,7 @@ static std::string last;
       // just collect the outstanding scanners and ignore the cells
       if (m_eos == true) {
         if (atomic_read(&m_outstanding_scanners) == 0)
-          final_decrement(scanner, is_eos);
+          final_decrement(is_eos);
         return;
       }
 
@@ -227,9 +229,9 @@ static std::string last;
         scancells->set_eos(false);
 
         if (m_track_limits)
-          track_predicates(scanner, scancells);
+          track_predicates(scancells);
         else
-          m_original_cb->scan_ok(scanner, scancells);
+          m_original_cb->scan_ok(m_primary_scanner, scancells);
 
         // fetch data from the next scanner when we have reached the end of
         // the current one
@@ -237,7 +239,7 @@ static std::string last;
           readahead();
       }
 
-      final_decrement(scanner, is_eos);
+      final_decrement(is_eos);
     }
 
     virtual void register_scanner(TableScannerAsync *scanner) { 
@@ -268,7 +270,7 @@ static std::string last;
     }
 
    private:
-    void final_decrement(TableScannerAsync *scanner, bool is_eos) {
+    void final_decrement(bool is_eos) {
       // If the last outstanding scanner just finished; send an "eos" 
       // packet to the original callback and decrement the outstanding scanners
       // once more (this is the equivalent operation to the increment in
@@ -280,7 +282,7 @@ static std::string last;
           // send empty eos package to caller
           ScanCellsPtr empty = new ScanCells;
           empty->set_eos();
-          m_original_cb->scan_ok(scanner, empty);
+          m_original_cb->scan_ok(m_primary_scanner, empty);
           m_original_cb->decrement_outstanding();
           m_final_decrement = true;
         }
@@ -305,16 +307,21 @@ static std::string last;
         char *qv = (char *)cell.row_key;
 
         // get unescaped row
-        char *row = qv + strlen(qv);
-        while (*row != '\t' && row > (char *)cell.row_key)
-          row--;
-        if (*row != '\t') {
+        char *row;
+        if ((row = strrchr(qv, '\t')) == 0) {
           HT_WARNF("Invalid index entry '%s' in index table '^%s'",
                    qv, m_primary_table->get_name().c_str());
           continue;
         }
-        *row++ = '\0';
+        *row++ = 0;
         escaper_row.unescape(row, strlen(row), &unescaped_row, &unescaped_row_len);
+
+        // if the original query specified row intervals then these have
+        // to be filtered in the client
+        if (!m_row_intervals_applied && primary_spec.row_intervals.size()) {
+          if (!row_intervals_match(primary_spec.row_intervals, unescaped_row))
+            continue;
+        }
 
         // cut off the "%d," part at the beginning to get the column id
         // The max. column id is 255, therefore there must be a ',' after 3
@@ -333,6 +340,13 @@ static std::string last;
           HT_WARNF("Invalid index entry '%s' in index table '^%s'",
                    qv, m_primary_table->get_name().c_str());
           continue;
+        }
+
+        // same about cell intervals
+        if (primary_spec.cell_intervals.size()) {
+          if (!cell_intervals_match(primary_spec.cell_intervals, unescaped_row,
+                                    m_column_map[cfid].c_str()))
+            continue;
         }
 
         uint32_t matching = 0;
@@ -385,20 +399,6 @@ static std::string last;
             continue;
         }
 
-        // if the original query specified row intervals then these have
-        // to be filtered in the client
-        if (primary_spec.row_intervals.size()) {
-          if (!row_intervals_match(primary_spec.row_intervals, unescaped_row))
-            continue;
-        }
-
-        // same about cell intervals
-        if (primary_spec.cell_intervals.size()) {
-          if (!cell_intervals_match(primary_spec.cell_intervals, unescaped_row,
-                                    m_column_map[cfid].c_str()))
-            continue;
-        }
-
         // if a temporary table was already created then store it in the 
         // temporary table. otherwise buffer it in memory but make sure
         // that no duplicate rows are inserted
@@ -419,8 +419,8 @@ static std::string last;
             m_tmp_keys.insert(CkeyMap::value_type(key, matching));
           else
             it->second |= matching;
+          m_tmp_cutoff += sizeof(KeySpec) + key.row_len + key.column_qualifier_len;
         }
-        m_tmp_cutoff += sizeof(KeySpec) + key.row_len + key.column_qualifier_len;
       }
 
       // reached EOS? then flush the mutator
@@ -469,7 +469,6 @@ static std::string last;
                 m_timeout_ms, Table::SCANNER_FLAG_IGNORE_INDEX);
       }
       else {
-
         ssb.set_max_versions(primary_spec.max_versions);
         ssb.set_return_deletes(primary_spec.return_deletes);
         ssb.set_keys_only(primary_spec.keys_only);
@@ -500,12 +499,6 @@ static std::string last;
           if (m_cur_matching == m_all_matching)
             ssb.add_row(last_row);
           m_cur_matching = 0;
-
-          if (ssb.get().row_intervals.empty()) {
-            m_eos = true;
-            return;
-          }
-
         }
         else {
           for (CkeyMap::iterator it = m_tmp_keys.begin(); 
@@ -519,6 +512,13 @@ static std::string last;
           if (*last_row)
             ssb.add_row(last_row);
         }
+
+        if (ssb.get().row_intervals.empty()) {
+          m_eos = true;
+          return;
+        }
+
+        ssb.set_scan_and_filter_rows(primary_spec.scan_and_filter_rows);
 
         s = m_primary_table->create_scanner_async(this, ssb.get(), 
                 m_timeout_ms, Table::SCANNER_FLAG_IGNORE_INDEX);
@@ -670,6 +670,8 @@ static std::string last;
           last = "";
         }
       }
+
+      ssb->set_scan_and_filter_rows(primary_spec.scan_and_filter_rows);
  
       // store the "last" pointer before it goes out of scope
       m_last_rowkey_verify = last;
@@ -721,7 +723,7 @@ static std::string last;
       m_scanners.push_back(s);
     }
 
-    void track_predicates(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
+    void track_predicates(ScanCellsPtr &scancells) {
       // no results from the primary table, or LIMIT/CELL_LIMIT exceeded? 
       // then return immediately
       if ((scancells->get_eos() && scancells->empty()) || m_limits_reached) {
@@ -791,7 +793,7 @@ static std::string last;
 
       // send the results to the original callback
       if (scp->size())
-        m_original_cb->scan_ok(scanner, scp);
+        m_original_cb->scan_ok(m_primary_scanner, scp);
     }
 
     bool row_intervals_match(const RowIntervals &rivec, const char *row) {
@@ -865,6 +867,9 @@ static std::string last;
 
     typedef std::map<KeySpec, uint32_t> CkeyMap;
     typedef std::map<String, String> CstrMap;
+
+    // a weak pointer to the primary scanner
+    TableScannerAsync* m_primary_scanner;
 
     // a pointer to the primary table
     TablePtr m_primary_table;
@@ -940,6 +945,9 @@ static std::string last;
 
     // true if this index is a qualifier index
     bool m_qualifier_scan;
+
+    // true if the row intervals have been applied to the index scan
+    bool m_row_intervals_applied;
 
     // buffer for accumulating keys from the index
     CkeyMap m_tmp_keys;
