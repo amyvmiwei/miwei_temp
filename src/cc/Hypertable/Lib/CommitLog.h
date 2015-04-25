@@ -114,10 +114,10 @@ namespace Hypertable {
      * @param cluster_id Originating cluster ID
      * @param buffer block of updates to commit
      * @param revision most recent revision in buffer
-     * @param sync syncs the commit log updates to disk
+     * @param flags Flags to pass to underlying append operation
      * @return Error::OK on success or error code on failure
      */
-    int write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision, bool sync=true);
+    int write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision, Filesystem::Flags flags);
 
     /** Sync previous updates written to commit log.
      *
@@ -200,7 +200,7 @@ namespace Hypertable {
                     PropertiesPtr &, CommitLogBase *init_log, bool is_meta);
     int roll(CommitLogFileInfo **clfip=0);
     int compress_and_write(DynamicBuffer &input, BlockHeader *header,
-                           int64_t revision, bool sync);
+                           int64_t revision, Filesystem::Flags flags);
     void remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs);
 
     FilesystemPtr           m_fs;

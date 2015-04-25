@@ -71,7 +71,7 @@ void FsBroker::Lib::copy(ClientPtr &client, const std::string &from,
       StaticBuffer send_buf;
       if (amount > 0) {
         send_buf.set(dst, amount, false);
-        client->append(to_fd, send_buf, 0);
+        client->append(to_fd, send_buf);
       }
 
       if (amount < (uint32_t)BUFFER_SIZE) {
@@ -124,7 +124,7 @@ void FsBroker::Lib::copy_from_local(ClientPtr &client, const string &from, const
       if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
         goto done;
       send_buf.set(buf, nread, true);
-      client->append(fd, send_buf, 0);
+      client->append(fd, send_buf);
     }
 
     while (true) {
@@ -132,7 +132,7 @@ void FsBroker::Lib::copy_from_local(ClientPtr &client, const string &from, const
       if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
         break;
       send_buf.set(buf, nread, true);
-      client->append(fd, send_buf, 0);
+      client->append(fd, send_buf);
     }
 
   done:

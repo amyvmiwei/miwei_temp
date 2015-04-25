@@ -49,6 +49,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Filesystem;
 import org.hypertable.Common.Status;
 import org.hypertable.FsBroker.Lib.Broker;
 import org.hypertable.FsBroker.Lib.MetricsHandler;
@@ -173,6 +174,9 @@ public class HadoopBroker implements Broker {
         mConf.set("dfs.client.buffer.dir", "/tmp");
         mConf.setInt("dfs.client.block.write.retries", 3);
         mConf.setBoolean("fs.automatic.close", false);
+
+        // Apply umask to file permissions object
+        mFilePermission.applyUMask(FsPermission.getUMask(mConf));
 
         try {
             mFilesystem = FileSystem.get(mConf);
@@ -457,10 +461,8 @@ public class HadoopBroker implements Broker {
             if ((flags & OPEN_FLAG_OVERWRITE) != 0)
               create_flags.add(CreateFlag.OVERWRITE);
 
-            ofd.os = mFilesystem.create(new Path(fileName),
-                                        FsPermission.getFileDefault().applyUMask(FsPermission.getUMask(mConf)),
-                                        create_flags,
-                                        bufferSize, replication, blockSize, null);
+            ofd.os = mFilesystem.create(new Path(fileName), mFilePermission,
+                                        create_flags, bufferSize, replication, blockSize, null);
             ofd.pathname = fileName;
 
             if (mVerbose)
@@ -631,7 +633,7 @@ public class HadoopBroker implements Broker {
     }
 
     public void Append(ResponseCallbackAppend cb, int fd, int amount,
-                      byte [] data, boolean sync) {
+                      byte [] data, Filesystem.Flags flags) {
         int error = Error.OK;
         OpenFileData ofd;
 
@@ -659,9 +661,12 @@ public class HadoopBroker implements Broker {
 
             mMetricsHandler.addBytesWritten(amount);
 
-            if (sync) {
+            if (flags != Filesystem.Flags.NONE) {
               long startTime = System.currentTimeMillis();
-              ofd.os.hflush();
+              if (flags == Filesystem.Flags.FLUSH)
+                ofd.os.hflush();
+              else if (flags == Filesystem.Flags.SYNC)
+                ofd.os.hsync();
               mMetricsHandler.addSync(System.currentTimeMillis() - startTime);
             }
 
@@ -682,8 +687,8 @@ public class HadoopBroker implements Broker {
 
         if (error != Error.OK)
             log.severe("Error sending WRITE response back (fd=" + fd
-                    + ", error=" + error + ", amount=" + amount
-                    + ", sync=" + sync + ")");
+                       + ", error=" + error + ", amount=" + amount
+                       + ", flags=" + flags.getValue() + ")");
     }
 
     public void PositionRead(ResponseCallbackPositionRead cb, int fd,
@@ -1063,6 +1068,7 @@ public class HadoopBroker implements Broker {
   private FileSystem    mFilesystem_noverify;
   private MetricsHandler mMetricsHandler;
   private StatusManager mStatusManager = new StatusManager();
+  private FsPermission  mFilePermission = new FsPermission((short)0644);
   private boolean       mVerbose;
   private boolean       mShutdown;
   public  OpenFileMap   mOpenFileMap = new OpenFileMap();

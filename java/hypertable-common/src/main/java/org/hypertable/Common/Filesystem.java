@@ -29,6 +29,20 @@ import java.util.zip.DataFormatException;
 
 public class Filesystem {
 
+  /** Enumeration for flags */
+  public enum Flags {
+    NONE(0), FLUSH(1), SYNC(2);
+    private final int value;
+    private Flags(int value) {
+      this.value = value;
+    }
+    public int getValue() {
+      return value;
+    }
+    private static Flags[] allValues = values();
+    public static Flags fromOrdinal(int n) {return allValues[n];}
+  };
+
   /**
    * A directory entry for readdir.
    */

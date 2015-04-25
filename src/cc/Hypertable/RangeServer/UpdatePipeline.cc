@@ -541,13 +541,17 @@ void UpdatePipeline::commit() {
      * Commit ROOT mutations
      */
     if (uc->root_buf.ptr > uc->root_buf.mark) {
-      if ((error = Global::root_log->write(ClusterId::get(), uc->root_buf, uc->last_revision)) != Error::OK) {
+      if ((error = Global::root_log->write(ClusterId::get(), uc->root_buf, uc->last_revision, Filesystem::Flags::SYNC)) != Error::OK) {
         HT_FATALF("Problem writing %d bytes to ROOT commit log - %s",
                   (int)uc->root_buf.fill(), Error::get_text(error));
       }
     }
 
-    foreach_ht (UpdateRecTable *table_update, uc->updates) {
+    Filesystem::Flags flags {Filesystem::Flags::NONE};
+
+    for (UpdateRecTable *table_update : uc->updates) {
+
+      flags = table_update->id.is_metadata() ? Filesystem::Flags::SYNC : Filesystem::Flags::FLUSH;
 
       coalesce_amount += table_update->total_buffer_size;
 
@@ -555,7 +559,9 @@ void UpdatePipeline::commit() {
       for (std::unordered_map<Range *, UpdateRecRangeList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         if ((*iter).second->transfer_buf.ptr > (*iter).second->transfer_buf.mark) {
           committed_transfer_data += (*iter).second->transfer_buf.ptr - (*iter).second->transfer_buf.mark;
-          if ((error = (*iter).second->transfer_log->write(ClusterId::get(), (*iter).second->transfer_buf, (*iter).second->latest_transfer_revision)) != Error::OK) {
+          if ((error = (*iter).second->transfer_log->write(ClusterId::get(), (*iter).second->transfer_buf,
+                                                           (*iter).second->latest_transfer_revision,
+                                                           flags)) != Error::OK) {
             table_update->error = error;
             table_update->error_msg = format("Problem writing %d bytes to transfer log",
                                              (int)(*iter).second->transfer_buf.fill());
@@ -574,23 +580,23 @@ void UpdatePipeline::commit() {
       if (table_update->go_buf.ptr > table_update->go_buf.mark) {
         CommitLog *log = 0;
 
-        bool sync = false;
         if (table_update->id.is_user()) {
+          flags = Filesystem::Flags::NONE;
           log = Global::user_log;
           if ((table_update->flags & Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
             user_log_needs_syncing = true;
         }
         else if (table_update->id.is_metadata()) {
-          sync = true;
+          flags = Filesystem::Flags::SYNC;
           log = Global::metadata_log;
         }
         else {
           HT_ASSERT(table_update->id.is_system());
-          sync = true;
+          flags = Filesystem::Flags::FLUSH;
           log = Global::system_log;
         }
 
-        if ((error = log->write(ClusterId::get(), table_update->go_buf, uc->last_revision, sync)) != Error::OK) {
+        if ((error = log->write(ClusterId::get(), table_update->go_buf, uc->last_revision, flags)) != Error::OK) {
           table_update->error_msg = format("Problem writing %d bytes to commit log (%s) - %s",
                                            (int)table_update->go_buf.fill(),
                                            log->get_log_dir().c_str(),

@@ -62,7 +62,7 @@ void Append::run() {
       HT_THROW_INPUT_OVERRUN(remain, params.get_size());
 
     m_broker->append(&cb, params.get_fd(), params.get_size(),
-		     ptr, params.get_flush());
+		     ptr, static_cast<Filesystem::Flags>(params.get_flags()));
 
   }
   catch (Exception &e) {

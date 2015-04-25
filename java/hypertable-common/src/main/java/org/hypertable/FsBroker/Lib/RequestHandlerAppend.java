@@ -30,6 +30,7 @@ import org.hypertable.AsyncComm.CommHeader;
 import org.hypertable.AsyncComm.Event;
 
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Filesystem;
 import org.hypertable.Common.Serialization;
 import org.hypertable.Common.System;
 
@@ -48,7 +49,7 @@ public class RequestHandlerAppend extends ApplicationHandler {
 
   public void run() {
     int     fd, amount;
-    boolean sync;
+    Filesystem.Flags flags;
     ResponseCallbackAppend cb = new ResponseCallbackAppend(mComm, mEvent);
 
     try {
@@ -65,7 +66,7 @@ public class RequestHandlerAppend extends ApplicationHandler {
 
       fd = mEvent.payload.getInt();
       amount = mEvent.payload.getInt();
-      sync = mEvent.payload.get() != 0;
+      flags = Filesystem.Flags.fromOrdinal((int)mEvent.payload.get());
 
       if (mEvent.header.alignment != 0)
         mEvent.payload.position(mEvent.header.alignment);
@@ -73,7 +74,7 @@ public class RequestHandlerAppend extends ApplicationHandler {
       byte [] data = new byte [ amount ];
       mEvent.payload.get(data);
 
-      mBroker.Append(cb, fd, amount, data, sync);
+      mBroker.Append(cb, fd, amount, data, flags);
     }
     catch (Exception e) {
       int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());

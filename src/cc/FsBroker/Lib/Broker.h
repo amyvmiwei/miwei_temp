@@ -95,14 +95,14 @@ namespace Lib {
 
     /**
      * Append data to open file.
+     * @param cb Response callback
      * @param fd An open file descriptor.
      * @param amount Number of bytes to write.
      * @param data   The data to write.
-     * @param flush  Sync data to disk.
-     * @param cb
+     * @param flags Flags (FLUSH or SYNC)
      */
     virtual void append(Response::Callback::Append *cb, uint32_t fd,
-                        uint32_t amount, const void *data, bool flush) = 0;
+                        uint32_t amount, const void *data, Filesystem::Flags flags) = 0;
 
     /**
      * Seek open file.

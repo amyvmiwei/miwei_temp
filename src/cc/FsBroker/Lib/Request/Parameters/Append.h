@@ -56,9 +56,9 @@ namespace Parameters {
     /// <code>flush</code>.
     /// @param fd File descriptor
     /// @param size Size of data buffer
-    /// @param flush Flag indicating if file should be flushed after append
-    Append(int32_t fd, uint32_t size, bool flush)
-      : m_fd(fd), m_size(size), m_flush(flush) {}
+    /// @param flags Flags (FLUSH or SYNC)
+    Append(int32_t fd, uint32_t size, uint8_t flags)
+      : m_fd(fd), m_size(size), m_flags(flags) {}
 
     /// Gets file descriptor
     /// @return File descriptor
@@ -68,9 +68,9 @@ namespace Parameters {
     /// @return Size of data buffer
     uint32_t get_size() { return m_size; }
 
-    /// Gets flush flag
-    /// @return Flush flag
-    bool get_flush() { return m_flush; }
+    /// Gets flags
+    /// @return Flags
+    uint8_t get_flags() { return m_flags; }
 
   private:
 
@@ -89,8 +89,8 @@ namespace Parameters {
     /// Size of data buffer
     uint32_t m_size {};
 
-    /// Flag signalling if flush is to be performed after appending
-    bool m_flush {};
+    /// Flags (FLUSH or SYNC)
+    uint8_t m_flags {};
   };
 
   /// @}

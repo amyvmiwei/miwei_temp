@@ -172,7 +172,7 @@ void Writer::write_header() {
   memcpy(backup_buf, buf.base, Header::LENGTH);
 
   FileUtils::write(m_backup_fd, backup_buf, Header::LENGTH);
-  if (m_fs->append(m_fd, buf, Filesystem::O_FLUSH) != Header::LENGTH)
+  if (m_fs->append(m_fd, buf, Filesystem::Flags::FLUSH) != Header::LENGTH)
     HT_THROWF(Error::FSBROKER_IO_ERROR, "Error writing %s "
               "metalog header to file: %s", m_definition->name(),
               m_filename.c_str());
@@ -207,7 +207,7 @@ void Writer::record_state(EntityPtr entity) {
   }
 
   FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  m_fs->append(m_fd, buf, Filesystem::Flags::FLUSH);
   m_offset += buf.size;
 }
 
@@ -251,7 +251,7 @@ void Writer::record_state(std::vector<EntityPtr> &entities) {
   memcpy(backup_buf.get(), buf.base, buf.size);
 
   FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  m_fs->append(m_fd, buf, Filesystem::Flags::FLUSH);
   m_offset += buf.size;
 }
 
@@ -274,7 +274,7 @@ void Writer::record_removal(EntityPtr entity) {
   memcpy(backup_buf, buf.base, buf.size);
 
   FileUtils::write(m_backup_fd, backup_buf, buf.size);
-  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  m_fs->append(m_fd, buf, Filesystem::Flags::FLUSH);
   m_offset += buf.size;
 
 }
@@ -305,7 +305,7 @@ void Writer::record_removal(std::vector<EntityPtr> &entities) {
   memcpy(backup_buf.get(), buf.base, buf.size);
 
   FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  m_fs->append(m_fd, buf, Filesystem::Flags::FLUSH);
   m_offset += buf.size;
 
 }

@@ -399,13 +399,13 @@ void Client::decode_response_read(EventPtr &event, const void **buffer,
 }
 
 void
-Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
+Client::append(int32_t fd, StaticBuffer &buffer, Flags flags,
                DispatchHandler *handler) {
   CommHeader header(Request::Handler::Factory::FUNCTION_APPEND);
   header.gid = fd;
   header.alignment = HT_DIRECT_IO_ALIGNMENT;
   CommBuf *cbuf = new CommBuf(header, HT_DIRECT_IO_ALIGNMENT, buffer);
-  Request::Parameters::Append params(fd, buffer.size, (bool)(flags & O_FLUSH));
+  Request::Parameters::Append params(fd, buffer.size, static_cast<uint8_t>(flags));
   uint8_t *base = (uint8_t *)cbuf->get_data_ptr();
   params.encode(cbuf->get_data_ptr_address());
   size_t padding = HT_DIRECT_IO_ALIGNMENT -
@@ -425,7 +425,7 @@ Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
 }
 
 
-size_t Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags) {
+size_t Client::append(int32_t fd, StaticBuffer &buffer, Flags flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
 
@@ -433,7 +433,7 @@ size_t Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags) {
   header.gid = fd;
   header.alignment = HT_DIRECT_IO_ALIGNMENT;
   CommBuf *cbuf = new CommBuf(header, HT_DIRECT_IO_ALIGNMENT, buffer);
-  Request::Parameters::Append params(fd, buffer.size, (bool)(flags & O_FLUSH));
+  Request::Parameters::Append params(fd, buffer.size, static_cast<uint8_t>(flags));
   uint8_t *base = (uint8_t *)cbuf->get_data_ptr();
   params.encode(cbuf->get_data_ptr_address());
   size_t padding = HT_DIRECT_IO_ALIGNMENT -

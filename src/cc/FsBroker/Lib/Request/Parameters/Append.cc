@@ -45,7 +45,7 @@ size_t Append::encoded_length_internal() const {
 void Append::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_fd);
   Serialization::encode_i32(bufp, m_size);
-  Serialization::encode_bool(bufp, m_flush);
+  Serialization::encode_i8(bufp, m_flags);
 }
 
 void Append::decode_internal(uint8_t version, const uint8_t **bufp,
@@ -53,7 +53,7 @@ void Append::decode_internal(uint8_t version, const uint8_t **bufp,
   (void)version;
   m_fd = (int32_t)Serialization::decode_i32(bufp, remainp);
   m_size = Serialization::decode_i32(bufp, remainp);
-  m_flush = Serialization::decode_bool(bufp, remainp);
+  m_flags = Serialization::decode_i8(bufp, remainp);
 }
 
 

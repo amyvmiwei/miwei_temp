@@ -238,7 +238,7 @@ namespace {
         dbuf.ptr = dbuf.base + (4*limit);
         dbuf.own = false;
 
-        if ((error = log->write(0, dbuf, revision)) != Error::OK)
+        if ((error = log->write(0, dbuf, revision, Filesystem::Flags::FLUSH)) != Error::OK)
           HT_THROW(error, "Problem writing to log file");
       }
     }

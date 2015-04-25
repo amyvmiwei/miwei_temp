@@ -80,7 +80,7 @@ namespace FsBroker {
     virtual void close(ResponseCallback *cb, uint32_t fd);
     virtual void read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount);
     virtual void append(Response::Callback::Append *cb, uint32_t fd,
-                        uint32_t amount, const void *data, bool sync);
+                        uint32_t amount, const void *data, Filesystem::Flags flags);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
     virtual void length(Response::Callback::Length *cb, const char *fname,

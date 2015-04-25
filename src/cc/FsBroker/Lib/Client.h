@@ -134,10 +134,10 @@ namespace Lib {
     void decode_response_read(EventPtr &event, const void **buffer,
                               uint64_t *offset, uint32_t *length) override;
 
-    void append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
+    void append(int32_t fd, StaticBuffer &buffer, Flags flags,
         	DispatchHandler *handler) override;
     size_t append(int32_t fd, StaticBuffer &buffer,
-			  uint32_t flags = 0) override;
+                  Flags flags = Flags::NONE) override;
     void decode_response_append(EventPtr &event, uint64_t *offset,
                                 uint32_t *length) override;
 

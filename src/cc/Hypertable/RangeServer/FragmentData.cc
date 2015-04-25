@@ -105,7 +105,7 @@ void FragmentData::merge(TableIdentifier &table, RangePtr &range,
     HT_ASSERT(dbuf.ptr-dbuf.base <= (long)dbuf.size);
 
     if (remain)
-      log->write(ClusterId::get(), dbuf, latest_revision, false);
+      log->write(ClusterId::get(), dbuf, latest_revision, Filesystem::Flags::NONE);
   }
 
   HT_INFOF("Just added %d key/value pairs (%lld bytes)",

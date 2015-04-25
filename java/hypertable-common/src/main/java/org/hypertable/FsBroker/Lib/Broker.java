@@ -23,6 +23,8 @@ package org.hypertable.FsBroker.Lib;
 
 import org.hypertable.AsyncComm.ResponseCallback;
 
+import org.hypertable.Common.Filesystem;
+
 public interface Broker {
 
   static final int OPEN_FLAG_DIRECT          = 0x00000001;
@@ -45,7 +47,7 @@ public interface Broker {
   void Read(ResponseCallbackRead cb, int fd, int amount);
 
   void Append(ResponseCallbackAppend cb, int fd, int amount, byte [] data,
-             boolean sync);
+              Filesystem.Flags flags);
 
   void PositionRead(ResponseCallbackPositionRead cb, int fd, long offset,
                     int amount, boolean verify_checksum);

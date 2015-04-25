@@ -225,7 +225,7 @@ void CellStoreV0::add(const Key &key, const ByteString value) {
     size_t zlen = zbuf.fill();
     StaticBuffer send_buf(zbuf);
 
-    try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
+    try { m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler); }
     catch (Exception &e) {
       HT_THROW2F(e.code(), e, "Problem writing to FS file '%s'",
                  m_filename.c_str());
@@ -298,7 +298,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
       m_outstanding_appends--;
     }
 
-    m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+    m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
     m_outstanding_appends++;
     m_offset += zlen;
@@ -336,7 +336,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   zlen = zbuf.fill();
   send_buf = zbuf;
 
-  m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+  m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
   m_outstanding_appends++;
   m_offset += zlen;
@@ -353,7 +353,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   zlen = zbuf.fill();
   send_buf = zbuf;
 
-  m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+  m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
   m_outstanding_appends++;
   m_offset += zlen;
@@ -370,7 +370,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
     assert(!m_bloom_filter_items && m_bloom_filter);
 
     m_bloom_filter->serialize(send_buf);
-    m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+    m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
     m_outstanding_appends++;
     m_offset += m_bloom_filter->size();

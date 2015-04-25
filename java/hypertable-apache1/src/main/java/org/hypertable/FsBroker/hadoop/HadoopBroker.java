@@ -578,7 +578,7 @@ public class HadoopBroker implements Broker {
     }
 
     public void Append(ResponseCallbackAppend cb, int fd, int amount,
-                      byte [] data, boolean sync) {
+                       byte [] data, Filesystem.Flags flags) {
         int error = Error.OK;
         OpenFileData ofd;
 
@@ -604,7 +604,7 @@ public class HadoopBroker implements Broker {
 
             ofd.os.write(data, 0, amount);
 
-            if (sync)
+            if (flags != Filesystem.Flags.NONE)
                 ofd.os.sync();
 
             error = cb.response(offset, amount);
@@ -620,8 +620,8 @@ public class HadoopBroker implements Broker {
 
         if (error != Error.OK)
             log.severe("Error sending WRITE response back (fd=" + fd
-                    + ", error=" + error + ", amount=" + amount
-                    + ", sync=" + sync + ")");
+                       + ", error=" + error + ", amount=" + amount
+                       + ", flags=" + flags.getValue() + ")");
     }
 
     public void PositionRead(ResponseCallbackPositionRead cb, int fd,
