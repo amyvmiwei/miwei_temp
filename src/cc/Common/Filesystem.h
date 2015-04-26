@@ -439,14 +439,28 @@ namespace Hypertable {
      */
     virtual void flush(int fd, DispatchHandler *handler) = 0;
 
-    /** Flushes a file.  Isues a flush command which causes all buffered
-     * writes to get persisted to disk, and waits for it to complete.
+    /** Flushes a file.  Issues a <i>flush</i> command which causes all buffered
+     * writes to get flushed to the underlying filesystem.  For "normal"
+     * filesystems, such as the local filesystem, this command translates into
+     * an fsync() system call.  However, for some distributed filesystems such
+     * as HDFS, this command causes the filesystem broker to flush buffered
+     * writes into the memory of all of the replica servers, but doesn't
+     * necessarily push the writes all the way down to the physical storage.
      * This command will get serialized along with other commands issued
      * with the same file descriptor.
      *
      * @param fd The open file descriptor
      */
     virtual void flush(int fd) = 0;
+
+    /** Syncs a file.  Issues a <i>sync</i> command which causes the filesystem
+     * to persist all buffered updates to the physical storage.  It is
+     * equivalent to the fsync() Unix system call.  This command will get
+     * serialized along with other commands issued with the same file descriptor.
+     *
+     * @param fd The open file descriptor
+     */
+    virtual void sync(int fd) = 0;
 
     /** Determines if a file exists asynchronously.  Issues an exists request.
      * The caller will get notified of successful completion or error via the

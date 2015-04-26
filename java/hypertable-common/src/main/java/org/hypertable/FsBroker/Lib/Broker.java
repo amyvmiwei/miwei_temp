@@ -58,6 +58,8 @@ public interface Broker {
 
   void Flush(ResponseCallback cb, int fd);
 
+  void Sync(ResponseCallback cb, int fd);
+
   void Rmdir(ResponseCallback cb, String fileName);
 
   void Readdir(ResponseCallbackReaddir cb, String dirName);

@@ -165,6 +165,8 @@ namespace Lib {
     void flush(int32_t fd, DispatchHandler *handler) override;
     void flush(int32_t fd) override;
 
+    void sync(int32_t fd) override;
+
     void rmdir(const String &name, DispatchHandler *handler) override;
     void rmdir(const String &name, bool force = true) override;
 

@@ -256,7 +256,9 @@ namespace Apps {
     Mutex m_mutex;
     ContextPtr m_context;
     LogReplayBarrierPtr m_log_replay_barrier;
-    UpdatePipelinePtr m_update_pipeline;
+    UpdatePipelinePtr m_update_pipeline_metadata;
+    UpdatePipelinePtr m_update_pipeline_system;
+    UpdatePipelinePtr m_update_pipeline_user;
     Mutex                  m_stats_mutex;
     PropertiesPtr          m_props;
 

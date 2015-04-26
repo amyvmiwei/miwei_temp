@@ -637,11 +637,14 @@ void LocalBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {
   cb->response(listing);
 }
 
-
 void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void LocalBroker::sync(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataLocalPtr fdata;
 
-  HT_DEBUGF("flush fd=%d", fd);
+  HT_DEBUGF("sync fd=%d", fd);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -655,7 +658,7 @@ void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
     int error = errno;
     report_error(cb);
     m_status_manager.set_write_error(error);
-    HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
+    HT_ERRORF("sync failed: fd=%d - %s", fdata->fd, strerror(errno));
     return;
   }
 

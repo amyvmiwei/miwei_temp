@@ -290,6 +290,10 @@ void QfsBroker::rmdir(ResponseCallback *cb, const char *dname) {
 }
 
 void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void QfsBroker::sync(ResponseCallback *cb, uint32_t fd) {
 
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
@@ -304,7 +308,7 @@ void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
   if(status < 0) {
     m_status_manager.set_write_status(Status::Code::CRITICAL,
                                       KFS::ErrorCodeToStr(status));
-    HT_ERRORF("flush(fd=%d,qfsFd=%d) failure (%d) - %s", (int)fd,
+    HT_ERRORF("sync(fd=%d,qfsFd=%d) failure (%d) - %s", (int)fd,
               (int)fdata->fd, -status,
               KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);

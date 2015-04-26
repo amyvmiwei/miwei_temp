@@ -142,17 +142,32 @@ int64_t CommitLog::get_timestamp() {
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
-int
-CommitLog::sync() {
+int CommitLog::flush() {
   ScopedLock lock(m_mutex);
-  int error = Error::OK;
+  int error {};
 
-  // Sync commit log update (protected by lock)
   try {
     if (m_fd == -1)
       return Error::CLOSED;
     m_fs->flush(m_fd);
-    HT_DEBUG_OUT << "synced commit log explicitly" << HT_END;
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem flushing commit log: %s: %s",
+              m_cur_fragment_fname.c_str(), e.what());
+    error = e.code();
+  }
+
+  return error;
+}
+
+int CommitLog::sync() {
+  ScopedLock lock(m_mutex);
+  int error {};
+
+  try {
+    if (m_fd == -1)
+      return Error::CLOSED;
+    m_fs->sync(m_fd);
   }
   catch (Exception &e) {
     HT_ERRORF("Problem syncing commit log: %s: %s",
@@ -162,6 +177,7 @@ CommitLog::sync() {
 
   return error;
 }
+
 
 int
 CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,

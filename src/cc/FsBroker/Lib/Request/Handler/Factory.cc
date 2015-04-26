@@ -46,6 +46,7 @@
 #include "Rmdir.h"
 #include "Seek.h"
 #include "Status.h"
+#include "Sync.h"
 
 #include <Common/Logger.h>
 #include <Common/Error.h>
@@ -92,6 +93,8 @@ ApplicationHandler *Factory::create(Comm *comm, Broker *broker,
     return new Rename(comm, broker, event);
   case FUNCTION_DEBUG:
     return new Debug(comm, broker, event);
+  case FUNCTION_SYNC:
+    return new Sync(comm, broker, event);
   default:
     HT_THROWF(Error::INVALID_METHOD_IDENTIFIER,
               "%d", (int)event->header.command);

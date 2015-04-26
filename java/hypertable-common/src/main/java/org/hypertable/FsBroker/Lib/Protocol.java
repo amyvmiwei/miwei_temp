@@ -41,7 +41,7 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
     public static final short COMMAND_EXISTS        = 15;
     public static final short COMMAND_RENAME        = 16;
     public static final short COMMAND_DEBUG         = 17;
-    public static final short COMMAND_POSIX_READDIR = 18;
+    public static final short COMMAND_SYNC          = 18;
     public static final short COMMAND_MAX           = 19;
 
     public static final short SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
@@ -65,7 +65,7 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
         "exists",
         "rename",
         "debug",
-        "posix_readdir"
+        "sync"
     };
 
     public String CommandText(short command) {

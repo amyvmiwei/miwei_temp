@@ -858,9 +858,6 @@ public class HadoopBroker implements Broker {
 
     }
 
-    /**
-     *
-     */
     public void Flush(ResponseCallback cb, int fd) {
         int error = Error.OK;
         OpenFileData ofd;
@@ -883,6 +880,42 @@ public class HadoopBroker implements Broker {
 
             if (error != Error.OK)
                 log.severe("Error sending FLUSH response back (fd=" + fd
+                        + ", error=" + error + ")");
+            mStatusManager.clearStatus();
+        }
+        catch (IOException e) {
+          mStatusManager.setWriteException(e);
+          mMetricsHandler.incrementErrorCount();
+          log.severe("I/O exception - " + e.toString());
+          if (error == Error.OK)
+            error = Error.DFSBROKER_IO_ERROR;
+          error = cb.error(error, e.toString());
+        }
+    }
+
+
+    public void Sync(ResponseCallback cb, int fd) {
+        int error = Error.OK;
+        OpenFileData ofd;
+
+        try {
+
+            if ((ofd = mOpenFileMap.Get(fd)) == null) {
+                error = Error.DFSBROKER_BAD_FILE_HANDLE;
+                throw new IOException("Invalid file handle " + fd);
+            }
+
+            if (mVerbose)
+                log.info("Sync request handle=" + fd);
+
+            long startTime = System.currentTimeMillis();
+            ofd.os.hsync();
+            mMetricsHandler.addSync(System.currentTimeMillis() - startTime);
+
+            error = cb.response_ok();
+
+            if (error != Error.OK)
+                log.severe("Error sending SYNC response back (fd=" + fd
                         + ", error=" + error + ")");
             mStatusManager.clearStatus();
         }

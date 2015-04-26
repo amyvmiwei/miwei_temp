@@ -70,7 +70,6 @@ namespace Hypertable {
     uint32_t commit_iteration {};
     uint32_t transfer_count {};
     uint32_t total_added {};
-    bool sync {};
   };
 
   /// @}

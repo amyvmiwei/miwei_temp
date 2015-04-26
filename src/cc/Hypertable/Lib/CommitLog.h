@@ -119,6 +119,12 @@ namespace Hypertable {
      */
     int write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision, Filesystem::Flags flags);
 
+    /** Flushes previous updates written to commit log.
+     *
+     * @return Error::OK on success or error code on failure
+     */
+    int flush();
+
     /** Sync previous updates written to commit log.
      *
      * @return Error::OK on success or error code on failure

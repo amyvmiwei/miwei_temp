@@ -355,8 +355,6 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
   // Install maintenance timer
   m_timer_handler = make_shared<TimerHandler>(m_context->comm, this);
 
-  m_update_pipeline = make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler);
-
   local_recover();
 
   m_timer_handler->start();
@@ -416,8 +414,12 @@ void Apps::RangeServer::shutdown() {
     if (m_group_commit_timer_handler)
       m_group_commit_timer_handler->shutdown();
 
-    // Kill update threads
-    m_update_pipeline->shutdown();
+    // Kill update pipelines
+    m_update_pipeline_user->shutdown();
+    if (m_update_pipeline_system)
+      m_update_pipeline_system->shutdown();
+    if (m_update_pipeline_metadata)
+      m_update_pipeline_metadata->shutdown();
 
     Global::range_locator = 0;
 
@@ -770,10 +772,14 @@ void Apps::RangeServer::local_recover() {
 
       m_context->live_map->merge(&replay_map);
 
-      if (metadata_log_reader)
+      if (root_log_reader || metadata_log_reader) {
         Global::metadata_log = new CommitLog(Global::log_dfs,
                                              Global::log_dir + "/metadata",
                                              m_props, metadata_log_reader.get());
+        m_update_pipeline_metadata =
+          make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                      Global::metadata_log, Filesystem::Flags::SYNC);
+      }
 
       m_log_replay_barrier->set_metadata_complete();
 
@@ -822,10 +828,14 @@ void Apps::RangeServer::local_recover() {
 
       // Create system log and wake up anybody waiting for system replay to
       // complete
-      if (system_log_reader)
+      if (system_log_reader) {
         Global::system_log = new CommitLog(Global::log_dfs,
                                            Global::log_dir + "/system", m_props,
                                            system_log_reader.get());
+        m_update_pipeline_system =
+          make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                      Global::system_log, Filesystem::Flags::FLUSH);
+      }
 
       m_log_replay_barrier->set_system_complete();
 
@@ -879,6 +889,10 @@ void Apps::RangeServer::local_recover() {
       Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
                                        + "/user", m_props, user_log_reader.get(), false);
 
+      m_update_pipeline_user =
+        make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                    Global::user_log, Filesystem::Flags::FLUSH);
+
       m_log_replay_barrier->set_user_complete();
 
       // Finish mid-maintenance
@@ -902,16 +916,28 @@ void Apps::RangeServer::local_recover() {
         Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
             + "/root", m_props, root_log_reader.get());
 
-      if (metadata_log_reader)
+      if (root_log_reader || metadata_log_reader) {
         Global::metadata_log = new CommitLog(Global::log_dfs, Global::log_dir
             + "/metadata", m_props, metadata_log_reader.get());
+        m_update_pipeline_metadata =
+          make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                      Global::metadata_log, Filesystem::Flags::SYNC);
+      }
 
-      if (system_log_reader)
+      if (system_log_reader) {
         Global::system_log = new CommitLog(Global::log_dfs, Global::log_dir
             + "/system", m_props, system_log_reader.get());
+        m_update_pipeline_system =
+          make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                      Global::system_log, Filesystem::Flags::FLUSH);
+      }
 
       Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
           + "/user", m_props, user_log_reader.get(), false);
+
+      m_update_pipeline_user =
+        make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                    Global::user_log, Filesystem::Flags::FLUSH);
 
       Global::rsml_writer = new MetaLog::Writer(Global::log_dfs, rsml_definition,
                                                 Global::log_dir + "/" + rsml_definition->name(),
@@ -1824,18 +1850,28 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
         Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
                                          + "/root", m_props);
       }
-      else if (Global::metadata_log == 0) {
+      if (Global::metadata_log == 0) {
         Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
         ScopedLock lock(Global::mutex);
-        Global::metadata_log = new CommitLog(Global::log_dfs,
-                                             Global::log_dir + "/metadata", m_props);
+        if (Global::metadata_log == 0) {
+          Global::metadata_log = new CommitLog(Global::log_dfs,
+                                               Global::log_dir + "/metadata", m_props);
+          m_update_pipeline_metadata =
+            make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                        Global::metadata_log, Filesystem::Flags::SYNC);
+        }
       }
     }
     else if (table.is_system() && Global::system_log == 0) {
       Global::log_dfs->mkdirs(Global::log_dir + "/system");
       ScopedLock lock(Global::mutex);
-      Global::system_log = new CommitLog(Global::log_dfs,
-                                         Global::log_dir + "/system", m_props);
+      if (Global::system_log == 0) {
+        Global::system_log = new CommitLog(Global::log_dfs,
+                                           Global::log_dir + "/system", m_props);
+        m_update_pipeline_system =
+          make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                      Global::system_log, Filesystem::Flags::FLUSH);
+      }
     }
 
     /**
@@ -2004,7 +2040,6 @@ Apps::RangeServer::commit_log_sync(ResponseCallback *cb,
   int error = Error::OK;
   UpdateRecTable *table_update = new UpdateRecTable();
   StaticBuffer buffer(0);
-  SchemaPtr schema;
   std::vector<UpdateRecTable *> table_update_vector;
 
   HT_DEBUG_OUT <<"received commit_log_sync request for table "<< table.id<< HT_END;
@@ -2020,12 +2055,14 @@ Apps::RangeServer::commit_log_sync(ResponseCallback *cb,
       return;
     }
 
-    schema = table_update->table_info->get_schema();
-
-    // Check for group commit
-    if (schema->get_group_commit_interval() > 0) {
-      group_commit_add(cb->event(), cluster_id, schema, table, 0, buffer, 0);
-      return;
+    // If USER table, check for group commit interval
+    if (table.is_user()) {
+      SchemaPtr schema = table_update->table_info->get_schema();
+      // Check for group commit
+      if (schema->get_group_commit_interval() > 0) {
+        group_commit_add(cb->event(), cluster_id, schema, table, 0, buffer, 0);
+        return;
+      }
     }
 
     // normal sync...
@@ -2035,7 +2072,6 @@ Apps::RangeServer::commit_log_sync(ResponseCallback *cb,
     table_update->total_count = 0;
     table_update->total_buffer_size = 0;;
     table_update->flags = 0;
-    table_update->sync = true;
     request->buffer = buffer;
     request->count = 0;
     request->event = cb->event();
@@ -2043,7 +2079,17 @@ Apps::RangeServer::commit_log_sync(ResponseCallback *cb,
 
     table_update_vector.push_back(table_update);
 
-    batch_update(table_update_vector, cb->event()->deadline());
+    UpdateContext *uc = new UpdateContext(table_update_vector, cb->event()->deadline());
+
+    if (table.is_user())
+      m_update_pipeline_user->add(uc);
+    else if (table.is_metadata())
+      m_update_pipeline_metadata->add(uc);
+    else {
+      HT_ASSERT(table.is_system());
+      m_update_pipeline_system->add(uc);
+    }
+
   }
   catch (Exception &e) {
     HT_ERROR_OUT << "Exception caught: " << e << HT_END;
@@ -2088,7 +2134,6 @@ Apps::RangeServer::update(Response::Callback::Update *cb, uint64_t cluster_id,
   std::vector<UpdateRecTable *> table_update_vector;
 
   table_update->id = table;
-  table_update->commit_interval = 0;
   table_update->total_count = count;
   table_update->total_buffer_size = buffer.size;
   table_update->flags = flags;
@@ -2103,14 +2148,23 @@ Apps::RangeServer::update(Response::Callback::Update *cb, uint64_t cluster_id,
 
   table_update_vector.push_back(table_update);
 
-  batch_update(table_update_vector, table_update->expire_time);
+  UpdateContext *uc = new UpdateContext(table_update_vector, table_update->expire_time);
+
+  if (table.is_user())
+    m_update_pipeline_user->add(uc);
+  else if (table.is_metadata())
+    m_update_pipeline_metadata->add(uc);
+  else {
+    HT_ASSERT(table.is_system());
+    m_update_pipeline_system->add(uc);
+  }
 
 }
 
 void
 Apps::RangeServer::batch_update(std::vector<UpdateRecTable *> &updates, boost::xtime expire_time) {
   UpdateContext *uc = new UpdateContext(updates, expire_time);
-  m_update_pipeline->add(uc);
+  m_update_pipeline_user->add(uc);
 }
 
 
@@ -3143,8 +3197,6 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
   PhantomRangePtr phantom_range;
   TableInfoPtr phantom_table_info;
   vector<MetaLog::EntityPtr> metalog_entities;
-  bool root_log_exists, metadata_log_exists, system_log_exists;
-  root_log_exists = metadata_log_exists = system_log_exists = false;
 
   HT_INFOF("phantom_prepare_ranges op_id=%lld, location=%s, plan_generation=%d,"
            " num_ranges=%d", (Lld)op_id, location.c_str(), plan_generation,
@@ -3259,38 +3311,39 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
 
       RangePtr range = phantom_range->get_range();
       {
-        if (rr.is_root()) {
-          if (!root_log_exists){
+        if (rr.table.is_metadata()) {
+          if (rr.is_root()) {
             if (!Global::root_log) {
               Global::log_dfs->mkdirs(Global::log_dir + "/root");
               ScopedLock lock(Global::mutex);
-              Global::root_log = new CommitLog(Global::log_dfs,
-                                               Global::log_dir + "/root", m_props);
-              root_log_exists = true;
+              if (!Global::root_log)
+                Global::root_log = new CommitLog(Global::log_dfs,
+                                                 Global::log_dir + "/root", m_props);
             }
           }
-          log = Global::root_log;
-        }
-        else if (rr.table.is_metadata()) {
-          if (!metadata_log_exists){
+          if (!Global::metadata_log) {
+            Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
+            ScopedLock lock(Global::mutex);
             if (!Global::metadata_log) {
-              Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
-              ScopedLock lock(Global::mutex);
               Global::metadata_log = new CommitLog(Global::log_dfs,
                                                    Global::log_dir + "/metadata", m_props);
-              metadata_log_exists = true;
+              m_update_pipeline_metadata =
+                make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                            Global::metadata_log, Filesystem::Flags::SYNC);
             }
           }
-          log = Global::metadata_log;
+          log = rr.is_root() ? Global::root_log : Global::metadata_log;
         }
         else if (rr.table.is_system()) {
-          if (!system_log_exists){
+          if (!Global::system_log) {
+            Global::log_dfs->mkdirs(Global::log_dir + "/system");
+            ScopedLock lock(Global::mutex);
             if (!Global::system_log) {
-              Global::log_dfs->mkdirs(Global::log_dir + "/system");
-              ScopedLock lock(Global::mutex);
               Global::system_log = new CommitLog(Global::log_dfs,
                                                  Global::log_dir + "/system", m_props);
-              system_log_exists = true;
+              m_update_pipeline_system =
+                make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
+                                            Global::system_log, Filesystem::Flags::FLUSH);
             }
           }
           log = Global::system_log;

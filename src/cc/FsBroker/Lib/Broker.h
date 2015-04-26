@@ -167,12 +167,20 @@ namespace Lib {
 
 
     /**
-     * Sync out data that has been written.
+     * Flush data that has been written.
      *
      * @param fd An open file.
      * @param cb
      */
     virtual void flush(ResponseCallback *cb, uint32_t fd) = 0;
+
+    /**
+     * Sync out data that has been written.
+     *
+     * @param fd An open file.
+     * @param cb
+     */
+    virtual void sync(ResponseCallback *cb, uint32_t fd) = 0;
 
     /**
      * Check status of FSBroker.

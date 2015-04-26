@@ -518,9 +518,13 @@ void MaprBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {
 
 
 void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void MaprBroker::sync(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataMaprPtr fdata;
 
-  HT_DEBUGF("flush fd=%d", fd);
+  HT_DEBUGF("sync fd=%d", fd);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -530,12 +534,12 @@ void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
     return;
   }
 
-  HT_DEBUGF("flush fd=%d filename=%s", fd, fdata->filename.c_str());
+  HT_DEBUGF("sync fd=%d filename=%s", fd, fdata->filename.c_str());
 
   int64_t start_time = get_ts64();
   if (hdfsFlush(m_filesystem, fdata->file) == -1) {
     report_error(cb);
-    HT_ERRORF("flush failed: fd=%d - %s", fd, strerror(errno));
+    HT_ERRORF("sync failed: fd=%d - %s", fd, strerror(errno));
     return;
   }
   m_metrics_handler->add_sync(get_ts64() - start_time);

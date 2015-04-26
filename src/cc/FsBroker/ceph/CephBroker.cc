@@ -366,9 +366,13 @@ int CephBroker::rmdir_recursive(const char *directory) {
 }
 
 void CephBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void CephBroker::sync(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataCephPtr fdata;
 
-  HT_DEBUGF("flush fd=%d", fd);
+  HT_DEBUGF("sync fd=%d", fd);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -379,7 +383,7 @@ void CephBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
   int r;
   if ((r = ceph_fsync(fdata->fd, true)) != 0) {
-    HT_ERRORF("flush failed: fd=%d  ceph_fd=%d - %s", fd, fdata->fd, strerror(-r));
+    HT_ERRORF("sync failed: fd=%d  ceph_fd=%d - %s", fd, fdata->fd, strerror(-r));
     report_error(cb, -r);
     return;
   }
