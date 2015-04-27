@@ -95,10 +95,8 @@ void IndexTables::add(const Key &key, uint8_t flag,
     UInt8Formatter tmp(key.column_family_code);
     p = tmp.append_to(p);
     *p++  = ',';
-    if (key.column_qualifier_len) {
-      memcpy(p, key.column_qualifier, key.column_qualifier_len);
-      p += key.column_qualifier_len;
-    }
+    memcpy(p, escaped_qualifier, escaped_qualifier_len);
+    p     += escaped_qualifier_len;
     *p++  = '\t';
     memcpy(p, escaped_row, escaped_row_len);
     p += escaped_row_len;
