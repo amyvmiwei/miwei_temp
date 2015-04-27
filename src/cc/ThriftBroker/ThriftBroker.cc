@@ -333,9 +333,13 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   foreach_ht(const ThriftGen::ColumnPredicate &cp, tss.column_predicates) {
     HT_INFOF("%s:%s %s", cp.column_family.c_str(), cp.column_qualifier.c_str(),
              cp.__isset.value ? cp.value.c_str() : "");
-    hss.column_predicates.push_back(Hypertable::ColumnPredicate(
-     cp.column_family.c_str(), cp.column_qualifier.c_str(), cp.operation, 
-     cp.__isset.value ? cp.value.c_str() : 0));
+    hss.column_predicates.push_back(
+      Hypertable::ColumnPredicate(
+        cp.__isset.column_family ? cp.column_family.c_str() : 0,
+        cp.__isset.column_qualifier ? cp.column_qualifier.c_str() : 0,
+        cp.operation,
+        cp.__isset.value ? cp.value.c_str() : 0,
+        cp.__isset.value ? cp.value.size() : 0));
   }
 }
 
@@ -411,9 +415,12 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpecBuilder &s
   // column predicates
   ssb.reserve_column_predicates(tss.column_predicates.size());
   for (auto & cp : tss.column_predicates)
-    ssb.add_column_predicate(cp.column_family, cp.column_qualifier.c_str(),
-                             cp.operation, 
-                             cp.__isset.value ? cp.value.c_str() : 0);
+    ssb.add_column_predicate(
+        cp.__isset.column_family ? cp.column_family.c_str() : 0,
+        cp.__isset.column_qualifier ? cp.column_qualifier.c_str() : 0,
+        cp.operation,
+        cp.__isset.value ? cp.value.c_str() : 0,
+        cp.__isset.value ? cp.value.size() : 0);
 
 }
 
