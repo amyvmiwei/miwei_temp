@@ -348,6 +348,12 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
 
   Global::log_prune_threshold_max = cfg.get_i64("CommitLog.PruneThreshold.Max", threshold_max);
 
+  m_log_flush_method_meta =
+    convert(props->get_str("Hypertable.LogFlushMethod.Meta"));
+
+  m_log_flush_method_user =
+    convert(props->get_str("Hypertable.LogFlushMethod.User"));
+
   m_maintenance_scheduler =
     std::make_shared<MaintenanceScheduler>(Global::maintenance_queue,
                                            m_context->live_map);
@@ -778,7 +784,7 @@ void Apps::RangeServer::local_recover() {
                                              m_props, metadata_log_reader.get());
         m_update_pipeline_metadata =
           make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                      Global::metadata_log, Filesystem::Flags::SYNC);
+                                      Global::metadata_log, m_log_flush_method_meta);
       }
 
       m_log_replay_barrier->set_metadata_complete();
@@ -834,7 +840,7 @@ void Apps::RangeServer::local_recover() {
                                            system_log_reader.get());
         m_update_pipeline_system =
           make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                      Global::system_log, Filesystem::Flags::FLUSH);
+                                      Global::system_log, m_log_flush_method_user);
       }
 
       m_log_replay_barrier->set_system_complete();
@@ -891,7 +897,7 @@ void Apps::RangeServer::local_recover() {
 
       m_update_pipeline_user =
         make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                    Global::user_log, Filesystem::Flags::FLUSH);
+                                    Global::user_log, m_log_flush_method_user);
 
       m_log_replay_barrier->set_user_complete();
 
@@ -921,7 +927,7 @@ void Apps::RangeServer::local_recover() {
             + "/metadata", m_props, metadata_log_reader.get());
         m_update_pipeline_metadata =
           make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                      Global::metadata_log, Filesystem::Flags::SYNC);
+                                      Global::metadata_log, m_log_flush_method_meta);
       }
 
       if (system_log_reader) {
@@ -929,7 +935,7 @@ void Apps::RangeServer::local_recover() {
             + "/system", m_props, system_log_reader.get());
         m_update_pipeline_system =
           make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                      Global::system_log, Filesystem::Flags::FLUSH);
+                                      Global::system_log, m_log_flush_method_user);
       }
 
       Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
@@ -937,7 +943,7 @@ void Apps::RangeServer::local_recover() {
 
       m_update_pipeline_user =
         make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                    Global::user_log, Filesystem::Flags::FLUSH);
+                                    Global::user_log, m_log_flush_method_user);
 
       Global::rsml_writer = new MetaLog::Writer(Global::log_dfs, rsml_definition,
                                                 Global::log_dir + "/" + rsml_definition->name(),
@@ -1858,7 +1864,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
                                                Global::log_dir + "/metadata", m_props);
           m_update_pipeline_metadata =
             make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                        Global::metadata_log, Filesystem::Flags::SYNC);
+                                        Global::metadata_log, m_log_flush_method_meta);
         }
       }
     }
@@ -1870,7 +1876,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
                                            Global::log_dir + "/system", m_props);
         m_update_pipeline_system =
           make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                      Global::system_log, Filesystem::Flags::FLUSH);
+                                      Global::system_log, m_log_flush_method_user);
       }
     }
 
@@ -3329,7 +3335,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
                                                    Global::log_dir + "/metadata", m_props);
               m_update_pipeline_metadata =
                 make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                            Global::metadata_log, Filesystem::Flags::SYNC);
+                                            Global::metadata_log, m_log_flush_method_meta);
             }
           }
           log = rr.is_root() ? Global::root_log : Global::metadata_log;
@@ -3343,7 +3349,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
                                                  Global::log_dir + "/system", m_props);
               m_update_pipeline_system =
                 make_shared<UpdatePipeline>(m_context, m_query_cache, m_timer_handler,
-                                            Global::system_log, Filesystem::Flags::FLUSH);
+                                            Global::system_log, m_log_flush_method_user);
             }
           }
           log = Global::system_log;

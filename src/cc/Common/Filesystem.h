@@ -567,6 +567,9 @@ namespace Hypertable {
     return lhs.name.compare(rhs.name) < 0;
   }
 
+  /// Converts string mnemonic to corresponding Filesystem::Flags value
+  extern Filesystem::Flags convert(std::string str);
+
   /** @} */
 
 } // namespace Hypertable

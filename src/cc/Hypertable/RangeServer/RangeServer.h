@@ -23,8 +23,8 @@
 /// Declarations for RangeServer.
 /// This file contains the type declarations for the RangeServer
 
-#ifndef HYPERTABLE_RANGESERVER_H
-#define HYPERTABLE_RANGESERVER_H
+#ifndef Hypertable_RangeServer_RangeServer_h
+#define Hypertable_RangeServer_RangeServer_h
 
 #include <Hypertable/RangeServer/Context.h>
 #include <Hypertable/RangeServer/Global.h>
@@ -65,6 +65,7 @@
 #include <AsyncComm/Event.h>
 #include <AsyncComm/ResponseCallback.h>
 
+#include <Common/Filesystem.h>
 #include <Common/Logger.h>
 #include <Common/MetricsCollectorGanglia.h>
 #include <Common/MetricsProcess.h>
@@ -259,6 +260,8 @@ namespace Apps {
     UpdatePipelinePtr m_update_pipeline_metadata;
     UpdatePipelinePtr m_update_pipeline_system;
     UpdatePipelinePtr m_update_pipeline_user;
+    Filesystem::Flags m_log_flush_method_meta {};
+    Filesystem::Flags m_log_flush_method_user {};
     Mutex                  m_stats_mutex;
     PropertiesPtr          m_props;
 
@@ -341,4 +344,4 @@ namespace Apps {
 
 }}
 
-#endif // HYPERTABLE_RANGESERVER_H
+#endif // Hypertable_RangeServer_RangeServer_h

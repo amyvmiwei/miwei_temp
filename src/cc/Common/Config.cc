@@ -183,6 +183,12 @@ void DefaultPolicy::init_options() {
         "Number of client worker threads created")
     ("Hypertable.Connection.Retry.Interval", i32()->default_value(10000),
         "Average time, in milliseconds, between connection retry atempts")
+    ("Hypertable.LogFlushMethod.Meta", str()->default_value("SYNC"),
+        "Log flush method for metadata (FLUSH flushes data to replicas, SYNC "
+        "persists data all the way down to physical storage)")
+    ("Hypertable.LogFlushMethod.User", str()->default_value("FLUSH"),
+        "Log flush method for user data (FLUSH flushes data to replicas, SYNC "
+        "persists data all the way down to physical storage)")
     ("Hypertable.Metrics.Ganglia.Disable", boo()->default_value(false),
         "Disable publishing of metrics to Ganglia")
     ("Hypertable.Metrics.Ganglia.Port", i16()->default_value(15860),
