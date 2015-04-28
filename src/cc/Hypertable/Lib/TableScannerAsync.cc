@@ -51,6 +51,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
   ScanSpecBuilder index_spec;
   const ScanSpec *first_pass_spec;
   bool use_qualifier = false;
+  bool row_intervals_applied = false;
   std::vector<CellPredicate> cell_predicates;
 
   HT_ASSERT(timeout_ms);
@@ -58,7 +59,9 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
   // can we optimize this query with an index?
   if (!(flags & Table::SCANNER_FLAG_IGNORE_INDEX)
       && use_index(table, scan_spec, index_spec,
-                   cell_predicates, &use_qualifier)) {
+                   cell_predicates,
+                   &use_qualifier,
+                   &row_intervals_applied)) {
 
     first_pass_spec = &index_spec.get();
 
@@ -66,8 +69,8 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
 
     // create a ResultCallback object which will load the keys from
     // the index, then sort and verify them
-    cb = new IndexScannerCallback(table, primary_spec.get(), cell_predicates,
-                                  cb, timeout_ms, use_qualifier);
+    cb = new IndexScannerCallback(this, table, primary_spec.get(), cell_predicates,
+                                  cb, timeout_ms, use_qualifier, row_intervals_applied);
 
     // get the index table
     if (use_qualifier)
@@ -94,7 +97,8 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
 bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec, 
                                   ScanSpecBuilder &index_spec,
                                   std::vector<CellPredicate> &cell_predicates,
-                                  bool *use_qualifier)
+                                  bool *use_qualifier,
+                                  bool *row_intervals_applied)
 {
   if (!table->has_index_table() && !table->has_qualifier_index_table())
     return false;
@@ -118,6 +122,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   bool value_match = false;
   size_t qualifier_index_count = 0;
   size_t value_index_count = 0;
+  size_t row_intervals_applied_count = 0;
 
   // for value prefix queries we require normal indicies for ALL scanned columns
   if (!primary_spec.column_predicates.empty()) {
@@ -146,61 +151,131 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
           return false;
       }
 
+      UInt8Formatter cfid(cf_spec->get_id());
+
       if (cp.operation & ColumnPredicate::REGEX_MATCH) {
         if (!Regex::extract_prefix((const char *)cp.value, (size_t)cp.value_len,
                                    &prefix, &prefix_len, regex_prefix_buf))
           return false;
-        if (index_row_buf.size < prefix_len+5)
-          index_row_buf.grow(prefix_len+5);
-        UInt8Formatter tmp(cf_spec->get_id());
-        index_row_buf.ptr = (uint8_t*)tmp.append_to((char*)index_row_buf.base);
+        const char *escaped_prefix;
+        size_t escaped_prefix_len;
+        lde.escape(prefix, prefix_len,
+                   &escaped_prefix, &escaped_prefix_len);
+        if (index_row_buf.size < escaped_prefix_len+5)
+          index_row_buf.grow(escaped_prefix_len+5);
+        index_row_buf.ptr = (uint8_t*)cfid.append_to((char*)index_row_buf.base);
         *index_row_buf.ptr++  = ',';
-        index_row_buf.add_unchecked(prefix, prefix_len);
+        index_row_buf.add_unchecked(escaped_prefix, escaped_prefix_len);
         *index_row_buf.ptr = 0;
         HT_ASSERT(index_row_buf.fill() < index_row_buf.size);
         add_index_row(index_spec, (const char *)index_row_buf.base);
         cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
-      else if ((cp.operation & ColumnPredicate::EXACT_MATCH) ||
-               (cp.operation & ColumnPredicate::PREFIX_MATCH)) {
+      else if (cp.operation & (ColumnPredicate::EXACT_MATCH|
+                               ColumnPredicate::PREFIX_MATCH)) {
 
         // every \t in the original value gets escaped
         const char *value;
         size_t value_len;
         lde.escape(cp.value, cp.value_len, &value, &value_len);
 
+        const char *escaped_qualifier;
+        size_t escaped_qualifier_len = 0;
+        if ((cp.operation & ColumnPredicate::EXACT_MATCH) &&
+            (cp.operation & (ColumnPredicate::QUALIFIER_EXACT_MATCH|
+                             ColumnPredicate::QUALIFIER_PREFIX_MATCH))) {
+
+          lde.escape(cp.column_qualifier, cp.column_qualifier_len,
+                     &escaped_qualifier, &escaped_qualifier_len);
+        }
+
         // exact match:  create row interval ["%d,value\t", ..)
+        //          or   create row interval ["%d,value\tqualifier", ..)
+        //          or   create row interval ["%d,value\tqualifier\t", ..)
+        //          or   create row interval ["%d,value\tqualifier\trow", ..)
         // prefix match: create row interval ["%d,value", ..)
-        if (index_row_buf.size < value_len+6)
-          index_row_buf.grow(value_len+6);
+        if (index_row_buf.size < value_len+escaped_qualifier_len+6)
+          index_row_buf.grow(value_len+escaped_qualifier_len+6);
         // %d,
-        UInt8Formatter tmp(cf_spec->get_id());
-        index_row_buf.ptr = (uint8_t*)tmp.append_to((char*)index_row_buf.base);
+        index_row_buf.ptr = (uint8_t*)cfid.append_to((char*)index_row_buf.base);
         *index_row_buf.ptr++  = ',';
         // value
+        bool has_row_interval = false;
         index_row_buf.add_unchecked(value, value_len);
-        if (cp.operation & ColumnPredicate::EXACT_MATCH)
-          *index_row_buf.ptr = '\t';
-        *index_row_buf.ptr = 0;
-        HT_ASSERT(index_row_buf.fill() < index_row_buf.size);
-        add_index_row(index_spec, (const char *)index_row_buf.base);
+        if (cp.operation & ColumnPredicate::EXACT_MATCH) {
+          *index_row_buf.ptr++ = '\t';
+          // qualifier
+          if (cp.operation & (ColumnPredicate::QUALIFIER_EXACT_MATCH|
+                              ColumnPredicate::QUALIFIER_PREFIX_MATCH)) {
+
+            index_row_buf.add_unchecked(escaped_qualifier, escaped_qualifier_len);
+            if (cp.operation & ColumnPredicate::QUALIFIER_EXACT_MATCH) {
+              *index_row_buf.ptr++ = '\t';
+              *index_row_buf.ptr = 0;
+              // primary row intervals
+              if (primary_spec.row_intervals.size()) {
+                has_row_interval = true;
+                ++row_intervals_applied_count;
+                index_row_prefix = (const char *)index_row_buf.base;
+                foreach_ht (const RowInterval &primary_ri, primary_spec.row_intervals) {
+                  index_spec.add_row_interval(
+                    index_row_prefix + primary_ri.start, primary_ri.start_inclusive,
+                    index_row_prefix + primary_ri.end, primary_ri.end_inclusive);
+                }
+              }
+              // primary cell intervals
+              else if (primary_spec.cell_intervals.size()) {
+                has_row_interval = true;
+                index_row_prefix = (const char *)index_row_buf.base;
+                foreach_ht (const CellInterval &primary_ci, primary_spec.cell_intervals) {
+                  index_spec.add_row_interval(
+                    index_row_prefix + primary_ci.start_row, true,
+                    index_row_prefix + primary_ci.end_row, true);
+                }
+              }
+            }
+            else
+              *index_row_buf.ptr = 0;
+          }
+          else if (cp.operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
+            if (Regex::extract_prefix(cp.column_qualifier, cp.column_qualifier_len,
+                                  &prefix, &prefix_len, regex_prefix_buf)) {
+              const char *escaped_prefix;
+              size_t escaped_prefix_len;
+              lde.escape(prefix, prefix_len,
+                          &escaped_prefix, &escaped_prefix_len);
+              index_row_buf.add(escaped_prefix, escaped_prefix_len);
+            }
+            *index_row_buf.ptr = 0;
+          }
+          else
+            *index_row_buf.ptr = 0;
+        }
+        if (!has_row_interval) {
+          *index_row_buf.ptr = 0;
+          HT_ASSERT(index_row_buf.fill() < index_row_buf.size);
+          add_index_row(index_spec, (const char *)index_row_buf.base);
+        }
         cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
       else if (cp.operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
-        if (Regex::extract_prefix(cp.column_qualifier, cp.column_qualifier_len,
-                                  &prefix, &prefix_len, regex_prefix_buf)) {
-          index_row_prefix.clear();
-          index_row_prefix.reserve(5+prefix_len);
-          index_row_prefix = format("%d,", (int)cf_spec->get_id());
-          index_row_prefix.append(prefix, prefix_len);
-          add_index_row(index_spec, index_row_prefix.c_str());
-          cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
-        }
-        else
+        if (!Regex::extract_prefix(cp.column_qualifier, cp.column_qualifier_len,
+                                  &prefix, &prefix_len, regex_prefix_buf))
           return false;
+        const char *escaped_prefix;
+        size_t escaped_prefix_len;
+        lde.escape(prefix, prefix_len,
+                    &escaped_prefix, &escaped_prefix_len);
+        index_row_prefix.clear();
+        index_row_prefix.reserve(5+escaped_prefix_len);
+        index_row_prefix = cfid.c_str();
+        index_row_prefix.append(",", 1);
+        index_row_prefix.append(escaped_prefix, escaped_prefix_len);
+        add_index_row(index_spec, index_row_prefix.c_str());
+        cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
-      else if ((cp.operation & ColumnPredicate::QUALIFIER_EXACT_MATCH) ||
-               (cp.operation & ColumnPredicate::QUALIFIER_PREFIX_MATCH)) {
+      else if (cp.operation & (ColumnPredicate::QUALIFIER_EXACT_MATCH|
+                               ColumnPredicate::QUALIFIER_PREFIX_MATCH)) {
 
         const char *escaped_qualifier;
         size_t escaped_qualifier_len;
@@ -208,21 +283,46 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
                    &escaped_qualifier, &escaped_qualifier_len);
         index_row_prefix.clear();
         index_row_prefix.reserve(6+escaped_qualifier_len);
-        index_row_prefix = format("%d,", (int)cf_spec->get_id());
+        index_row_prefix = cfid.c_str();
+        index_row_prefix.append(",", 1);
         index_row_prefix.append(escaped_qualifier, escaped_qualifier_len);
-        if (cp.operation & ColumnPredicate::QUALIFIER_EXACT_MATCH)
+        if (cp.operation & ColumnPredicate::QUALIFIER_EXACT_MATCH) {
           index_row_prefix.append("\t", 1);
-        add_index_row(index_spec, index_row_prefix.c_str());
+          // primary row intervals
+          if (primary_spec.row_intervals.size()) {
+            ++row_intervals_applied_count;
+            foreach_ht (const RowInterval &primary_ri, primary_spec.row_intervals) {
+              index_spec.add_row_interval(
+                index_row_prefix + primary_ri.start, primary_ri.start_inclusive,
+                index_row_prefix + primary_ri.end, primary_ri.end_inclusive);
+            }
+          }
+          // primary cell intervals
+          else if (primary_spec.cell_intervals.size()) {
+            foreach_ht (const CellInterval &primary_ci, primary_spec.cell_intervals) {
+              index_spec.add_row_interval(
+                index_row_prefix + primary_ci.start_row, true,
+                index_row_prefix + primary_ci.end_row, true);
+            }
+          }
+          else
+            add_index_row(index_spec, index_row_prefix.c_str());
+        }
+        else
+          add_index_row(index_spec, index_row_prefix.c_str());
         cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
       else
         return false;
     }
 
+    if (row_intervals_applied)
+      *row_intervals_applied = row_intervals_applied_count == primary_spec.column_predicates.size();
+
     if (qualifier_match_only) {
       if (qualifier_index_count < primary_spec.column_predicates.size())
         return false;
-      *use_qualifier = qualifier_match_only;      
+      *use_qualifier = qualifier_match_only;
     }
     else if (value_index_count < primary_spec.column_predicates.size())
       return false;

@@ -59,7 +59,8 @@ namespace Lib {
         value(v), value_len(vlen), operation(op) {
       if (!vlen && value)
         value_len = strlen(value);
-      column_qualifier_len = strlen(column_qualifier);
+      column_qualifier_len =
+        column_qualifier ? strlen(column_qualifier) : 0;
     }
 
     ColumnPredicate(const uint8_t **bufp, size_t *remainp) {

@@ -151,7 +151,7 @@ namespace Hypertable {
     bool use_index(TablePtr table, const ScanSpec &primary_spec, 
                    ScanSpecBuilder &index_spec,
                    std::vector<CellPredicate> &cell_predicates,
-                   bool *use_qualifier);
+                   bool *use_qualifier, bool *row_intervals_applied);
     void transform_primary_scan_spec(ScanSpecBuilder &primary_spec);
     void add_index_row(ScanSpecBuilder &ssb, const char *row);
 

@@ -24,7 +24,7 @@
 
 #include <Hypertable/Lib/CellInterval.h>
 #include <Hypertable/Lib/ColumnPredicate.h>
-#include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/RowInterval.h>
 #include <Hypertable/Lib/TableParts.h>
 
@@ -196,7 +196,7 @@ namespace Lib {
       RowInterval ri;
       ri.start = arena.dup(start);
       ri.start_inclusive = start_inclusive;
-      ri.end = arena.dup(end);
+      ri.end = !end.empty() ? arena.dup(end) : Key::END_ROW_MARKER;
       ri.end_inclusive = end_inclusive;
       row_intervals.push_back(ri);
     }
@@ -223,7 +223,7 @@ namespace Lib {
       ci.start_row = arena.dup(start_row);
       ci.start_column = arena.dup(start_column);
       ci.start_inclusive = start_inclusive;
-      ci.end_row = arena.dup(end_row);
+      ci.end_row = !end_row.empty() ? arena.dup(end_row) : Key::END_ROW_MARKER;
       ci.end_column = arena.dup(end_column);
       ci.end_inclusive = end_inclusive;
       cell_intervals.push_back(ci);

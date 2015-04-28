@@ -29,7 +29,7 @@
 
 #include <Hypertable/Lib/ScanSpec.h>
 
-#include<re2/re2.h>
+#include <re2/re2.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -156,8 +156,6 @@ namespace Hypertable {
             return false;
         }
       }
-      else if (*qualifier)
-        return false;
 
       // Value match
       if (cp->operation & ColumnPredicate::VALUE_MATCH) {
