@@ -20,13 +20,13 @@
  */
 
 /// @file
-/// Definitions for Append request parameters.
-/// This file contains definitions for Append, a class for encoding and
-/// decoding paramters to the <i>append</i> file system broker function.
+/// Definitions for Sync request parameters.
+/// This file contains definitions for Sync, a class for encoding and
+/// decoding paramters to the <i>sync</i> file system broker function.
 
 #include <Common/Compat.h>
 
-#include "Append.h"
+#include "Sync.h"
 
 #include <Common/Logger.h>
 #include <Common/Serialization.h>
@@ -34,27 +34,19 @@
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib::Request::Parameters;
 
-uint8_t Append::encoding_version() const {
+uint8_t Sync::encoding_version() const {
   return 1;
 }
 
-size_t Append::encoded_length_internal() const {
-  return 9;
+size_t Sync::encoded_length_internal() const {
+  return 4;
 }
 
-void Append::encode_internal(uint8_t **bufp) const {
+void Sync::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_fd);
-  Serialization::encode_i32(bufp, m_size);
-  Serialization::encode_i8(bufp, m_flags);
 }
 
-void Append::decode_internal(uint8_t version, const uint8_t **bufp,
-			     size_t *remainp) {
-  (void)version;
+void Sync::decode_internal(uint8_t version, const uint8_t **bufp,
+                           size_t *remainp) {
   m_fd = (int32_t)Serialization::decode_i32(bufp, remainp);
-  m_size = Serialization::decode_i32(bufp, remainp);
-  m_flags = Serialization::decode_i8(bufp, remainp);
 }
-
-
-

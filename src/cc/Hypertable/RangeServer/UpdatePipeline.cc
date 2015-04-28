@@ -48,9 +48,10 @@ using namespace Hypertable::RangeServer;
 using namespace std;
 
 UpdatePipeline::UpdatePipeline(ContextPtr &context, QueryCachePtr &query_cache,
-                               TimerHandlerPtr &timer_handler) :
+                               TimerHandlerPtr &timer_handler, CommitLog *log,
+                               Filesystem::Flags flags) :
   m_context(context), m_query_cache(query_cache),
-  m_timer_handler(timer_handler) {
+  m_timer_handler(timer_handler), m_log(log), m_flags(flags) {
   m_update_coalesce_limit = m_context->props->get_i64("Hypertable.RangeServer.UpdateCoalesceLimit");
   m_maintenance_pause_interval = m_context->props->get_i32("Hypertable.RangeServer.Testing.MaintenanceNeeded.PauseInterval");
   m_update_delay = m_context->props->get_i32("Hypertable.RangeServer.UpdateDelay", 0);
@@ -132,7 +133,7 @@ void UpdatePipeline::qualify_and_transform() {
     if (uc->auto_revision < m_last_revision)
       uc->auto_revision = m_last_revision;
 
-    foreach_ht (UpdateRecTable *table_update, uc->updates) {
+    for (UpdateRecTable *table_update : uc->updates) {
 
       HT_DEBUG_OUT <<"Update: "<< table_update->id << HT_END;
 
@@ -174,7 +175,7 @@ void UpdatePipeline::qualify_and_transform() {
       table_update->id.encode(&table_update->go_buf.ptr);
       table_update->go_buf.set_mark();
 
-      foreach_ht (UpdateRequest *request, table_update->requests) {
+      for (UpdateRequest *request : table_update->requests) {
         uc->total_updates++;
 
         mod_end = request->buffer.base + request->buffer.size;
@@ -471,7 +472,7 @@ void UpdatePipeline::qualify_and_transform() {
              * being aborted, so reset all of the UpdateRecRangeLists,
              * reset the go_buf and the root_buf
              */
-            for (std::unordered_map<Range *, UpdateRecRangeList *>::iterator iter = table_update->range_map.begin();
+            for (auto iter = table_update->range_map.begin();
                  iter != table_update->range_map.end(); ++iter)
               (*iter).second->reset_updates(request);
             table_update->go_buf.ptr = table_update->go_buf.base + go_buf_reset_offset;
@@ -518,7 +519,7 @@ void UpdatePipeline::commit() {
   uint64_t coalesce_amount = 0;
   int error = Error::OK;
   uint32_t committed_transfer_data;
-  bool user_log_needs_syncing;
+  bool log_needs_syncing {};
 
   while (true) {
 
@@ -535,27 +536,27 @@ void UpdatePipeline::commit() {
     }
 
     committed_transfer_data = 0;
-    user_log_needs_syncing = false;
+    log_needs_syncing = false;
 
-    /**
-     * Commit ROOT mutations
-     */
+    // Commit ROOT mutations
     if (uc->root_buf.ptr > uc->root_buf.mark) {
-      if ((error = Global::root_log->write(ClusterId::get(), uc->root_buf, uc->last_revision)) != Error::OK) {
+      if ((error = Global::root_log->write(ClusterId::get(), uc->root_buf, uc->last_revision, Filesystem::Flags::SYNC)) != Error::OK) {
         HT_FATALF("Problem writing %d bytes to ROOT commit log - %s",
                   (int)uc->root_buf.fill(), Error::get_text(error));
       }
     }
 
-    foreach_ht (UpdateRecTable *table_update, uc->updates) {
+    for (UpdateRecTable *table_update : uc->updates) {
 
       coalesce_amount += table_update->total_buffer_size;
 
       // Iterate through all of the ranges, committing any transferring updates
-      for (std::unordered_map<Range *, UpdateRecRangeList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
+      for (auto iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         if ((*iter).second->transfer_buf.ptr > (*iter).second->transfer_buf.mark) {
           committed_transfer_data += (*iter).second->transfer_buf.ptr - (*iter).second->transfer_buf.mark;
-          if ((error = (*iter).second->transfer_log->write(ClusterId::get(), (*iter).second->transfer_buf, (*iter).second->latest_transfer_revision)) != Error::OK) {
+          if ((error = (*iter).second->transfer_log->write(ClusterId::get(), (*iter).second->transfer_buf,
+                                                           (*iter).second->latest_transfer_revision,
+                                                           m_flags)) != Error::OK) {
             table_update->error = error;
             table_update->error_msg = format("Problem writing %d bytes to transfer log",
                                              (int)(*iter).second->transfer_buf.fill());
@@ -568,45 +569,27 @@ void UpdatePipeline::commit() {
       if (table_update->error != Error::OK)
         continue;
 
-      /**
-       * Commit valid (go) mutations
-       */
+      if ((table_update->flags & Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
+        log_needs_syncing = true;
+
+      // Commit valid (go) mutations
       if (table_update->go_buf.ptr > table_update->go_buf.mark) {
-        CommitLog *log = 0;
 
-        bool sync = false;
-        if (table_update->id.is_user()) {
-          log = Global::user_log;
-          if ((table_update->flags & Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
-            user_log_needs_syncing = true;
-        }
-        else if (table_update->id.is_metadata()) {
-          sync = true;
-          log = Global::metadata_log;
-        }
-        else {
-          HT_ASSERT(table_update->id.is_system());
-          sync = true;
-          log = Global::system_log;
-        }
-
-        if ((error = log->write(ClusterId::get(), table_update->go_buf, uc->last_revision, sync)) != Error::OK) {
+        if ((error = m_log->write(ClusterId::get(), table_update->go_buf, uc->last_revision, Filesystem::Flags::NONE)) != Error::OK) {
           table_update->error_msg = format("Problem writing %d bytes to commit log (%s) - %s",
                                            (int)table_update->go_buf.fill(),
-                                           log->get_log_dir().c_str(),
+                                           m_log->get_log_dir().c_str(),
                                            Error::get_text(error));
           HT_ERRORF("%s", table_update->error_msg.c_str());
           table_update->error = error;
           continue;
         }
       }
-      else if (table_update->sync)
-        user_log_needs_syncing = true;
 
     }
 
     bool do_sync = false;
-    if (user_log_needs_syncing) {
+    if (log_needs_syncing) {
       if (m_commit_queue_count > 0 && coalesce_amount < m_update_coalesce_limit) {
         coalesce_queue.push_back(uc);
         continue;
@@ -616,17 +599,31 @@ void UpdatePipeline::commit() {
     else if (!coalesce_queue.empty())
       do_sync = true;
 
-    // Now sync the USER commit log if needed
+    // Now sync the commit log if needed
     if (do_sync) {
-      size_t retry_count = 0;
+      size_t retry_count {};
       uc->total_syncs++;
-      while ((error = Global::user_log->sync()) != Error::OK) {
-        HT_ERRORF("Problem sync'ing user log fragment (%s) - %s",
-                  Global::user_log->get_current_fragment_file().c_str(),
-                  Error::get_text(error));
-        if (++retry_count == 6)
+
+      while (true) {
+
+        if (m_flags == Filesystem::Flags::FLUSH)
+          error = m_log->flush();
+        else if (m_flags == Filesystem::Flags::SYNC)
+          error = m_log->sync();
+        else
+          error = Error::OK;
+
+        if (error != Error::OK) {
+          HT_ERRORF("Problem %sing log fragment (%s) - %s",
+                    (m_flags == Filesystem::Flags::FLUSH ? "flush" : "sync"),
+                    m_log->get_current_fragment_file().c_str(),
+                    Error::get_text(error));
+          if (++retry_count == 6)
+            break;
+          poll(0, 0, 10000);
+        }
+        else
           break;
-        poll(0, 0, 10000);
       }
     }
 
@@ -666,14 +663,14 @@ void UpdatePipeline::add_and_respond() {
     /**
      *  Insert updates into Ranges
      */
-    foreach_ht (UpdateRecTable *table_update, uc->updates) {
+    for (UpdateRecTable *table_update : uc->updates) {
 
       // Iterate through all of the ranges, inserting updates
-      for (std::unordered_map<Range *, UpdateRecRangeList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
+      for (auto iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         ByteString value;
         Key key_comps;
 
-        foreach_ht (UpdateRecRange &update, (*iter).second->updates) {
+        for (UpdateRecRange &update : (*iter).second->updates) {
           Range *rangep = (*iter).first;
           Locker<Range> lock(*rangep);
           uint8_t *ptr = update.bufp->base + update.offset;
@@ -731,11 +728,9 @@ void UpdatePipeline::add_and_respond() {
       }
     }
 
-    /**
-     * Decrement usage counters for all referenced ranges
-     */
-    foreach_ht (UpdateRecTable *table_update, uc->updates) {
-      for (std::unordered_map<Range *, UpdateRecRangeList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
+    // Decrement usage counters for all referenced ranges
+    for (UpdateRecTable *table_update : uc->updates) {
+      for (auto iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         if ((*iter).second->range_blocked)
           (*iter).first->decrement_update_counter();
       }
@@ -745,13 +740,13 @@ void UpdatePipeline::add_and_respond() {
      * wait for these ranges to complete maintenance
      */
     bool maintenance_needed = false;
-    foreach_ht (UpdateRecTable *table_update, uc->updates) {
+    for (UpdateRecTable *table_update : uc->updates) {
 
-      /**
+      /*
        * If any of the newly updated ranges needs maintenance,
        * schedule immediately
        */
-      for (std::unordered_map<Range *, UpdateRecRangeList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
+      for (auto iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         if ((*iter).first->need_maintenance() &&
             !Global::maintenance_queue->contains((*iter).first)) {
           maintenance_needed = true;
@@ -762,7 +757,7 @@ void UpdatePipeline::add_and_respond() {
         }
       }
 
-      foreach_ht (UpdateRequest *request, table_update->requests) {
+      for (UpdateRequest *request : table_update->requests) {
 	Response::Callback::Update cb(m_context->comm, request->event);
 
         if (table_update->error != Error::OK) {

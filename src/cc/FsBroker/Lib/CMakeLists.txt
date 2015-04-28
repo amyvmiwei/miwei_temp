@@ -42,6 +42,7 @@ Request/Handler/Rename.cc
 Request/Handler/Rmdir.cc
 Request/Handler/Seek.cc
 Request/Handler/Status.cc
+Request/Handler/Sync.cc
 Request/Parameters/Append.cc
 Request/Parameters/Close.cc
 Request/Parameters/Create.cc
@@ -59,6 +60,7 @@ Request/Parameters/Rename.cc
 Request/Parameters/Rmdir.cc
 Request/Parameters/Seek.cc
 Request/Parameters/Shutdown.cc
+Request/Parameters/Sync.cc
 Response/Callback/Open.cc
 Response/Callback/Read.cc
 Response/Callback/Append.cc

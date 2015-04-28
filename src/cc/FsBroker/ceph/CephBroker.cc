@@ -188,14 +188,15 @@ void CephBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount
 }
 
 void CephBroker::append(Response::Callback::Append *cb, uint32_t fd,
-			uint32_t amount, const void *data, bool sync)
+			uint32_t amount, const void *data, Filesystem::Flags flags)
 {
   OpenFileDataCephPtr fdata;
   ssize_t nwritten;
   uint64_t offset;
 
   HT_DEBUG_OUT << "append fd="<< fd <<" amount="<< amount <<" data='"
-	       << format_bytes(20, data, amount) <<" sync="<< sync << HT_END;
+	       << format_bytes(20, data, amount) << " flags="
+               << static_cast<uint8_t>(flags) << HT_END;
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -219,7 +220,8 @@ void CephBroker::append(Response::Callback::Append *cb, uint32_t fd,
   }
 
   int r;
-  if (sync && ((r = ceph_fsync(fdata->fd, true)) != 0)) {
+  if ((flags == Filesystem::Flags::FLUSH || flags == Filesystem::Flags::SYNC) &&
+      ((r = ceph_fsync(fdata->fd, true)) != 0)) {
     HT_ERRORF("flush failed: fd=%d ceph_fd=%d - %s", fd, fdata->fd, strerror(errno));
     report_error(cb, r);
     return;
@@ -366,9 +368,13 @@ int CephBroker::rmdir_recursive(const char *directory) {
 }
 
 void CephBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void CephBroker::sync(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataCephPtr fdata;
 
-  HT_DEBUGF("flush fd=%d", fd);
+  HT_DEBUGF("sync fd=%d", fd);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -379,7 +385,7 @@ void CephBroker::flush(ResponseCallback *cb, uint32_t fd) {
 
   int r;
   if ((r = ceph_fsync(fdata->fd, true)) != 0) {
-    HT_ERRORF("flush failed: fd=%d  ceph_fd=%d - %s", fd, fdata->fd, strerror(-r));
+    HT_ERRORF("sync failed: fd=%d  ceph_fd=%d - %s", fd, fdata->fd, strerror(-r));
     report_error(cb, -r);
     return;
   }

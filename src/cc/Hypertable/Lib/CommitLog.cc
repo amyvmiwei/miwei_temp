@@ -142,17 +142,32 @@ int64_t CommitLog::get_timestamp() {
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
-int
-CommitLog::sync() {
+int CommitLog::flush() {
   ScopedLock lock(m_mutex);
-  int error = Error::OK;
+  int error {};
 
-  // Sync commit log update (protected by lock)
   try {
     if (m_fd == -1)
       return Error::CLOSED;
     m_fs->flush(m_fd);
-    HT_DEBUG_OUT << "synced commit log explicitly" << HT_END;
+  }
+  catch (Exception &e) {
+    HT_ERRORF("Problem flushing commit log: %s: %s",
+              m_cur_fragment_fname.c_str(), e.what());
+    error = e.code();
+  }
+
+  return error;
+}
+
+int CommitLog::sync() {
+  ScopedLock lock(m_mutex);
+  int error {};
+
+  try {
+    if (m_fd == -1)
+      return Error::CLOSED;
+    m_fs->sync(m_fd);
   }
   catch (Exception &e) {
     HT_ERRORF("Problem syncing commit log: %s: %s",
@@ -163,9 +178,10 @@ CommitLog::sync() {
   return error;
 }
 
+
 int
 CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,
-                 bool sync) {
+                 Filesystem::Flags flags) {
   int error;
   BlockHeaderCommitLog header(MAGIC_DATA, revision, cluster_id);
 
@@ -178,7 +194,7 @@ CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,
   /**
    * Compress and write the commit block
    */
-  if ((error = compress_and_write(buffer, &header, revision, sync)) != Error::OK)
+  if ((error = compress_and_write(buffer, &header, revision, flags)) != Error::OK)
     return error;
 
   /**
@@ -240,7 +256,7 @@ int CommitLog::link_log(uint64_t cluster_id, CommitLogBase *log_base) {
     if (m_fd == -1)
       return Error::CLOSED;
 
-    m_fs->append(m_fd, send_buf, false);
+    m_fs->append(m_fd, send_buf);
     m_cur_fragment_length += amount;
 
     if ((error = roll(&file_info)) != Error::OK)
@@ -460,8 +476,8 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
 
 
 int
-CommitLog::compress_and_write(DynamicBuffer &input,
-    BlockHeader *header, int64_t revision, bool sync) {
+CommitLog::compress_and_write(DynamicBuffer &input, BlockHeader *header,
+                              int64_t revision, Filesystem::Flags flags) {
   ScopedLock lock(m_mutex);
   int error = Error::OK;
   DynamicBuffer zblock;
@@ -477,7 +493,7 @@ CommitLog::compress_and_write(DynamicBuffer &input,
     size_t amount = zblock.fill();
     StaticBuffer send_buf(zblock);
 
-    m_fs->append(m_fd, send_buf, sync);
+    m_fs->append(m_fd, send_buf, flags);
     assert(revision != 0);
     if (revision > m_latest_revision)
       m_latest_revision = revision;

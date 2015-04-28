@@ -67,6 +67,7 @@ namespace Handler {
       FUNCTION_EXISTS,   ///< Exists
       FUNCTION_RENAME,   ///< Rename
       FUNCTION_DEBUG,    ///< Debug
+      FUNCTION_SYNC,     ///< Sync
       FUNCTION_MAX       ///< Maximum code marker
     };
 

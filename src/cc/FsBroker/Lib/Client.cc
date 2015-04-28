@@ -46,6 +46,7 @@
 #include "Request/Parameters/Rmdir.h"
 #include "Request/Parameters/Seek.h"
 #include "Request/Parameters/Shutdown.h"
+#include "Request/Parameters/Sync.h"
 #include "Response/Parameters/Append.h"
 #include "Response/Parameters/Exists.h"
 #include "Response/Parameters/Length.h"
@@ -399,13 +400,13 @@ void Client::decode_response_read(EventPtr &event, const void **buffer,
 }
 
 void
-Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
+Client::append(int32_t fd, StaticBuffer &buffer, Flags flags,
                DispatchHandler *handler) {
   CommHeader header(Request::Handler::Factory::FUNCTION_APPEND);
   header.gid = fd;
   header.alignment = HT_DIRECT_IO_ALIGNMENT;
   CommBuf *cbuf = new CommBuf(header, HT_DIRECT_IO_ALIGNMENT, buffer);
-  Request::Parameters::Append params(fd, buffer.size, (bool)(flags & O_FLUSH));
+  Request::Parameters::Append params(fd, buffer.size, static_cast<uint8_t>(flags));
   uint8_t *base = (uint8_t *)cbuf->get_data_ptr();
   params.encode(cbuf->get_data_ptr_address());
   size_t padding = HT_DIRECT_IO_ALIGNMENT -
@@ -425,7 +426,7 @@ Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags,
 }
 
 
-size_t Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags) {
+size_t Client::append(int32_t fd, StaticBuffer &buffer, Flags flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
 
@@ -433,7 +434,7 @@ size_t Client::append(int32_t fd, StaticBuffer &buffer, uint32_t flags) {
   header.gid = fd;
   header.alignment = HT_DIRECT_IO_ALIGNMENT;
   CommBuf *cbuf = new CommBuf(header, HT_DIRECT_IO_ALIGNMENT, buffer);
-  Request::Parameters::Append params(fd, buffer.size, (bool)(flags & O_FLUSH));
+  Request::Parameters::Append params(fd, buffer.size, static_cast<uint8_t>(flags));
   uint8_t *base = (uint8_t *)cbuf->get_data_ptr();
   params.encode(cbuf->get_data_ptr_address());
   size_t padding = HT_DIRECT_IO_ALIGNMENT -
@@ -785,6 +786,29 @@ Client::flush(int32_t fd) {
   }
   catch (Exception &e) {
     HT_THROW2F(e.code(), e, "Error flushing FS fd %d", (int)fd);
+  }
+}
+
+
+void
+Client::sync(int32_t fd) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommHeader header(Request::Handler::Factory::FUNCTION_SYNC);
+  header.gid = fd;
+  Request::Parameters::Sync params(fd);
+  CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
+  params.encode(cbuf->get_data_ptr_address());
+
+  try {
+    send_message(cbuf, &sync_handler);
+
+    if (!sync_handler.wait_for_reply(event))
+      HT_THROW(Protocol::response_code(event.get()),
+               Protocol::string_format_message(event).c_str());
+  }
+  catch (Exception &e) {
+    HT_THROW2F(e.code(), e, "Error syncing FS fd %d", (int)fd);
   }
 }
 

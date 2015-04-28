@@ -174,7 +174,7 @@ void QfsBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount)
   }
 }
 
-void QfsBroker::append(Response::Callback::Append *cb, uint32_t fd, uint32_t amount, const void *data, bool flush) {
+void QfsBroker::append(Response::Callback::Append *cb, uint32_t fd, uint32_t amount, const void *data, Filesystem::Flags flags) {
 
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
@@ -188,24 +188,24 @@ void QfsBroker::append(Response::Callback::Append *cb, uint32_t fd, uint32_t amo
   if(written < 0) {
     m_status_manager.set_write_status(Status::Code::CRITICAL,
                                       KFS::ErrorCodeToStr(written));
-    HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,%s) failure (%d) - %s", (int)fd,
-              (int)fdata->fd, (Lld)amount, flush ? "flush" : "",
+    HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,flags=%d) failure (%d) - %s", (int)fd,
+              (int)fdata->fd, (Lld)amount, static_cast<int>(flags),
               (int)-written, KFS::ErrorCodeToStr(written).c_str());
     report_error(cb, written);
   }
   else {
-    if(flush) {
+    if (flags == Filesystem::Flags::FLUSH || flags == Filesystem::Flags::SYNC) {
       int64_t start_time = get_ts64();
       int error = m_client->Sync(fdata->fd);
-      m_metrics_handler->add_sync(get_ts64() - start_time);
       if (error) {
         m_status_manager.set_write_status(Status::Code::CRITICAL,
                                           KFS::ErrorCodeToStr(error));
-        HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,%s) failure (%d) - %s", (int)fd,
-                  (int)fdata->fd, (Lld)amount, flush ? "flush" : "",
+        HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,flags=%d) failure (%d) - %s", (int)fd,
+                  (int)fdata->fd, (Lld)amount, static_cast<int>(flags),
                   (int)-written, KFS::ErrorCodeToStr(written).c_str());
         return report_error(cb, error);
       }
+      m_metrics_handler->add_sync(get_ts64() - start_time);
     }
     m_metrics_handler->add_bytes_written(written);
     cb->response(offset, written);
@@ -290,6 +290,10 @@ void QfsBroker::rmdir(ResponseCallback *cb, const char *dname) {
 }
 
 void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void QfsBroker::sync(ResponseCallback *cb, uint32_t fd) {
 
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
@@ -304,7 +308,7 @@ void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
   if(status < 0) {
     m_status_manager.set_write_status(Status::Code::CRITICAL,
                                       KFS::ErrorCodeToStr(status));
-    HT_ERRORF("flush(fd=%d,qfsFd=%d) failure (%d) - %s", (int)fd,
+    HT_ERRORF("sync(fd=%d,qfsFd=%d) failure (%d) - %s", (int)fd,
               (int)fdata->fd, -status,
               KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);

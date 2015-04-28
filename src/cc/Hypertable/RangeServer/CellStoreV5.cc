@@ -456,7 +456,7 @@ void CellStoreV5::add(const Key &key, const ByteString value) {
     size_t zlen = zbuf.fill();
     StaticBuffer send_buf(zbuf);
 
-    try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
+    try { m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler); }
     catch (Exception &e) {
       HT_THROW2F(e.code(), e, "Problem writing to FS file '%s'",
                  m_filename.c_str());
@@ -555,7 +555,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
       m_outstanding_appends--;
     }
 
-    m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+    m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
     m_outstanding_appends++;
     m_offset += zlen;
@@ -593,7 +593,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   zlen = zbuf.fill();
   send_buf = zbuf;
 
-  m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+  m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
   m_outstanding_appends++;
   m_offset += zlen;
@@ -617,7 +617,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   zlen = zbuf.fill();
   send_buf = zbuf;
 
-  m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+  m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
 
   m_outstanding_appends++;
   m_offset += zlen;
@@ -640,7 +640,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
       m_trailer.bloom_filter_mode = m_bloom_filter_mode;
       m_trailer.bloom_filter_hash_count = m_bloom_filter->get_num_hashes();
       m_bloom_filter->serialize(send_buf);
-      m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+      m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
       m_outstanding_appends++;
       m_offset += m_bloom_filter->total_size();
     }
@@ -681,7 +681,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
       zbuf.ptr += HT_IO_ALIGNMENT_PADDING(zbuf.fill());
     }
     send_buf = zbuf;
-    m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
+    m_filesys->append(m_fd, send_buf, Filesystem::Flags::NONE, &m_sync_handler);
     m_outstanding_appends++;
     zlen = zbuf.fill();
     m_offset += zlen;

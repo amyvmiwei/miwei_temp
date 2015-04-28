@@ -211,7 +211,7 @@ CommitLogBlockStream::write_header(FilesystemPtr &fs, int32_t fd) {
   StaticBuffer buf(HEADER_SIZE);
   HT_ASSERT(header_str.size() == HEADER_SIZE);
   memcpy(buf.base, header_str.c_str(), HEADER_SIZE);
-  fs->append(fd, buf, Filesystem::O_FLUSH);
+  fs->append(fd, buf, Filesystem::Flags::FLUSH);
 }
 
 uint64_t CommitLogBlockStream::header_size() {

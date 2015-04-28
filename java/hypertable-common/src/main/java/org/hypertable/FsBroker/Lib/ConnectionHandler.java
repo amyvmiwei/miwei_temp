@@ -102,6 +102,9 @@ public class ConnectionHandler implements DispatchHandler {
       case Protocol.COMMAND_FLUSH:
         requestHandler = new RequestHandlerFlush(mComm, mBroker, event);
         break;
+      case Protocol.COMMAND_SYNC:
+        requestHandler = new RequestHandlerSync(mComm, mBroker, event);
+        break;
       case Protocol.COMMAND_RMDIR:
         requestHandler = new RequestHandlerRmdir(mComm, mBroker, event);
         break;

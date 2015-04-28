@@ -25,8 +25,8 @@
  * a %MetaLog.
  */
 
-#ifndef HYPERTABLE_METALOGWRITER_H
-#define HYPERTABLE_METALOGWRITER_H
+#ifndef Hypertable_Lib_MetaLogWriter_h
+#define Hypertable_Lib_MetaLogWriter_h
 
 #include "Common/Filesystem.h"
 #include "Common/Mutex.h"
@@ -201,6 +201,10 @@ namespace Hypertable {
 
       /// Current write offset of %MetaLog file
       int m_offset;
+
+      /// Log flush method (FLUSH or SYNC)
+      Filesystem::Flags m_flush_method {};
+
     };
 
     /// Smart pointer to Writer
@@ -211,4 +215,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_METALOGWRITER_H
+#endif // Hypertable_Lib_MetaLogWriter_h

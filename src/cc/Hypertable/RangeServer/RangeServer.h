@@ -23,8 +23,8 @@
 /// Declarations for RangeServer.
 /// This file contains the type declarations for the RangeServer
 
-#ifndef HYPERTABLE_RANGESERVER_H
-#define HYPERTABLE_RANGESERVER_H
+#ifndef Hypertable_RangeServer_RangeServer_h
+#define Hypertable_RangeServer_RangeServer_h
 
 #include <Hypertable/RangeServer/Context.h>
 #include <Hypertable/RangeServer/Global.h>
@@ -65,6 +65,7 @@
 #include <AsyncComm/Event.h>
 #include <AsyncComm/ResponseCallback.h>
 
+#include <Common/Filesystem.h>
 #include <Common/Logger.h>
 #include <Common/MetricsCollectorGanglia.h>
 #include <Common/MetricsProcess.h>
@@ -256,9 +257,26 @@ namespace Apps {
     Mutex m_mutex;
     ContextPtr m_context;
     LogReplayBarrierPtr m_log_replay_barrier;
-    UpdatePipelinePtr m_update_pipeline;
-    Mutex                  m_stats_mutex;
-    PropertiesPtr          m_props;
+
+    /// Update pipeline for METADTA table
+    UpdatePipelinePtr m_update_pipeline_metadata;
+
+    /// Update pipeline for other (non-METADATA) system tables
+    UpdatePipelinePtr m_update_pipeline_system;
+
+    /// Update pipeline for USER tables
+    UpdatePipelinePtr m_update_pipeline_user;
+
+    /// Flush method for METADATA commit log updates
+    Filesystem::Flags m_log_flush_method_meta {};
+
+    /// Flush method for USER commit log updates
+    Filesystem::Flags m_log_flush_method_user {};
+
+    Mutex m_stats_mutex;
+
+    /// Configuration properties
+    PropertiesPtr m_props;
 
     /// Flag indicating if verbose logging is enabled
     bool m_verbose {};
@@ -339,4 +357,4 @@ namespace Apps {
 
 }}
 
-#endif // HYPERTABLE_RANGESERVER_H
+#endif // Hypertable_RangeServer_RangeServer_h

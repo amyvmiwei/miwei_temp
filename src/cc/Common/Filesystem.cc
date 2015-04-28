@@ -36,6 +36,10 @@
 #include <Common/Error.h>
 #include <Common/Serialization.h>
 
+#include <boost/algorithm/string.hpp>
+
+#include <strings.h>
+
 using namespace Hypertable;
 using namespace Serialization;
 
@@ -170,4 +174,16 @@ String Filesystem::basename(String name, char separator) {
 
   // Remove any duplicate adjacent path separators
   return remove_trailing_duplicates(name, separator);
+}
+
+
+Filesystem::Flags Hypertable::convert(std::string str) {
+  boost::trim_if(str, boost::is_any_of("\"'"));
+  if (!strcasecmp(str.c_str(), "FLUSH"))
+    return Filesystem::Flags::FLUSH;
+  else if (!strcasecmp(str.c_str(), "SYNC"))
+    return Filesystem::Flags::SYNC;
+  else if (!strcasecmp(str.c_str(), "NONE"))
+    return Filesystem::Flags::NONE;
+  HT_THROWF(Error::INVALID_ARGUMENT, "Unrecognized argument: %s", str.c_str());
 }

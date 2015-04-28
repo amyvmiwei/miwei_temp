@@ -36,6 +36,7 @@
 
 #include <Common/ByteString.h>
 #include <Common/DynamicBuffer.h>
+#include <Common/Filesystem.h>
 
 #include <memory>
 #include <thread>
@@ -67,7 +68,8 @@ namespace Hypertable {
     /// @param query_cache Query cache
     /// @param timer_handler Timer handler
     UpdatePipeline(ContextPtr &context, QueryCachePtr &query_cache,
-                   TimerHandlerPtr &timer_handler);
+                   TimerHandlerPtr &timer_handler, CommitLog *log,
+                   Filesystem::Flags flags);
 
     /// Adds updates to pipeline
     /// Adds <code>uc</code> to #m_qualify_queue and signals #m_qualify_queue_cond.
@@ -127,6 +129,9 @@ namespace Hypertable {
     /// Pointer to timer handler
     TimerHandlerPtr m_timer_handler;
 
+    /// Pointer to commit log
+    CommitLog *m_log {};
+
     /// %Mutex protecting stage 1 input queue
     Mutex m_qualify_queue_mutex;
 
@@ -174,6 +179,9 @@ namespace Hypertable {
 
     /// Maximum allowable clock skew
     int32_t m_max_clock_skew {};
+
+    /// Commit log flush flag (NONE, FLUSH, or SYNC)
+    Filesystem::Flags m_flags {};
 
     /// Flag indicating if pipeline is being shut down
     bool m_shutdown {};

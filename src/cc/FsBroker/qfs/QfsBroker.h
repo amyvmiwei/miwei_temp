@@ -76,7 +76,7 @@ namespace FsBroker {
 
     virtual void create(Response::Callback::Open *cb, const char *fname, uint32_t flags, int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount);
-    virtual void append(Response::Callback::Append *, uint32_t fd, uint32_t amount, const void *data, bool flush);
+    virtual void append(Response::Callback::Append *, uint32_t fd, uint32_t amount, const void *data, Filesystem::Flags flags);
     virtual void seek(ResponseCallback *cb, uint32_t fd, uint64_t offset);
     virtual void remove(ResponseCallback *cb, const char *fname);
     virtual void length(Response::Callback::Length *cb, const char *fname,
@@ -86,6 +86,7 @@ namespace FsBroker {
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
+    virtual void sync(ResponseCallback *cb, uint32_t fd);
     virtual void status(Response::Callback::Status *cb);
     virtual void shutdown(ResponseCallback *cb);
     virtual void readdir(Response::Callback::Readdir *cb, const char *dname);

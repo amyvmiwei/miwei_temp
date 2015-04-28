@@ -56,9 +56,8 @@ using namespace std;
 
 namespace Hypertable {
 
-  /** @addtogroup Common
-   *  @{
-   */
+  /// @addtogroup Common
+  /// @{
 
   /**
    * Abstract base class for a filesystem.  All commands have synchronous and
@@ -72,7 +71,16 @@ namespace Hypertable {
    */
   class Filesystem {
   public:
-    enum OptionType { O_FLUSH = 1 };
+
+    /// Enumeration type for append flags
+    enum class Flags : uint8_t {
+      /// None
+      NONE=0,
+      /// Flush
+      FLUSH=1,
+      /// Sync
+      SYNC=2
+    };
 
     enum OpenFlags {
       OPEN_FLAG_DIRECTIO = 0x00000001,
@@ -245,7 +253,7 @@ namespace Hypertable {
      * @param flags Flags for this operation: O_FLUSH or 0
      * @param handler The dispatch handler
      */
-    virtual void append(int fd, StaticBuffer &buffer, uint32_t flags,
+    virtual void append(int fd, StaticBuffer &buffer, Flags flags,
             DispatchHandler *handler) = 0;
 
     /**
@@ -258,7 +266,7 @@ namespace Hypertable {
      * @param buffer The buffer to append
      * @param flags Flags for this operation: O_FLUSH or 0
      */
-    virtual size_t append(int fd, StaticBuffer &buffer, uint32_t flags = 0) = 0;
+    virtual size_t append(int fd, StaticBuffer &buffer, Flags flags = Flags::NONE) = 0;
 
     /** Decodes the response from an append request
      *
@@ -439,14 +447,28 @@ namespace Hypertable {
      */
     virtual void flush(int fd, DispatchHandler *handler) = 0;
 
-    /** Flushes a file.  Isues a flush command which causes all buffered
-     * writes to get persisted to disk, and waits for it to complete.
+    /** Flushes a file.  Issues a <i>flush</i> command which causes all buffered
+     * writes to get flushed to the underlying filesystem.  For "normal"
+     * filesystems, such as the local filesystem, this command translates into
+     * an fsync() system call.  However, for some distributed filesystems such
+     * as HDFS, this command causes the filesystem broker to flush buffered
+     * writes into the memory of all of the replica servers, but doesn't
+     * necessarily push the writes all the way down to the physical storage.
      * This command will get serialized along with other commands issued
      * with the same file descriptor.
      *
      * @param fd The open file descriptor
      */
     virtual void flush(int fd) = 0;
+
+    /** Syncs a file.  Issues a <i>sync</i> command which causes the filesystem
+     * to persist all buffered updates to the physical storage.  It is
+     * equivalent to the fsync() Unix system call.  This command will get
+     * serialized along with other commands issued with the same file descriptor.
+     *
+     * @param fd The open file descriptor
+     */
+    virtual void sync(int fd) = 0;
 
     /** Determines if a file exists asynchronously.  Issues an exists request.
      * The caller will get notified of successful completion or error via the
@@ -553,7 +575,14 @@ namespace Hypertable {
     return lhs.name.compare(rhs.name) < 0;
   }
 
-  /** @} */
+  /// Converts string mnemonic to corresponding Filesystem::Flags value.
+  /// @param str String mnemonic for append flag ("NONE", "FLUSH", or "SYNC")
+  /// @return Append flag corresponding to string mnemonic
+  /// @throws Exception with code equal to Error::INVALID_ARGUMENT if string
+  /// mnemonic is not recognized
+  extern Filesystem::Flags convert(std::string str);
+
+  /// @}
 
 } // namespace Hypertable
 

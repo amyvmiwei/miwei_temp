@@ -108,7 +108,7 @@ void AccessGroupHintsFile::write(String location) {
                              Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
     StaticBuffer sbuf(contents.length());
     memcpy(sbuf.base, contents.c_str(), contents.length());
-    Global::dfs->append(fd, sbuf, Filesystem::O_FLUSH);
+    Global::dfs->append(fd, sbuf);
     Global::dfs->close(fd);
   }
   catch (Exception &e) {

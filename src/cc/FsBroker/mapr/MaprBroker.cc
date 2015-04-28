@@ -226,14 +226,15 @@ void MaprBroker::read(Response::Callback::Read *cb, uint32_t fd, uint32_t amount
 
 
 void MaprBroker::append(Response::Callback::Append *cb, uint32_t fd,
-                         uint32_t amount, const void *data, bool sync) {
+                        uint32_t amount, const void *data, Filesystem::Flags flags) {
   OpenFileDataMaprPtr fdata;
   tSize nwritten;
   int64_t offset;
   int error;
 
-  HT_DEBUG_OUT <<"append fd="<< fd <<" amount="<< amount <<" data='"
-      << format_bytes(20, data, amount) <<" sync="<< sync << HT_END;
+  HT_DEBUG_OUT << "append fd=" << fd << " amount=" << amount << " data='"
+               << format_bytes(20, data, amount) << " flags="
+               << static_cast<int>(flags) << HT_END;
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -257,13 +258,15 @@ void MaprBroker::append(Response::Callback::Append *cb, uint32_t fd,
     return;
   }
 
-  int64_t start_time = get_ts64();
-  if (sync && hdfsFlush(m_filesystem, fdata->file)) {
-    report_error(cb);
-    HT_ERRORF("flush failed: fd=%d - %s", fd, strerror(errno));
-    return;
+  if (flags == Filesystem::Flags::FLUSH || flags == Filesystem::Flags::SYNC) {
+    int64_t start_time = get_ts64();
+    if (hdfsFlush(m_filesystem, fdata->file)) {
+      report_error(cb);
+      HT_ERRORF("flush failed: fd=%d - %s", fd, strerror(errno));
+      return;
+    }
+    m_metrics_handler->add_sync(get_ts64() - start_time);
   }
-  m_metrics_handler->add_sync(get_ts64() - start_time);
 
   m_metrics_handler->add_bytes_written(nwritten);
 
@@ -515,9 +518,13 @@ void MaprBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {
 
 
 void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
+  this->sync(cb, fd);
+}
+
+void MaprBroker::sync(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataMaprPtr fdata;
 
-  HT_DEBUGF("flush fd=%d", fd);
+  HT_DEBUGF("sync fd=%d", fd);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -527,12 +534,12 @@ void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
     return;
   }
 
-  HT_DEBUGF("flush fd=%d filename=%s", fd, fdata->filename.c_str());
+  HT_DEBUGF("sync fd=%d filename=%s", fd, fdata->filename.c_str());
 
   int64_t start_time = get_ts64();
   if (hdfsFlush(m_filesystem, fdata->file) == -1) {
     report_error(cb);
-    HT_ERRORF("flush failed: fd=%d - %s", fd, strerror(errno));
+    HT_ERRORF("sync failed: fd=%d - %s", fd, strerror(errno));
     return;
   }
   m_metrics_handler->add_sync(get_ts64() - start_time);

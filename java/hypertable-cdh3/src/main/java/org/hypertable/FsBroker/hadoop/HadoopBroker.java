@@ -570,7 +570,7 @@ public class HadoopBroker implements Broker {
     }
 
     public void Append(ResponseCallbackAppend cb, int fd, int amount,
-                      byte [] data, boolean sync) {
+                       byte [] data, Filesystem.Flags flags) {
         int error = Error.OK;
         OpenFileData ofd;
 
@@ -596,7 +596,7 @@ public class HadoopBroker implements Broker {
 
             ofd.os.write(data, 0, amount);
 
-            if (sync)
+            if (flags != Filesystem.Flags.NONE)
                 ofd.os.sync();
 
             error = cb.response(offset, amount);
@@ -612,8 +612,8 @@ public class HadoopBroker implements Broker {
 
         if (error != Error.OK)
             log.severe("Error sending WRITE response back (fd=" + fd
-                    + ", error=" + error + ", amount=" + amount
-                    + ", sync=" + sync + ")");
+                       + ", error=" + error + ", amount=" + amount
+                       + ", flags=" + flags.getValue() + ")");
     }
 
     public void PositionRead(ResponseCallbackPositionRead cb, int fd,
@@ -770,9 +770,6 @@ public class HadoopBroker implements Broker {
 
     }
 
-    /**
-     *
-     */
     public void Flush(ResponseCallback cb, int fd) {
         int error = Error.OK;
         OpenFileData ofd;
@@ -802,6 +799,37 @@ public class HadoopBroker implements Broker {
             error = cb.error(error, e.toString());
         }
     }
+
+    public void Sync(ResponseCallback cb, int fd) {
+        int error = Error.OK;
+        OpenFileData ofd;
+
+        try {
+
+            if ((ofd = mOpenFileMap.Get(fd)) == null) {
+                error = Error.DFSBROKER_BAD_FILE_HANDLE;
+                throw new IOException("Invalid file handle " + fd);
+            }
+
+            if (mVerbose)
+                log.info("Sync request handle=" + fd);
+
+            ofd.os.sync();
+
+            error = cb.response_ok();
+
+            if (error != Error.OK)
+                log.severe("Error sending SYNC response back (fd=" + fd
+                        + ", error=" + error + ")");
+        }
+        catch (IOException e) {
+            log.severe("I/O exception - " + e.toString());
+            if (error == Error.OK)
+                error = Error.DFSBROKER_IO_ERROR;
+            error = cb.error(error, e.toString());
+        }
+    }
+
 
     /**
      *

@@ -20,12 +20,12 @@
  */
 
 /// @file
-/// Declarations for Append request parameters.
-/// This file contains declarations for Append, a class for encoding and
-/// decoding paramters to the <i>append</i> file system broker function.
+/// Declarations for Sync request parameters.
+/// This file contains declarations for Sync, a class for encoding and
+/// decoding paramters to the <i>sync</i> file system broker function.
 
-#ifndef FsBroker_Lib_Request_Parameters_Append_h
-#define FsBroker_Lib_Request_Parameters_Append_h
+#ifndef FsBroker_Lib_Request_Parameters_Sync_h
+#define FsBroker_Lib_Request_Parameters_Sync_h
 
 #include <Common/Serializable.h>
 
@@ -42,35 +42,23 @@ namespace Parameters {
   /// @addtogroup FsBrokerLibRequestParameters
   /// @{
 
-  /// %Request parameters for <i>append</i> requests.
-  class Append : public Serializable {
+  /// %Request parameters for <i>sync</i> requests.
+  class Sync : public Serializable {
   public:
 
     /// Constructor.
     /// Empty initialization for decoding.
-    Append() {}
+    Sync() {}
 
     /// Constructor.
     /// Initializes with parameters for encoding.  Sets #m_fd to
-    /// <code>fd</code>, #m_size to <code>size</code>, and #m_flush to
-    /// <code>flush</code>.
+    /// <code>fd</code>.
     /// @param fd File descriptor
-    /// @param size Size of data buffer
-    /// @param flags Flags (FLUSH or SYNC)
-    Append(int32_t fd, uint32_t size, uint8_t flags)
-      : m_fd(fd), m_size(size), m_flags(flags) {}
+    Sync(int32_t fd) : m_fd(fd) {}
 
     /// Gets file descriptor
     /// @return File descriptor
     int32_t get_fd() { return m_fd; }
-
-    /// Gets size of data buffer
-    /// @return Size of data buffer
-    uint32_t get_size() { return m_size; }
-
-    /// Gets flags
-    /// @return Flags
-    uint8_t get_flags() { return m_flags; }
 
   private:
 
@@ -83,18 +71,13 @@ namespace Parameters {
     void decode_internal(uint8_t version, const uint8_t **bufp,
 			 size_t *remainp) override;
 
-    /// File descriptor to which append applies
+    /// File descriptor to which sync applies
     int32_t m_fd {};
 
-    /// Size of data buffer
-    uint32_t m_size {};
-
-    /// Flags (FLUSH or SYNC)
-    uint8_t m_flags {};
   };
 
   /// @}
 
 }}}}}
 
-#endif // FsBroker_Lib_Request_Parameters_Append_h
+#endif // FsBroker_Lib_Request_Parameters_Sync_h
