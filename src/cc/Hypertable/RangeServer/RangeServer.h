@@ -257,13 +257,26 @@ namespace Apps {
     Mutex m_mutex;
     ContextPtr m_context;
     LogReplayBarrierPtr m_log_replay_barrier;
+
+    /// Update pipeline for METADTA table
     UpdatePipelinePtr m_update_pipeline_metadata;
+
+    /// Update pipeline for other (non-METADATA) system tables
     UpdatePipelinePtr m_update_pipeline_system;
+
+    /// Update pipeline for USER tables
     UpdatePipelinePtr m_update_pipeline_user;
+
+    /// Flush method for METADATA commit log updates
     Filesystem::Flags m_log_flush_method_meta {};
+
+    /// Flush method for USER commit log updates
     Filesystem::Flags m_log_flush_method_user {};
-    Mutex                  m_stats_mutex;
-    PropertiesPtr          m_props;
+
+    Mutex m_stats_mutex;
+
+    /// Configuration properties
+    PropertiesPtr m_props;
 
     /// Flag indicating if verbose logging is enabled
     bool m_verbose {};

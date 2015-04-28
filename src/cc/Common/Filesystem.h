@@ -56,9 +56,8 @@ using namespace std;
 
 namespace Hypertable {
 
-  /** @addtogroup Common
-   *  @{
-   */
+  /// @addtogroup Common
+  /// @{
 
   /**
    * Abstract base class for a filesystem.  All commands have synchronous and
@@ -72,7 +71,16 @@ namespace Hypertable {
    */
   class Filesystem {
   public:
-    enum class Flags : uint8_t { NONE=0, FLUSH=1, SYNC=2 };
+
+    /// Enumeration type for append flags
+    enum class Flags : uint8_t {
+      /// None
+      NONE=0,
+      /// Flush
+      FLUSH=1,
+      /// Sync
+      SYNC=2
+    };
 
     enum OpenFlags {
       OPEN_FLAG_DIRECTIO = 0x00000001,
@@ -567,10 +575,14 @@ namespace Hypertable {
     return lhs.name.compare(rhs.name) < 0;
   }
 
-  /// Converts string mnemonic to corresponding Filesystem::Flags value
+  /// Converts string mnemonic to corresponding Filesystem::Flags value.
+  /// @param str String mnemonic for append flag ("NONE", "FLUSH", or "SYNC")
+  /// @return Append flag corresponding to string mnemonic
+  /// @throws Exception with code equal to Error::INVALID_ARGUMENT if string
+  /// mnemonic is not recognized
   extern Filesystem::Flags convert(std::string str);
 
-  /** @} */
+  /// @}
 
 } // namespace Hypertable
 
