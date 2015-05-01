@@ -144,6 +144,14 @@ public class Dispatcher {
     private DispatchHandler mDispatchHandler;
   }
 
+  private static String getPid() throws IOException {
+    byte[] bo = new byte[100];
+    String[] cmd = {"bash", "-c", "echo $PPID"};
+    Process p = Runtime.getRuntime().exec(cmd);
+    p.getInputStream().read(bo);
+    return new String(bo);
+  }
+
   static String usage[] = {
     "",
     "usage: Dispatcher [OPTIONS] read|write|scan|incr <keySize> <valueSize> <totalDataSize>",
@@ -232,13 +240,17 @@ public class Dispatcher {
 
     Setup setup = new Setup();
 
+    File pidfile = null;
+
     setup.tableName="perftest";
 
     if (args.length == 1 && args[0].equals("--help"))
       Usage.DumpAndExit(usage);
 
     for (int i=0; i<args.length; i++) {
-      if (args[i].startsWith("--port="))
+      if (args[i].equals("--pidfile"))
+        pidfile = new File(args[++i]);        
+      else if (args[i].startsWith("--port="))
         port = Integer.parseInt(args[i].substring(7));
       else if (args[i].startsWith("--clients="))
         clients = Integer.parseInt(args[i].substring(10));
@@ -298,6 +310,15 @@ public class Dispatcher {
 
     if (totalDataSize == -1)
       Usage.DumpAndExit(usage);
+
+    if (pidfile != null) {
+      if (!pidfile.exists()) {
+        FileWriter pidFileWriter = new FileWriter(pidfile);
+        pidFileWriter.write(getPid());
+        pidFileWriter.close();
+      }
+      pidfile.deleteOnExit();
+    }
 
     setup.keyCount = totalDataSize / (setup.keySize+setup.valueSize);
 

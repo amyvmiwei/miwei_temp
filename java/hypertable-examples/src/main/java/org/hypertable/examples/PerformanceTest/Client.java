@@ -25,7 +25,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.BufferedReader;
 import java.nio.ByteOrder;
 import java.nio.channels.SelectionKey;
@@ -142,6 +144,7 @@ public class Client {
     int port = DEFAULT_PORT;
     int thriftbroker_port = DriverHypertable.DEFAULT_THRIFTBROKER_PORT;
     String host = null;
+    File pidfile = null;
     long timeout = 0;
 
     if (args.length == 0) {
@@ -153,8 +156,11 @@ public class Client {
     for (int i=0; i<args.length; i++) {
       if (args[i].startsWith("--timeout="))
         timeout = Integer.parseInt(args[i].substring(10));
-      if (args[i].startsWith("--thriftbroker-port="))
+      else if (args[i].startsWith("--thriftbroker-port="))
         thriftbroker_port = Integer.parseInt(args[i].substring(20));
+      else if (args[i].equals("--pidfile")) {
+        pidfile = new File(args[++i]);
+      }
       else if (host == null) {
         int colon = args[i].indexOf(':');
         if (colon == -1)
@@ -169,6 +175,15 @@ public class Client {
     }
 
     System.out.println("Connecting to " + host + ":" + port);
+
+    if (pidfile != null) {
+      if (!pidfile.exists()) {
+        FileWriter pidFileWriter = new FileWriter(pidfile);
+        pidFileWriter.write(getPid());
+        pidFileWriter.close();
+      }
+      pidfile.deleteOnExit();
+    }
 
     try {
       Event event;
