@@ -83,11 +83,10 @@ void Reader::get_all_entities(std::vector<EntityPtr> &entities) {
 
 void Reader::reload() {
   try {
-    scan_log_directory(m_fs, m_path, m_file_nums, &m_next_filenum);
-    std::sort(m_file_nums.begin(), m_file_nums.end());
+    scan_log_directory(m_fs, m_path, m_file_nums);
     if (!m_file_nums.empty()) {
-      verify_backup(m_file_nums.back());
-      load_file(m_path + "/" + m_file_nums.back());
+      verify_backup(m_file_nums.front());
+      load_file(m_path + "/" + m_file_nums.front());
     }
   }
   catch (Exception &e) {

@@ -197,6 +197,10 @@ void DefaultPolicy::init_options() {
         "time, in seconds, between writing metrics to sys/RS_METRICS")
     ("Hypertable.Request.Timeout", i32()->default_value(600000), "Length of "
         "time, in milliseconds, before timing out requests (system wide)")
+    ("Hypertable.MetaLog.HistorySize", i32()->default_value(30), "Number "
+        "of old MetaLog files to retain for historical purposes")
+    ("Hypertable.MetaLog.MaxFileSize", i64()->default_value(100*M), "Maximum "
+        "size a MetaLog file can grow before it is compacted")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
     ("Hypertable.Network.Interface", str(),

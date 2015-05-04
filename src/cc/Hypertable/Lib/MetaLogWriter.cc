@@ -25,21 +25,22 @@
  * a %MetaLog.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/FileUtils.h"
-#include "Common/Path.h"
-#include "Common/StringExt.h"
-
-#include <boost/algorithm/string.hpp>
-#include <boost/shared_array.hpp>
+#include <Common/Compat.h>
 
 #include "MetaLog.h"
 #include "MetaLogWriter.h"
 
+#include <Common/Config.h>
+#include <Common/FileUtils.h>
+#include <Common/Path.h>
+#include <Common/StringExt.h>
+
+#include <boost/algorithm/string.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <thread>
 
 extern "C" {
 #include <sys/types.h>
@@ -60,8 +61,8 @@ bool Writer::skip_recover_entry = false;
 
 
 Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const string &path,
-               std::vector<EntityPtr> &initial_entities) :
-  m_fs(fs), m_definition(definition), m_fd(-1), m_offset(0) {
+               std::vector<EntityPtr> &initial_entities)
+  : m_fs(fs), m_definition(definition) {
 
   HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
 
@@ -78,26 +79,31 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const string &path,
   if (!FileUtils::exists(m_backup_path))
     FileUtils::mkdirs(m_backup_path);
 
-  std::vector<int32_t> file_ids;
-  int32_t next_id;
+  scan_log_directory(m_fs, m_path, m_file_ids);
 
-  scan_log_directory(m_fs, m_path, file_ids, &next_id);
+  m_history_size = Config::properties->get_i32("Hypertable.MetaLog.HistorySize");
 
-  purge_old_log_files(file_ids, 30);
+  m_max_file_size = Config::properties->get_i64("Hypertable.MetaLog.MaxFileSize");
 
   // get replication
-  int replication = Config::properties->get_i32("Hypertable.Metadata.Replication");
+  m_replication = Config::properties->get_i32("Hypertable.Metadata.Replication");
 
   // get flush method
   m_flush_method = convert(Config::properties->get_str("Hypertable.LogFlushMethod.Meta"));
 
+  int32_t next_id = m_file_ids.empty() ? 0 : m_file_ids.front()+1;
+
   // Open FS file
   m_filename = m_path + "/" + next_id;
-  m_fd = m_fs->create(m_filename, 0, FS_BUFFER_SIZE, replication, FS_BLOCK_SIZE);
+  m_fd = m_fs->create(m_filename, 0, FS_BUFFER_SIZE, m_replication, FS_BLOCK_SIZE);
 
   // Open backup file
   m_backup_filename = m_backup_path + "/" + next_id;
   m_backup_fd = ::open(m_backup_filename.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0644);
+
+  m_file_ids.push_front(next_id);
+
+  purge_old_log_files();
 
   write_header();
 
@@ -115,7 +121,7 @@ Writer::~Writer() {
 }
 
 void Writer::close() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   try {
     if (m_fd != -1) {
       m_fs->close(m_fd);
@@ -131,28 +137,75 @@ void Writer::close() {
 }
 
 
-void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_count) {
-  ScopedLock lock(m_mutex);
+void Writer::purge_old_log_files() {
 
-  // reverse sort
-  sort(file_ids.rbegin(), file_ids.rend());
+  while (m_file_ids.size() > m_history_size) {
 
-  if (file_ids.size() > keep_count) {
-    for (size_t i=keep_count; i< file_ids.size(); i++) {
-      string tmp_name;
+    // remove from brokered FS
+    string tmp_name = m_path + String("/") + m_file_ids.back();
+    m_fs->remove(tmp_name);
 
-      // remove from FS
-      tmp_name = m_path + String("/") + file_ids[i];
-      m_fs->remove(tmp_name);
+    // remove local backup
+    tmp_name = m_backup_path + String("/") + m_file_ids.back();
+    if (FileUtils::exists(tmp_name))
+      FileUtils::unlink(tmp_name);
 
-      // remove local backup
-      tmp_name = m_backup_path + String("/") + file_ids[i];
-
-      if (FileUtils::exists(tmp_name))
-        FileUtils::unlink(tmp_name);
-    }
-    file_ids.resize(keep_count);
+    m_file_ids.pop_back();
   }
+
+}
+
+void Writer::roll() {
+
+  // Close descriptors
+  if (m_fd != -1) {
+    m_fs->close(m_fd);
+    m_fd = -1;
+    ::close(m_backup_fd);
+    m_backup_fd = -1;
+  }
+
+  int32_t next_id = m_file_ids.front() + 1;
+
+  // Open next brokered FS file
+  m_filename = m_path + "/" + next_id;
+  m_fd = m_fs->create(m_filename, 0, FS_BUFFER_SIZE, m_replication, FS_BLOCK_SIZE);
+
+  // Open next backup file
+  m_backup_filename = m_backup_path + "/" + next_id;
+  m_backup_fd = ::open(m_backup_filename.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0644);
+
+  m_file_ids.push_front(next_id);
+
+  purge_old_log_files();
+
+  m_offset = 0;
+
+  write_header();
+
+  // Compute total length
+  uint32_t total_length {};
+  for (auto &entry : m_entity_map)
+    total_length += entry.second.first;
+  total_length += EntityHeader::LENGTH;  // For Recover entity
+
+  // Create initial file contents
+  StaticBuffer buf (new uint8_t [total_length], total_length);
+  uint8_t *ptr = buf.base;
+  for (auto &entry : m_entity_map) {
+    memcpy(ptr, entry.second.second.get(), entry.second.first);
+    ptr += entry.second.first;
+  }
+  EntityRecover er;
+  er.encode_entry(&ptr);
+  HT_ASSERT((ptr-buf.base) == buf.size);
+
+  m_offset += buf.size;
+
+  // Write contents to file(s)
+  FileUtils::write(m_backup_fd, buf.base, buf.size);
+  m_fs->append(m_fd, buf, m_flush_method);
+  
 }
 
 
@@ -185,13 +238,15 @@ void Writer::write_header() {
 
 
 void Writer::record_state(EntityPtr entity) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   size_t length;
   StaticBuffer buf;
-  boost::shared_array<uint8_t> backup_buf;
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
+
+  if (m_offset > m_max_file_size)
+    roll();
 
   {
     Locker<Entity> lock(*entity);
@@ -205,18 +260,28 @@ void Writer::record_state(EntityPtr entity) {
       entity->encode_entry( &ptr );
 
     HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
-    backup_buf.reset(new uint8_t [length]);
-    memcpy(backup_buf.get(), buf.base, buf.size);
   }
 
-  FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-  m_fs->append(m_fd, buf, m_flush_method);
+  shared_ptr<uint8_t> backup_buf(new uint8_t [length], default_delete<uint8_t[]>());
+  memcpy(backup_buf.get(), buf.base, buf.size);
+
   m_offset += buf.size;
+
+  FileUtils::write(m_backup_fd, buf.base, buf.size);
+  m_fs->append(m_fd, buf, m_flush_method);
+
+  // Add to entity map
+  if (dynamic_cast<EntityRecover *>(entity.get()) == nullptr) {
+    m_entity_map.erase(entity->header.id);
+    if (!entity->marked_for_removal())
+      m_entity_map[entity->header.id] = SerializedEntityT(length, backup_buf);
+  }
+
 }
 
 void Writer::record_state(std::vector<EntityPtr> &entities) {
-  ScopedLock lock(m_mutex);
-  boost::shared_array<StaticBuffer> buffers( new StaticBuffer[entities.size()] );
+  lock_guard<mutex> lock(m_mutex);
+  shared_ptr<StaticBuffer> buffers( new StaticBuffer[entities.size()], default_delete<StaticBuffer[]>() );
   uint8_t *ptr;
   size_t length = 0;
   size_t total_length = 0;
@@ -227,45 +292,59 @@ void Writer::record_state(std::vector<EntityPtr> &entities) {
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
+  if (m_offset > m_max_file_size)
+    roll();
+
   size_t i=0;
   for (auto & entity : entities) {
     Locker<Entity> lock(*entity);
     length = EntityHeader::LENGTH + (entity->marked_for_removal() ? 0 : entity->encoded_length());
-    buffers[i].set(new uint8_t [length], length);
-    ptr = buffers[i].base;
+    buffers.get()[i].set(new uint8_t [length], length);
+    ptr = buffers.get()[i].base;
     if (entity->marked_for_removal())
       entity->header.encode( &ptr );
     else
       entity->encode_entry( &ptr );
-    HT_ASSERT((ptr-buffers[i].base) == (ptrdiff_t)buffers[i].size);
+
+    // Add to entity map
+    HT_ASSERT(dynamic_cast<EntityRecover *>(entity.get()) == nullptr);
+    m_entity_map.erase(entity->header.id);
+    if (!entity->marked_for_removal()) {
+      shared_ptr<uint8_t> backup_buf(new uint8_t [length], default_delete<uint8_t[]>());
+      memcpy(backup_buf.get(), buffers.get()[i].base, length);
+      m_entity_map[entity->header.id] = SerializedEntityT(length, backup_buf);
+    }
+
+    HT_ASSERT((ptr-buffers.get()[i].base) == (ptrdiff_t)buffers.get()[i].size);
     total_length += length;
     i++;
   }
 
-  boost::shared_array<uint8_t> backup_buf( new uint8_t [total_length] );
   StaticBuffer buf(new uint8_t [total_length], total_length);
   ptr = buf.base;
   for (i=0; i<entities.size(); i++) {
-    memcpy(ptr, buffers[i].base, buffers[i].size);
-    ptr += buffers[i].size;
+    memcpy(ptr, buffers.get()[i].base, buffers.get()[i].size);
+    ptr += buffers.get()[i].size;
   }
   HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
 
-  memcpy(backup_buf.get(), buf.base, buf.size);
-
-  FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-  m_fs->append(m_fd, buf, m_flush_method);
   m_offset += buf.size;
+
+  FileUtils::write(m_backup_fd, buf.base, buf.size);
+  m_fs->append(m_fd, buf, m_flush_method);
 }
 
 void Writer::record_removal(EntityPtr entity) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   StaticBuffer buf(EntityHeader::LENGTH);
   uint8_t backup_buf[EntityHeader::LENGTH];
   uint8_t *ptr = buf.base;
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
+
+  if (m_offset > m_max_file_size)
+    roll();
 
   entity->header.flags |= EntityHeader::FLAG_REMOVE;
   entity->header.length = 0;
@@ -276,15 +355,19 @@ void Writer::record_removal(EntityPtr entity) {
   HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
   memcpy(backup_buf, buf.base, buf.size);
 
+  m_offset += buf.size;
+
   FileUtils::write(m_backup_fd, backup_buf, buf.size);
   m_fs->append(m_fd, buf, m_flush_method);
-  m_offset += buf.size;
+
+  // Remove from entity map
+  m_entity_map.erase(entity->header.id);
 
 }
 
 
 void Writer::record_removal(std::vector<EntityPtr> &entities) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (entities.empty())
     return;
@@ -292,9 +375,12 @@ void Writer::record_removal(std::vector<EntityPtr> &entities) {
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
+  if (m_offset > m_max_file_size)
+    roll();
+
   size_t length = entities.size() * EntityHeader::LENGTH;
   StaticBuffer buf(length);
-  boost::shared_array<uint8_t> backup_buf( new uint8_t [length] );
+  shared_ptr<uint8_t> backup_buf(new uint8_t [length], default_delete<uint8_t[]>());
   uint8_t *ptr = buf.base;
 
   for (auto &entity : entities) {
@@ -302,13 +388,16 @@ void Writer::record_removal(std::vector<EntityPtr> &entities) {
     entity->header.length = 0;
     entity->header.checksum = 0;
     entity->header.encode( &ptr );
+    // Remove from entity map
+    m_entity_map.erase(entity->header.id);
   }
 
   HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
   memcpy(backup_buf.get(), buf.base, buf.size);
 
+  m_offset += buf.size;
+
   FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
   m_fs->append(m_fd, buf, m_flush_method);
-  m_offset += buf.size;
 
 }

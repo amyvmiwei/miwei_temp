@@ -27,8 +27,8 @@
 #ifndef HYPERTABLE_METALOG_H
 #define HYPERTABLE_METALOG_H
 
+#include <deque>
 #include <iostream>
-#include <vector>
 
 #include "Common/Filesystem.h"
 #include "Common/Mutex.h"
@@ -99,12 +99,10 @@ namespace Hypertable {
      * server.
      * @param fs Smart pointer to Filesystem object
      * @param path Pathname of %MetaLog directory
-     * @param file_ids Output vector to hold discovered numeric file names
-     * @param nextidp Reference to integer filled in with numeric file name
-     * that can be used for the next %MetaLog file.
+     * @param file_ids Deque to hold discovered numeric file names
      */
     void scan_log_directory(FilesystemPtr &fs, const std::string &path,
-                            std::vector<int32_t> &file_ids, int32_t *nextidp);
+                            std::deque<int32_t> &file_ids);
 
    }
 

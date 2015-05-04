@@ -326,6 +326,7 @@ configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncT
 configure_file(${SRC_DIR}/name_id_mapper_test.cfg ${DST_DIR}/name_id_mapper_test.cfg)
 configure_file(${SRC_DIR}/metalog_test.golden ${DST_DIR}/metalog_test.golden)
 configure_file(${SRC_DIR}/metalog_test2.golden ${DST_DIR}/metalog_test2.golden)
+configure_file(${SRC_DIR}/metalog_test3.golden ${DST_DIR}/metalog_test3.golden)
 
 add_test(Hypertable-Lib-TestSetup env INSTALL_DIR=${INSTALL_DIR}
          ${SRC_DIR}/test_setup.sh)

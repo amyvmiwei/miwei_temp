@@ -31,6 +31,7 @@
 #include "Common/Filesystem.h"
 #include "Common/ReferenceCount.h"
 
+#include <deque>
 #include <map>
 #include <vector>
 
@@ -102,11 +103,10 @@ namespace Hypertable {
        * This method scans the %MetaLog directory with a call to
        * scan_log_directory() and then loads the largest numerically named file
        * in the directory with a call to load_file().  The #m_file_nums
-       * vector is populated with the numeric file names found in log directory
-       * and the #m_next_filenum is set to the next largest unused numeric
-       * file name.  This method propagates all
-       * exceptions of type Error::METALOG_ERROR and converts all other
-       * exceptions to Error::METALOG_READ_ERROR and rethrows.
+       * vector is populated with the numeric file names found in log directory.
+       * This method propagates all exceptions of type Error::METALOG_ERROR and
+       * converts all other exceptions to Error::METALOG_READ_ERROR and
+       * rethrows.
        * @throws Exception with one of the Error::METALOG_ERROR codes.
        */
       void reload();
@@ -117,7 +117,9 @@ namespace Hypertable {
        * one.
        * @return Next unused numeric file name.
        */
-      int32_t next_file_number() { return m_next_filenum; }
+      int32_t next_file_number() {
+        return m_file_nums.empty() ? 0 : m_file_nums.front() + 1;
+      }
 
       /** Loads %MetaLog file.
        * This method opens <code>fname</code> and reads the header with a call
@@ -191,11 +193,8 @@ namespace Hypertable {
       /// Flags that control read behavior
       int m_flags;
 
-      /// Next unused numeric filename
-      int32_t m_next_filenum;
-
       /// Vector of numeric file names found in log directory
-      std::vector<int32_t> m_file_nums;
+      std::deque<int32_t> m_file_nums;
 
       /// Map containing latest version of each Entity read from %MetaLog
       std::map<EntityHeader, EntityPtr> m_entity_map;

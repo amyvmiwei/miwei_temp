@@ -24,13 +24,15 @@
  * This file contains definitions that are part of the MetaLog system.
  */
 
-#include "Common/Compat.h"
-#include "Common/Filesystem.h"
-#include "Common/Serialization.h"
-
-#include <cctype>
+#include <Common/Compat.h>
 
 #include "MetaLog.h"
+
+#include <Common/Filesystem.h>
+#include <Common/Serialization.h>
+
+#include <algorithm>
+#include <cctype>
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
@@ -50,12 +52,10 @@ void Header::decode(const uint8_t **bufp, size_t *remainp) {
 
 
 void MetaLog::scan_log_directory(FilesystemPtr &fs, const string &path,
-                                 std::vector<int32_t> &file_ids, int32_t *nextidp) {
+                                 std::deque<int32_t> &file_ids) {
   const char *ptr;
   int32_t id;
   std::vector<Filesystem::Dirent> listing;
-
-  *nextidp = 0;
 
   if (!fs->exists(path))
     return;
@@ -69,11 +69,8 @@ void MetaLog::scan_log_directory(FilesystemPtr &fs, const string &path,
         break;
     }
 
-    if (*ptr == 0 || (ptr > listing[i].name.c_str() && !strcmp(ptr, ".bad"))) {
+    if (*ptr == 0 || (ptr > listing[i].name.c_str() && !strcmp(ptr, ".bad")))
       id = atoi(listing[i].name.c_str());
-      if (id >= *nextidp)
-        *nextidp = id+1;
-    }
   
     if (*ptr != 0) {
       HT_WARNF("Invalid META LOG file name encountered '%s', skipping...",
@@ -83,5 +80,9 @@ void MetaLog::scan_log_directory(FilesystemPtr &fs, const string &path,
 
     file_ids.push_back(id);
   }
+
+  // reverse sort
+  sort(file_ids.begin(), file_ids.end(),
+       [](int32_t lhs, int32_t rhs) { return lhs > rhs; });
 
 }

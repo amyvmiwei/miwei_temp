@@ -33,6 +33,7 @@
 #include <AsyncComm/ConnectionManager.h>
 #include <AsyncComm/ReactorFactory.h>
 
+#include <Common/Config.h>
 #include <Common/FileUtils.h>
 #include <Common/InetAddr.h>
 #include <Common/Init.h>
@@ -54,11 +55,18 @@ namespace Hypertable {
 
     class EntityGeneric : public Entity {
     public:
-      EntityGeneric(int t) : Entity(t), value(100) { m_name = String("GenericEntity") + t; }
-      EntityGeneric(const EntityHeader &header_) : Entity(header_), value(0) { m_name = String("GenericEntity") + header_.type; }
+      EntityGeneric(int t) : Entity(t), m_value(100) {
+        m_name = String("GenericEntity") + t;
+        char buf[1025];
+        memset(buf, '0', 1024);
+        buf[1024] = 0;
+        m_data.append(buf);
+      }
+      EntityGeneric(const EntityHeader &header_) : Entity(header_) { m_name = String("GenericEntity") + header_.type; }
       virtual const String name() { return m_name; }
-      virtual void display(ostream &os) { os << "value=" << value; }
-      void increment() { value++; }
+      virtual void display(ostream &os) { os << "value=" << m_value; }
+      void increment() { m_value++; }
+      void set_value(int32_t value) { m_value = value; }
 
       virtual void decode(const uint8_t **bufp, size_t *remainp,
                           uint16_t definition_version) {
@@ -72,22 +80,24 @@ namespace Hypertable {
       }
 
       size_t encoded_length_internal() const override {
-	return 4;
+	return 4 + Serialization::encoded_length_vstr(m_data);;
       }
 
       void encode_internal(uint8_t **bufp) const override {
-        Serialization::encode_i32(bufp, value);
+        Serialization::encode_i32(bufp, m_value);
+        Serialization::encode_vstr(bufp, m_data);
       }
 
       void decode_internal(uint8_t version, const uint8_t **bufp,
 			   size_t *remainp) override {
 	(void)version;
-        value = Serialization::decode_i32(bufp, remainp);
+        m_value = Serialization::decode_i32(bufp, remainp);
+        m_data = Serialization::decode_vstr(bufp, remainp);
       }
-      
 
       String m_name;
-      int32_t value;
+      int32_t m_value {};
+      String m_data;
     };
     
     typedef std::shared_ptr<EntityGeneric> EntityGenericPtr;
@@ -140,6 +150,12 @@ namespace {
           writer->record_state(g_entities[j]);
       }
     }
+  }
+
+  void randomly_set_values(MetaLog::WriterPtr &writer) {
+    for (auto & entity : g_entities)
+      dynamic_pointer_cast<MetaLog::EntityGeneric>(entity)->set_value( Random::number32() % 1000000 );
+    writer->record_state(g_entities);
   }
 
   void display_entities(ofstream &out) {
@@ -225,6 +241,32 @@ main(int ac, char *av[]) {
       reader = 0;
       out.close();
       HT_ASSERT(system("diff metalog_test2.out metalog_test2.golden") == 0);
+    }
+
+
+    /**
+     *  Log file rollover test
+     */
+    Config::properties->set("Hypertable.MetaLog.MaxFileSize", (int64_t)50000);
+    writer = new MetaLog::Writer(fs, g_test_definition,
+                                 testdir + "/" + g_test_definition->name(),
+                                 g_entities);
+
+    {
+      ofstream out("metalog_test3.out");
+      randomly_set_values(writer);
+      randomly_set_values(writer);
+      randomly_set_values(writer);
+      randomly_set_values(writer);
+      writer = 0;
+      reader = new MetaLog::Reader(fs, g_test_definition,
+                                   testdir + "/" + g_test_definition->name());
+      g_entities.clear();
+      reader->get_entities(g_entities);
+      display_entities(out);
+      reader = 0;
+      out.close();
+      HT_ASSERT(system("diff metalog_test3.out metalog_test3.golden") == 0);
     }
 
     /**
