@@ -203,6 +203,8 @@ void DefaultPolicy::init_options() {
         "size a MetaLog file can grow before it is compacted")
     ("Hypertable.MetaLog.SkipErrors", boo()->default_value(false), "Skipping "
         "errors instead of throwing exceptions on metalog errors")
+    ("Hypertable.MetaLog.WriteInterval", i32()->default_value(30),
+        "Minimum write interval for Metalog in milliseconds")
     ("Hypertable.Network.Interface", str(),
      "Use this interface for network communication")
     ("CephBroker.Port", i16(),

@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <memory>
 #include <thread>
 
@@ -107,6 +108,8 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const string &path,
 
   write_header();
 
+  m_write_scheduler = make_shared<WriteScheduler>(this);
+
   // Write existing entries
   record_state(initial_entities);
 
@@ -117,11 +120,12 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const string &path,
 }
 
 Writer::~Writer() {
+  m_write_scheduler.reset();
   close();
 }
 
 void Writer::close() {
-  lock_guard<mutex> lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   try {
     if (m_fd != -1) {
       m_fs->close(m_fd);
@@ -198,7 +202,7 @@ void Writer::roll() {
   }
   EntityRecover er;
   er.encode_entry(&ptr);
-  HT_ASSERT((ptr-buf.base) == buf.size);
+  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
 
   m_offset += buf.size;
 
@@ -206,6 +210,77 @@ void Writer::roll() {
   FileUtils::write(m_backup_fd, buf.base, buf.size);
   m_fs->append(m_fd, buf, m_flush_method);
   
+}
+
+void Writer::service_write_queue() {
+
+  if (!m_write_ready)
+    return;
+
+  m_write_ready = false;
+
+  if (!m_write_queue.empty()) {
+    size_t total {};
+    for (auto & sb : m_write_queue)
+      total += sb->size;
+
+    StaticBuffer buf(total);
+    uint8_t *ptr = buf.base;
+
+    for (auto & sb : m_write_queue) {
+      memcpy(ptr, sb->base, sb->size);
+      ptr += sb->size;
+    }
+    HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
+
+    m_offset += buf.size;
+
+    FileUtils::write(m_backup_fd, buf.base, buf.size);
+    m_fs->append(m_fd, buf, m_flush_method);
+
+    m_write_queue.clear();
+
+    if (m_offset > m_max_file_size)
+      roll();
+  }
+
+}
+
+
+Writer::WriteScheduler::WriteScheduler(Writer *writer)
+  : m_writer(writer) {
+  m_interval = Config::properties->get_i32("Hypertable.MetaLog.WriteInterval");
+  m_comm = Comm::instance();
+}
+
+Writer::WriteScheduler::~WriteScheduler() {
+  unique_lock<mutex> lock(m_mutex);
+  if (m_scheduled)
+    m_cond.wait(lock);
+}
+
+
+void Writer::WriteScheduler::schedule() {
+  unique_lock<mutex> lock(m_mutex);
+  if (m_scheduled)
+    return;
+  auto duration = chrono::system_clock::now().time_since_epoch();
+  auto millis = chrono::duration_cast<chrono::milliseconds>(duration).count();
+  uint32_t duration_millis = m_interval - (millis % m_interval);
+  int error;
+  if ((error = m_comm->set_timer(duration_millis, shared_from_this())) != Error::OK)
+    HT_FATALF("Problem setting MetaLog timer - %s", Error::get_text(error));
+  m_scheduled = true;
+}
+
+
+void Writer::WriteScheduler::handle(EventPtr &event) {
+  {
+    unique_lock<mutex> lock(m_mutex);
+    m_scheduled = false;
+  }
+  m_writer->signal_write_ready();
+  m_cond.notify_all();
 }
 
 
@@ -238,37 +313,29 @@ void Writer::write_header() {
 
 
 void Writer::record_state(EntityPtr entity) {
-  lock_guard<mutex> lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   size_t length;
-  StaticBuffer buf;
+  StaticBufferPtr buf;
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
-  if (m_offset > m_max_file_size)
-    roll();
-
   {
     Locker<Entity> lock(*entity);
     length = EntityHeader::LENGTH + (entity->marked_for_removal() ? 0 : entity->encoded_length());
-    buf.set(new uint8_t [length], length);
-    uint8_t *ptr = buf.base;
+    buf = make_shared<StaticBuffer>(length);
+    uint8_t *ptr = buf->base;
 
     if (entity->marked_for_removal())
       entity->header.encode( &ptr );
     else
       entity->encode_entry( &ptr );
 
-    HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
+    HT_ASSERT((ptr-buf->base) == (ptrdiff_t)buf->size);
   }
 
   shared_ptr<uint8_t> backup_buf(new uint8_t [length], default_delete<uint8_t[]>());
-  memcpy(backup_buf.get(), buf.base, buf.size);
-
-  m_offset += buf.size;
-
-  FileUtils::write(m_backup_fd, buf.base, buf.size);
-  m_fs->append(m_fd, buf, m_flush_method);
+  memcpy(backup_buf.get(), buf->base, buf->size);
 
   // Add to entity map
   if (dynamic_cast<EntityRecover *>(entity.get()) == nullptr) {
@@ -277,10 +344,17 @@ void Writer::record_state(EntityPtr entity) {
       m_entity_map[entity->header.id] = SerializedEntityT(length, backup_buf);
   }
 
+  m_write_queue.push_back(buf);
+
+  m_write_scheduler->schedule();
+
+  m_cond.wait(lock);
+
+  service_write_queue();
 }
 
 void Writer::record_state(std::vector<EntityPtr> &entities) {
-  lock_guard<mutex> lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   shared_ptr<StaticBuffer> buffers( new StaticBuffer[entities.size()], default_delete<StaticBuffer[]>() );
   uint8_t *ptr;
   size_t length = 0;
@@ -291,9 +365,6 @@ void Writer::record_state(std::vector<EntityPtr> &entities) {
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
-
-  if (m_offset > m_max_file_size)
-    roll();
 
   size_t i=0;
   for (auto & entity : entities) {
@@ -320,31 +391,31 @@ void Writer::record_state(std::vector<EntityPtr> &entities) {
     i++;
   }
 
-  StaticBuffer buf(new uint8_t [total_length], total_length);
-  ptr = buf.base;
+  StaticBufferPtr buf = make_shared<StaticBuffer>(total_length);
+  ptr = buf->base;
   for (i=0; i<entities.size(); i++) {
     memcpy(ptr, buffers.get()[i].base, buffers.get()[i].size);
     ptr += buffers.get()[i].size;
   }
-  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
+  HT_ASSERT((ptr-buf->base) == (ptrdiff_t)buf->size);
 
-  m_offset += buf.size;
+  m_write_queue.push_back(buf);
 
-  FileUtils::write(m_backup_fd, buf.base, buf.size);
-  m_fs->append(m_fd, buf, m_flush_method);
+  m_write_scheduler->schedule();
+
+  m_cond.wait(lock);
+
+  service_write_queue();
+
 }
 
 void Writer::record_removal(EntityPtr entity) {
-  lock_guard<mutex> lock(m_mutex);
-  StaticBuffer buf(EntityHeader::LENGTH);
-  uint8_t backup_buf[EntityHeader::LENGTH];
-  uint8_t *ptr = buf.base;
+  unique_lock<mutex> lock(m_mutex);
+  StaticBufferPtr buf = make_shared<StaticBuffer>(EntityHeader::LENGTH);
+  uint8_t *ptr = buf->base;
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
-
-  if (m_offset > m_max_file_size)
-    roll();
 
   entity->header.flags |= EntityHeader::FLAG_REMOVE;
   entity->header.length = 0;
@@ -352,22 +423,23 @@ void Writer::record_removal(EntityPtr entity) {
 
   entity->header.encode( &ptr );
 
-  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
-  memcpy(backup_buf, buf.base, buf.size);
-
-  m_offset += buf.size;
-
-  FileUtils::write(m_backup_fd, backup_buf, buf.size);
-  m_fs->append(m_fd, buf, m_flush_method);
+  HT_ASSERT((ptr-buf->base) == (ptrdiff_t)buf->size);
 
   // Remove from entity map
   m_entity_map.erase(entity->header.id);
 
+  m_write_queue.push_back(buf);
+
+  m_write_scheduler->schedule();
+
+  m_cond.wait(lock);
+
+  service_write_queue();
 }
 
 
 void Writer::record_removal(std::vector<EntityPtr> &entities) {
-  lock_guard<mutex> lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
 
   if (entities.empty())
     return;
@@ -375,13 +447,9 @@ void Writer::record_removal(std::vector<EntityPtr> &entities) {
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
-  if (m_offset > m_max_file_size)
-    roll();
-
   size_t length = entities.size() * EntityHeader::LENGTH;
-  StaticBuffer buf(length);
-  shared_ptr<uint8_t> backup_buf(new uint8_t [length], default_delete<uint8_t[]>());
-  uint8_t *ptr = buf.base;
+  StaticBufferPtr buf = make_shared<StaticBuffer>(length);
+  uint8_t *ptr = buf->base;
 
   for (auto &entity : entities) {
     entity->header.flags |= EntityHeader::FLAG_REMOVE;
@@ -392,12 +460,21 @@ void Writer::record_removal(std::vector<EntityPtr> &entities) {
     m_entity_map.erase(entity->header.id);
   }
 
-  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
-  memcpy(backup_buf.get(), buf.base, buf.size);
+  HT_ASSERT((ptr-buf->base) == (ptrdiff_t)buf->size);
 
-  m_offset += buf.size;
+  m_write_queue.push_back(buf);
 
-  FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
-  m_fs->append(m_fd, buf, m_flush_method);
+  m_write_scheduler->schedule();
 
+  m_cond.wait(lock);
+
+  service_write_queue();
+
+}
+
+
+void Writer::signal_write_ready() {
+  unique_lock<mutex> lock(m_mutex);
+  m_write_ready = true;
+  m_cond.notify_all();
 }

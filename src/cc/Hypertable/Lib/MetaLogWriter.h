@@ -35,6 +35,10 @@
 #include <Common/Mutex.h>
 #include <Common/ReferenceCount.h>
 
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
+
+#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -45,9 +49,8 @@ namespace Hypertable {
 
   namespace MetaLog {
 
-    /** @addtogroup libHypertable
-     * @{
-     */
+    /// @addtogroup libHypertable
+    /// @{
 
     /** Writes a %MetaLog.
      * This class is used to persist application entities to a %MetaLog.  It
@@ -148,10 +151,42 @@ namespace Hypertable {
        */
       void record_removal(std::vector<EntityPtr> &entities);
 
+      void signal_write_ready();
+
       /// Global flag to force writer to skip writing EntityRecover (testing)
       static bool skip_recover_entry;
 
     private:
+
+      /// Periodically flushes deferred writes to disk
+      class WriteScheduler : public DispatchHandler {
+      public:
+
+        /// Constructor.
+        WriteScheduler(Writer *writer);
+
+        virtual ~WriteScheduler();
+
+        void schedule();
+
+        void handle(EventPtr &event) override;
+
+      private:
+        /// %Mutex for serializing access to members
+        std::mutex m_mutex;
+        /// Condition variable to signal when timer has stopped
+        condition_variable m_cond;
+        /// Pointer to MetaLogWriter
+        Writer *m_writer {};
+        /// Pointer to Comm layer
+        Comm *m_comm {};
+        /// Timer interval
+        int32_t m_interval {};
+        /// Flag indicating that write has been scheduled
+        bool m_scheduled {};
+      };
+
+      typedef std::shared_ptr<WriteScheduler> WriteSchedulerPtr;
 
       /** Writes %MetaLog file header.
        * This method writes a %MetaLog file header to the open %MetaLog file
@@ -176,8 +211,13 @@ namespace Hypertable {
 
       void roll();
 
+      void service_write_queue();
+
       /// %Mutex for serializing access to members
       std::mutex m_mutex;
+
+      /// Condition variable to signal completion of deferred writes
+      condition_variable m_cond;
       
       /// Smart pointer to Filesystem object
       FilesystemPtr m_fs;
@@ -227,12 +267,21 @@ namespace Hypertable {
       /// Map of current serialized entity data
       std::map<int64_t, SerializedEntityT> m_entity_map;
 
+      /// Flag indicating that 
+      bool m_write_ready {};
+
+      /// Vector of pending writes
+      std::vector<StaticBufferPtr> m_write_queue;
+
+      /// Write scheduler
+      WriteSchedulerPtr m_write_scheduler;
+
     };
 
     /// Smart pointer to Writer
     typedef intrusive_ptr<Writer> WriterPtr;
     
-    /** @}*/
+    /// @}
   }
 
 }

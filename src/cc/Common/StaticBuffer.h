@@ -24,19 +24,19 @@
  * The %StaticBuffer is a memory buffer of static size.
  */
 
-#ifndef HYPERTABLE_STATICBUFFER_H
-#define HYPERTABLE_STATICBUFFER_H
+#ifndef Common_StaticBuffer_h
+#define Common_StaticBuffer_h
 
 #include "DynamicBuffer.h"
 #include "Logger.h"
 
 #include <cstdlib>
+#include <memory>
 
 namespace Hypertable {
 
-  /** @addtogroup Common
-   *  @{
-   */
+  /// @addtogroup Common
+  ///  @{
 
   /** A memory buffer of static size. The actual buffer can be allocated or
    * assigned by the caller. If the StaticBuffer "owns" the pointer then it
@@ -228,8 +228,11 @@ namespace Hypertable {
     return !(sb1 == sb2);
   }
 
-  /** @} */
+  /// Smart pointer to StaticBuffer
+  typedef std::shared_ptr<StaticBuffer> StaticBufferPtr;
+
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_STATICBUFFER_H
+#endif // Common_StaticBuffer_h
