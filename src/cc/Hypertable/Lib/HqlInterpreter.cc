@@ -547,7 +547,10 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
     ignore_unknown_columns = true;
 
   // Turn on no-log-sync unconditionally for LOAD DATA INFILE
-  mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
+  if (LoadDataFlags::no_log(state.load_flags))
+    mutator_flags |= Table::MUTATOR_FLAG_NO_LOG;
+  else
+    mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   if (state.table_name.empty()) {
     if (state.output_file.empty())

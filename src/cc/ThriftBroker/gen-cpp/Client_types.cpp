@@ -53,13 +53,15 @@ const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES(::apache::thrift::TEnu
 
 int _kMutatorFlagValues[] = {
   MutatorFlag::NO_LOG_SYNC,
-  MutatorFlag::IGNORE_UNKNOWN_CFS
+  MutatorFlag::IGNORE_UNKNOWN_CFS,
+  MutatorFlag::NO_LOG
 };
 const char* _kMutatorFlagNames[] = {
   "NO_LOG_SYNC",
-  "IGNORE_UNKNOWN_CFS"
+  "IGNORE_UNKNOWN_CFS",
+  "NO_LOG"
 };
-const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(2, _kMutatorFlagValues, _kMutatorFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(3, _kMutatorFlagValues, _kMutatorFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
 int _kStatusCodeValues[] = {
   StatusCode::OK,

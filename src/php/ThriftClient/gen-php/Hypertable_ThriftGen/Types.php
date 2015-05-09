@@ -82,13 +82,16 @@ final class KeyFlag {
  * 
  * NO_LOG_SYNC: Do not sync the commit log
  * IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
+ * NO_LOG: Don't write to the commit log
  */
 final class MutatorFlag {
   const NO_LOG_SYNC = 1;
   const IGNORE_UNKNOWN_CFS = 2;
+  const NO_LOG = 4;
   static public $__names = array(
     1 => 'NO_LOG_SYNC',
     2 => 'IGNORE_UNKNOWN_CFS',
+    4 => 'NO_LOG',
   );
 }
 

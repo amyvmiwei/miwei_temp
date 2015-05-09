@@ -26,6 +26,7 @@ use constant INSERT => 255;
 package Hypertable::ThriftGen::MutatorFlag;
 use constant NO_LOG_SYNC => 1;
 use constant IGNORE_UNKNOWN_CFS => 2;
+use constant NO_LOG => 4;
 package Hypertable::ThriftGen::StatusCode;
 use constant OK => 0;
 use constant WARNING => 1;

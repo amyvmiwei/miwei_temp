@@ -2162,6 +2162,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_no_log {
+      set_no_log(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.load_flags |= LoadDataFlags::NO_LOG;
+      }
+      ParserState &state;
+    };
+
     struct scan_set_keys_only {
       scan_set_keys_only(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -2603,6 +2611,7 @@ namespace Hypertable {
           Token NO_CACHE     = as_lower_d["no_cache"];
           Token NOESCAPE     = as_lower_d["noescape"];
           Token NO_ESCAPE    = as_lower_d["no_escape"];
+          Token NO_LOG       = as_lower_d["no_log"];
           Token IDS          = as_lower_d["ids"];
           Token NOKEYS       = as_lower_d["nokeys"];
           Token SINGLE_CELL_FORMAT = as_lower_d["single_cell_format"];
@@ -3383,6 +3392,7 @@ namespace Hypertable {
             | IGNORE_UNKNOWN_COLUMNS[set_ignore_unknown_cfs(self.state)]
             | SINGLE_CELL_FORMAT[set_single_cell_format(self.state)]
             | FS >> EQUAL >> single_string_literal[set_field_separator(self.state)]
+            | NO_LOG[set_no_log(self.state)]
             ;
 
           /**

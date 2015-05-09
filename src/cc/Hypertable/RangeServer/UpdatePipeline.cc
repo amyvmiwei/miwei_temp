@@ -569,11 +569,16 @@ void UpdatePipeline::commit() {
       if (table_update->error != Error::OK)
         continue;
 
-      if ((table_update->flags & Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
+      constexpr uint32_t NO_LOG_SYNC_FLAGS = 
+        Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG_SYNC |
+        Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG;
+
+      if ((table_update->flags & NO_LOG_SYNC_FLAGS) == 0)
         log_needs_syncing = true;
 
       // Commit valid (go) mutations
-      if (table_update->go_buf.ptr > table_update->go_buf.mark) {
+      if ((table_update->flags & Lib::RangeServer::Protocol::UPDATE_FLAG_NO_LOG) == 0 &&
+          table_update->go_buf.ptr > table_update->go_buf.mark) {
 
         if ((error = m_log->write(ClusterId::get(), table_update->go_buf, uc->last_revision, Filesystem::Flags::NONE)) != Error::OK) {
           table_update->error_msg = format("Problem writing %d bytes to commit log (%s) - %s",

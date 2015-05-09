@@ -87,7 +87,7 @@ namespace Hypertable {
      * @param name Name of table to compact
      * @param row Optional row identifying range withing table to compact
      * @param flags Compaction flags
-     *        (see RangeServerProtocol::CompactionFlags)
+     *        (see Lib::RangeServer::Protocol::CompactionFlags)
      */
     void compact(const std::string &name, const std::string &row, uint32_t flags);
 
