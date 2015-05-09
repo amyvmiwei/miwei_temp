@@ -350,10 +350,11 @@ namespace Hypertable {
      * @param fd The open file descriptor
      * @param offset The starting offset of read
      * @param amount The amount of data to read (in bytes)
+     * @param verify_checksum Tells filesystem to perform checksum verification
      * @param handler The dispatch handler
      */
     virtual void pread(int fd, size_t amount, uint64_t offset,
-            DispatchHandler *handler) = 0;
+                       bool verify_checksum, DispatchHandler *handler) = 0;
 
     /** Reads data from a file at the specified position.  Issues a pread
      * request and waits for it to complete, returning the read data.

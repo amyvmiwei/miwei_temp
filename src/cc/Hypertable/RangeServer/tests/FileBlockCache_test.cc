@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     else {
       length = input_data[index].length;
       block = new uint8_t [ length ];
-      HT_EXPECT(cache->insert(file_id, file_offset, block, length, true),
+      HT_EXPECT(cache->insert(file_id, file_offset, block, length, EventPtr(), true),
                 Error::FAILED_EXPECTATION);
       total_alloc += length;
       cache->checkin(file_id, file_offset);

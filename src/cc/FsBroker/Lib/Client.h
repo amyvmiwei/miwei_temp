@@ -153,7 +153,7 @@ namespace Lib {
     int64_t decode_response_length(EventPtr &event) override;
 
     void pread(int32_t fd, size_t len, uint64_t offset,
-               DispatchHandler *handler) override;
+               bool verify_checksum, DispatchHandler *handler) override;
     size_t pread(int32_t fd, void *dst, size_t len, uint64_t offset,
 			 bool verify_checksum) override;
     void decode_response_pread(EventPtr &event, const void **buffer,

@@ -665,10 +665,10 @@ int64_t Client::decode_response_length(EventPtr &event) {
 
 void
 Client::pread(int32_t fd, size_t len, uint64_t offset,
-              DispatchHandler *handler) {
+              bool verify_checksum, DispatchHandler *handler) {
   CommHeader header(Request::Handler::Factory::FUNCTION_PREAD);
   header.gid = fd;
-  Request::Parameters::Pread params(fd, offset, len, true);
+  Request::Parameters::Pread params(fd, offset, len, verify_checksum);
   CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
   params.encode(cbuf->get_data_ptr_address());
 
