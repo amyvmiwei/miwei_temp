@@ -26,6 +26,7 @@
 /// CellStore using its block index.
 
 #include <Common/Compat.h>
+
 #include "CellStoreScannerIntervalBlockIndex.h"
 
 #include <Hypertable/RangeServer/Global.h>
@@ -33,10 +34,15 @@
 
 #include <Hypertable/Lib/BlockHeaderCellStore.h>
 
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
+#include <AsyncComm/Event.h>
+#include <AsyncComm/Protocol.h>
+
 #include <Common/Error.h>
 #include <Common/System.h>
 
 #include <cassert>
+#include <utility>
 
 using namespace Hypertable;
 
@@ -222,19 +228,32 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
     if (Global::block_cache == 0 || Global::block_cache->compressed() ||
         !Global::block_cache->checkout(m_file_id, m_block.offset,
 				       (uint8_t **)&m_block.base, &len)) {
-      bool second_try = false;
-      bool checked_out = false;
+      bool second_try {};
+      bool checked_out {};
+
     try_again:
       try {
         DynamicBuffer buf;
+        EventPtr event;
 
 	if (Global::block_cache == 0 || !Global::block_cache->compressed() ||
             !Global::block_cache->checkout(m_file_id, m_block.offset,
 				           (uint8_t **)&buf.base, &len)) {
-	  buf.grow(m_block.zlength, true);
 
 	  /** Read compressed block **/
-	  Global::dfs->pread(m_fd, buf.base, m_block.zlength, m_block.offset, second_try);
+          DispatchHandlerSynchronizer sync_handler;
+	  Global::dfs->pread(m_fd, m_block.zlength, m_block.offset, second_try, &sync_handler);
+          if (!sync_handler.wait_for_reply(event))
+            HT_THROW(Protocol::response_code(event.get()),
+                     Protocol::string_format_message(event).c_str());
+          {
+            uint32_t length;
+            uint64_t off;
+            const void *data;
+            Global::dfs->decode_response_read(event, &data, &off, &length);
+            buf.base = (uint8_t *)data;
+            buf.own = false;
+          }
 
 	  checked_out = false;
 	}
@@ -263,10 +282,11 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
         if (Global::block_cache && Global::block_cache->compressed()) {
           if (checked_out)
             Global::block_cache->checkin(m_file_id, m_block.offset);
-          else if (Global::block_cache->insert(m_file_id, m_block.offset, (uint8_t *)buf.base, m_block.zlength))
-            buf.own = false;
+          else
+            Global::block_cache->insert(m_file_id, m_block.offset,
+                                        (uint8_t *)buf.base, m_block.zlength,
+                                        event, false);
         }
-
       }
       catch (Exception &e) {
         HT_WARN_OUT << "Error reading cell store (fd=" << m_fd << " file="
@@ -291,7 +311,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
       /** Insert uncompressed block into cache  **/
       m_cached = Global::block_cache && !Global::block_cache->compressed() &&
           Global::block_cache->insert(m_file_id, m_block.offset,
-				      (uint8_t *)m_block.base, len, true);
+				      (uint8_t *)m_block.base, len, EventPtr(), true);
     }
     else
       m_cached = true;

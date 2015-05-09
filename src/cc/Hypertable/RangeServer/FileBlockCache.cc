@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,11 +19,13 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
-#include <iostream>
+#include <Common/Compat.h>
 
 #include "FileBlockCache.h"
+
+#include <cassert>
+#include <iostream>
+#include <utility>
 
 using namespace Hypertable;
 using std::pair;
@@ -34,7 +36,8 @@ FileBlockCache::~FileBlockCache() {
   ScopedLock lock(m_mutex);
   for (BlockCache::const_iterator iter = m_cache.begin();
        iter != m_cache.end(); ++iter)
-    delete [] (*iter).block;
+    if (!iter->event)
+      delete [] (*iter).block;
   m_cache.clear();
 }
 
@@ -81,7 +84,8 @@ void FileBlockCache::checkin(int file_id, uint64_t file_offset) {
 
 bool
 FileBlockCache::insert(int file_id, uint64_t file_offset,
-		       uint8_t *block, uint32_t length, bool checkout) {
+		       uint8_t *block, uint32_t length,
+                       const EventPtr &event, bool checkout) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
 
@@ -100,7 +104,7 @@ FileBlockCache::insert(int file_id, uint64_t file_offset,
       return false;
   }
 
-  BlockCacheEntry entry(file_id, file_offset);
+  BlockCacheEntry entry(file_id, file_offset, event);
   entry.block = block;
   entry.length = length;
   entry.ref_count = checkout ? 1 : 0;
@@ -162,7 +166,8 @@ int64_t FileBlockCache::make_room(int64_t amount) {
     if ((*iter).ref_count == 0) {
       m_available += (*iter).length;
       amount_freed += (*iter).length;
-      delete [] (*iter).block;
+      if (!iter->event)
+        delete [] iter->block;
       iter = m_cache.erase(iter);
       if (m_available >= amount)
 	break;

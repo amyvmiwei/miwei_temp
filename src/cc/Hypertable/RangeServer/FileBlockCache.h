@@ -19,16 +19,18 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_FILEBLOCKCACHE_H
-#define HYPERTABLE_FILEBLOCKCACHE_H
+#ifndef Hypertable_RangeServer_FileBlockCache_h
+#define Hypertable_RangeServer_FileBlockCache_h
+
+#include <AsyncComm/Event.h>
+
+#include <Common/Mutex.h>
+#include <Common/atomic.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-
-#include "Common/Mutex.h"
-#include "Common/atomic.h"
 
 namespace Hypertable {
   using namespace boost::multi_index;
@@ -50,7 +52,8 @@ namespace Hypertable {
                   uint32_t *lengthp);
     void checkin(int file_id, uint64_t file_offset);
     bool insert(int file_id, uint64_t file_offset,
-		uint8_t *block, uint32_t length, bool checkout=false);
+		uint8_t *block, uint32_t length, 
+                const EventPtr &event, bool checkout);
     bool contains(int file_id, uint64_t file_offset);
 
     void increase_limit(int64_t amount);
@@ -114,16 +117,16 @@ namespace Hypertable {
 
     class BlockCacheEntry {
     public:
-      BlockCacheEntry() : file_id(-1), length(0), file_offset(0), block(0),
-          ref_count(0) { return; }
-      BlockCacheEntry(int id, uint64_t offset) : file_id(id), length(0),
-          file_offset(offset), block(0), ref_count(0) { return; }
+      BlockCacheEntry() { }
+      BlockCacheEntry(int id, uint64_t offset, const EventPtr &e)
+        : file_id(id), file_offset(offset), event(e) {}
 
-      int      file_id;
-      uint32_t length;
-      uint64_t file_offset;
-      uint8_t  *block;
-      uint32_t ref_count;
+      int file_id {-1};
+      uint32_t length {};
+      uint64_t file_offset {};
+      uint8_t  *block {};
+      uint32_t ref_count {};
+      EventPtr event;
       int64_t key() const { return FileBlockCache::make_key(file_id, file_offset); }
     };
 
@@ -164,5 +167,4 @@ namespace Hypertable {
 
 }
 
-
-#endif // HYPERTABLE_FILEBLOCKCACHE_H
+#endif // Hypertable_RangeServer_FileBlockCache_h
