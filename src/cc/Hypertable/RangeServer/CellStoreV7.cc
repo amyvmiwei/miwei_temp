@@ -254,7 +254,7 @@ CellStoreV7::create(const char *fname, size_t max_entries,
       if (!(has_num_hashes && has_bits_per_item)) {
         HT_WARN("Bloom filter option --bits-per-item must be used with "
                 "--num-hashes, defaulting to false probability of 0.01");
-        m_filter_false_positive_prob = 0.1;
+        m_filter_false_positive_prob = 0.1f;
       }
       else {
         m_trailer.bloom_filter_hash_count = props->get_i32("num-hashes");
@@ -543,7 +543,7 @@ void CellStoreV7::add(const Key &key, const ByteString value) {
     else {
       assert(!m_bloom_filter_items && m_bloom_filter);
 
-      m_bloom_filter->insert(key.row);
+      m_bloom_filter->insert(key.row, key.row_len);
 
       if (m_bloom_filter_mode == BLOOM_FILTER_ROWS_COLS)
         m_bloom_filter->insert(key.row, key.row_len + 2);

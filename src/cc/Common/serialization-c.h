@@ -122,7 +122,7 @@
  */
 #ifdef HT_LITTLE_ENDIAN
 # define HT_ENCODE_I16(_op_, _v_) do { \
-    memcpy(_op_, &(_v_), 2); \
+    *reinterpret_cast<uint16_t*>(_op_) = _v_; \
     _op_ += 2; \
   } while (0)
 #else
@@ -138,7 +138,7 @@
 #ifdef HT_LITTLE_ENDIAN
 # define HT_DECODE_I16(_ip_, _r_, _v_) do { \
     HT_DECODE_NEED(_r_, 2); \
-    memcpy(&(_v_), _ip_, 2); \
+    _v_ = *reinterpret_cast<const uint16_t*>(_ip_); \
     _ip_ += 2; \
   } while (0)
 #else
@@ -155,7 +155,7 @@
  */
 #ifdef HT_LITTLE_ENDIAN
 # define HT_ENCODE_I32(_op_, _v_) do { \
-    memcpy(_op_, &(_v_), 4); \
+    *reinterpret_cast<uint32_t*>(_op_) = _v_; \
     _op_ += 4; \
   } while (0)
 #else
@@ -173,7 +173,7 @@
 #ifdef HT_LITTLE_ENDIAN
 # define HT_DECODE_I32(_ip_, _r_, _v_) do { \
     HT_DECODE_NEED(_r_, 4); \
-    memcpy(&_v_, _ip_, 4); \
+    _v_ = *reinterpret_cast<const uint32_t*>(_ip_); \
     _ip_ += 4; \
   } while (0)
 #else
@@ -192,7 +192,7 @@
  */
 #ifdef HT_LITTLE_ENDIAN
 # define HT_ENCODE_I64(_op_, _v_) do { \
-    memcpy(_op_, &(_v_), 8); \
+    *reinterpret_cast<uint64_t*>(_op_) = _v_; \
     _op_ += 8; \
   } while (0)
 #else
@@ -214,7 +214,7 @@
 #ifdef HT_LITTLE_ENDIAN
 # define HT_DECODE_I64(_ip_, _r_, _v_) do { \
     HT_DECODE_NEED(_r_, 8); \
-    memcpy(&(_v_), _ip_, 8); \
+    _v_ = *reinterpret_cast<const uint64_t*>(_ip_); \
     _ip_ += 8; \
   } while (0)
 #else
@@ -321,22 +321,17 @@
 
 /* vint decode helpers */
 #define HT_DECODE_VINT0(_type_, _v_, _ip_, _r_) \
-  uint32_t _shift_ = 0; \
   HT_DECODE_NEED(_r_, 1); \
-  _v_ = (*(_ip_)++ & 0x7f);
+  _v_ = (*(_ip_) & 0x7f);
 
-#define HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_) \
-  _shift_ += 7; \
-  if ((_ip_)[-1] & 0x80) { \
+#define HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _shift_, _done_) \
+  if (*(_ip_) & 0x80) { \
     HT_DECODE_NEED(_r_, 1); \
-    _v_ |= ((_type_)(*(_ip_)++ & 0x7f) << _shift_); \
-  } else _done_;
-
-#define HT_DECODE_VINT4(_type_, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(_type_, _v_, _ip_, _r_, _done_)
+    _v_ |= ((_type_)(*(++(_ip_)) & 0x7f) << _shift_); \
+  } else { \
+    ++(_ip_); \
+    _done_; \
+  }
 
 /*
  * Decode a 32-bit integer encoded in vint format
@@ -348,8 +343,11 @@
  */
 #define HT_DECODE_VI32(_ip_, _r_, _v_, _done_) do { \
   HT_DECODE_VINT0(uint32_t, _v_, _ip_, _r_) \
-  HT_DECODE_VINT4(uint32_t, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(uint32_t, _v_, _ip_, _r_, _done_) \
+  HT_DECODE_VINT_(uint32_t, _v_, _ip_, _r_,  7, _done_) \
+  HT_DECODE_VINT_(uint32_t, _v_, _ip_, _r_, 14, _done_) \
+  HT_DECODE_VINT_(uint32_t, _v_, _ip_, _r_, 21, _done_) \
+  HT_DECODE_VINT_(uint32_t, _v_, _ip_, _r_, 28, _done_) \
+  HT_DECODE_VINT_(uint32_t, _v_, _ip_, _r_,  0, _done_) \
   HT_THROW_BAD_VINT("vint32"); \
 } while (0)
 
@@ -363,10 +361,16 @@
  */
 #define HT_DECODE_VI64(_ip_, _r_, _v_, _done_) do { \
   HT_DECODE_VINT0(uint64_t, _v_, _ip_, _r_) \
-  HT_DECODE_VINT4(uint64_t, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT4(uint64_t, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, _done_) \
-  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_,  7, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 14, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 21, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 28, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 35, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 42, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 49, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 56, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_, 63, _done_) \
+  HT_DECODE_VINT_(uint64_t, _v_, _ip_, _r_,  0, _done_) \
   HT_THROW_BAD_VINT("vint64"); \
 } while (0)
 

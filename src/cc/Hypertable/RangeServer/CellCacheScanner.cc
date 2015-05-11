@@ -73,9 +73,9 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
 
     current.serial.ptr = current_buf.base;
 
-    for (iter = m_cell_cache_ptr->m_cell_map.lower_bound(current.serial);
+    for (iter = m_cell_cache_ptr->m_cell_map.lower_bound(CellCache::CellCacheKey(current.serial));
          iter != m_cell_cache_ptr->m_cell_map.end(); ++iter) {
-      current.load(iter->first);
+      iter->first.load(current);
       if (current.flag != FLAG_DELETE_ROW ||
           strcmp(current.row, scan_ctx->start_key.row))
         break;
@@ -92,9 +92,9 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
 
       current.serial.ptr = current_buf.base;
 
-      for (iter = m_cell_cache_ptr->m_cell_map.lower_bound(current.serial);
+      for (iter = m_cell_cache_ptr->m_cell_map.lower_bound(CellCache::CellCacheKey(current.serial));
            iter != m_cell_cache_ptr->m_cell_map.end(); ++iter) {
-        current.load(iter->first);
+        iter->first.load(current);
         if (current.flag != FLAG_DELETE_COLUMN_FAMILY ||
             current.column_family_code != scan_ctx->start_key.column_family_code ||
             strcmp(current.row, scan_ctx->start_key.row))
@@ -104,11 +104,19 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
     }
   }
 
-  m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scan_ctx->start_serkey);
-  if (m_start_iter != m_cell_cache_ptr->m_cell_map.end())
-    m_end_iter = m_cell_cache_ptr->m_cell_map.lower_bound(scan_ctx->end_serkey);
+  CellCache::CellCacheKey start_cck(scan_ctx->start_serkey);
+  m_start_iter = m_cell_cache_ptr->m_cell_map.lower_bound(start_cck);
+  if (m_start_iter != m_cell_cache_ptr->m_cell_map.end()) {
+    CellCache::CellCacheKey end_cck(scan_ctx->end_serkey);
+    if (start_cck.compare(end_cck))
+      m_end_iter = m_cell_cache_ptr->m_cell_map.upper_bound(end_cck);
+    else {
+      m_end_iter = m_start_iter;
+      ++m_end_iter;
+    }
+  }
   else
-    m_end_iter = m_cell_cache_ptr->m_cell_map.end();
+    m_end_iter = m_start_iter;
   m_cur_iter = m_start_iter;
 
   if (!m_deletes.empty()) {
@@ -117,7 +125,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   }
 
   while (m_cur_iter != m_end_iter) {
-    m_cur_entry.key.load( (*m_cur_iter).first );
+    (*m_cur_iter).first.load(m_cur_entry.key);
     if (m_cur_entry.key.flag == FLAG_DELETE_ROW
         || m_scan_context_ptr->family_mask[m_cur_entry.key.column_family_code]) {
       m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_cur_iter).second;
@@ -155,7 +163,7 @@ void CellCacheScanner::forward() {
 bool CellCacheScanner::internal_get() {
 
   if (m_in_deletes) {
-    m_cur_entry.key.load( (*m_delete_iter).first );
+    (*m_delete_iter).first.load(m_cur_entry.key);
     m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_delete_iter).second;
     return true;
   }
@@ -178,7 +186,7 @@ void CellCacheScanner::internal_forward() {
     if (m_delete_iter == m_deletes.end()) {
       m_in_deletes = false;
       // reset current entry since its loaded with the last entry in m_deletes
-      m_cur_entry.key.load( (*m_cur_iter).first );
+      (*m_cur_iter).first.load(m_cur_entry.key);
       m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_cur_iter).second;
     }
     return;
@@ -187,7 +195,7 @@ void CellCacheScanner::internal_forward() {
   ++m_cur_iter;
   while (m_cur_iter != m_end_iter) {
 
-    m_cur_entry.key.load( (*m_cur_iter).first );
+    (*m_cur_iter).first.load(m_cur_entry.key);
     if (m_cur_entry.key.flag == FLAG_DELETE_ROW
         || m_scan_context_ptr->family_mask[m_cur_entry.key.column_family_code]) {
       m_cur_entry.value.ptr = m_cur_entry.key.serial.ptr + (*m_cur_iter).second;
@@ -212,6 +220,7 @@ void CellCacheScanner::load_entry_cache() {
   if (m_eos)
     return;
 
+  m_entry_cache.reserve(Global::cell_cache_scanner_cache_size);
   while (m_entry_cache.size() < (size_t)Global::cell_cache_scanner_cache_size) {
 
     if (!internal_get()) {

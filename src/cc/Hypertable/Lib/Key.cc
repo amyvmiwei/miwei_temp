@@ -156,11 +156,15 @@ namespace Hypertable {
    * TODO: Re-implement below function in terms of this function
    */
   bool Key::load(const SerializedKey& key) {
-    serial = key;
-    const uint8_t* ptr = serial.ptr;
-    size_t len = Serialization::decode_vi32(&ptr);
+    const uint8_t* ptr = key.ptr;
+    uint32_t len = Serialization::decode_vi32(&ptr);
+    return load(key, len, ptr - key.ptr);
+  }
 
-    length = len + (ptr - serial.ptr);
+  bool Key::load(const SerializedKey& key, uint32_t len, uint32_t offset) {
+    serial = key;
+    const uint8_t* ptr = serial.ptr + offset;
+    length = len + offset;
 
     const uint8_t *end_ptr = ptr + len;
 

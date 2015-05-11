@@ -162,6 +162,8 @@ void QueryCache::dump_keys(ofstream &out) {
 void QueryCache::invalidate(const char *tablename, const char *row, std::set<uint8_t> &columns) {
   std::lock_guard<MutexWithStatistics> lock(m_mutex);
   InvalidateHashIndex &hash_index = m_cache.get<2>();
+  if (hash_index.size() == 0)
+    return;
   InvalidateHashIndex::iterator iter;
   RowKey row_key(tablename, row);
   pair<InvalidateHashIndex::iterator, InvalidateHashIndex::iterator> p = hash_index.equal_range(row_key);

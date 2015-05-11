@@ -38,31 +38,9 @@
 using namespace Hypertable;
 using namespace std;
 
-namespace {
-
-  struct CounterKeyCompare {
-    bool operator()(const CellCache::Value lhs, const CellCache::Value rhs) {
-      const uint8_t *ptr1, *ptr2;
-      int len1 = lhs.first.decode_length(&ptr1);
-      int len2 = rhs.first.decode_length(&ptr2);
-
-      // Strip timestamp & revision from key length (see Key.h)
-      if (*ptr1 >= 0x80)
-        len1 -= (*ptr1 & Key::REV_IS_TS) ? 8 : 16;
-      if (*ptr2 >= 0x80)
-        len2 -= (*ptr2 & Key::REV_IS_TS) ? 8 : 16;
-
-      int len = (len1 < len2) ? len1 : len2;
-      int cmp = memcmp(ptr1+1, ptr2+1, len-1);
-      return (cmp==0) ? len1 - len2 : cmp;
-    }
-  };
-
-}
-
 
 CellCache::CellCache()
-  : m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)) {
+  : m_cell_map(std::less<const CellCacheKey>(), Alloc(m_arena)) {
   assert(Config::properties); // requires Config::init* first
   m_arena.set_page_size((size_t)
       Config::get_i32("Hypertable.RangeServer.AccessGroup.CellCache.PageSize"));
@@ -72,16 +50,15 @@ CellCache::CellCache()
 /**
  */
 void CellCache::add(const Key &key, const ByteString value) {
-  SerializedKey new_key;
-  uint8_t *ptr;
-  size_t total_len = key.length + value.length();
+  size_t value_len = value.length();
+  size_t total_len = key.length + value_len;
 
   m_key_bytes += key.length;
-  m_value_bytes += value.length();
+  m_value_bytes += value_len;
 
-  new_key.ptr = ptr = m_arena.alloc(total_len);
-
+  uint8_t *ptr = m_arena.alloc(total_len);
   memcpy(ptr, key.serial.ptr, key.length);
+  CellCacheKey new_key(ptr);
   ptr += key.length;
 
   value.write(ptr);
@@ -104,7 +81,6 @@ void CellCache::add(const Key &key, const ByteString value) {
 /**
  */
 void CellCache::add_counter(const Key &key, const ByteString value) {
-  const uint8_t *ptr;
 
   // Check for counter reset
   if (*value.ptr == 9) {
@@ -121,7 +97,7 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
   HT_ASSERT(*value.ptr == 8);
 
   CounterKeyCompare comp;
-  Value lookup_value(key.serial, 0);
+  Value lookup_value(CellCacheKey(key.serial), 0);
   auto range = equal_range(m_cell_map.begin(), m_cell_map.end(), lookup_value, comp);
 
   // If no matching key, do a normal add
@@ -132,21 +108,15 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 
   auto iter = range.first;
 
-  size_t len = (*iter).first.decode_length(&ptr);
-
   // If the lengths differ, assume they're different keys and do a normal add
-  if (len + (ptr-(*iter).first.ptr) != key.length) {
-    add(key, value);
-    return;
-  }
-
-  if (memcmp(ptr+1, key.row, (key.flag_ptr+1)-(const uint8_t *)key.row)) {
+  if ((*iter).first.key_length() != key.length ||
+      memcmp((*iter).first.row(), key.row, (key.flag_ptr+1)-(const uint8_t *)key.row)) {
     add(key, value);
     return;
   }
 
   ByteString old_value;
-  old_value.ptr = (*iter).first.ptr + (*iter).second;
+  old_value.ptr = (*iter).first.key().ptr + (*iter).second;
 
   HT_ASSERT(*old_value.ptr == 8 || *old_value.ptr == 9);
 
@@ -160,9 +130,8 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 
   // If new timestamp is less than or equal to existing timestamp, assume the
   // increment was already accumulated, so skip it
-  size_t offset = (key.flag_ptr-((const uint8_t *)key.serial.ptr)) + 1;
-  len = (*iter).second - offset;
-  ptr = ((uint8_t *)(*iter).first.ptr) + offset;
+  uint32_t offset = (key.flag_ptr-((const uint8_t *)key.serial.ptr)) + 1;
+  uint32_t len = (*iter).second - offset;
 
 #if 0
   // If key timestamp is not auto-assigned, assume that the timestamp uniquely
@@ -176,10 +145,10 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 #endif
 
   // Copy timestamp/revision info from insert key to the one in the map
-  memcpy(((uint8_t *)(*iter).first.ptr) + offset, key.flag_ptr+1, len);
+  memcpy(((uint8_t *)(*iter).first.key().ptr) + offset, key.flag_ptr+1, len);
 
   // read old value
-  ptr = old_value.ptr+1;
+  const uint8_t* ptr = old_value.ptr+1;
   size_t remaining = 8;
   int64_t old_count = (int64_t)Serialization::decode_i64(&ptr, &remaining);
 
@@ -204,18 +173,17 @@ void CellCache::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
     if (last_row == 0)
       last_row = row;
     if (strcmp(row, last_row) != 0) {
-      CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
-      if (iter == split_row_data.end())
-        split_row_data[last_row] = last_count;
-      else
-        iter->second += last_count;
+      std::pair<SplitRowDataMapT::iterator, bool> r =
+        split_row_data.insert(std::make_pair(last_row, last_count));
+      if (!r.second)
+        r.first->second += last_count;
       last_row = row;
       last_count = 0;
     }
     last_count++;
   }
   if (last_count > 0) {
-    CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
+    SplitRowDataMapT::iterator iter = split_row_data.find(last_row);
     if (iter == split_row_data.end())
       split_row_data[last_row] = last_count;
     else

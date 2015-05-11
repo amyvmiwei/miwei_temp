@@ -33,7 +33,7 @@ namespace Hypertable {
     SerializedKey(const uint8_t *buf) : ByteString(buf) { }
     SerializedKey(ByteString bs) { ptr = bs.ptr; }
 
-    int compare(const SerializedKey sk) const {
+    int compare(const SerializedKey& sk) const {
       const uint8_t *ptr1, *ptr2;
       int len1 = decode_length(&ptr1);
       int len2 = sk.decode_length(&ptr2);
@@ -57,27 +57,27 @@ namespace Hypertable {
     }
   };
 
-  inline bool operator==(const SerializedKey sk1, const SerializedKey sk2) {
+  inline bool operator==(const SerializedKey& sk1, const SerializedKey& sk2) {
     return sk1.compare(sk2) == 0;
   }
 
-  inline bool operator!=(const SerializedKey sk1, const SerializedKey sk2) {
+  inline bool operator!=(const SerializedKey& sk1, const SerializedKey& sk2) {
     return sk1.compare(sk2) != 0;
   }
 
-  inline bool operator<(const SerializedKey sk1, const SerializedKey sk2) {
+  inline bool operator<(const SerializedKey& sk1, const SerializedKey& sk2) {
     return sk1.compare(sk2) < 0;
   }
 
-  inline bool operator<=(const SerializedKey sk1, const SerializedKey sk2) {
+  inline bool operator<=(const SerializedKey& sk1, const SerializedKey& sk2) {
     return sk1.compare(sk2) <= 0;
   }
 
-  inline bool operator>(const SerializedKey sk1, const SerializedKey sk2) {
+  inline bool operator>(const SerializedKey& sk1, const SerializedKey& sk2) {
     return sk1.compare(sk2) > 0;
   }
 
-  inline bool operator>=(const SerializedKey sk1, const SerializedKey sk2) {
+  inline bool operator>=(const SerializedKey& sk1, const SerializedKey& sk2) {
     return sk1.compare(sk2) >= 0;
   }
 

@@ -41,13 +41,13 @@ namespace Hypertable {
 
     virtual int64_t get_disk_read() { return 0; }
 
-    typedef std::map<const SerializedKey, uint32_t> CellCacheMap;
-
   private:
 
     bool internal_get();
     void internal_forward();
     void load_entry_cache();
+
+    typedef std::map<const CellCache::CellCacheKey, uint32_t> CellCacheMap;
 
     class CellCacheEntry {
     public:

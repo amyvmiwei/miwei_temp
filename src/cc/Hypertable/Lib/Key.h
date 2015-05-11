@@ -109,6 +109,7 @@ namespace Hypertable {
      * @return true on success, false otherwise
      */
     bool load(const SerializedKey& key);
+    bool load(const SerializedKey& key, uint32_t len, uint32_t offset);
 
     size_t len_row() const { return row_len; }
 
