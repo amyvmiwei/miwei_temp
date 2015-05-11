@@ -456,6 +456,7 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
       foreach_ht (const RowInterval& ri, scan_spec.row_intervals) {
         if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
           scan_spec.base_copy(interval_scan_spec);
+          interval_scan_spec.scan_and_filter_rows = false;
           interval_scan_spec.row_intervals.push_back(ri);
           ri_scanner = 0;
           ri_scanner = new IntervalScannerAsync(comm, app_queue, table,
