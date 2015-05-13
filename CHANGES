@@ -1,3 +1,31 @@
+Version 0.9.8.8:
+(2015-05-15)
+
+   Added NO_LOG feature to allow skipping commit log write
+   Added group commit to MetaLog
+   issue 1196: Periodically roll MetaLog file to prevent it from getting too big
+   Improved file flush logic in HDFS broker
+   issue 1341: Eliminated superfluous memory copy in CellStoreScannerIntervalBlockIndex::fetch_next_block
+   Added --pidfile option to performance test Client and Dispatcher
+   Secondary index improvements (including performance)
+   Small fix on scan and filter rows
+   Fixed column predicate values that are not 0-terminated strings
+   More performance improvements
+   Reduced brittleness in Bad-RSML-Master-recover test
+   Client side performance improvements
+   Fixed bug in AsyncComm RequestCache::get_next_timeout
+   Added fast numeric formatters, replacing sprintf
+   Added PageArena dup overload for std::string
+   Share application queues among table objects
+   Cleaned up COUNTER handling code in CellCache
+   Use dictionary for strings in CellsBuilder
+   Reduced calls to strlen and cf spec lookups in Mutator
+   Fixed path problem in auto-generated hql_types.rb
+   Performance improvements in LocationCache and TableMutatorAsyncScatterBuffer
+   Don't create object map entry on weak reference in ThriftBroker
+   Changed strings returned by value to const reference
+   Fixe MapReduce connectors for rows with non-UTF8 characters
+
 Version 0.9.8.7:
 (2015-04-02)
 
