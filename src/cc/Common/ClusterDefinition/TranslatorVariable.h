@@ -20,12 +20,12 @@
  */
 
 /// @file
-/// Declarations for TranslatorRole.
-/// This file contains type declarations for TranslatorRole, a class for
-/// translating a role definiton statement.
+/// Declarations for TranslatorVariable.
+/// This file contains type declarations for TranslatorVariable, a class for
+/// translating variable definition statements.
 
-#ifndef Tools_cluster_TranslatorRole_h
-#define Tools_cluster_TranslatorRole_h
+#ifndef Common_TranslatorVariable_h
+#define Common_TranslatorVariable_h
 
 #include "TranslationContext.h"
 #include "Translator.h"
@@ -39,32 +39,31 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
-  /// Translates a role definition.
-  class TranslatorRole : public Translator {
+  /// Translates a variable definition.
+  class TranslatorVariable : public Translator {
   public:
+
     /// Constructor.
-    /// @param fname Filename of source file
-    /// @param lineno Starting offset within source file of input text
-    /// @param text Input text
-    TranslatorRole(const string &fname, size_t lineno, const string &text)
+    /// @param fname Filename of source file containing variable definition
+    /// @param lineno Line number within source file of variable definition text
+    /// @param text Text of variable definition
+    TranslatorVariable(const string &fname, size_t lineno, const string &text)
       : m_fname(fname), m_lineno(lineno), m_text(text) {};
 
-    /// Translates a role definition.
-    /// This function translates role definitions of the form:
+    /// Translates a variable definition.
+    /// This method translates a global variable definition of the form:
     /// <pre>
-    /// role: slave test[00-99]
+    /// CONFIG_FILE="/root/hypertable.cfg"
     /// </pre>
-    /// To a bash variable definition of the form:
+    /// Into the following
     /// <pre>
-    /// ROLE_slave="test[00-99]"
+    /// CONFIG_FILE=${CONFIG_FILE:-"/root/hypertable.cfg"}
     /// </pre>
-    /// As a side effect, it inserts the role name into
-    /// <code>context.roles</code> and inserts the variable name representing
-    /// the role (e.g. <code>ROLE_name</code>) into the
-    /// <code>context.symbols</code> map, mapping it to the role value (e.g.
-    /// <code>test[00-99]</code> in the above example).
+    /// This allow variables to be overriden by environment variables. As a side
+    /// effect, it inserts the variable name into the
+    /// <code>context.symbols</code> map, mapping it to the variable value.
     /// @param context Context object containing symbol tables
-    /// @return Translated role statement.
+    /// @return Translated variable definition statement
     const string translate(TranslationContext &context) override;
 
   private:
@@ -72,7 +71,7 @@ namespace Hypertable { namespace ClusterDefinition {
     string m_fname;
     /// Starting offset within #m_fname of input text
     size_t m_lineno;
-    /// Input text containing role definition statememt
+    /// Text of variable definition
     string m_text;
   };
 
@@ -80,4 +79,4 @@ namespace Hypertable { namespace ClusterDefinition {
 
 }}
 
-#endif // Tools_cluster_TranslatorRole_h
+#endif // Common_TranslatorVariable_h

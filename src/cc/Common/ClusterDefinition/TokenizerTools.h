@@ -25,8 +25,8 @@
 /// containing utility functions to assist in cluster definition file
 /// tokenization.
 
-#ifndef Tools_cluster_ClusterDefinition_TokenizerTools_h
-#define Tools_cluster_ClusterDefinition_TokenizerTools_h
+#ifndef Common_ClusterDefinition_TokenizerTools_h
+#define Common_ClusterDefinition_TokenizerTools_h
 
 #include <map>
 #include <string>
@@ -186,4 +186,4 @@ namespace Hypertable {
   }
 }
 
-#endif // Tools_cluster_ClusterDefinition_TokenizerTools_h
+#endif // Common_ClusterDefinition_TokenizerTools_h

@@ -24,8 +24,8 @@
 /// This file contains type declarations for Token, a class representing a
 /// cluster definition file token.
 
-#ifndef Tools_cluster_ClusterDefinition_Token_h
-#define Tools_cluster_ClusterDefinition_Token_h
+#ifndef Common_ClusterDefinition_Token_h
+#define Common_ClusterDefinition_Token_h
 
 #include "Translator.h"
 
@@ -85,4 +85,4 @@ namespace Hypertable { namespace ClusterDefinition {
 
 }}
 
-#endif // Tools_cluster_ClusterDefinition_Token_h
+#endif // Common_ClusterDefinition_Token_h

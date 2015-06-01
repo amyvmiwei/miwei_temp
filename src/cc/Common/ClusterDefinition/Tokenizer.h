@@ -24,8 +24,8 @@
 /// This file contains type declarations for Tokenizer, a class for tokenizing a
 /// cluster definition file.
 
-#ifndef Tools_cluster_ClusterDefinition_Tokenizer_h
-#define Tools_cluster_ClusterDefinition_Tokenizer_h
+#ifndef Common_ClusterDefinition_Tokenizer_h
+#define Common_ClusterDefinition_Tokenizer_h
 
 #include "Token.h"
 
@@ -126,4 +126,4 @@ namespace Hypertable { namespace ClusterDefinition {
 
 }}
 
-#endif // Tools_cluster_ClusterDefinition_Tokenizer_h
+#endif // Common_ClusterDefinition_Tokenizer_h

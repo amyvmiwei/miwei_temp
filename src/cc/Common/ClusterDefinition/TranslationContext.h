@@ -20,17 +20,15 @@
  */
 
 /// @file
-/// Declarations for Translator.
-/// This file contains type declarations for Translator, an abstract base class
-/// for classes that translate cluster definition entities
-/// (e.g. role, task, ...)
+/// Declarations for TranslationContext.
+/// This file contains type declarations for TranslationContext, a class to hold
+/// context populated and used by cluster definition entity translators.
 
-#ifndef Tools_cluster_Translator_h
-#define Tools_cluster_Translator_h
+#ifndef Common_TranslationContext_h
+#define Common_TranslationContext_h
 
-#include "TranslationContext.h"
-
-#include <memory>
+#include <map>
+#include <set>
 #include <string>
 
 namespace Hypertable { namespace ClusterDefinition {
@@ -40,20 +38,26 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
-  /// Abstract base class for translators.
-  class Translator {
+  /// Context used to translate cluster definition statements.
+  class TranslationContext {
+
   public:
-    /// Translates token
-    /// This method is called to translate a token.
-    /// @param context Context object containing symbol tables
-    /// @return Translated token text
-    virtual const string translate(TranslationContext &context) = 0;
+
+    /// Map of variable names to default values
+    map<string, string> symbols;
+
+    /// Set of role names
+    set<string> roles;
+
+    /// Map of tasks to descriptive text
+    map<string, string> tasks;
+
+    // Map of tasks to comma separated roles
+    map<string, string> task_roles;
   };
 
-  /// Smart pointer to Translator
-  typedef shared_ptr<Translator> TranslatorPtr;
-
   /// @}
+
 }}
 
-#endif // Tools_cluster_Translator_h
+#endif // Common_TranslationContext_h

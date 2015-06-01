@@ -24,8 +24,8 @@
 /// This file contains type declarations for ToJson, a class for
 /// converting a cluster definition file into JSON.
 
-#ifndef Tools_cluster_ClusterDefinition_ToJson_h
-#define Tools_cluster_ClusterDefinition_ToJson_h
+#ifndef Common_ClusterDefinition_ToJson_h
+#define Common_ClusterDefinition_ToJson_h
 
 #include <string>
 
@@ -75,4 +75,4 @@ namespace Hypertable {
   }
 }
 
-#endif // Tools_cluster_ClusterDefinition_ToJson_h
+#endif // Common_ClusterDefinition_ToJson_h

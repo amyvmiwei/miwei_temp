@@ -24,8 +24,8 @@
 /// This file contains type declarations for Compiler, a class for compiling a
 /// cluster definition file into an executable bash script.
 
-#ifndef Tools_cluster_ClusterDefinition_Compiler_h
-#define Tools_cluster_ClusterDefinition_Compiler_h
+#ifndef Common_ClusterDefinition_Compiler_h
+#define Common_ClusterDefinition_Compiler_h
 
 #include <string>
 
@@ -146,4 +146,4 @@ namespace Hypertable {
   }
 }
 
-#endif // Tools_cluster_ClusterDefinition_Compiler_h
+#endif // Common_ClusterDefinition_Compiler_h

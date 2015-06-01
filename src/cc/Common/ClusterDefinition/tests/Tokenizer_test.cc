@@ -20,7 +20,7 @@
  */
 #include <Common/Compat.h>
 
-#include <Tools/cluster/ClusterDefinition/Tokenizer.h>
+#include <Common/ClusterDefinition/Tokenizer.h>
 
 #include <Common/Error.h>
 #include <Common/FileUtils.h>

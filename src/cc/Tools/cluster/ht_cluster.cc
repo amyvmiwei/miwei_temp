@@ -22,14 +22,14 @@
 #include <Common/Compat.h>
 
 #include "ClusterCommandInterpreter.h"
-#include "ClusterDefinition/Compiler.h"
-#include "ClusterDefinition/ToJson.h"
-#include "ClusterDefinition/TokenizerTools.h"
 
 #include <Tools/Lib/CommandShell.h>
 
 #include <Hypertable/Lib/Config.h>
 
+#include <Common/ClusterDefinition/Compiler.h>
+#include <Common/ClusterDefinition/ToJson.h>
+#include <Common/ClusterDefinition/TokenizerTools.h>
 #include <Common/Config.h>
 #include <Common/FileUtils.h>
 #include <Common/Init.h>

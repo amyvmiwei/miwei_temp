@@ -17,28 +17,14 @@
 # 02110-1301, USA.
 #
 
-set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/cluster")
-set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/cluster")
-
 set(cluster_SRCS
 ht_cluster.cc
 ClusterCommandInterpreter.cc
-ClusterDefinition/Compiler.cc
-ClusterDefinition/ToJson.cc
-ClusterDefinition/Token.cc
-ClusterDefinition/Tokenizer.cc
-ClusterDefinition/TokenizerTools.cc
-ClusterDefinition/TranslatorCode.cc
-ClusterDefinition/TranslatorRole.cc
-ClusterDefinition/TranslatorTask.cc
-ClusterDefinition/TranslatorVariable.cc
 )
 
 # ht_cluster - command interpreter
 add_executable(ht_cluster ${cluster_SRCS})
-target_link_libraries(ht_cluster Hypertable)
-
-add_subdirectory(ClusterDefinition)
+target_link_libraries(ht_cluster HyperCommon Hypertable)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS ht_cluster RUNTIME DESTINATION bin)

@@ -27,8 +27,8 @@
 #include <Common/Compat.h>
 
 #include "ClusterCommandInterpreter.h"
-#include "ClusterDefinition/TokenizerTools.h"
 
+#include <Common/ClusterDefinition/TokenizerTools.h>
 #include <Common/String.h>
 #include <Common/System.h>
 

@@ -24,8 +24,8 @@
 /// This file contains type declarations for TranslatorTask, a class for
 /// translating a task definiton statement.
 
-#ifndef Tools_cluster_TranslatorTask_h
-#define Tools_cluster_TranslatorTask_h
+#ifndef Common_TranslatorTask_h
+#define Common_TranslatorTask_h
 
 #include "TranslationContext.h"
 #include "Translator.h"
@@ -104,4 +104,4 @@ namespace Hypertable { namespace ClusterDefinition {
 
 }}
 
-#endif // Tools_cluster_TranslatorTask_h
+#endif // Common_TranslatorTask_h

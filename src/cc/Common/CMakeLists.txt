@@ -27,6 +27,15 @@ endif ()
 set(Common_SRCS
 Base64.cc
 Checksum.cc
+ClusterDefinition/Compiler.cc
+ClusterDefinition/ToJson.cc
+ClusterDefinition/Token.cc
+ClusterDefinition/Tokenizer.cc
+ClusterDefinition/TokenizerTools.cc
+ClusterDefinition/TranslatorCode.cc
+ClusterDefinition/TranslatorRole.cc
+ClusterDefinition/TranslatorTask.cc
+ClusterDefinition/TranslatorVariable.cc
 Config.cc
 ConsoleOutputSquelcher.cc
 Cronolog.cc
@@ -105,6 +114,8 @@ configure_file(${SRC_DIR}/tests/HostSpecification_test.golden
 
 add_executable(logging_test tests/logging_test.cc)
 target_link_libraries(logging_test HyperCommon)
+
+add_subdirectory(ClusterDefinition)
 
 # serialization tests
 add_executable(Serializable_test tests/Serializable_test.cc)

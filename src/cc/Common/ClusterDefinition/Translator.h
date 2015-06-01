@@ -20,16 +20,17 @@
  */
 
 /// @file
-/// Declarations for TranslatorCode.
-/// This file contains type declarations for TranslatorCode, a class for
-/// translating a code block.
+/// Declarations for Translator.
+/// This file contains type declarations for Translator, an abstract base class
+/// for classes that translate cluster definition entities
+/// (e.g. role, task, ...)
 
-#ifndef Tools_cluster_TranslatorCode_h
-#define Tools_cluster_TranslatorCode_h
+#ifndef Common_Translator_h
+#define Common_Translator_h
 
 #include "TranslationContext.h"
-#include "Translator.h"
 
+#include <memory>
 #include <string>
 
 namespace Hypertable { namespace ClusterDefinition {
@@ -39,32 +40,20 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
-  /// Translates a code block.
-  class TranslatorCode : public Translator {
+  /// Abstract base class for translators.
+  class Translator {
   public:
-    /// Constructor.
-    /// @param fname Filename of source file
-    /// @param lineno Starting offset within source file of code block text
-    /// @param text Text of code block
-    TranslatorCode(const string &fname, size_t lineno, const string &text)
-      : m_fname(fname), m_text(text) { (void)lineno; };
-
-    /// Translates a code block.
-    /// This method does no translation and passes the code block text straight
-    /// through untranslated.
+    /// Translates token
+    /// This method is called to translate a token.
     /// @param context Context object containing symbol tables
-    /// @return Unmodified code block text
-    const string translate(TranslationContext &context) override;
-
-  private:
-    /// Source file name containing code block
-    string m_fname;
-    /// Text of code block
-    string m_text;
+    /// @return Translated token text
+    virtual const string translate(TranslationContext &context) = 0;
   };
 
-  /// @}
+  /// Smart pointer to Translator
+  typedef shared_ptr<Translator> TranslatorPtr;
 
+  /// @}
 }}
 
-#endif // Tools_cluster_TranslatorCode_h
+#endif // Common_Translator_h
