@@ -1,4 +1,4 @@
 Hypertable CRITICAL - HYPERTABLE Hyperspace client connect error
 Hypertable CRITICAL - HYPERSPACE file not found - Hyperspace 'open' error, name=/hypertable/master flags=0x3 events=0x0
 Hypertable CRITICAL - No connected RangeServers
-Hypertable WARNING - RangeServer rs1 () Range initialization not yet complete
+Hypertable OK

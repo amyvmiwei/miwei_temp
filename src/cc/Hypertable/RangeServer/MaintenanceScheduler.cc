@@ -203,8 +203,11 @@ void MaintenanceScheduler::schedule() {
   foreach_ht (RangeData &rd, ranges.array)
     rd.data = rd.range->get_maintenance_data(ranges.arena, current_time, flags);
 
-  if (ranges.array.empty())
+  if (ranges.array.empty()) {
+    if (!Global::range_initialization_complete)
+      Global::range_initialization_complete = true;
     return;
+  }
 
   // Make a copy of the range statistics array for get_statistics()
   {
