@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,32 +19,34 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "CommTestThreadFunction.h"
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/Event.h>
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/TestHarness.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
+#include <boost/thread/thread.hpp>
+
+#include <chrono>
 #include <cstdlib>
+#include <thread>
 
 extern "C" {
-#include <poll.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
 }
-
-#include <boost/thread/thread.hpp>
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/TestHarness.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/Event.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include "CommTestThreadFunction.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -119,18 +121,18 @@ int main(int argc, char **argv) {
     if ((error = comm->set_timer(history[i].delay*1000, handler))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     if (history[i].delay > wait_time)
       wait_time = history[i].delay;
   }
 
-  poll(0, 0, (wait_time+1)*1000);
+  this_thread::sleep_for(chrono::milliseconds((wait_time+1)*1000));
 
   if (!golden)
     harness.validate_and_exit("commTestTimer.golden");
 
   harness.regenerate_golden_file("commTestTimer.golden");
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

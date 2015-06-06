@@ -19,25 +19,26 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
-#include "Common/Thread.h"
+#include <Common/Compat.h>
+
+#include "OperationTest.h"
+
+#include <Hypertable/Master/Context.h>
+#include <Hypertable/Master/MetaLogDefinitionMaster.h>
+#include <Hypertable/Master/OperationProcessor.h>
+#include <Hypertable/Master/ReferenceManager.h>
+#include <Hypertable/Master/ResponseManager.h>
+
+#include <Hypertable/Lib/Config.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <Common/Logger.h>
+#include <Common/Init.h>
+#include <Common/Thread.h>
 
 #include <iostream>
 #include <set>
-
-#include "FsBroker/Lib/Client.h"
-
-#include "Hypertable/Lib/Config.h"
-
-#include "Hypertable/Master/Context.h"
-#include "Hypertable/Master/MetaLogDefinitionMaster.h"
-#include "Hypertable/Master/OperationProcessor.h"
-#include "Hypertable/Master/ReferenceManager.h"
-#include "Hypertable/Master/ResponseManager.h"
-
-#include "OperationTest.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -441,7 +442,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
-  return 0;
+  quick_exit(EXIT_SUCCESS);
 }

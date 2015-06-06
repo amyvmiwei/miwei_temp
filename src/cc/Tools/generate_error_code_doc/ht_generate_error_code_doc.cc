@@ -30,5 +30,5 @@ using namespace std;
 int main(int argc, char **argv) {
   System::initialize(System::locate_install_dir(argv[0]));
   Error::generate_html_error_code_documentation(cout);
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

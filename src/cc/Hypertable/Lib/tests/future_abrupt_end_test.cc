@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,7 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Common/StringExt.h>
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/ServerLauncher.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Future.h>
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <AsyncComm/ReactorFactory.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -30,21 +46,6 @@
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/StringExt.h"
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/ServerLauncher.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Future.h"
-#include "Hypertable/Lib/KeySpec.h"
-
-#include "AsyncComm/ReactorFactory.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -144,14 +145,14 @@ int main(int argc, char **argv) {
   }
   catch (Hypertable::Exception &e) {
     cerr << e << endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   if (ii != num_cells) {
     cout << "Expected " << num_cells << " cells, received " << ii << endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
   cout << "Test passed"<< endl;
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

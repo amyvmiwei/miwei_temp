@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
     if (!fs->wait_for_connection(10000)) {
       HT_ERROR("Unable to connect to FS Broker, exiting...");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     srandom(1);

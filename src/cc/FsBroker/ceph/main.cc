@@ -61,7 +61,7 @@ struct AppPolicy : Config::Policy {
 
     if (has("ceph-version")) {
       cout <<"  Ceph: "<< ceph_version(NULL, NULL, NULL) << endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
   }
 };

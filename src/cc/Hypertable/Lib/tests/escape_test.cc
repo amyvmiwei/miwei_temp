@@ -78,12 +78,12 @@ namespace {
 
     if (strchr(escape_buf, '\n') != 0) {
       cout << "'\\n' found in escaped buffer" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     if (strchr(escape_buf, '\t') != 0) {
       cout << "'\\t' found in escaped buffer" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     escaper.unescape(escape_buf, escape_len, (const char **)&out_buf, &out_len);
@@ -91,12 +91,12 @@ namespace {
     if (out_len != len) {
       cout << "Unescaped buffer size " << out_len
            << " differs from original size " << len << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     if (memcmp(doc, out_buf, len)) {
       cout << "Unescaped buffer differs from original" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
   }

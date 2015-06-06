@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     Schema::AccessGroup *ag = schema->get_access_group("default");
 
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     schema = Schema::new_instance(schema2_str, strlen(schema2_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     ag = schema->get_access_group("default");
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
     schema = Schema::new_instance(schema3_str, strlen(schema3_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     ag = schema->get_access_group("default");
 

@@ -19,19 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/Init.h"
-#include "Common/StaticBuffer.h"
-#include "Common/md5.h"
+#include <Common/Compat.h>
 
-#include "AsyncComm/ConnectionManager.h"
+#include <Hypertable/RangeServer/AccessGroup.h>
+#include <Hypertable/RangeServer/AccessGroupHintsFile.h>
+#include <Hypertable/RangeServer/Global.h>
 
-#include "FsBroker/Lib/Client.h"
+#include <FsBroker/Lib/Client.h>
 
-#include "Hypertable/RangeServer/AccessGroup.h"
-#include "Hypertable/RangeServer/AccessGroupHintsFile.h"
-#include "Hypertable/RangeServer/Global.h"
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Config.h>
+#include <Common/Init.h>
+#include <Common/StaticBuffer.h>
+#include <Common/md5.h>
 
 #include <cstring>
 
@@ -208,13 +209,13 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
   catch (...) {
     HT_ERROR_OUT << "unexpected exception caught" << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 
 }
 

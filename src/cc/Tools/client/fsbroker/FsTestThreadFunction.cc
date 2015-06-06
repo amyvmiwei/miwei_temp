@@ -71,21 +71,21 @@ void fsbroker::FsTestThreadFunction::operator()() {
 
     if (origsz != dfssz1) {
       HT_ERRORF("Length mismatch: %lld != %lld", (Lld)origsz, (Lld)dfssz1);
-      exit(1);
+      quick_exit(EXIT_FAILURE);
     }
     if (origsz != dfssz2) {
       HT_ERRORF("Length mismatch: %lld != %lld", (Lld)origsz, (Lld)dfssz2);
-      exit(1);
+      quick_exit(EXIT_FAILURE);
     }
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   /**
   cmd_rm.push_arg(m_dfs_file, "");
   if (cmd_rm.run() != 0)
-    exit(1);
+    exit(EXIT_FAILURE);
   **/
 }

@@ -153,11 +153,11 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   fflush(stdout);
-  _exit(0); // don't bother with static objects
+  quick_exit(EXIT_SUCCESS); // don't bother with static objects
 }
 
 void generate_balance_plan(PropertiesPtr &props, const String &load_balancer,

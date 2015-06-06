@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
 
     if (!dfs->wait_for_connection(timeout)) {
       cerr << "error: timed out waiting for FS broker" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     Global::memory_tracker = new MemoryTracker(0, 0);
@@ -205,7 +205,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
   }
   catch (std::exception &e) {
     cerr << "error: " << e.what() << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   range_cell_store_info.start_row = "";
@@ -221,7 +221,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
         if (end_row_cstr == 0) {
           cerr << "error: mal-formed end row (missing colon) - "
                << range_cell_store_info.end_row << endl;
-          exit(1);
+          exit(EXIT_FAILURE);
         }
         end_row_cstr++;
         cell_store_info.start_row = range_cell_store_info.start_row;
@@ -251,7 +251,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
     else {
       cerr << "Unexpected column family encountered: '" << cell.column_family
            << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -261,7 +261,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
     if (end_row_cstr == 0) {
       cerr << "error: mal-formed end row (missing colon) - "
            << range_cell_store_info.end_row << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     end_row_cstr++;
     cell_store_info.start_row = range_cell_store_info.start_row;

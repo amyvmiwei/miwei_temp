@@ -41,13 +41,13 @@ int main(int ac, char *av[]) {
 
     if (strcmp(output, golden[ii])) {
       printf( "Test failed expected output %s got %s\n", golden[ii], output);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     else
       printf("Test passed expected output %s got %s\n", golden[ii], output);
 
     HT_ASSERT(md5_hash((const char *)input[ii]) == golden_hashes[ii]);
   }
-  exit(0);
+  exit(EXIT_SUCCESS);
 
 }

@@ -70,12 +70,12 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
 #if defined(__linux__)
     if ((poll_fd = epoll_create(256)) < 0) {
       perror("epoll_create");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 #elif defined(__sun__)
     if ((poll_fd = port_create()) < 0) {
       perror("creation of event port failed");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 #elif defined(__APPLE__) || defined(__FreeBSD__)
     kqd = kqueue();
@@ -91,7 +91,7 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
      */
     if ((m_interrupt_sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
       HT_ERRORF("socket() failure: %s", strerror(errno));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     // Set to non-blocking (are we sure we should do this?)
@@ -151,7 +151,7 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
 	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, EPOLLIN|EPOLLOUT|POLLRDHUP|"
 		  "EPOLLET) failed : %s", poll_fd, m_interrupt_sd,
 		  strerror(errno));
-	exit(1);
+	exit(EXIT_FAILURE);
       }
     }
     else {
@@ -160,7 +160,7 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
       if (epoll_ctl(poll_fd, EPOLL_CTL_ADD, m_interrupt_sd, &event) < 0) {
 	HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, 0) failed : %s",
 		  poll_fd, m_interrupt_sd, strerror(errno));
-	exit(1);
+	exit(EXIT_FAILURE);
       }
     }
 #endif

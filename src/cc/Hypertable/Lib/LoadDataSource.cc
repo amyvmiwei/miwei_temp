@@ -265,7 +265,7 @@ LoadDataSource::parse_header(const string &header,
     if (j == m_column_info.size()) {
       cout << "ERROR: key column '" << column_name
            << "' not found in input file" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 

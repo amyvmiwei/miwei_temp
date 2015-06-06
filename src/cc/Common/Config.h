@@ -150,7 +150,7 @@ namespace Hypertable { namespace Config {
     static void init() { }
     static void on_init_error(Exception &e) {
       HT_ERROR_OUT << e << HT_END;
-      std::exit(1);
+      std::exit(EXIT_FAILURE);
     }
     static void cleanup() { }
   };

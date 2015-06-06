@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,20 +19,19 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
+#include <Common/Compat.h>
 
-#include "AsyncComm/Config.h"
+#include <Hypertable/Master/SystemState.h>
 
-#include "Hypertable/Master/SystemState.h"
+#include <AsyncComm/Config.h>
 
-extern "C" {
-#include <poll.h>
-}
+#include <Common/Logger.h>
+#include <Common/Init.h>
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include <vector>
 
 using namespace Hypertable;
@@ -73,7 +72,7 @@ int main(int argc, char **argv) {
     out << notifications[0].subject << "\n";
     out << notifications[0].body << "\n";
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
 
     if (system_state.admin_set(SystemVariable::READONLY, true))
       HT_FATAL("admin_set(SystemVariable::READONLY, true) changed state");
@@ -87,7 +86,7 @@ int main(int argc, char **argv) {
     out << notifications[0].subject << "\n";
     out << notifications[0].body << "\n";
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
 
     if (system_state.admin_set(SystemVariable::READONLY, true))
       HT_FATAL("admin_set(SystemVariable::READONLY, true) changed state");
@@ -142,7 +141,7 @@ int main(int argc, char **argv) {
     out << notifications[0].subject << "\n";
     out << notifications[0].body << "\n";
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
 
     specs.clear();
     spec.code = SystemVariable::READONLY;
@@ -161,7 +160,7 @@ int main(int argc, char **argv) {
     out << notifications[0].subject << "\n";
     out << notifications[0].body << "\n";
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
 
     specs.clear();
     spec.code = SystemVariable::READONLY;
@@ -224,7 +223,7 @@ int main(int argc, char **argv) {
     out << notifications[0].subject << "\n";
     out << notifications[0].body << "\n";
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
 
     if (system_state.auto_set(SystemVariable::READONLY, true, "because of test (2)"))
       HT_FATAL("auto_set(SystemVariable::READONLY, true) changed state");
@@ -238,7 +237,7 @@ int main(int argc, char **argv) {
     out << notifications[0].subject << "\n";
     out << notifications[0].body << "\n";
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
 
     if (system_state.auto_set(SystemVariable::READONLY, true, "because of test (3)"))
       HT_FATAL("auto_set(SystemVariable::READONLY, true) changed state");
@@ -275,13 +274,13 @@ int main(int argc, char **argv) {
     String cmd = "diff system_state_test.output system_state_test.golden";
     if (system(cmd.c_str()) != 0) {
       std::cout << "system_state_test.output differs from golden file.\n";
-      _exit(1);
+      _exit(EXIT_FAILURE);
     }
 
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    _exit(EXIT_FAILURE);
   }
   return 0;
 }

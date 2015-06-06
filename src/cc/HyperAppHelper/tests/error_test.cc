@@ -30,6 +30,7 @@
 
 using namespace Hypertable;
 using namespace Hypertable::HyperAppHelper;
+using namespace std;
 
 static int argc;
 static char **argv;
@@ -51,5 +52,5 @@ main(int _argc, char **_argv)
   s=error_get_text(999999);
   HT_ASSERT(!strcmp(s, "ERROR NOT REGISTERED"));
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

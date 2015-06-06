@@ -45,5 +45,5 @@ void Shutdown::run() {
   HT_INFO("Exiting RangeServer.");
   if (has("pidfile"))
     FileUtils::unlink(get_str("pidfile"));
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

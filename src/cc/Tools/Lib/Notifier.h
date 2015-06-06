@@ -42,7 +42,7 @@ namespace Hypertable {
       InetAddr inet_addr;
       m_comm = Comm::instance();
       if (!InetAddr::initialize(&inet_addr, addr_str)) {
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       m_addr = inet_addr;
       InetAddr::initialize(&inet_addr, INADDR_ANY, 0);
@@ -62,7 +62,7 @@ namespace Hypertable {
         if ((error = m_comm->send_datagram(m_addr, m_send_addr, cbp))
             != Error::OK) {
           HT_ERRORF("Problem sending datagram - %s", Error::get_text(error));
-          exit(1);
+          exit(EXIT_FAILURE);
         }
       }
     }

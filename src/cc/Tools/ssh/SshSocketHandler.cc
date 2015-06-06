@@ -136,7 +136,7 @@ void SshSocketHandler::set_libssh_verbosity(const std::string &value) {
     ms_libssh_verbosity = SSH_LOG_FUNCTIONS;
   else {
     cout << "Unrecognized libssh logging level: " << value << endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 }
 

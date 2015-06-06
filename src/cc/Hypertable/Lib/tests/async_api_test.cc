@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,15 +19,16 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+
+#include <Common/StringExt.h>
+#include <Common/Usage.h>
+#include <Common/Mutex.h>
+
 #include <fstream>
 #include <vector>
-
-#include "Common/StringExt.h"
-#include "Common/Usage.h"
-#include "Common/Mutex.h"
-
-#include "Hypertable/Lib/Client.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -156,7 +157,7 @@ namespace {
       ScopedLock lock(mutex);
       Exception e(error, error_msg);
       outfile << e << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     void update_ok(TableMutatorAsync *mutator) {
@@ -167,7 +168,7 @@ namespace {
       ScopedLock lock(mutex);
       Exception e(error, "");
       outfile << e << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     void completed() {
@@ -288,11 +289,11 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   if (system("diff ./asyncApiTest.output ./asyncApiTest.golden"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

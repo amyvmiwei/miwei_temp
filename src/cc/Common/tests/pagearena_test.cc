@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,11 +19,11 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
-#include "Common/PageArenaAllocator.h"
-#include "Common/TestUtils.h"
+#include <Common/Compat.h>
+#include <Common/Logger.h>
+#include <Common/Init.h>
+#include <Common/PageArenaAllocator.h>
+#include <Common/TestUtils.h>
 
 #include <boost/bind.hpp>
 #include <deque>
@@ -214,6 +214,6 @@ int main(int ac, char *av[]) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 }

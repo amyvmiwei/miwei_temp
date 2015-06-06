@@ -425,7 +425,7 @@ namespace Hypertable {
       if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
         HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed : %s",
                      m_reactor->poll_fd, m_sd, strerror(errno));
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       m_poll_interest = 0;
 #endif

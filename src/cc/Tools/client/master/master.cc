@@ -75,7 +75,7 @@ namespace {
         if (!m_connected) {
           if (!m_silent)
             cout << "Master CRITICAL - connect error" << endl;
-          _exit(2);
+          quick_exit(2);
         }
       }
       else if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
       if (!silent)
         cout << "Master CRITICAL - connect error" << endl;
-      _exit(2);
+      quick_exit(2);
     }
 
     poll(0, 0, 100);
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
         cout << " - " << msg;
       cout << endl;
     }
-    _exit(2);
+    quick_exit(2);
   }
-  _exit(error);
+  quick_exit(error);
 }

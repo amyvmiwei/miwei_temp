@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         cout << " - " << msg;
       cout << endl;
     }
-    _exit(output_only ? 0 : 2);
+    quick_exit(output_only ? 0 : 2);
   }
   catch (ThriftGen::ClientException &e) {
     if (!silent) {
@@ -127,13 +127,13 @@ int main(int argc, char **argv) {
         cout << " - " << e.message;
       cout << endl;
     }
-    _exit(output_only ? 0 : 2);
+    quick_exit(output_only ? 0 : 2);
   }
   catch (std::exception &e) {
     if (!silent)
       cout << "ThriftBroker CRITICAL - " << e.what() << endl;
-    _exit(output_only ? 0 : 2);
+    quick_exit(output_only ? 0 : 2);
   }
 
-  _exit(error);
+  quick_exit(error);
 }

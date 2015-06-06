@@ -32,7 +32,7 @@ using namespace std;
     try { parse_ts(_timestr_); } \
     catch (std::exception &e) { break; } \
     cout << _timestr_ << " parsed successfullly, but is invalid" << endl; \
-    exit(0); \
+    exit(EXIT_SUCCESS); \
   } while (0)
 
 
@@ -59,5 +59,4 @@ int main(int ac, char *av[]) {
   VERIFY_OUT_OF_RANGE("2011-06-15 12:60:30");
   VERIFY_OUT_OF_RANGE("2011-06-15 12:30:60");
 
-  return 0;
 }

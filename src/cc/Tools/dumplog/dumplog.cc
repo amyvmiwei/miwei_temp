@@ -65,7 +65,7 @@ struct AppPolicy : Config::Policy {
   static void init() {
     if (!has("log-dir")) {
       HT_ERROR_OUT <<"log-dir required\n"<< cmdline_desc() << HT_END;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 };
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
     if (!dfs_client->wait_for_connection(timeout)) {
       HT_ERROR("Unable to connect to DFS Broker, exiting...");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     FilesystemPtr fs = dfs_client;

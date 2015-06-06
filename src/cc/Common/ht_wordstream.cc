@@ -26,14 +26,13 @@
  * with a space (' ').
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
+#include <Common/Compat.h>
+#include <Common/Init.h>
+#include <Common/Checksum.h>
+#include <Common/FileUtils.h>
+#include <Common/WordStream.h>
 
 #include <iostream>
-
-#include "Checksum.h"
-#include "FileUtils.h"
-#include "WordStream.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -77,7 +76,7 @@ int main(int argc, char **argv) {
 
     if (!has("words-per-record")) {
       cout << cmdline_desc() << flush;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     WordStreamPtr word_stream
@@ -88,9 +87,9 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   cout << std::flush;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

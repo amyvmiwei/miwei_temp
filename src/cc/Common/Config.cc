@@ -570,17 +570,17 @@ void parse_args(int argc, char *argv[]) {
   // some built-in behavior
   if (has("help")) {
     std::cout << cmdline_desc() << std::flush;
-    _exit(0);
+    std::quick_exit(EXIT_SUCCESS);
   }
 
   if (has("help-config")) {
     std::cout << file_desc() << std::flush;
-    _exit(0);
+    std::quick_exit(EXIT_SUCCESS);
   }
 
   if (has("version")) {
     std::cout << version_string() << std::endl;
-    _exit(0);
+    std::quick_exit(EXIT_SUCCESS);
   }
 
   filename = get_str("config");
@@ -640,7 +640,7 @@ void DefaultPolicy::init() {
     Logger::get()->set_level(Logger::Priority::FATAL);
   else {
     HT_ERROR_OUT << "unknown logging level: "<< loglevel << HT_END;
-    _exit(0);
+    std::quick_exit(EXIT_SUCCESS);
   }
   if (verbose) {
     HT_NOTICE_OUT << "Initializing " << System::exe_name << " (Hypertable "

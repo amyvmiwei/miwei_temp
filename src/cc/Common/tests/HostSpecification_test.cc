@@ -93,8 +93,7 @@ int main(int argc, char **argv) {
 
   string cmd = "diff HostSpecification_test.output HostSpecification_test.golden";
   if (system(cmd.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
-  return 0;
-
+  quick_exit(EXIT_SUCCESS);
 }

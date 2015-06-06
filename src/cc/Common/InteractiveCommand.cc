@@ -60,7 +60,7 @@ void InteractiveCommand::parse_command_line(const char *line) {
 
     if (*ptr == '\"') {
       if (!parse_string_literal(ptr, key, &ptr))
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     else {
       base = ptr;
@@ -70,7 +70,7 @@ void InteractiveCommand::parse_command_line(const char *line) {
           base = ++ptr;
           if (*base == '\"') {
             if (!parse_string_literal(base, value, &ptr))
-              exit(1);
+              exit(EXIT_FAILURE);
             break;
           }
           else {

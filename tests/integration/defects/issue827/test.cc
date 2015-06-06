@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,11 +19,13 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+
 #include <iostream>
 #include <map>
 #include <cassert>
-#include "Hypertable/Lib/Client.h"
 
 using namespace Hypertable;
 
@@ -73,7 +75,7 @@ main(int _argc, char **_argv)
   }
   catch (Exception &ex) {
     std::cout << "caught exception: " << ex << std::endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

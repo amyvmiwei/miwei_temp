@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,14 +19,15 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Common/md5.h>
+#include <Common/Usage.h>
+
+#include <Hypertable/Lib/Client.h>
+
 #include <cstdlib>
 #include <iostream>
-
-#include "Common/md5.h"
-#include "Common/Usage.h"
-
-#include "Hypertable/Lib/Client.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -152,7 +153,7 @@ int main(int argc, char **argv) {
 	for (size_t j=0; j<values.size(); j++)
 	  std::cout << values[i] << "\n";
 	std::cout << endl;
-	_exit(1);
+	quick_exit(EXIT_FAILURE);
       }
     }
 
@@ -161,8 +162,8 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

@@ -64,7 +64,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         m_broker->shutdown(&cb);
         if (has("pidfile"))
           FileUtils::unlink(get_str("pidfile"));
-        _exit(0);
+        quick_exit(EXIT_SUCCESS);
       }
       m_app_queue->add(Request::Handler::Factory::create(m_comm, m_broker.get(),
                                                          event));

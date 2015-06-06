@@ -19,26 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <string>
-
-#include "Common/FailureInducer.h"
-#include "Common/Init.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/ReactorFactory.h"
-#include "AsyncComm/ReactorRunner.h"
-
-#include <Hypertable/Lib/ClusterId.h>
+#include <Common/Compat.h>
 
 #include "Config.h"
 #include "ConnectionHandler.h"
@@ -46,6 +27,26 @@
 #include "HyperspaceSessionHandler.h"
 #include "RangeServer.h"
 #include "IndexUpdater.h"
+
+#include <Hypertable/Lib/ClusterId.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/ReactorFactory.h>
+#include <AsyncComm/ReactorRunner.h>
+
+#include <Common/FailureInducer.h>
+#include <Common/Init.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <string>
 
 using namespace Hypertable;
 using namespace Config;
@@ -95,7 +96,7 @@ int main(int argc, char **argv) {
 
     if (!Global::hyperspace->wait_for_connection(hyperspace_timeout)) {
       HT_ERROR("Unable to connect to hyperspace, exiting...");
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     // Initialize cluster ID from Hyperspace, enabling ClusterId::get()
@@ -118,7 +119,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
+    quick_exit(EXIT_FAILURE);
   }
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

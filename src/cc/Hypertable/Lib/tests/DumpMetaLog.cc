@@ -46,7 +46,7 @@ struct MyPolicy : Policy {
   static void init() {
     if (!has("path")) {
       HT_ERROR_OUT <<"path required\n"<< cmdline_desc() << HT_END;
-      std::exit(1);
+      std::exit(EXIT_FAILURE);
     }
   }
 };

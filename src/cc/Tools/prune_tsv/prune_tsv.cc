@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,7 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
+
+#include <AsyncComm/Config.h>
+
+#include <Common/Init.h>
+#include <Common/Logger.h>
 
 #include <cctype>
 #include <cstdlib>
@@ -30,10 +36,6 @@ extern "C" {
 #include <time.h>
 #include <sys/time.h>
 }
-
-#include "AsyncComm/Config.h"
-#include "Common/Init.h"
-#include "Common/Logger.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -70,7 +72,7 @@ namespace {
     static void init() {
       if (!has("past-date-offset")) {
 	cout << cmdline_desc() << endl;
-	_exit(1);
+	quick_exit(EXIT_FAILURE);
       }
     }
   };
@@ -154,7 +156,7 @@ namespace {
 
     if (end == str || *end == '\0') {
       cout << "\nERROR: Invalid <past-date-offset> argument: " << str << "\n" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     if (*end == 'd' || *end == 'D')
@@ -165,7 +167,7 @@ namespace {
       date_offset = n * 365 * 24 * 60 * 60;
     else {
       cout << "\nERROR: Invalid <past-date-offset> argument: " << str << "\n" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
     return date_offset;
   }
@@ -251,11 +253,11 @@ int main(int argc, char **argv) {
       }
     }
     cout << flush;
-    _exit(0);
+    quick_exit(EXIT_SUCCESS);
   }
   catch (std::exception &e) {
     cerr << "Error - " << e.what() << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
 }

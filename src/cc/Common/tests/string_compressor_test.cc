@@ -69,18 +69,18 @@ int main(int argc, char *argv[]) {
       decompressor.load(str);
       if (str != strings[ii]) {
         cout << "Expected " << strings[ii] << " got " << str << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       ++ii;
     }
 
     if (ii != strings.size()) {
       cout << "Expected " << strings.size() << " results, got " << ii << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     if (total_compressed_len != 0) {
       cout << "Expected 0B left after decompression got " <<  total_compressed_len  << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
   catch (Exception &e) {

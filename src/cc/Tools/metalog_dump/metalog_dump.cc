@@ -78,7 +78,7 @@ namespace {
     static void init() {
       if (!has("log-path")) {
         HT_ERROR_OUT <<"log-path required\n"<< cmdline_desc() << HT_END;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
   };
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
 
     if (!dfs_client->wait_for_connection(timeout)) {
       HT_ERROR("Unable to connect to DFS Broker, exiting...");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     // Population Defintion map
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
     auto iter = defmap.find(name);
     if (iter == defmap.end()) {
       cerr << "No definition for log type '" << name << "'" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     def = iter->second;
 
@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
       cout << "log version: " << rsml_reader->version() << "\n";
 
     if (show_version)
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
 
     std::vector<MetaLog::EntityPtr> entities;
 
@@ -255,5 +255,5 @@ int main(int argc, char **argv) {
     HT_ERROR_OUT << e << HT_END;
     return 1;
   }
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

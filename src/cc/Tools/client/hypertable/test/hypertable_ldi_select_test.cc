@@ -19,7 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/Config.h>
+
+#include <Common/StringExt.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Init.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -30,22 +43,9 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "Common/StringExt.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/System.h"
-#include "Common/Init.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/Config.h"
-
-#include "FsBroker/Lib/Client.h"
-
 using namespace Hypertable;
 using namespace Config;
 using namespace std;
-
 
 namespace {
   const char *required_files[] = {
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
   for (int i=0; required_files[i]; i++) {
     if (!FileUtils::exists(required_files[i])) {
       HT_ERRORF("Unable to find '%s'", required_files[i]);
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
   }
 
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
   sync_handler->wait_for_reply(event);
   if(event->type == Event::DISCONNECT || event->error == Error::COMM_CONNECT_ERROR) {
     HT_ERRORF("Unable to connect to %s:%d", host.c_str(), port);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
 
@@ -154,12 +154,12 @@ int main(int argc, char **argv) {
   cmd_str = "./ht_hypertable --test-mode --config hypertable.cfg "
       "< hypertable_ldi_stdin_test_load.hql > hypertable_ldi_select_test.output 2>&1";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   cmd_str = "./ht_hypertable --test-mode --config hypertable.cfg "
       "< hypertable_ldi_stdin_test_select.hql >> hypertable_ldi_select_test.output 2>&1";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   /**
    * LDI and Select using FsBroker
@@ -180,37 +180,37 @@ int main(int argc, char **argv) {
   // load from dfs zipped file
   cmd_str = "./ht_hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   // select into dfs zipped file
   hql = "USE \"/test\"; SELECT * FROM hypertable INTO FILE \"fs:///ldi_test/dfs_select.gz\";";
   cmd_str = "./ht_hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
 #if 0
   // cp from dfs dir
   cmd_str = "cp " + test_dir + "dfs_select.gz .";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   cmd_str = "rm -rf " + test_dir;
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 #endif
 
   copyFromDfs(client, "/ldi_test/dfs_select.gz", "dfs_select.gz");
 
   cmd_str = "gunzip -f dfs_select.gz";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   cmd_str = "cat dfs_select >> hypertable_ldi_select_test.output ";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   cmd_str = "diff hypertable_ldi_select_test.output hypertable_ldi_select_test.golden";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   hql = (String)" USE \"/test\";" +
     " DROP TABLE IF EXISTS hypertable;" +
@@ -222,11 +222,11 @@ int main(int argc, char **argv) {
   // load from dfs zipped file
   cmd_str = "./ht_hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   cmd_str = "diff hypertable_escape_test.output hypertable_escape_test.golden";
   if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

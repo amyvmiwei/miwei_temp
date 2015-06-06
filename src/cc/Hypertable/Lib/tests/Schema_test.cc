@@ -20,13 +20,14 @@
  */
 
 #include <Common/Compat.h>
+
+#include <Hypertable/Lib/Schema.h>
+
 #include <Common/FileUtils.h>
 #include <Common/Logger.h>
 #include <Common/TestHarness.h>
 #include <Common/Time.h>
 #include <Common/Usage.h>
-
-#include <Hypertable/Lib/Schema.h>
 
 extern "C" {
 #include <errno.h>

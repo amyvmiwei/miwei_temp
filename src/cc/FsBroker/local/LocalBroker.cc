@@ -95,7 +95,7 @@ LocalBroker::LocalBroker(PropertiesPtr &cfg) {
 
   // ensure that root directory exists
   if (!FileUtils::mkdirs(m_rootdir))
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 

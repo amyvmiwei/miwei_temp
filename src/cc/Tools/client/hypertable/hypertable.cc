@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
         cout << " - " << msg;
       cout << endl;
     }
-    _exit(output_only ? 0 : 2);
+    quick_exit(output_only ? 0 : 2);
   }
-  _exit(status);
+  quick_exit(status);
 }

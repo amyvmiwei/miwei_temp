@@ -19,15 +19,16 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
+#include <Common/Compat.h>
 
-#include "Hypertable/Lib/CompressorFactory.h"
-#include "Hypertable/Lib/BlockHeaderCommitLog.h"
+#include <Hypertable/Lib/CompressorFactory.h>
+#include <Hypertable/Lib/BlockHeaderCommitLog.h>
+
+#include <Common/DynamicBuffer.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
 
 using namespace Hypertable;
 

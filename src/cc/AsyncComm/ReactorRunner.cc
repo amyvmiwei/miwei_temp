@@ -104,7 +104,7 @@ void ReactorRunner::operator()() {
           if ((nread = FileUtils::recv(pollfds[i].fd, buf, 8)) == -1 &&
               errno != EAGAIN && errno != EINTR) {
             HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
-            exit(1);
+            exit(EXIT_FAILURE);
           }
         }
         

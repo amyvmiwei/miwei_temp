@@ -83,13 +83,13 @@ void ClientKeepaliveHandler::start() {
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
       != Error::OK)) {
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if ((error = m_comm->set_timer(m_keep_alive_interval, shared_from_this()))
       != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
 }
@@ -145,12 +145,12 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
           if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
             HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
-            exit(1);
+            exit(EXIT_FAILURE);
           }
 
           if ((error = m_comm->set_timer(m_keep_alive_interval, shared_from_this())) != Error::OK) {
             HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-            exit(1);
+            exit(EXIT_FAILURE);
           }
           break;
         }
@@ -349,7 +349,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
                 != Error::OK)) {
               HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
-              exit(1);
+              exit(EXIT_FAILURE);
             }
           }
 
@@ -394,13 +394,13 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
         != Error::OK)) {
       HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     if ((error = m_comm->set_timer(m_keep_alive_interval, shared_from_this()))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
   else {
@@ -436,13 +436,13 @@ void ClientKeepaliveHandler::expire_session() {
     if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
         != Error::OK)) {
       HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     if ((error = m_comm->set_timer(m_keep_alive_interval, shared_from_this()))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 }

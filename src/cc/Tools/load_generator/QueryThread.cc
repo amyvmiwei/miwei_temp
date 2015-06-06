@@ -92,7 +92,7 @@ void QueryThread::operator()() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   m_state.elapsed_time = stopwatch.elapsed();

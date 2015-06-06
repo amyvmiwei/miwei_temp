@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,15 +19,31 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
+#include "DispatchHandler.h"
+#include "Comm.h"
+#include "Event.h"
+
+#include <AsyncComm/ApplicationHandler.h>
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/ConnectionHandlerFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/System.h>
+#include <Common/SockAddrMap.h>
+#include <Common/Usage.h>
+
+#include <chrono>
 #include <iostream>
 #include <queue>
 #include <string>
+#include <thread>
 
 extern "C" {
 #include <arpa/inet.h>
-#include <poll.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
@@ -36,24 +52,8 @@ extern "C" {
 #include <time.h>
 }
 
-#include "AsyncComm/ApplicationHandler.h"
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/ConnectionHandlerFactory.h"
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/System.h"
-#include "Common/SockAddrMap.h"
-#include "Common/Usage.h"
-
-#include "DispatchHandler.h"
-#include "Comm.h"
-#include "Event.h"
-
 using namespace Hypertable;
 using namespace std;
-
 
 namespace {
 
@@ -140,7 +140,7 @@ namespace {
           cbp->append_bytes((uint8_t *)event_ptr->payload,
                             event_ptr->payload_len);
           if (g_delay > 0)
-            poll(0, 0, g_delay);
+            this_thread::sleep_for(chrono::milliseconds(g_delay));
           int error = m_comm->send_response(event_ptr->addr, cbp);
           if (error != Error::OK) {
             HT_ERRORF("Comm::send_response returned %s",
@@ -176,7 +176,7 @@ namespace {
         cbp->append_bytes((uint8_t *)event_ptr->payload,
                           event_ptr->payload_len);
         if (g_delay > 0)
-          poll(0, 0, g_delay);
+          this_thread::sleep_for(chrono::milliseconds(g_delay));
         int error = m_comm->send_datagram(event_ptr->addr,
                                           event_ptr->local_addr, cbp);
         if (error != Error::OK) {
@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
       rval = atoi(&argv[i][7]);
       if (rval <= 1024 || rval > 65535) {
         cerr << "Invalid port.  Must be in the range of 1024-65535." << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       port = (uint16_t)rval;
     }
@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
       if (client_addr.sin_port != 0) {
 	if ((error = comm->connect(client_addr, local_addr, dhp)) != Error::OK) {
 	  HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
-	  exit(1);
+	  exit(EXIT_FAILURE);
 	}
       }
       else {
@@ -299,11 +299,12 @@ int main(int argc, char **argv) {
       comm->create_datagram_receive_socket(local_addr, 0, dhp);
     }
 
-    poll(0, 0, -1);
+    this_thread::sleep_for(chrono::system_clock::duration::max());
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    _exit(EXIT_FAILURE);
   }
 
-  return 0;
+  _exit(EXIT_SUCCESS);
 }

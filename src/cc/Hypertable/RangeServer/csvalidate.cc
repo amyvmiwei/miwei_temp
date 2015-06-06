@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -76,7 +76,7 @@ namespace {
       if (!has("filename")) {
         HT_ERROR_OUT <<"filename required" << HT_END;
         cout << cmdline_desc() << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
   };
@@ -147,7 +147,7 @@ namespace {
     }
     else {
       cout << "unsupported CellStore version (" << version << ")" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     state.trailer->deserialize(end - state.trailer->size());
@@ -180,7 +180,7 @@ namespace {
 
     if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC)) {
       cout << "corrupt fixed index" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     int64_t index_entries = output_buf.fill() / (bits64 ? 8 : 4);
@@ -208,7 +208,7 @@ namespace {
 
     if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC)) {
       cout << "corrupt variable index" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     SerializedKey key;
@@ -237,7 +237,7 @@ namespace {
 
     if ((BloomFilterMode)bloom_filter_mode == BLOOM_FILTER_ROWS_COLS) {
       cout << "Unsupported bloom filter type (BLOOM_FILTER_ROWS_COLS)" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     HT_ASSERT((BloomFilterMode)bloom_filter_mode == BLOOM_FILTER_ROWS);
@@ -441,7 +441,7 @@ int main(int argc, char **argv) {
 
     if (!dfs->wait_for_connection(timeout)) {
       cout << "timed out waiting for FS broker" << endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     Global::dfs = dfs;

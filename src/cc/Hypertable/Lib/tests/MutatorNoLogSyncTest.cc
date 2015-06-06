@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,7 +19,22 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/StringExt.h>
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/ServerLauncher.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -30,20 +45,6 @@
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/StringExt.h"
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/ServerLauncher.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/KeySpec.h"
-
-#include "AsyncComm/ReactorFactory.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -273,7 +274,7 @@ int main(int argc, char **argv) {
               " --no-thriftbroker --config=" + config_file;
   if (system(start_all.c_str()) !=0) {
     HT_ERROR("Unable to start servers");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   sleep(2);
 
@@ -294,7 +295,7 @@ int main(int argc, char **argv) {
     cerr << e << endl;
     stop_rangeservers(rangeservers);
     HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   key.column_family = "Field";
@@ -399,7 +400,7 @@ int main(int argc, char **argv) {
     cout << "Test failed" << endl;
     stop_rangeservers(rangeservers);
     HT_EXPECT(system(clean_db.c_str()) == 0, Error::EXTERNAL);
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   // stop all servers
@@ -408,7 +409,7 @@ int main(int argc, char **argv) {
 
   cout << "Test passed"<< endl;
 
-  exit(0);
+  exit(EXIT_SUCCESS);
 }
 
 
@@ -420,7 +421,7 @@ namespace {
       + port + (String)" rangeserver";
     if (system(command.c_str()) !=0) {
       HT_ERRORF("RangeServer on port %d did not come up", port);
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 

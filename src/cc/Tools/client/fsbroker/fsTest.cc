@@ -88,10 +88,10 @@ namespace {
     thread2.join();
 
     if (system("cmp words output.a"))
-      exit(1);
+      exit(EXIT_FAILURE);
 
     if (system("cmp output.a output.b"))
-      exit(1);
+      exit(EXIT_FAILURE);
   }
 
   void test_readdir(FsBroker::Lib::ClientPtr &client, const string &testdir) {
@@ -114,7 +114,7 @@ namespace {
     filestr.close();
 
     if (system("diff fsTest.out fsTest.golden"))
-      exit(1);
+      exit(EXIT_FAILURE);
   }
 
   void test_rename(FsBroker::Lib::ClientPtr &client, const string &testdir) {
@@ -181,5 +181,4 @@ int main(int argc, char **argv) {
     HT_ERROR_OUT << "unexpected exception caught" << HT_END;
     return 1;
   }
-  return 0;
 }

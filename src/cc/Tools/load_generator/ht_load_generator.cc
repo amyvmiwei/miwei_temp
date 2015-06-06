@@ -18,19 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
 
-#include <iostream>
-#include <fstream>
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
+#include <Common/Compat.h>
 
-extern "C" {
-#include <poll.h>
-#include <stdio.h>
-#include <time.h>
-}
+#include "LoadClient.h"
+#include "LoadThread.h"
+#include "QueryThread.h"
+#include "ParallelLoad.h"
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/DataGenerator.h>
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Cells.h>
+
+#include <Common/Mutex.h>
+#include <Common/Stopwatch.h>
+#include <Common/String.h>
+#include <Common/Sweetener.h>
+#include <Common/Init.h>
+#include <Common/Usage.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/progress.hpp>
@@ -39,27 +45,22 @@ extern "C" {
 #include <boost/thread/xtime.hpp>
 #include <boost/timer.hpp>
 
-#include "Common/Mutex.h"
-#include "Common/Stopwatch.h"
-#include "Common/String.h"
-#include "Common/Sweetener.h"
-#include "Common/Init.h"
-#include "Common/Usage.h"
+#include <chrono>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <thread>
 
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/DataGenerator.h"
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Cells.h"
-
-#include "LoadClient.h"
-#include "LoadThread.h"
-#include "QueryThread.h"
-#include "ParallelLoad.h"
+extern "C" {
+#include <stdio.h>
+#include <time.h>
+}
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
 using namespace std;
-using namespace boost;
 
 namespace {
 
@@ -166,7 +167,7 @@ int main(int argc, char **argv) {
 
     if (!has("type")) {
       std::cout << cmdline_desc() << std::flush;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     load_type = get_str("type");
@@ -204,7 +205,7 @@ int main(int argc, char **argv) {
     if (generator_props->has("DataGenerator.MaxBytes") &&
         generator_props->has("DataGenerator.MaxKeys")) {
       HT_ERROR("Only one of 'DataGenerator.MaxBytes' or 'DataGenerator.MaxKeys' may be specified");
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     if (generator_props->has("DataGenerator.DeletePercentage"))
@@ -224,24 +225,24 @@ int main(int argc, char **argv) {
               && !generator_props->has("max-keys")) {
         HT_ERROR("'DataGenerator.MaxKeys' or --max-keys must be specified for "
                 "load type 'query'");
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       if (parallel > 0) {
         if (to_stdout) {
           HT_FATAL("--stdout switch not supported for parallel queries");
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
         if (sample_fname != "") {
           HT_FATAL("--sample-file not supported for parallel queries");
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
         if (has("query-mode")) {
           HT_FATAL("--query-mode not supported for parallel queries");
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
         if (thrift) {
           HT_FATAL("thrift mode not supported for parallel queries");
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
 
         generate_query_load_parallel(generator_props, table, parallel);
@@ -252,16 +253,16 @@ int main(int argc, char **argv) {
     }
     else {
       std::cout << cmdline_desc() << std::flush;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   fflush(stdout);
-  _exit(0); // don't bother with static objects
+  quick_exit(EXIT_SUCCESS); // don't bother with static objects
 }
 
 
@@ -493,7 +494,7 @@ generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
 
@@ -632,7 +633,7 @@ generate_update_load_parallel(PropertiesPtr &props, String &tablename,
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   stopwatch.stop();
@@ -734,7 +735,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
 
       if (delay)
-        poll(0, 0, delay);
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
       scan_spec.clear();
       if (query_mode == INDEX) {
@@ -784,7 +785,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   stopwatch.stop();

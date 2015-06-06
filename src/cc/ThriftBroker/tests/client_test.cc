@@ -1,4 +1,4 @@
-/* -*- C++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,19 +18,21 @@
  */
 
 #include <Common/Compat.h>
-#include <Common/Logger.h>
-#include <Common/System.h>
 
 #include <ThriftBroker/Client.h>
 #include <ThriftBroker/gen-cpp/HqlService.h>
 #include <ThriftBroker/ThriftHelper.h>
 #include <ThriftBroker/SerializedCellsReader.h>
 
+#include <Common/Logger.h>
+#include <Common/System.h>
+
 #include <iostream>
 #include <fstream>
 
 using namespace Hypertable;
 using namespace Hypertable::ThriftGen;
+using namespace std;
 
 void run(Thrift::Client *client);
 void test_rename_alter(Thrift::Client *client, std::ostream &out);
@@ -84,7 +86,7 @@ void run(Thrift::Client *client) {
   }
   catch (ClientException &e) {
     std::cout << e << std::endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 
@@ -362,28 +364,28 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         break;
       if (result.is_scan == true) {
         out << "All results are expected to be from mutators" << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       if (result.is_error == true) {
         out << "Got unexpected error from mutator" << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       if (num_results > 3) {
         out << "Got unexpected number of results from mutator" << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       out << "Async flush successful" << std::endl;
     }
 
     if (client->future_has_outstanding(ff) || !client->future_is_empty(ff) || client->future_is_cancelled(ff)) {
       out << "Future should not have any outstanding operations or queued results or be cancelled" << std::endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
     client->future_cancel(ff);
     if (!client->future_is_cancelled(ff)) {
       out << "Future should be cancelled" << std::endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
     client->async_mutator_close(color_mutator);
     client->async_mutator_close(location_mutator);
@@ -431,11 +433,11 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         break;
       if (result.is_scan == false) {
         out << "All results are expected to be from scans" << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       if (result.is_error == true) {
         out << "Got unexpected error from async scan " << result.error_msg << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
 
       if (result.id == color_scanner)
@@ -448,7 +450,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         out << "Got result from unknown scanner id " << result.id
             << " expecting one of " << color_scanner << ", " << location_scanner << ", "
             << energy_scanner << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       for (size_t ii=0; ii< result.cells.size(); ++ii) {
         out << result.cells[ii] << std::endl;
@@ -461,12 +463,12 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         break;
       if (result_as_arrays.is_scan == false) {
         out << "All results are expected to be from scans" << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       if (result_as_arrays.is_error == true) {
         out << "Got unexpected error from async scan " << result_as_arrays.error_msg
             << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
 
       if (result_as_arrays.id == color_scanner)
@@ -479,7 +481,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         out << "Got result_as_arrays from unknown scanner id " << result.id
             << " expecting one of " << color_scanner << ", " << location_scanner << ", "
             << energy_scanner << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       for (size_t ii=0; ii < result_as_arrays.cells.size(); ++ii) {
         out << "{" ;
@@ -498,12 +500,12 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         break;
       if (result_serialized.is_scan == false) {
         out << "All results are expected to be from scans" << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       if (result_serialized.is_error == true) {
         out << "Got unexpected error from async scan " << result_serialized.error_msg
             << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
 
       if (result_serialized.id == color_scanner)
@@ -516,7 +518,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
         out << "Got result_serialized from unknown scanner id " << result_serialized.id
             << " expecting one of " << color_scanner << ", " << location_scanner << ", "
             << energy_scanner << std::endl;
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       SerializedCellsReader reader((void *)result_serialized.cells.c_str(),
                                    (uint32_t)result_serialized.cells.length());
@@ -571,7 +573,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
   client->namespace_close(ns);
   if (num_results != num_expected_results) {
     out << "Expected " << num_expected_results << " received " << num_results << std::endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
 }
@@ -581,7 +583,7 @@ void check_error(std::string expected, std::string &received,
 {
   if (received != expected) {
     out << "Expected: " << expected << "; received: " << received << std::endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 }
 

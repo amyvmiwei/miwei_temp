@@ -226,7 +226,7 @@ test_escaped_regexps(void)
   const char *cmd = "diff indices_test.output indices_test.golden";
   if (system(cmd) != 0) {
     printf("diff failed\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 

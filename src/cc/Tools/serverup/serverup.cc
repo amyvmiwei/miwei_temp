@@ -142,7 +142,7 @@ namespace {
     if (get_bool("display-address")) {
       std::cout << get_str("fs-host") << ":" << get_i16("fs-port")
           << std::endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     FsBroker::Lib::ClientPtr fs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
@@ -161,7 +161,7 @@ namespace {
     }
     catch (Exception &e) {
       HT_ERRORF("Status check: %s - %s", Error::get_text(e.code()), e.what());
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
   }
 
@@ -183,7 +183,7 @@ namespace {
     if (get_bool("display-address")) {
       std::cout << host << ":" <<
           properties->get_i16("Hyperspace.Replica.Port") << std::endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
@@ -209,7 +209,7 @@ namespace {
     if (get_bool("display-address")) {
       std::cout << get_str("Hypertable.Master.Host") << ":" <<
           get_i16("Hypertable.Master.Port") << std::endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     if (!hyperspace) {
@@ -254,7 +254,7 @@ namespace {
 
     if (get_bool("display-address")) {
       std::cout << host << ":" << port << std::endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     HT_DEBUG_OUT << "Checking master on " << host << ":" << port << HT_END;
@@ -300,7 +300,7 @@ namespace {
 
     if (get_bool("display-address")) {
       std::cout << get_str("rs-host") << ":" << get_i16("rs-port") << std::endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
@@ -327,7 +327,7 @@ namespace {
     if (get_bool("display-address")) {
       std::cout << get_str("thrift-host") << ":" << get_i16("thrift-port")
           << std::endl;
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     String table_id;
@@ -416,7 +416,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);    // don't bother with global/static objects
+    quick_exit(EXIT_FAILURE);
   }
-  _exit(down);   // ditto
+  quick_exit(down);   // ditto
 }

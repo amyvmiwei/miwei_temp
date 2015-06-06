@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,19 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Future.h>
+
+#include <Common/md5.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
 #include <iostream>
 
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/md5.h"
-#include "Common/Usage.h"
-
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Future.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -139,7 +140,7 @@ int main(int argc, char **argv) {
               result->get_error(error, error_msg);
               Exception e(error, error_msg);
               HT_ERROR_OUT << "Encountered scan error " << e << HT_END;
-              _exit(1);
+              quick_exit(EXIT_FAILURE);
             }
 
             HT_ASSERT(result->is_update());
@@ -184,7 +185,7 @@ int main(int argc, char **argv) {
           result->get_error(error, error_msg);
           Exception e(error, error_msg);
           HT_ERROR_OUT << "Encountered scan error " << e << HT_END;
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
 
         result->get_cells(cells);
@@ -203,7 +204,7 @@ int main(int argc, char **argv) {
 
       if (memcmp(sent_digest, received_digest, 16)) {
         HT_ERROR("MD5 digest mismatch between sent and received");
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       HT_INFO("cancel test finished");
 
@@ -225,7 +226,7 @@ int main(int argc, char **argv) {
           result->get_error(error, error_msg);
           Exception e(error, error_msg);
           HT_ERROR_OUT << "Encountered scan error " << e << HT_END;
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
 
         result->get_cells(cells);
@@ -239,7 +240,7 @@ int main(int argc, char **argv) {
 
       if (memcmp(sent_digest, received_digest, 16)) {
         HT_ERROR("MD5 digest mismatch between sent and received");
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       HT_INFO("full scan test finished");
 
@@ -283,7 +284,7 @@ int main(int argc, char **argv) {
           result->get_error(error, error_msg);
           Exception e(error, error_msg);
           HT_ERROR_OUT << "Encountered scan error " << e << HT_END;
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
 
         if (scanner_b_ptr == result->get_scanner()) {
@@ -295,7 +296,7 @@ int main(int argc, char **argv) {
         }
         else {
           HT_ERROR("Result from a cancelled scanner received");
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
       }
 
@@ -303,7 +304,7 @@ int main(int argc, char **argv) {
 
       if (memcmp(sent_digest, received_digest, 16)) {
         HT_ERROR("MD5 digest mismatch between sent and received");
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       HT_INFO("cancel scanner test finished");
 
@@ -312,8 +313,8 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

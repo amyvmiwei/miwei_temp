@@ -122,14 +122,14 @@ int main(int argc, char **argv) {
     if ((error = comm->connect(addr, default_handler)) != Error::OK) {
       if (!silent)
         cout << "FsBroker CRITICAL - " << Error::get_text(error) << endl;
-      _exit(output_only ? 0 : 2);
+      quick_exit(output_only ? 0 : 2);
     }
 
     /// this should have a deadline
     if (!sync_handler->wait_for_connection()) {
       if (!silent)
         cout << "FsBroker CRITICAL - connect error" << endl;
-      _exit(output_only ? 0 : 2);
+      quick_exit(output_only ? 0 : 2);
     }
 
     FsBroker::Lib::ClientPtr client = make_shared<FsBroker::Lib::Client>(comm, addr, timeout_ms);
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
         cout << " - " << msg;
       cout << endl;
     }
-    _exit(output_only ? 0 : 2);
+    quick_exit(output_only ? 0 : 2);
   }
-  _exit(error);
+  quick_exit(error);
 }

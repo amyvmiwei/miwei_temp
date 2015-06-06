@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,32 +19,31 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cstdlib>
-#include <iostream>
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/NameIdMapper.h>
+
+#include <Common/Config.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/Init.h>
+#include <Common/Timer.h>
+#include <Common/Usage.h>
 
 #include <boost/progress.hpp>
-
 #include <boost/algorithm/string.hpp>
+
+#include <cstdlib>
+#include <iostream>
 
 extern "C" {
 #include <netdb.h>
 #include <sys/types.h>
 #include <signal.h>
 }
-
-#include "Common/Config.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
-#include "Common/Timer.h"
-#include "Common/Usage.h"
-
-
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/NameIdMapper.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -254,5 +253,5 @@ int main(int argc, char **argv) {
   else
     cout << "Success - all ranges are available." << endl;
 
-  _exit(errors.size());   // ditto
+  quick_exit(errors.size());   // ditto
 }

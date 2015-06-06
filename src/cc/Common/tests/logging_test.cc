@@ -40,7 +40,7 @@ jmp_buf jmp_ctx;
 void _sig_##_handler(int) { \
   if (++n_sigs >= N_EXPECTED_SIGS && !last_try) { \
     HT_INFO("Caught unexpected " #_sig_ " signal, aborting..."); \
-    exit(1); \
+    exit(EXIT_FAILURE); \
   } \
   HT_INFO("Caught " #_sig_ " signal, continuing..."); \
   longjmp(jmp_ctx, 1); \

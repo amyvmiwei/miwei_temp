@@ -51,7 +51,7 @@ namespace {
                     const pair<string, string> &m2) const {
       if (m1.first == m2.first) {
         cout << "error: multiple mappings for '" << m1.first << "'" << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       return m1.first.length() >= m2.first.length();
     }

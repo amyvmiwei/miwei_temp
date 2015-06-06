@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   catch (Exception &e) {
     if (e.code()!=Error::BAD_SCAN_SPEC) {
       std::cout << e << std::endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
     fired=true;
   }
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
   catch (Exception &e) {
     if (e.code()!=Error::BAD_SCAN_SPEC) {
       std::cout << e << std::endl;
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
     fired=true;
   }
@@ -83,5 +83,5 @@ int main(int argc, char **argv) {
   HT_ASSERT(fired==true);
   fired=false;
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

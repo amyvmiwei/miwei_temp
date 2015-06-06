@@ -307,7 +307,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
   catch (Exception &e) {
     HT_ERRORF("Unable to listen on port %u - %s - %s",
               port, Error::get_text(e.code()), e.what());
-    _exit(0);
+    quick_exit(EXIT_SUCCESS);
   }
 
   Global::location_initializer = make_shared<LocationInitializer>(m_context);
@@ -315,7 +315,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
   if(Global::location_initializer->is_removed(Global::toplevel_dir+"/servers", m_hyperspace)) {
     HT_ERROR_OUT << "location " << Global::location_initializer->get()
         << " has been marked removed in hyperspace" << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   // Create Master client
@@ -484,7 +484,7 @@ void Apps::RangeServer::shutdown() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
 }

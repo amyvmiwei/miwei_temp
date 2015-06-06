@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,18 +18,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/ApacheLogParser.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <Common/Error.h>
+#include <Common/System.h>
 
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-
-#include "Common/Error.h"
-#include "Common/System.h"
-
-#include "Hypertable/Lib/ApacheLogParser.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/KeySpec.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -227,7 +228,7 @@ int main(int argc, char **argv) {
       HT_ERROR_OUT << e << HT_END;
       do {
         if (!mutator_ptr->need_retry())
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         handle_mutation_failure(mutator_ptr);
       } while (!mutator_ptr->retry(RETRY_TIMEOUT));
     }
@@ -241,7 +242,7 @@ int main(int argc, char **argv) {
     HT_ERROR_OUT << e << HT_END;
     do {
       if (!mutator_ptr->need_retry())
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       handle_mutation_failure(mutator_ptr);
     } while (!mutator_ptr->retry(RETRY_TIMEOUT));
   }

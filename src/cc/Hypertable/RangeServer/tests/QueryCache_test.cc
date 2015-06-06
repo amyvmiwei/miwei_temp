@@ -81,12 +81,12 @@ int main(int argc, char **argv) {
 
   if (cache->insert(&key, "/1", "aa", columns, cell_count, result, MAX_MEMORY+1)) {
     cout << "Error: insert should have failed." << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if (cache->lookup(&key, result, &result_length, &cell_count)) {
     cout << "Error: key should not exist in cache." << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   for (size_t rowi = (size_t)'a'; rowi <= (size_t)'z'; rowi++) {
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
       md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
       if (!cache->insert(&key, "/1", row, columns, cell_count, result, 1000)) {
 	cout << "Error: insert failed." << endl;
-	exit(1);
+	exit(EXIT_FAILURE);
       }
     }
   }
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
     if (!cache->lookup(&key, result, &result_length, &cell_count)) {
       cout << "Error: key not found." << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
     if (cache->lookup(&key, result, &result_length, &cell_count)) {
       cout << "Error: key found." << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 

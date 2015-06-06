@@ -19,31 +19,31 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/Init.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include <iostream>
-#include <fstream>
-
-#include "AsyncComm/ConnectionManager.h"
-
-#include "FsBroker/Lib/Client.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/SerializedKey.h"
+#include <Common/Compat.h>
 
 #include "../CellStoreFactory.h"
 #include "../CellStoreV7.h"
 #include "../Global.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/SerializedKey.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Config.h>
+#include <Common/Init.h>
+#include <Common/DynamicBuffer.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
 
 using namespace Hypertable;
 using namespace std;
@@ -551,13 +551,13 @@ namespace {
     if (replaced_files_read.size() != replaced_files_write.size()) {
       HT_ERRORF("Wrote %lu replaced_files read %lu", (unsigned long)replaced_files_write.size(),
 		(unsigned long)replaced_files_read.size());
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     for (size_t ii=0; ii < replaced_files_read.size(); ++ii) {
       if (replaced_files_read[ii] != replaced_files_write[ii]) {
         HT_ERRORF("Wrote %s as %luth replaced file read %s", replaced_files_write[ii].c_str(),
 		  (unsigned long)ii,  replaced_files_read[ii].c_str());
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       out << replaced_files_read[ii] << "\n";
     }

@@ -73,7 +73,7 @@ LocationInitializer::LocationInitializer(std::shared_ptr<Context> &context)
     else if (FileUtils::exists(m_location_file)) {
       if (!FileUtils::read(m_location_file, m_location)) {
         HT_ERRORF("Problem reading location file '%s'", m_location_file.c_str());
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
       boost::trim(m_location);
       if (!m_location.empty())
@@ -169,7 +169,7 @@ bool LocationInitializer::process_initialization_response(Event *event) {
   if (!location_persisted) {
     if (FileUtils::write(m_location_file, params.location()) < 0) {
       HT_ERRORF("Unable to write location to file '%s'", m_location_file.c_str());
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
     {
       ScopedLock lock(m_mutex);

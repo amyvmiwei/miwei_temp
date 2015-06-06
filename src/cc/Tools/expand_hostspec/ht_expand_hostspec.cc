@@ -39,7 +39,7 @@ namespace {
     cout << "This program expands a host specification into a" << endl;
     cout << "space-separated list of host names." << endl;
     cout << endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 }
 
@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     cout << Error::get_text(e.code()) << " - " << e.what() << endl;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

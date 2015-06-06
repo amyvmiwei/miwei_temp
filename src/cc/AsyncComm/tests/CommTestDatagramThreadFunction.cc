@@ -70,7 +70,7 @@ namespace {
       }
       else {
         HT_INFOF("%s", event_ptr->to_str().c_str());
-        //exit(1);
+        //exit(EXIT_FAILURE);
       }
     }
 

@@ -23,15 +23,12 @@
  * Helper class for printing usage banners to the command line.
  */
 
-#include "Common/Compat.h"
-
-#include <iostream>
-
-extern "C" {
-#include <stdlib.h>
-}
+#include <Common/Compat.h>
 
 #include "Usage.h"
+
+#include <cstdlib>
+#include <iostream>
 
 using namespace Hypertable;
 using namespace std;
@@ -45,5 +42,5 @@ void Usage::dump_and_exit(const char **usage, int rcode) {
   cout << endl;
   dump(usage);
   cout << endl;
-  _exit(rcode);
+  quick_exit(rcode);
 }

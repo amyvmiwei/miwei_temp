@@ -243,12 +243,12 @@ int ClusterCommandInterpreter::execute_line(const String &line) {
   if (pid == 0) {
     if (execv(program.c_str(), argv) < 0) {
       cout << "execv(" << program << ") failed - " << strerror(errno) << endl;
-      _exit(2);
+      quick_exit(2);
     }
   }
   else if (pid < 0) {
     cout << "vfork() failed - " << strerror(errno) << endl;
-    _exit(2);
+    quick_exit(2);
   }
   else {
     int status;

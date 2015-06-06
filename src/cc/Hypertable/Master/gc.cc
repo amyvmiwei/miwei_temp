@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,18 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <iostream>
-#include "Common/Init.h"
-#include "Common/Thread.h"
-#include "Common/System.h"
-#include "Common/Logger.h"
-#include "Common/Error.h"
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Namespace.h"
-#include "FsBroker/Lib/Client.h"
+#include <Common/Compat.h>
+
 #include "GcWorker.h"
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Namespace.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <Common/Error.h>
+#include <Common/Init.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Thread.h>
+
+#include <iostream>
 
 using namespace Hypertable;
 using namespace Config;
@@ -78,7 +83,7 @@ main(int ac, char *av[]) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

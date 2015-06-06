@@ -26,22 +26,23 @@
  * depending on the these arguments.
  */
 
-#include "Compat.h"
-#include "Common/String.h"
+#include <Common/Compat.h>
+#include <Common/String.h>
+#include <Common/FailureInducer.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+
 #include <vector>
 
 extern "C" {
 #include <poll.h>
 }
 
-#include "FailureInducer.h"
-#include "Error.h"
-#include "Logger.h"
-
 using namespace Hypertable;
+using namespace std;
 
 namespace {
   enum { 
@@ -86,7 +87,7 @@ void FailureInducer::maybe_fail(const String &label) {
         HT_ERRORF("induced failure code '%d' '%s' iteration=%u",
                  (*iter).second->error_code, (*iter).first.c_str(), 
                  (*iter).second->iteration);
-        _exit(1);
+        quick_exit(EXIT_FAILURE);
       }
     }
     (*iter).second->iteration++;

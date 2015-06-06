@@ -69,7 +69,7 @@ namespace Hypertable {
       m_path = path;
       if (pipe(fd) < 0) {
         perror("pipe");
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       if ((m_child_pid = fork()) == 0) {
         if (outfile) {
@@ -84,7 +84,7 @@ namespace Hypertable {
           outfd = open(outfile, open_flags, 0644);
           if (outfd < 0) {
             perror("open");
-            exit(1);
+            exit(EXIT_FAILURE);
           }
           dup2(outfd, 1);
           dup2(outfd, 2);

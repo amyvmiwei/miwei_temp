@@ -52,7 +52,7 @@ void ServerKeepaliveHandler::start() {
   if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, shared_from_this()))
       != Error::OK) {
     HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   m_master->tick();
@@ -117,7 +117,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     if ((error = m_comm->set_timer(Master::TIMER_INTERVAL_MS, shared_from_this()))
         != Error::OK) {
       HT_ERRORF("Problem setting timer - %s", Error::get_text(error));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
   }

@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -76,7 +76,7 @@ namespace {
       if (!has("filename")) {
         HT_ERROR_OUT <<"filename required" << HT_END;
         cout << cmdline_desc() << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
   };
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
     if (!dfs->wait_for_connection(timeout)) {
       cerr << "error: timed out waiting for FS broker" << endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     Global::dfs = dfs;
@@ -125,9 +125,9 @@ int main(int argc, char **argv) {
       }
       catch (Exception &ex) {
         std::cout << fname << ": corrupt" << std::endl;
-        _exit(-1);
+        quick_exit(EXIT_FAILURE);
       }
-      _exit(0);
+      quick_exit(EXIT_SUCCESS);
     }
 
     memset(column_id_map, 0, 256*sizeof(char *));
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
       if (column_id_map[i])
         cout << i << " = " << column_id_map[i] << endl;
     }
-    _exit(0);
+    quick_exit(EXIT_SUCCESS);
     **/
 
     /**

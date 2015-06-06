@@ -1,4 +1,4 @@
-/* -*- C++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,14 +17,15 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/HqlInterpreter.h>
+
+#include <Common/Init.h>
 
 #include <unistd.h>
-
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/HqlInterpreter.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -134,7 +135,7 @@ int main(int argc, char *argv[]) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

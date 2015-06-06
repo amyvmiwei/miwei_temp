@@ -37,7 +37,9 @@
 #include <Common/Init.h>
 #include <Common/InetAddr.h>
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
@@ -80,7 +82,7 @@ namespace {
         if (!m_connected) {
           if (!m_silent)
             cout << "RangeServer CRITICAL - connect error" << endl;
-          _exit(2);
+          quick_exit(2);
         }
       }
       else if (event_ptr->type == Event::CONNECTION_ESTABLISHED)
@@ -119,10 +121,10 @@ int main(int argc, char **argv) {
     if ((error = comm->connect(addr, dispatch_handler_ptr)) != Error::OK) {
       if (!silent)
         cout << "RangeServer CRITICAL - connect error" << endl;
-      _exit(2);
+      quick_exit(2);
     }
 
-    poll(0, 0, 100);
+    this_thread::sleep_for(chrono::milliseconds(100));
 
     // Maybe connect to Hyperspace
     Hyperspace::SessionPtr hyperspace;
@@ -131,7 +133,7 @@ int main(int argc, char **argv) {
       if (!hyperspace->wait_for_connection(timeout)) {
         if (!silent)
           cout << "RangeServer CRITICAL - Unable to connecto to Hyperspace" << endl;
-        _exit(2);
+        quick_exit(2);
       }
     }
 
@@ -150,7 +152,7 @@ int main(int argc, char **argv) {
         cout << " - " << msg;
       cout << endl;
     }
-    _exit(2);
+    quick_exit(2);
   }
-  _exit(error);
+  quick_exit(error);
 }

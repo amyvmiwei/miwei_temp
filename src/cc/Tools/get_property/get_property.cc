@@ -82,5 +82,5 @@ int main(int argc, char **argv)
 
 bail:
   cout << flush;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

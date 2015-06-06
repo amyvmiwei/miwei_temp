@@ -19,8 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_DATAGENERATOR_H
-#define HYPERTABLE_DATAGENERATOR_H
+#ifndef Hypertable_Lib_DataGenerator_h
+#define Hypertable_Lib_DataGenerator_h
+
+#include "Cell.h"
+#include "DataGeneratorRowComponent.h"
+#include "DataGeneratorQualifier.h"
+#include "DataGeneratorColumn.h"
+
+#include <Common/Config.h>
+#include <Common/Random.h>
+#include <Common/String.h>
 
 #include <iostream>
 #include <iterator>
@@ -31,16 +40,6 @@ extern "C" {
 #include <limits.h>
 #include <stdlib.h>
 }
-
-#include "Common/Config.h"
-#include "Common/Random.h"
-#include "Common/String.h"
-
-#include "Cell.h"
-#include "DataGeneratorRowComponent.h"
-#include "DataGeneratorQualifier.h"
-#include "DataGeneratorColumn.h"
-
 
 namespace Hypertable {
   using namespace Hypertable::Config;
@@ -100,7 +99,7 @@ namespace Hypertable {
   /**
    * Provides an STL-style iterator on DataGenerator objects.
    */
-  class DataGeneratorIterator : public iterator<forward_iterator_tag, Cell> {
+  class DataGeneratorIterator : public boost::iterator<forward_iterator_tag, Cell> {
 
     friend class DataGenerator;
 
@@ -167,4 +166,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_DATAGENERATOR_H
+#endif // Hypertable_Lib_DataGenerator_h

@@ -85,16 +85,16 @@ namespace Hypertable {
 
       if (length_min == 0 && length_max == 0) {
         cout << "ERROR: length.min and/or length.max must be specified for row component type 'string'" << endl;
-        _exit(1);
+        std::quick_exit(EXIT_FAILURE);
       }
       else if (length_max < length_min) {
         cout << "ERROR: length.max must be less than length.min for row component" << endl;
-        _exit(1);
+        std::quick_exit(EXIT_FAILURE);
       }
 
       if (order != RANDOM) {
         cout << "ERROR: 'random' is the only currently supported row component type" << endl;
-        _exit(1);
+        std::quick_exit(EXIT_FAILURE);
       }
 
       m_render_buf.reset( new char [length_max+1] );

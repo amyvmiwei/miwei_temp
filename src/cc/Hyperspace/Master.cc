@@ -162,7 +162,7 @@ Hyperspace::Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     if (!FileUtils::mkdirs(m_base_dir.c_str())) {
       HT_ERRORF("Unable to create base directory %s - %s",
                 m_base_dir.c_str(), strerror(errno));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -171,13 +171,13 @@ Hyperspace::Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
 	     m_lock_file.c_str());
     if ((m_lock_fd = ::open(m_lock_file.c_str(), O_RDWR|O_CREAT|O_TRUNC, 0644)) < 0) {
       HT_ERRORF("Unable to create lock file '%s' - %s", m_lock_file.c_str(), strerror(errno));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
   else {
     if ((m_lock_fd = ::open(m_lock_file.c_str(), O_RDWR)) < 0) {
       HT_ERRORF("Unable to open lock file '%s' - %s", m_lock_file.c_str(), strerror(errno));
-      exit(1);
+      exit(EXIT_FAILURE);
     }
   }
 
@@ -204,7 +204,7 @@ Hyperspace::Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
       HT_ERRORF("Unable to lock file '%s' - %s",
                 m_lock_file.c_str(), strerror(errno));
     }
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 #else
   if (flock(m_lock_fd, LOCK_EX | LOCK_NB) != 0) {
@@ -216,7 +216,7 @@ Hyperspace::Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
       HT_ERRORF("Unable to lock file '%s' - %s",
                 m_lock_file.c_str(), strerror(errno));
     }
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 #endif
 

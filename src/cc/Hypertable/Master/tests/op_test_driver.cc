@@ -19,7 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include <Hypertable/Master/BalancePlanAuthority.h>
 #include <Hypertable/Master/Context.h>
@@ -62,16 +62,14 @@
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <list>
 #include <map>
+#include <thread>
 #include <vector>
-
-extern "C" {
-#include <poll.h>
-}
 
 using namespace Hypertable;
 using namespace Config;
@@ -108,7 +106,7 @@ namespace {
     static void init() {
       if (!has("test")) {
         HT_ERROR_OUT <<"test name required\n"<< cmdline_desc() << HT_END;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
   };
@@ -307,7 +305,7 @@ namespace {
     context->mml_writer = 0;
 
     initialize_test(context, entities);
-    poll(0,0,100);
+    this_thread::sleep_for(chrono::milliseconds(100));
   }
 
   bool check_for_diff(const string &basename) {
@@ -434,13 +432,13 @@ int main(int argc, char **argv) {
       recreate_index_tables_test(context);
     else {
       HT_ERRORF("Unrecognized test name: %s", testname.c_str());
-      _exit(1);
+      quick_exit(EXIT_FAILURE);
     }
 
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   return 0;
@@ -468,10 +466,10 @@ void create_namespace_test(ContextPtr &context) {
   context->op->join();
 
   if (!check_for_diff("create_namespace"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -496,10 +494,10 @@ void drop_namespace_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("drop_namespace"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 namespace {
@@ -554,7 +552,7 @@ void create_table_test(ContextPtr &context) {
 
   context->rsc_manager->disconnect_server(g_rsc[0]);
   initialize_test(context, entities);
-  poll(0,0,100);
+  this_thread::sleep_for(chrono::milliseconds(100));
   context->rsc_manager->connect_server(g_rsc[0], "rs1.hypertable.com", InetAddr("localhost", 30267),
                                        InetAddr("localhost", g_rs_port));
   context->op->wait_for_empty();
@@ -565,10 +563,10 @@ void create_table_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("create_table"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -604,10 +602,10 @@ void drop_table_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("drop_table"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -636,7 +634,7 @@ void create_table_with_index_test(ContextPtr &context) {
 
   context->rsc_manager->disconnect_server(g_rsc[0]);
   initialize_test(context, entities);
-  poll(0,0,100);
+  this_thread::sleep_for(chrono::milliseconds(100));
   context->rsc_manager->connect_server(g_rsc[0], "rs1.hypertable.com", InetAddr("localhost", 30267),
                           InetAddr("localhost", g_rs_port));
   context->op->wait_for_empty();
@@ -647,10 +645,10 @@ void create_table_with_index_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("create_table_with_index"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -673,10 +671,10 @@ void rename_table_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("rename_table"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -704,10 +702,10 @@ void master_initialize_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("master_initialize"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -759,7 +757,7 @@ void system_upgrade_test(ContextPtr &context) {
   HT_ASSERT(dynamic_pointer_cast<Operation>(entity)->get_state() == OperationState::COMPLETE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -806,10 +804,10 @@ void move_range_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("move_range"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 void fill_ranges(vector<QualifiedRangeSpec> &root_specs,
@@ -912,11 +910,11 @@ void balance_plan_authority_test(ContextPtr &context) {
   String cmd = "cat balance_plan_authority_test.output | perl -e 'while (<>) { s/timestamp=.*?201\\d,/timestamp=0,/g; print; }' > output; diff output balance_plan_authority_test.golden";
   if (system(cmd.c_str()) != 0) {
     std::cout << "balance_plan_authority_test.output differs from golden file\n";
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 void toggle_table_maintenance_test(ContextPtr &context) {
@@ -987,10 +985,10 @@ void toggle_table_maintenance_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("toggle_table_maintenance"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }
 
 
@@ -1037,8 +1035,8 @@ void recreate_index_tables_test(ContextPtr &context) {
   out.close();
 
   if (!check_for_diff("recreate_index_tables"))
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
 
   context = 0;
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,16 +19,17 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Escaper.h"
-#include "Common/Init.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
+#include <Common/Escaper.h>
+#include <Common/Init.h>
+#include <Common/Logger.h>
 
 extern "C" {
 #include <string.h>
 }
 
 using namespace Hypertable;
+using namespace std;
 
 void run_test(const String &original, const String &escape_chars) {
   String str = original;
@@ -64,5 +65,5 @@ int main(int ac, char *av[]) {
   run_test("\\\\", ",");
   run_test("'hello,world'", "'");
   run_test("'hello,\\world'", "'");
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

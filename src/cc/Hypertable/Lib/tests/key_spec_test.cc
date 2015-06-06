@@ -19,19 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Future.h>
+
+#include <Common/md5.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
 #include <iostream>
 
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/md5.h"
-#include "Common/Usage.h"
-
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Future.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -117,15 +118,15 @@ int main(int argc, char **argv) {
             (cell.revision - timestamp) >= 5000000000LL) {
           HT_ERRORF("Supplied timestamp = %lld, returned revision = %lld",
                     (Lld)timestamp, (Lld)cell.revision);
-          _exit(1);
+          quick_exit(EXIT_FAILURE);
         }
       }
     }
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
-  _exit(0);
+  quick_exit(EXIT_SUCCESS);
 }

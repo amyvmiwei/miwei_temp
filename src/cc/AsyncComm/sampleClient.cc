@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,7 +19,24 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "DispatchHandler.h"
+#include "Comm.h"
+#include "CommHeader.h"
+#include "Event.h"
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+#include <Common/Serialization.h>
+
+#include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <queue>
 #include <cstdio>
@@ -36,23 +53,6 @@ extern "C" {
 #include <string.h>
 #include <time.h>
 }
-
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-#include "Common/Serialization.h"
-
-#include "DispatchHandler.h"
-#include "Comm.h"
-#include "CommHeader.h"
-#include "Event.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -145,7 +145,7 @@ public:
     }
     else if (event_ptr->type == Event::ERROR) {
       HT_INFOF("Error : %s", Error::get_text(event_ptr->error));
-      //exit(1);
+      //exit(EXIT_FAILURE);
     }
     else if (event_ptr->type == Event::MESSAGE) {
       m_queue.push(event_ptr);
@@ -217,7 +217,7 @@ public:
     }
     else {
       HT_INFOF("%s", event_ptr->to_str().c_str());
-      //exit(1);
+      //exit(EXIT_FAILURE);
     }
   }
 
@@ -275,7 +275,7 @@ int main(int argc, char **argv) {
       rval = atoi(&argv[i][7]);
       if (rval <= 1024 || rval > 65535) {
         cerr << "Invalid port.  Must be in the range of 1024-65535." << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       port = rval;
     }
@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
     Usage::dump_and_exit(usage);
 
   if (!InetAddr::initialize(&addr, host, port))
-    exit(1);
+    exit(EXIT_FAILURE);
 
   comm = Comm::instance();
 
@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
     if (inet_addr.sin_port == 0) {
       if ((error = comm->connect(addr, dhp)) != Error::OK) {
         HT_ERRORF("Comm::connect error - %s", Error::get_text(error));
-        exit(1);
+        exit(EXIT_FAILURE);
       }
     }
     else {
@@ -335,7 +335,7 @@ int main(int argc, char **argv) {
       comm->listen(inet_addr, handler_factory, dhp);
     }
     if (!((ResponseHandlerTCP *)resp_handler)->wait_for_connection())
-      exit(1);
+      exit(EXIT_FAILURE);
 
   }
 

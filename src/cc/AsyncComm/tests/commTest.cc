@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,35 +19,38 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "CommTestThreadFunction.h"
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/Event.h>
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/TestHarness.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
+#include <boost/thread/thread.hpp>
+
+#include <chrono>
 #include <cstdlib>
+#include <thread>
 
 extern "C" {
-#include <poll.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
 }
 
-#include <boost/thread/thread.hpp>
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/TestHarness.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/Event.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include "CommTestThreadFunction.h"
-
 using namespace Hypertable;
+using namespace std;
 
 namespace {
   const char *usage[] = {
@@ -67,7 +70,7 @@ namespace {
         execl("./testServer", "./testServer", DEFAULT_PORT_ARG, "--app-queue",
               (char *)0);
       }
-      poll(0,0,2000);
+      this_thread::sleep_for(chrono::milliseconds(2000));
     }
     ~ServerLauncher() {
       if (kill(m_child_pid, 9) == -1)

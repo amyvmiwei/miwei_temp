@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,30 +19,30 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include <iostream>
-#include <fstream>
-
-#include "AsyncComm/ConnectionManager.h"
-
-#include "FsBroker/Lib/Client.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/SerializedKey.h"
+#include <Common/Compat.h>
 
 #include "../CellStoreFactory.h"
 #include "../CellStoreV7.h"
 #include "../Global.h"
 
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/SerializedKey.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Init.h>
+#include <Common/DynamicBuffer.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
 
 using namespace Hypertable;
 using namespace std;
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
     if (!schema->is_valid()) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     RangeSpec range_spec;
@@ -223,9 +223,9 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(1);
+    quick_exit(EXIT_FAILURE);
   }
 
-  return 0;
+  quick_exit(EXIT_SUCCESS);
 }
 
