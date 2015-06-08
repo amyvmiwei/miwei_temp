@@ -50,9 +50,8 @@
 #include <map>
 #include <mutex>
 #include <sstream>
+#include <thread>
 #include <vector>
-
-#include <poll.h>
 
 using namespace Hypertable;
 using namespace std;
@@ -197,7 +196,7 @@ int main(int argc, char **argv) {
     chrono::time_point<chrono::steady_clock> now;
     for (auto & entry : start_map) {
       now = chrono::steady_clock::now();
-      poll(0, 0, chrono::duration_cast<std::chrono::milliseconds>(entry.first-now).count());
+      this_thread::sleep_for(chrono::duration_cast<std::chrono::milliseconds>(entry.first-now));
       if (!entry.second->issue_command(command)) {
         entry.second->dump_log(cerr);
         failed_hosts.push_back(entry.second->hostname());        

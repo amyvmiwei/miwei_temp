@@ -30,7 +30,6 @@
 extern "C" {
 #include <dirent.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -78,7 +77,7 @@ using namespace std;
         txn_str << txn; \
         HT_INFOF("Berkeley DB deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
-        poll(0, 0, (System::rand32() % 3000) + 1); \
+        this_thread::sleep_for(chrono::milliseconds((System::rand32() % 3000) + 1)); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
@@ -105,7 +104,7 @@ using namespace std;
         txn_str << txn; \
         HT_INFOF("Berkeley DB deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
-        poll(0, 0, (System::rand32() % 3000) + 1); \
+        this_thread::sleep_for(chrono::milliseconds((System::rand32() % 3000) + 1)); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \

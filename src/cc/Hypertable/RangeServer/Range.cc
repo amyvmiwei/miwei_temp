@@ -55,18 +55,17 @@
 #include <re2/re2.h>
 
 #include <cassert>
+#include <chrono>
 #include <string>
+#include <thread>
 #include <vector>
 
 extern "C" {
-#include <poll.h>
 #include <string.h>
 }
 
-
 using namespace Hypertable;
 using namespace std;
-
 
 Range::Range(Lib::Master::ClientPtr &master_client,
              const TableIdentifier &identifier, SchemaPtr &schema,
@@ -216,7 +215,7 @@ void Range::deferred_initialization(boost::xtime expire_time) {
       boost::xtime now;
       boost::xtime_get(&now, TIME_UTC_);
       if (boost::xtime_cmp(now, expire_time) < 0) {
-        poll(0, 0, 10000);
+        this_thread::sleep_for(chrono::milliseconds(10000));
         continue;
       }
       throw;
@@ -749,7 +748,7 @@ void Range::relinquish_install_log() {
       catch (Exception &e) {
         if (i<3) {
           HT_WARNF("%s - %s", Error::get_text(e.code()), e.what());
-          poll(0, 0, 5000);
+          this_thread::sleep_for(chrono::milliseconds(5000));
           continue;
         }
         HT_ERRORF("Problem updating meta log entry with RELINQUISH_LOG_INSTALLED state for %s",
@@ -877,7 +876,7 @@ void Range::relinquish_finalize() {
     catch (Exception &e) {
       if (i<6) {
         HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
-        poll(0, 0, 5000);
+        this_thread::sleep_for(chrono::milliseconds(5000));
         continue;
       }
       HT_ERRORF("Problem recording removal for range %s", m_name.c_str());
@@ -1060,7 +1059,7 @@ void Range::split_install_log() {
       catch (Exception &e) {
         if (i<3) {
           HT_WARNF("%s - %s", Error::get_text(e.code()), e.what());
-          poll(0, 0, 5000);
+          this_thread::sleep_for(chrono::milliseconds(5000));
           continue;
         }
         HT_ERRORF("Problem updating meta log with SPLIT_LOG_INSTALLED state for %s "
@@ -1322,7 +1321,7 @@ void Range::split_compact_and_shrink() {
       catch (Exception &e) {
         if (i<3) {
           HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
-          poll(0, 0, 5000);
+          this_thread::sleep_for(chrono::milliseconds(5000));
           continue;
         }
         HT_ERRORF("Problem updating meta log entry with SPLIT_SHRUNK state %s "
@@ -1415,7 +1414,7 @@ void Range::split_notify_master() {
     catch (Exception &e) {
       if (i<2) {
         HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
-        poll(0, 0, 5000);
+        this_thread::sleep_for(chrono::milliseconds(5000));
         continue;
       }
       HT_ERRORF("Problem updating meta log with STEADY state for %s",

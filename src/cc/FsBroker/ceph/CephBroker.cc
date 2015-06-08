@@ -19,24 +19,27 @@
 
 #include <Common/Compat.h>
 
+#include "CephBroker.h"
+
+#include <Common/Filesystem.h>
+#include <Common/FileUtils.h>
+#include <Common/System.h>
+
 #include <cerrno>
+#include <chrono>
 #include <string>
+#include <thread>
 
 extern "C" {
 #include <fcntl.h>
-#include <poll.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
 }
 
-#include "Common/Filesystem.h"
-#include "Common/FileUtils.h"
-#include "Common/System.h"
-#include "CephBroker.h"
-
 using namespace Hypertable;
 using namespace Hypertable::FsBroker;
+using namespace std;
 
 atomic_t CephBroker::ms_next_fd = ATOMIC_INIT(0);
 
@@ -400,7 +403,7 @@ void CephBroker::status(Response::Callback::Status *cb) {
 void CephBroker::shutdown(ResponseCallback *cb) {
   m_open_file_map.remove_all();
   cb->response_ok();
-  poll(0, 0, 2000);
+  this_thread::sleep_for(chrono::milliseconds(2000));
 }
 
 void CephBroker::readdir(Response::Callback::Readdir *cb, const char *dname) {

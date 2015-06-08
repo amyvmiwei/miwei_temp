@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,27 +19,26 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <iostream>
-#include <fstream>
-#include <queue>
+#include <Common/Compat.h>
 
-extern "C" {
-#include <poll.h>
-}
+#include "CommTestThreadFunction.h"
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
+#include <AsyncComm/Event.h>
+
+#include <Common/Error.h>
+#include <Common/Serialization.h>
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "Common/Error.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
-#include "AsyncComm/Event.h"
-#include "Common/Serialization.h"
-
-#include "CommTestThreadFunction.h"
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <queue>
+#include <thread>
 
 using namespace std;
 using namespace Hypertable;
@@ -47,9 +46,6 @@ using namespace Serialization;
 
 namespace {
 
-  /**
-   *
-   */
   class ResponseHandler : public DispatchHandler {
 
   public:
@@ -127,7 +123,7 @@ void CommTestThreadFunction::operator()() {
             HT_ERROR("Connection timeout.");
             return;
           }
-          poll(0, 0, 1000);
+          this_thread::sleep_for(chrono::milliseconds(1000));
           retries++;
         }
         else {

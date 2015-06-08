@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,17 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
 
-#include <ctime>
-#include <cmath>
-
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/DataGenerator.h"
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/Cells.h"
+#include <Common/Compat.h>
 
 #include "QueryThread.h"
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/DataGenerator.h>
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/Cells.h>
+
+#include <chrono>
+#include <cmath>
+#include <ctime>
+#include <thread>
 
 using namespace Hypertable;
 
@@ -57,8 +60,9 @@ void QueryThread::operator()() {
     DataGenerator dg(m_props, true);
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
+
       if (delay)
-        poll(0, 0, delay);
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
       scan_spec.clear();
       scan_spec.add_column((*iter).column_family);

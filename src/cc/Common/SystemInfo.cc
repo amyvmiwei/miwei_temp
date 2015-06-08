@@ -23,17 +23,22 @@
  * System information and statistics based on libsigar.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
-#include "Common/SystemInfo.h"
-#include "Common/Mutex.h"
+#include <Common/Compat.h>
+#include <Common/Config.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
+#include <Common/SystemInfo.h>
+#include <Common/Mutex.h>
 
+#if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
+#include <gperftools/malloc_extension.h>
+#endif
+
+#include <chrono>
+#include <thread>
 #include <utility>
 
 extern "C" {
-#include <poll.h>
 #include <ncurses.h>
 #include <term.h>
 #include <sigar.h>
@@ -41,13 +46,10 @@ extern "C" {
 #include <stdlib.h>
 }
 
-#if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
-#include <gperftools/malloc_extension.h>
-#endif
-
 #define HT_FIELD_NOTIMPL(_field_) (_field_ == (uint64_t)-1)
 
 using namespace Hypertable;
+using namespace std;
 
 bool CpuInfo::operator==(const CpuInfo &other) const {
   if (vendor == other.vendor &&
@@ -426,8 +428,10 @@ CpuStat &CpuStat::refresh() {
       need_pause = true;
     }
   }
+
   if (need_pause)
-    poll(0, 0, DEFAULT_PAUSE);
+    this_thread::sleep_for(chrono::milliseconds(DEFAULT_PAUSE));
+
   {
     ScopedRecLock lock(_mutex);
     sigar_cpu_t curr;
@@ -687,7 +691,8 @@ NetStat &NetStat::refresh() {
     }
   }
   if (need_pause)
-    poll(0, 0, DEFAULT_PAUSE);
+    this_thread::sleep_for(chrono::milliseconds(DEFAULT_PAUSE));
+
   {
     ScopedRecLock lock(_mutex);
 

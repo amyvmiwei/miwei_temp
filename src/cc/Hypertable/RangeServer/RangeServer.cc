@@ -1918,7 +1918,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
     HT_MAYBE_FAIL_X("metadata-load-range-3", table.is_metadata());
 
     // make sure that we don't have a clock skew
-    // poll() timeout is in milliseconds, revision and now is in nanoseconds
+    // timeout is in milliseconds, revision and now is in nanoseconds
     int64_t now = Hypertable::get_ts64();
     int64_t revision = range->get_scan_revision(cb->event()->header.timeout_ms);
     if (revision > now) {

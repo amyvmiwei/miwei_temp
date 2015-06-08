@@ -27,7 +27,7 @@
 
 //#define HT_DISABLE_LOG_DEBUG
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include "ReactorFactory.h"
 #include "ReactorRunner.h"
@@ -44,7 +44,9 @@
 #include <Common/Time.h>
 
 #include <cassert>
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 extern "C" {
 #if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
@@ -56,7 +58,6 @@ extern "C" {
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -275,7 +276,7 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
     if (m_verbose)
       HT_INFOF("Unable to bind to %s: %s, will retry in 10 seconds...",
                addr.to_str().c_str(), strerror(errno));
-    poll(0, 0, 10000);
+    this_thread::sleep_for(chrono::milliseconds(10000));
     bind_attempts++;
   }
 
@@ -410,7 +411,7 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
     if (m_verbose)
       HT_INFOF("Unable to bind to %s: %s, will retry in 10 seconds...",
                addr.to_str().c_str(), strerror(errno));
-    poll(0, 0, 10000);
+    this_thread::sleep_for(chrono::milliseconds(10000));
     bind_attempts++;
   }
 
@@ -621,7 +622,7 @@ Comm::connect_socket(int sd, const CommAddress &addr,
   while (::connect(sd, (struct sockaddr *)&connectable_addr.inet, sizeof(struct sockaddr_in))
           < 0) {
     if (errno == EINTR) {
-      poll(0, 0, 1000);
+      this_thread::sleep_for(chrono::milliseconds(1000));
       continue;
     }
     else if (errno == EINPROGRESS) {

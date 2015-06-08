@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -42,10 +42,11 @@
 #include <Common/FailureInducer.h>
 #include <Common/ScopeGuard.h>
 
+#include <chrono>
 #include <sstream>
+#include <thread>
 
 extern "C" {
-#include <poll.h>
 #include <time.h>
 }
 
@@ -169,7 +170,7 @@ void OperationRecover::execute() {
           last_notification = time(0);
         }
         HT_ERRORF("%s", message.c_str());
-        poll(0, 0, 30000);
+        this_thread::sleep_for(chrono::milliseconds(30000));
       }
     }
 

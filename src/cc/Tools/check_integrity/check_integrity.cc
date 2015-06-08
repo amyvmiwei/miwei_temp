@@ -36,8 +36,10 @@
 #include <boost/progress.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <thread>
 
 extern "C" {
 #include <netdb.h>
@@ -173,7 +175,7 @@ class LocationThread
           continue;
         }
         if (m_sleep_ms)
-          ::poll(0, 0, m_sleep_ms);
+          this_thread::sleep_for(chrono::milliseconds(m_sleep_ms));
 
         previous_end = m_ranges[i].endrow;
       }

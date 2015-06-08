@@ -47,7 +47,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <poll.h>
+#include <chrono>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -191,7 +192,7 @@ void OperationAlterTable::execute() {
       }
       m_context->mml_writer->record_state(shared_from_this());
       // Sleep a little bit to prevent busy wait
-      poll(0, 0, 5000);
+      this_thread::sleep_for(chrono::milliseconds(5000));
       return;
     }
     set_state(OperationState::UPDATE_HYPERSPACE);

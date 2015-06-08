@@ -24,16 +24,17 @@
  * testing.
  */
 
-#ifndef HYPERTABLE_SERVERLAUNCHER_H
-#define HYPERTABLE_SERVERLAUNCHER_H
+#ifndef Common_ServerLauncher_h
+#define Common_ServerLauncher_h
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 extern "C" {
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <poll.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -96,7 +97,7 @@ namespace Hypertable {
       }
       close(fd[0]);
       m_write_fd = fd[1];
-      poll(0, 0, 2000);
+      std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 
     /** Destructor; kills the external program */
@@ -133,4 +134,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_SERVERLAUNCHER_H
+#endif // Common_ServerLauncher_h

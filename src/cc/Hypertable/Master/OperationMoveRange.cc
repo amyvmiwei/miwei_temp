@@ -38,11 +38,9 @@
 #include <Common/System.h>
 #include <Common/md5.h>
 
+#include <chrono>
 #include <string>
-
-extern "C" {
-#include <poll.h>
-}
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -175,7 +173,7 @@ void OperationMoveRange::execute() {
         // If not yet relinquished, wait a couple of seconds and try again
         if (e.code() == Error::RANGESERVER_RANGE_NOT_YET_RELINQUISHED) {
           HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
-          poll(0, 0, 2000);
+          this_thread::sleep_for(chrono::milliseconds(2000));
           return;
         }
 
@@ -196,7 +194,7 @@ void OperationMoveRange::execute() {
         HT_WARNF("Problem moving range %s to %s: %s - %s",
                  m_range_name.c_str(), m_destination.c_str(),
                  Error::get_text(e.code()), e.what());
-        poll(0, 0, 5000);
+        this_thread::sleep_for(chrono::milliseconds(5000));
         set_state(OperationState::INITIAL);
         return;
       }
@@ -234,7 +232,7 @@ void OperationMoveRange::execute() {
           HT_WARNF("Problem acknowledging load range %s: %s - %s (dest %s)",
                    m_range_name.c_str(), Error::get_text(e.code()),
                    e.what(), m_destination.c_str());
-          poll(0, 0, 5000);
+          this_thread::sleep_for(chrono::milliseconds(5000));
           // Fetch new destination, if it changed, and then try again
           if (!bpa->get_balance_destination(m_params.table(),
                                             m_params.range_spec(),

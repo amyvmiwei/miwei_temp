@@ -32,10 +32,11 @@
 #include <Common/Logger.h>
 #include <Common/md5.h>
 
+#include <chrono>
 #include <string>
+#include <thread>
 
 extern "C" {
-#include <poll.h>
 #include <time.h>
 }
 
@@ -69,7 +70,7 @@ namespace Hypertable {
       md5DigestStr[16] = 0;
       do {
         if (now != 0)
-          poll(0, 0, 1200);
+          std::this_thread::sleep_for(std::chrono::milliseconds(1200));
         now = time(0);
         m_logname = format("%s/tables/%s/_xfer/%s_%d", toplevel_dir.c_str(),
                            table_id.c_str(), md5DigestStr, (int)now);

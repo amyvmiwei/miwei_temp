@@ -38,16 +38,17 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <queue>
+#include <chrono>
 #include <cstdio>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <queue>
 #include <string>
+#include <thread>
 
 extern "C" {
 #include <netdb.h>
 #include <errno.h>
-#include <poll.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
@@ -364,7 +365,7 @@ int main(int argc, char **argv) {
               HT_ERROR("Connection timeout.");
               return 1;
             }
-            poll(0, 0, 1000);
+            this_thread::sleep_for(chrono::milliseconds(1000));
             retries++;
           }
           else {

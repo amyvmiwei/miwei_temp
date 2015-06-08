@@ -25,10 +25,23 @@
  * functor class used to wait for and react to I/O events.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/FileUtils.h"
-#include "Common/Time.h"
+#include <Common/Compat.h>
+
+#define HT_DISABLE_LOG_DEBUG 1
+
+#include "HandlerMap.h"
+#include "IOHandler.h"
+#include "IOHandlerData.h"
+#include "ReactorFactory.h"
+#include "ReactorRunner.h"
+
+#include <Common/Config.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/Time.h>
+
+#include <chrono>
+#include <thread>
 
 extern "C" {
 #include <errno.h>
@@ -42,16 +55,8 @@ extern "C" {
 #endif
 }
 
-#define HT_DISABLE_LOG_DEBUG 1
-
-#include "Common/Logger.h"
-
-#include "HandlerMap.h"
-#include "IOHandler.h"
-#include "IOHandlerData.h"
-#include "ReactorFactory.h"
-#include "ReactorRunner.h"
 using namespace Hypertable;
+using namespace std;
 
 bool Hypertable::ReactorRunner::shutdown = false;
 bool Hypertable::ReactorRunner::record_arrival_time = false;
@@ -111,7 +116,7 @@ void ReactorRunner::operator()() {
         if (handlers[i] && removed_handlers.count(handlers[i]) == 0) {
           // dispatch delay for testing
           if (dispatch_delay && !did_delay && (pollfds[i].revents & POLLIN)) {
-            poll(0, 0, (int)dispatch_delay);
+            this_thread::sleep_for(chrono::milliseconds((int)dispatch_delay));
             did_delay = true;
           }
           if (record_arrival_time && !got_arrival_time
@@ -159,7 +164,7 @@ void ReactorRunner::operator()() {
       if (handler && removed_handlers.count(handler) == 0) {
         // dispatch delay for testing
         if (dispatch_delay && !did_delay && (events[i].events & EPOLLIN)) {
-          poll(0, 0, (int)dispatch_delay);
+          this_thread::sleep_for(chrono::milliseconds((int)dispatch_delay));
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time
@@ -215,7 +220,7 @@ void ReactorRunner::operator()() {
       if (handler && removed_handlers.count(handler) == 0) {
         // dispatch delay for testing
         if (dispatch_delay && !did_delay && events[i].portev_events == POLLIN) {
-          poll(0, 0, (int)dispatch_delay);
+          this_thread::sleep_for(chrono::milliseconds((int)dispatch_delay));
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].portev_events == POLLIN) {
@@ -262,7 +267,7 @@ void ReactorRunner::operator()() {
       if (handler && removed_handlers.count(handler) == 0) {
         // dispatch delay for testing
         if (dispatch_delay && !did_delay && events[i].filter == EVFILT_READ) {
-          poll(0, 0, (int)dispatch_delay);
+          this_thread::sleep_for(chrono::milliseconds((int)dispatch_delay));
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].filter == EVFILT_READ) {

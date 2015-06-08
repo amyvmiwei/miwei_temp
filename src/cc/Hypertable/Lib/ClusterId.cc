@@ -35,13 +35,13 @@
 #include <Common/SystemInfo.h>
 #include <Common/md5.h>
 
-extern "C" {
-#include <poll.h>
-}
+#include <chrono>
+#include <thread>
 
 using namespace Hyperspace;
 using namespace Hypertable;
 using namespace Hypertable::Config;
+using namespace std;
 
 uint64_t ClusterId::id;
 
@@ -74,7 +74,7 @@ ClusterId::ClusterId(Hyperspace::SessionPtr &hyperspace,
           break;
         if (--retry_count) {
           HT_INFO("Problem reading cluster ID from Hyperspace, will retry in 10 seconds ...");
-          poll(0, 0, 10000);
+          this_thread::sleep_for(chrono::milliseconds(10000));
           continue;
         }
       }

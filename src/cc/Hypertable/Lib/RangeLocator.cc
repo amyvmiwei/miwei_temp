@@ -36,13 +36,14 @@
 #include <boost/algorithm/string.hpp>
 
 #include <cassert>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 #include <vector>
 
 extern "C" {
 #include <limits.h>
-#include <poll.h>
 #include <string.h>
 }
 
@@ -179,7 +180,7 @@ void RangeLocator::initialize() {
     catch (Exception &e) {
       if (timer.expired())
         HT_THROW2(Error::HYPERSPACE_FILE_NOT_FOUND, e, metadata_file);
-      poll(0, 0, 3000);
+      this_thread::sleep_for(chrono::milliseconds(3000));
     }
   }
 
@@ -195,7 +196,7 @@ void RangeLocator::initialize() {
         m_hyperspace->close_nowait(handle);
         throw;
       }
-      poll(0, 0, 3000);
+      this_thread::sleep_for(chrono::milliseconds(3000));
     }
   }
 
@@ -250,7 +251,7 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
     }
 
     // wait a bit
-    poll(0, 0, (int)wait_time);
+    this_thread::sleep_for(chrono::milliseconds(wait_time));
     total_wait_time += wait_time;
     wait_time = (wait_time * 3) / 2;
 

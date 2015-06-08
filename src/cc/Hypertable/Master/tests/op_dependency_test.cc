@@ -37,8 +37,10 @@
 #include <Common/Init.h>
 #include <Common/Thread.h>
 
+#include <chrono>
 #include <iostream>
 #include <set>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Config;
@@ -331,7 +333,7 @@ int main(int argc, char **argv) {
 
     operation_foo->unblock();
     context->op->wake_up();
-    poll(0, 0, 1000);
+    this_thread::sleep_for(chrono::milliseconds(1000));
     context->op->wait_for_idle();
     
     HT_ASSERT(context->op->size() == 1);
@@ -370,11 +372,11 @@ int main(int argc, char **argv) {
     operation = operation_foo;
     context->op->add_operation(operation);
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
     HT_ASSERT(context->op->size() == 3);
 
     context->op->unblock("baz");
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
     HT_ASSERT(context->op->size() == 2);
 
     context->op->unblock("bar");
@@ -402,11 +404,11 @@ int main(int argc, char **argv) {
     operation = operation_foo;
     context->op->add_operation(operation);
 
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
     HT_ASSERT(context->op->size() == 3);
 
     context->op->unblock("bar");
-    poll(0, 0, 2000);
+    this_thread::sleep_for(chrono::milliseconds(2000));
     HT_ASSERT(context->op->size() == 3);
 
     context->op->unblock("baz");

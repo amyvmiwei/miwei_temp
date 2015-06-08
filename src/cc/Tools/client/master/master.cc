@@ -35,7 +35,9 @@
 #include <Common/InetAddr.h>
 #include <Common/Init.h>
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Tools::client::master;
@@ -113,7 +115,7 @@ int main(int argc, char **argv) {
       quick_exit(2);
     }
 
-    poll(0, 0, 100);
+    this_thread::sleep_for(chrono::milliseconds(100));
 
     CommandInterpreterPtr interp = new MasterCommandInterpreter(client);
 

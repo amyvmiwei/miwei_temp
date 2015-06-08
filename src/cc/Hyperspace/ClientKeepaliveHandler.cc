@@ -19,20 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-extern "C" {
-#include <poll.h>
-}
-
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/StringExt.h"
-#include "Common/Time.h"
+#include <Common/Compat.h>
 
 #include "ClientKeepaliveHandler.h"
 #include "Master.h"
 #include "Protocol.h"
 #include "Session.h"
+
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/StringExt.h>
+#include <Common/Time.h>
+
+#include <chrono>
+#include <thread>
 
 using namespace std;
 using namespace Hypertable;
@@ -414,7 +414,7 @@ void ClientKeepaliveHandler::expire_session() {
 
   if (m_conn_handler)
     m_conn_handler->close();
-  poll(0,0,2000);
+  this_thread::sleep_for(chrono::milliseconds(2000));
   m_conn_handler = 0;
   m_handle_map.clear();
   m_bad_handle_map.clear();

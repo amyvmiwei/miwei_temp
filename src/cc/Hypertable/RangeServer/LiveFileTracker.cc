@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,17 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/FailureInducer.h"
 
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "Global.h"
 #include "LiveFileTracker.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
 
+#include <Hypertable/Lib/Key.h>
+
+#include <Common/FailureInducer.h>
+
 using namespace Hypertable;
+using namespace std;
 
 LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
                                  SchemaPtr &schema_ptr,
@@ -153,7 +156,7 @@ void LiveFileTracker::update_files_column() {
                  << " : " << e << HT_END;
     if (retry_count < 6) {
       ++retry_count;
-      poll(0, 0, 15000);
+      this_thread::sleep_for(chrono::milliseconds(15000));
       goto try_again;
     }
       HT_THROW2(e.code(), e, "Problem updating 'Files' column of METADATA: ");

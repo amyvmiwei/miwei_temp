@@ -66,11 +66,13 @@
 #include <Common/Time.h>
 #include <Common/Timer.h>
 
-#include <poll.h>
+#include <chrono>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
 using namespace Serialization;
+using namespace std;
 
 Master::Client::Client(ConnectionManagerPtr &conn_mgr,
                            Hyperspace::SessionPtr &hyperspace,
@@ -172,7 +174,7 @@ void Master::Client::initialize_hyperspace() {
     catch (Exception &e) {
       if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND)
         throw;
-      poll(0, 0, 3000);
+      this_thread::sleep_for(chrono::milliseconds(3000));
     }
   }
   if (m_master_file_handle == 0)
@@ -801,7 +803,7 @@ Master::Client::send_message(CommBufPtr &cbp, Timer *timer, EventPtr &event, con
         error == Error::COMM_BROKEN_CONNECTION ||
         error == Error::COMM_CONNECT_ERROR ||
         error == Error::SERVER_NOT_READY) {
-      poll(0, 0, std::min(timer->remaining(), (System::rand32() % 3000)));
+      this_thread::sleep_for(chrono::milliseconds(std::min(timer->remaining(), (System::rand32() % 3000))));
       return false;
     }
     HT_THROWF(error, "Client operation %s failed", label.c_str());
@@ -847,7 +849,7 @@ Master::Client::replay_status(int64_t op_id, const String &location,
       CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
       params.encode(cbuf->get_data_ptr_address());
       if (!send_message(cbuf, &timer, event, label)) {
-        poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+        this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
         continue;
       }
     }
@@ -884,7 +886,7 @@ Master::Client::replay_complete(int64_t op_id, const String &location,
       CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
       params.encode(cbuf->get_data_ptr_address());
       if (!send_message(cbuf, &timer, event, label)) {
-        poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+        this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
         continue;
       }
     }
@@ -918,7 +920,7 @@ Master::Client::phantom_prepare_complete(int64_t op_id, const String &location,
     CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
     params.encode(cbuf->get_data_ptr_address());
     if (!send_message(cbuf, &timer, event, label)) {
-      poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+      this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
       continue;
     }
     return;
@@ -949,7 +951,7 @@ Master::Client::phantom_commit_complete(int64_t op_id, const String &location,
     CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
     params.encode(cbuf->get_data_ptr_address());
     if (!send_message(cbuf, &timer, event, label)) {
-      poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+      this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
       continue;
     }
     return;

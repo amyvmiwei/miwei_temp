@@ -36,12 +36,13 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp>
 
+#include <chrono>
 #include <unordered_map>
 #include <sstream>
+#include <thread>
 
 using namespace Hypertable;
 using namespace boost;
-
 
 OperationProcessor::ThreadContext::ThreadContext(ContextPtr &mctx)
   : master_context(mctx), current_blocked(0), busy_count(0),
@@ -349,7 +350,7 @@ void OperationProcessor::Worker::operator()() {
           break;
         }
         HT_ERROR_OUT << e << HT_END;
-        poll(0, 0, 5000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         m_context.need_order_recompute = true;
       }
 

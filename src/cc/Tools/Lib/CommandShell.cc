@@ -19,37 +19,37 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
+#include "CommandShell.h"
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+#include <Common/Logger.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/thread/exceptions.hpp>
+
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <queue>
+#include <thread>
 
 extern "C" {
 #include <dirent.h>
 #include <editline/readline.h>
 #include <errno.h>
 #include <limits.h>
-#include <poll.h>
 #include <signal.h>
 }
 
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/thread/exceptions.hpp>
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-#include "Common/Logger.h"
-
-#include "CommandShell.h"
-
 using namespace Hypertable;
 using namespace std;
-
 
 String CommandShell::ms_history_file = "";
 
@@ -589,7 +589,7 @@ process_line:
               return 2;
           }
           else
-            poll(0, 0, secs*1000);
+            this_thread::sleep_for(chrono::milliseconds(secs*1000));
         }
         else {
           exit_status = m_interp_ptr->execute_line(command);

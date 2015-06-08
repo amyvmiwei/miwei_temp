@@ -45,6 +45,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <chrono>
+#include <thread>
 #include <vector>
 
 using namespace Hypertable;
@@ -259,7 +261,7 @@ void OperationCreateTable::execute() {
     }
     catch (Exception &e) {
       HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
-      poll(0, 0, 5000);
+      this_thread::sleep_for(chrono::milliseconds(5000));
       set_state(OperationState::ASSIGN_LOCATION);
       break;
     }
@@ -283,7 +285,7 @@ void OperationCreateTable::execute() {
       HT_INFOF("Problem acknowledging load range %s: %s - %s (dest %s)",
                range_name.c_str(), Error::get_text(e.code()),
                e.what(), m_location.c_str());
-      poll(0, 0, 5000);
+      this_thread::sleep_for(chrono::milliseconds(5000));
       // Fetch new destination, if changed, and then try again
       range.start_row = 0;
       range.end_row = Key::END_ROW_MARKER;

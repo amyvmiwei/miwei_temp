@@ -20,6 +20,7 @@
  */
 
 #include <Common/Compat.h>
+
 #include "LocalBroker.h"
 
 #include <Common/FileUtils.h>
@@ -32,16 +33,17 @@
 #include <AsyncComm/ReactorFactory.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <thread>
 #include <vector>
 
 extern "C" {
 #include <dirent.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <poll.h>
 #if defined(__sun__)
 #include <sys/fcntl.h>
 #endif
@@ -677,7 +679,7 @@ void LocalBroker::status(Response::Callback::Status *cb) {
 void LocalBroker::shutdown(ResponseCallback *cb) {
   m_open_file_map.remove_all();
   cb->response_ok();
-  poll(0, 0, 2000);
+  this_thread::sleep_for(chrono::milliseconds(2000));
 }
 
 

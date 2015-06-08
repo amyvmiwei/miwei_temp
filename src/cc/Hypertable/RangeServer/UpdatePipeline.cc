@@ -41,7 +41,9 @@
 #include <Common/Logger.h>
 #include <Common/Serialization.h>
 
+#include <chrono>
 #include <set>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hypertable::RangeServer;
@@ -122,7 +124,7 @@ void UpdatePipeline::qualify_and_transform() {
     // This probably shouldn't happen for group commit, but since
     // it's only for testing purposes, we'll leave it here
     if (m_update_delay)
-      poll(0, 0, m_update_delay);
+      this_thread::sleep_for(chrono::milliseconds(m_update_delay));
 
     // Global commit log is only available after local recovery
     uc->auto_revision = Hypertable::get_ts64();
@@ -625,7 +627,7 @@ void UpdatePipeline::commit() {
                     Error::get_text(error));
           if (++retry_count == 6)
             break;
-          poll(0, 0, 10000);
+          this_thread::sleep_for(chrono::milliseconds(10000));
         }
         else
           break;
@@ -816,7 +818,7 @@ void UpdatePipeline::add_and_respond() {
 
     // For testing
     if (m_maintenance_pause_interval > 0 && maintenance_needed)
-      poll(0, 0, m_maintenance_pause_interval);
+      this_thread::sleep_for(chrono::milliseconds(m_maintenance_pause_interval));
 
   }
 }

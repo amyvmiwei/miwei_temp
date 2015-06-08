@@ -35,11 +35,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <chrono>
+#include <thread>
 #include <vector>
-
-extern "C" {
-#include <poll.h>
-}
 
 using namespace Hypertable;
 using namespace std;
@@ -81,7 +79,7 @@ void FailureInducer::maybe_fail(const String &label) {
         HT_INFOF("Induced pause at '%s' iteration=%u for %u milliseconds",
                 label.c_str(), (*iter).second->iteration,
                 (*iter).second->pause_millis);
-        poll(0, 0, (*iter).second->pause_millis);
+        this_thread::sleep_for(chrono::milliseconds((*iter).second->pause_millis));
       }
       else {
         HT_ERRORF("induced failure code '%d' '%s' iteration=%u",

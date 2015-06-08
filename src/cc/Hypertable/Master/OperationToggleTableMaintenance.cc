@@ -42,7 +42,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <poll.h>
+#include <chrono>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
@@ -182,7 +183,7 @@ void OperationToggleTableMaintenance::execute() {
           m_servers.clear();
           m_state = OperationState::SCAN_METADATA;
         }
-        poll(0, 0, 5000);
+        this_thread::sleep_for(chrono::milliseconds(5000));
         m_context->mml_writer->record_state(shared_from_this());
         break;
       }

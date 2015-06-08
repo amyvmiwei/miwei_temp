@@ -43,12 +43,12 @@
 
 #include <boost/algorithm/string.hpp>
 
-extern "C" {
-#include <poll.h>
-}
+#include <chrono>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace std;
 
 OperationCompact::OperationCompact(ContextPtr &context,
                                    const MetaLog::EntityHeader &header_)
@@ -147,7 +147,7 @@ void OperationCompact::execute() {
         m_state = OperationState::SCAN_METADATA;
       }
       // Sleep a little bit to prevent busy wait
-      poll(0, 0, 5000);
+      this_thread::sleep_for(chrono::milliseconds(5000));
       m_context->mml_writer->record_state(shared_from_this());
       return;
     }

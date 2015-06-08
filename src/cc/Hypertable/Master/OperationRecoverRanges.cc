@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -36,10 +36,13 @@
 #include "Utility.h"
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <set>
+#include <thread>
 
 using namespace Hypertable;
+using namespace std;
 
 OperationRecoverRanges::OperationRecoverRanges(ContextPtr &context,
         const String &location, int type)
@@ -197,7 +200,7 @@ void OperationRecoverRanges::execute() {
 
     if (!acknowledge()) {
       // wait a few seconds and then try again
-      poll(0, 0, 5000);
+      this_thread::sleep_for(chrono::milliseconds(5000));
       HT_MAYBE_FAIL(format("recover-server-ranges-%s-12", m_type_str.c_str()));
       break;
     }

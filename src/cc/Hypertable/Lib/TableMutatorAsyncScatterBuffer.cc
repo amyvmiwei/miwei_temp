@@ -38,11 +38,12 @@
 #include <Hypertable/Lib/TableMutatorAsyncDispatchHandler.h>
 #include <Hypertable/Lib/TableMutatorAsyncHandler.h>
 
-#include <poll.h>
-
 #include <algorithm>
+#include <chrono>
+#include <thread>
 
 using namespace Hypertable;
+using namespace std;
 
 TableMutatorAsyncScatterBuffer::TableMutatorAsyncScatterBuffer(Comm *comm,
     ApplicationQueueInterfacePtr &app_queue, TableMutatorAsync *mutator,
@@ -331,7 +332,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
         else
           outstanding = true;
         // Random wait between 0 and 5 seconds
-        poll(0, 0, m_rng()%5000);
+        this_thread::sleep_for(chrono::milliseconds(m_rng()%5000));
       }
       else {
         HT_FATALF("Problem sending updates to %s - %s (%s)",
@@ -374,7 +375,7 @@ TableMutatorAsyncScatterBuffer::create_redo_buffer(uint32_t id) {
     }
 
     m_timer.start();
-    poll(0,0, m_wait_time);
+    this_thread::sleep_for(chrono::milliseconds(m_wait_time));
     m_timer.stop();
     redo_buffer = new TableMutatorAsyncScatterBuffer(m_comm, m_app_queue, m_mutator,
         &m_table_identifier, m_schema, m_range_locator, m_auto_refresh, m_timeout_ms, id);

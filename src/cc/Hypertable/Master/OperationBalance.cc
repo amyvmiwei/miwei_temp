@@ -42,7 +42,9 @@
 #include <Common/System.h>
 #include <Common/md5.h>
 
+#include <chrono>
 #include <sstream>
+#include <thread>
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -132,7 +134,7 @@ void OperationBalance::execute() {
           addr.set_proxy(move->source_location);
           try {
             rsc.relinquish_range(addr, move->table, move->range);
-            poll(0, 0, wait_millis);
+            this_thread::sleep_for(chrono::milliseconds(wait_millis));
           }
           catch (Exception &e) {
             move->complete = true;

@@ -19,29 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_EVENT_H
-#define HYPERSPACE_EVENT_H
+#ifndef Hyperspace_Event_h
+#define Hyperspace_Event_h
 
-#include "Common/Compat.h"
-
-extern "C" {
-#include <poll.h>
-}
-
-#include <iostream>
-#include <string>
-
-#include <boost/thread/condition.hpp>
-
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Serialization.h"
-#include "Common/System.h"
-
-#include "AsyncComm/CommBuf.h"
+#include <Common/Compat.h>
 
 #include "HandleCallback.h"
 #include "BerkeleyDbFilesystem.h"
+
+#include <AsyncComm/CommBuf.h>
+
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/Serialization.h>
+#include <Common/System.h>
+
+#include <boost/thread/condition.hpp>
+
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <thread>
 
 #define HT_BDBTXN_EVT_BEGIN(parent_txn) \
   do { \
@@ -62,7 +60,7 @@ extern "C" {
       } \
       HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
       txn.abort(); \
-      poll(0, 0, (System::rand32() % 3000) + 1); \
+      std::this_thread::sleep_for(std::chrono::milliseconds((System::rand32() % 3000) + 1)); \
       continue; \
     } \
     break; \
@@ -80,7 +78,7 @@ extern "C" {
       } \
       HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
       txn.abort(); \
-      poll(0, 0, (System::rand32() % 3000) + 1); \
+      std::this_thread::sleep_for(std::chrono::milliseconds((System::rand32() % 3000) + 1)); \
       continue; \
     } \
     break; \
@@ -229,4 +227,4 @@ namespace Hyperspace {
   };
 } // namespace Hyperspace
 
-#endif // HYPERSPACE_EVENT_H
+#endif // Hyperspace_Event_h

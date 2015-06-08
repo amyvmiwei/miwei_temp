@@ -19,23 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cstring>
-
-extern "C" {
-#include <poll.h>
-}
-
-#include <boost/algorithm/string.hpp>
-
-#include "Common/Config.h"
-#include "Common/StringExt.h"
+#include <Common/Compat.h>
 
 #include "Key.h"
 #include "TableMutator.h"
 
+#include <Common/Config.h>
+#include <Common/StringExt.h>
+
+#include <boost/algorithm/string.hpp>
+
+#include <chrono>
+#include <cstring>
+#include <thread>
+
 using namespace Hypertable;
 using namespace Hypertable::Config;
+using namespace std;
 
 void TableMutator::handle_exceptions() {
   try {
@@ -154,7 +154,7 @@ void TableMutator::auto_flush() {
     wait_for_flush_completion(m_mutator.get());
 
     if (m_flush_delay)
-      poll(0, 0, m_flush_delay);
+      this_thread::sleep_for(chrono::milliseconds(m_flush_delay));
 
     m_mutator->flush_with_tablequeue(this,
             !(m_flags & Table::MUTATOR_FLAG_NO_LOG_SYNC));
@@ -268,7 +268,7 @@ void TableMutator::retry_flush() {
   if (failed_cells && failed_cells->size() > 0)
     set_cells(failed_cells->get());
 
-  poll(0, 0, 2000);
+  this_thread::sleep_for(chrono::milliseconds(2000));
 
   flush();
 }
