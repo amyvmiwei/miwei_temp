@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,17 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
+
+#include "BalanceAlgorithmEvenRanges.h"
+
+#include <Hypertable/Lib/Client.h>
 
 #include <algorithm>
 #include <vector>
 
-#include "Hypertable/Lib/Client.h"
-#include "BalanceAlgorithmEvenRanges.h"
-
 using namespace Hypertable;
 using namespace std;
-
 
 namespace {
 
@@ -102,7 +103,7 @@ namespace {
     String dst_server;
 
     bool found_dst_server = false;
-    foreach_ht(const String &target_server, state.servers) {
+    for (const auto &target_server : state.servers) {
       if (!target_server.compare(src_server))
         continue;
       dst_range_dist_it = table_it->second->range_dist.find(target_server);
@@ -162,7 +163,7 @@ void BalanceAlgorithmEvenRanges::compute_plan(BalancePlanPtr &plan,
   state.num_ranges = 0;
   state.num_empty_servers = 0;
 
-  foreach_ht (RangeServerStatistics &rs, m_statistics) {
+  for (auto &rs : m_statistics) {
 
     if (!rs.stats->live) {
       HT_INFOF("Aborting balance because %s is not yet live", rs.location.c_str());
@@ -187,7 +188,7 @@ void BalanceAlgorithmEvenRanges::compute_plan(BalancePlanPtr &plan,
     if (rs.stats->range_count > 0) {
       TableSummaryPtr ts;
       state.num_ranges += rs.stats->range_count;
-      foreach_ht (StatsTable &table, rs.stats->tables) {
+      for (auto &table : rs.stats->tables) {
         TableSummaryMap::iterator it = state.table_summaries.find(table.table_id.c_str());
         if (it == state.table_summaries.end()) {
           ts = new TableSummary;
@@ -213,7 +214,7 @@ void BalanceAlgorithmEvenRanges::compute_plan(BalancePlanPtr &plan,
    */
   std::vector<RangeServerConnectionPtr> connections;
   m_context->rsc_manager->get_valid_connections(locations, connections);
-  foreach_ht (RangeServerConnectionPtr &rsc, connections) {
+  for (auto &rsc : connections) {
     if (!rsc->get_balanced())
       balanced.push_back(rsc);
     state.servers.push_back(rsc->location());

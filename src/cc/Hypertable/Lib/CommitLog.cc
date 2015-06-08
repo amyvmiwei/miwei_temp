@@ -96,7 +96,7 @@ CommitLog::initialize(const string &log_dir, PropertiesPtr &props,
     if (m_range_reference_required)
       m_range_reference_required = init_log->range_reference_required();
     stitch_in(init_log);
-    foreach_ht (const CommitLogFileInfo *frag, m_fragment_queue) {
+    for (const auto frag : m_fragment_queue) {
       if (frag->num >= m_cur_fragment_num)
         m_cur_fragment_num = frag->num + 1;
     }
@@ -265,7 +265,7 @@ int CommitLog::link_log(uint64_t cluster_id, CommitLogBase *log_base) {
     file_info->verify();
     file_info->purge_dirs.insert(log_dir);
 
-    foreach_ht (CommitLogFileInfo *fi, log_base->fragment_queue()) {
+    for (auto fi : log_base->fragment_queue()) {
       if (fi->parent == 0) {
         fi->parent = file_info;
         file_info->references++;
@@ -318,7 +318,7 @@ int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
 
   if (trace) {
     *trace += format("--- Reap set begin (%s) ---\n", m_log_dir.c_str());
-    foreach_ht (CommitLogFileInfo *fi, m_reap_set)
+    for (const auto fi : m_reap_set)
       *trace += fi->to_str(remove_ok_logs) + "\n";
     *trace += format("--- Reap set end (%s) ---\n", m_log_dir.c_str());
   }
@@ -371,7 +371,7 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs)
   fi->verify();
 
   // Remove linked log directores
-  foreach_ht (const string &logdir, fi->purge_dirs) {
+  for (const auto &logdir : fi->purge_dirs) {
     try {
       HT_INFOF("Removing linked log directory '%s' because all fragments have been removed", logdir.c_str());
       removed_logs.insert(logdir);
@@ -550,7 +550,7 @@ void CommitLog::get_stats(const string &prefix, string &result) {
     HT_THROWF(Error::CLOSED, "Commit log '%s' has been closed", m_log_dir.c_str());
 
   try {
-    foreach_ht (const CommitLogFileInfo *frag, m_fragment_queue) {
+    for (const auto frag : m_fragment_queue) {
       result += prefix + String("-log-fragment[") + frag->num + "]\tsize\t" + frag->size + "\n";
       result += prefix + String("-log-fragment[") + frag->num + "]\trevision\t" + frag->revision + "\n";
       result += prefix + String("-log-fragment[") + frag->num + "]\tdir\t" + frag->log_dir + "\n";

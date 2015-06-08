@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -101,7 +101,7 @@ void TableMutatorSyncDispatchHandler::retry() {
   ScopedLock lock(m_mutex);
 
   m_errors.clear();
-  foreach_ht (CommAddress addr, m_pending) {
+  for (auto addr : m_pending) {
     try {
       m_client.commit_log_sync(addr, ClusterId::get(), m_table_identifier, this);
     }

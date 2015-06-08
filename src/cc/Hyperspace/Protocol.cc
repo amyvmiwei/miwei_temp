@@ -25,24 +25,24 @@
  * for encoding request messages.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
-#include <iostream>
-
-#include "Common/Error.h"
-#include "Common/Serialization.h"
-#include "Common/StringExt.h"
-#include "Common/FailureInducer.h"
-
-#include "AsyncComm/CommHeader.h"
+#include <Common/Compat.h>
 
 #include "Protocol.h"
+
+#include <AsyncComm/CommHeader.h>
+
+#include <Common/Error.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+#include <Common/FailureInducer.h>
+
+#include <cassert>
+#include <iostream>
 
 using namespace std;
 using namespace Hyperspace;
 using namespace Hypertable;
 using namespace Serialization;
-
 
 const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
   "keepalive",
@@ -93,7 +93,7 @@ Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id,
   CommBuf *cbuf = new CommBuf(header, 8 + 4 + (8*delivered_events.size()) + 1);
   cbuf->append_i64(session_id);
   cbuf->append_i32(delivered_events.size());
-  foreach_ht (uint64_t event_id, delivered_events)
+  for (auto event_id : delivered_events)
     cbuf->append_i64(event_id);
   cbuf->append_bool(destroy_session);
   return cbuf;
@@ -208,7 +208,7 @@ CommBuf *Hyperspace::Protocol::create_close_request(uint64_t handle) {
 CommBuf *Hyperspace::Protocol::create_mkdir_request(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs) {
   size_t attrs_len = 4;
   if (init_attrs) {
-    foreach_ht (const Attribute& attr, *init_attrs)
+    for (const auto& attr : *init_attrs)
       attrs_len += encoded_length_vstr(attr.name)
              + encoded_length_vstr(attr.value_len);
   }
@@ -219,7 +219,7 @@ CommBuf *Hyperspace::Protocol::create_mkdir_request(const std::string &name, boo
   cbuf->append_bool(create_intermediate);
   if (init_attrs) {
     cbuf->append_i32(init_attrs->size());
-    foreach_ht (const Attribute& attr, *init_attrs) {
+    for (const auto& attr : *init_attrs) {
       cbuf->append_vstr(attr.name);
       cbuf->append_vstr(attr.value, attr.value_len);
     }
@@ -270,7 +270,7 @@ CommBuf *
 Hyperspace::Protocol::create_attr_set_request(uint64_t handle, const std::string *name,
     uint32_t oflags, const std::vector<Attribute> &attrs) {
   size_t attrs_len = 4;
-  foreach_ht (const Attribute& attr, attrs)
+  for (const auto& attr : attrs)
     attrs_len += encoded_length_vstr(attr.name)
            + encoded_length_vstr(attr.value_len);
 
@@ -291,7 +291,7 @@ Hyperspace::Protocol::create_attr_set_request(uint64_t handle, const std::string
     cbuf->append_i64(handle);
   }
   cbuf->append_i32(attrs.size());
-  foreach_ht (const Attribute& attr, attrs) {
+  for (const auto& attr : attrs) {
     cbuf->append_vstr(attr.name);
     cbuf->append_vstr(attr.value, attr.value_len);
   }
@@ -350,7 +350,7 @@ Hyperspace::Protocol::create_attrs_get_request(uint64_t handle,
                                               const std::string *name,
                                               const std::vector<std::string> &attrs) {
   size_t len = 0;
-  foreach_ht (const std::string& attr, attrs)
+  for (const auto &attr : attrs)
     len += encoded_length_vstr(attr.size());
 
   CommHeader header(COMMAND_ATTRGET);
@@ -369,7 +369,7 @@ Hyperspace::Protocol::create_attrs_get_request(uint64_t handle,
     cbuf->append_i64(handle);
   }
   cbuf->append_i32(attrs.size());
-  foreach_ht (const std::string& attr, attrs)
+  for (const auto &attr : attrs)
     cbuf->append_vstr(attr);
   return cbuf;
 }

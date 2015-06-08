@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RECOVERYREPLAYCOUNTER_H
-#define HYPERTABLE_RECOVERYREPLAYCOUNTER_H
+#ifndef Hypertable_Master_RecoveryReplayCounter_h
+#define Hypertable_Master_RecoveryReplayCounter_h
 
 #include <boost/thread/condition.hpp>
 
@@ -56,7 +56,7 @@ namespace Hypertable {
       if (attempt != m_attempt)
         return false;
 
-      foreach_ht (const ErrorMap::value_type &vv, error_map) {
+      for (const auto &vv : error_map) {
         m_error_map[vv.first] = vv.second;
         if (vv.second != Error::OK)  {
           HT_WARN_OUT << "Received error " << vv.second << " for fragment "
@@ -94,7 +94,7 @@ namespace Hypertable {
     void set_errors(const std::vector<uint32_t> &fragments, int error) {
       ScopedLock lock(m_mutex);
       m_outstanding -= fragments.size();
-      foreach_ht(uint32_t fragment, fragments) {
+      for (auto fragment : fragments) {
         m_error_map[fragment] = error;
       }
       if (m_outstanding == 0) {
@@ -135,4 +135,4 @@ namespace Hypertable {
   typedef intrusive_ptr<RecoveryReplayCounter> RecoveryReplayCounterPtr;
 }
 
-#endif // HYPERTABLE_RECOVERYREPLAYCOUNTER_H
+#endif // Hypertable_Master_RecoveryReplayCounter_h

@@ -424,7 +424,7 @@ bool Context::can_accept_ranges(const RangeServerStatistics &stats)
 
   // accept new ranges if there's at least one disk below the threshold
   double numerator=0.0, denominator=0.0;
-  foreach_ht (const FsStat &fs, stats.stats->system.fs_stat) {
+  for (const auto &fs : stats.stats->system.fs_stat) {
     numerator += fs.total - fs.avail;
     denominator += fs.total;
   }

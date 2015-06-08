@@ -26,21 +26,21 @@
  * index.
  */
 
-#ifndef HYPERTABLE_CELLSTOREBLOCKINDEXARRAY_H
-#define HYPERTABLE_CELLSTOREBLOCKINDEXARRAY_H
+#ifndef Hypertable_RangeServer_CellStoreBlockIndexArray_h
+#define Hypertable_RangeServer_CellStoreBlockIndexArray_h
+
+#include "CellList.h"
+#include "CellListScannerBuffer.h"
+
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/PseudoTables.h>
+#include <Hypertable/Lib/SerializedKey.h>
+
+#include <Common/StaticBuffer.h>
 
 #include <cassert>
 #include <iostream>
 #include <map>
-
-#include "Common/StaticBuffer.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/PseudoTables.h"
-#include "Hypertable/Lib/SerializedKey.h"
-
-#include "CellList.h"
-#include "CellListScannerBuffer.h"
 
 namespace Hypertable {
 
@@ -170,7 +170,7 @@ namespace Hypertable {
         // array pointers to point into this new buffer
         StaticBuffer keydata(variable_end-variable_start);
         memcpy(keydata.base, variable_start, variable_end-variable_start);
-        foreach_ht (ElementT &element, m_array) {
+        for (auto &element : m_array) {
           HT_ASSERT(element.key.ptr < variable_end);
           uint64_t offset = element.key.ptr - variable_start;
           element.key.ptr = keydata.base + offset;
@@ -207,7 +207,7 @@ namespace Hypertable {
       variable.ptr = variable.base + variable.size;
 
       // Populate fixed array
-      foreach_ht (ElementT &element, m_array)
+      for (auto &element : m_array)
         fixed.add_unchecked(&element.offset, sizeof(OffsetT));
       m_array.clear();
 
@@ -248,7 +248,7 @@ namespace Hypertable {
                                    int32_t keys_per_block) {
       const char *row, *last_row = 0;
       int64_t last_count = 0;
-      foreach_ht (ElementT &e, m_array) {
+      for (auto &e : m_array) {
         row = e.key.row();
         if (last_row == 0)
           last_row = row;
@@ -425,4 +425,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_CELLSTOREBLOCKINDEXARRAY_H
+#endif // Hypertable_RangeServer_CellStoreBlockIndexArray_h

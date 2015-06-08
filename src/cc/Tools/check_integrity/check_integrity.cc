@@ -248,9 +248,8 @@ int main(int argc, char **argv) {
   
   if (errors.size()) {
     cout << endl << endl << "Got " << errors.size() << " errors: " << endl;
-    foreach_ht (const String &s, errors) {
+    for (const auto &s : errors)
       cout << "   " << s << endl;
-    }
   }
   else
     cout << "Success - all ranges are available." << endl;

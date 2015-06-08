@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
 #include <Common/Compat.h>
+
 #include "BalanceAlgorithmLoad.h"
 
 #include <Hypertable/Lib/RS_METRICS/ReaderTable.h>
@@ -28,14 +30,13 @@ using namespace Hypertable::Lib;
 using namespace Hypertable::Lib::RS_METRICS;
 using namespace std;
 
-
 BalanceAlgorithmLoad::BalanceAlgorithmLoad(ContextPtr &context,
                                            std::vector<RangeServerStatistics> &statistics)
   : m_context(context) {
 
   m_loadavg_deviation_threshold = m_context->props->get_f64("Hypertable.LoadBalancer.LoadavgThreshold");
 
-  foreach_ht (RangeServerStatistics &rs, statistics)
+  for (auto &rs : statistics)
     m_rsstats[rs.location] = rs;
 }
 
@@ -53,7 +54,7 @@ void BalanceAlgorithmLoad::compute_plan(BalancePlanPtr &plan,
   double mean_loadavg=0;
   double mean_loadavg_per_loadestimate=0;
 
-  foreach_ht(const ServerMetrics &sm, server_metrics) {
+  for (const auto &sm : server_metrics) {
     // only assign ranges if this RangeServer is connected
     RangeServerConnectionPtr rsc;
     if (m_context->rsc_manager &&
@@ -170,7 +171,7 @@ BalanceAlgorithmLoad::calculate_server_summary(const ServerMetrics &metrics,
   // calculate average loadavg for server
   const vector<ServerMeasurement> &measurements = metrics.get_measurements();
   if (measurements.size() > 0) {
-    foreach_ht(const ServerMeasurement& measurement, measurements) {
+    for (const auto &measurement : measurements) {
       summary.loadavg += measurement.loadavg;
       loadestimate += measurement.bytes_written_rate
           + measurement.bytes_scanned_rate;
@@ -196,7 +197,7 @@ void BalanceAlgorithmLoad::calculate_range_summary(const RangeMetrics &metrics,
   // calculate the average loadestimate for this range
   const vector<RangeMeasurement> &measurements = metrics.get_measurements();
   if (measurements.size() > 0) {
-    foreach_ht(const RangeMeasurement &measurement, measurements)
+    for (const auto &measurement : measurements)
       summary.loadestimate += measurement.byte_read_rate + measurement.byte_write_rate;
     summary.loadestimate /= measurements.size();
   }
@@ -206,7 +207,7 @@ void BalanceAlgorithmLoad::calculate_range_summary(const RangeMetrics &metrics,
 void BalanceAlgorithmLoad::populate_range_load_set(const RangeMetricsMap &range_metrics, RangeSetDescLoad &ranges_desc_load) {
 
   ranges_desc_load.clear();
-  foreach_ht(const RangeMetricsMap::value_type &vv, range_metrics) {
+  for (const auto &vv : range_metrics) {
     // don't consider ranges that can't be moved
     if (!vv.second.is_moveable())
       continue;

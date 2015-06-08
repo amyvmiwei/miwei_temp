@@ -26,19 +26,17 @@
  * to the requesting client.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-
-#include "AsyncComm/CommBuf.h"
+#include <Common/Compat.h>
 
 #include "ResponseCallbackAttrGet.h"
+
+#include <AsyncComm/CommBuf.h>
+
+#include <Common/Error.h>
 
 using namespace Hyperspace;
 using namespace Hypertable;
 
-/*
- *
- */
 int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffers) {
   CommHeader header;
   header.initialize_from_request_header(m_event->header);
@@ -52,7 +50,7 @@ int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffe
   }
 
   size_t len = 0;
-  foreach_ht (const DynamicBufferPtr &pdb, buffers) {
+  for (const auto &pdb : buffers) {
     if (pdb)
       len += pdb->fill();
   }
@@ -60,7 +58,7 @@ int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffe
   CommBufPtr cbp(new CommBuf(header, 8 + 4 * buffers.size() + len));
   cbp->append_i32(Error::OK);
   cbp->append_i32(buffers.size());
-  foreach_ht (const DynamicBufferPtr &pdb, buffers) {
+  for (const auto &pdb : buffers) {
     if (pdb)
       Serialization::encode_bytes32(cbp->get_data_ptr_address(), pdb->base, pdb->fill());
     else

@@ -19,16 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLS_H
-#define HYPERTABLE_CELLS_H
+#ifndef Hypertable_Lib_Cells_h
+#define Hypertable_Lib_Cells_h
+
+#include "Cell.h"
+
+#include <Common/PageArenaAllocator.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
 
 #include <vector>
 #include <set>
-
-#include "Common/ReferenceCount.h"
-#include "Common/PageArenaAllocator.h"
-#include <Common/StringExt.h>
-#include "Cell.h"
 
 namespace Hypertable {
 
@@ -108,7 +109,7 @@ public:
     clear();
     dst.clear();
     size_t ii=0;
-    foreach_ht(const FailedMutation &v, src) {
+    for (const auto &v : src) {
       add(v.first);
       dst.push_back(std::make_pair(m_cells[ii], v.second));
       ++ii;
@@ -139,4 +140,4 @@ typedef intrusive_ptr<CellsBuilder> CellsBuilderPtr;
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_CELLS_H
+#endif // Hypertable_Lib_Cells_h

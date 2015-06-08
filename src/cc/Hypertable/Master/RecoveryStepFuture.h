@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RECOVERYSTEPFUTURE_H
-#define HYPERTABLE_RECOVERYSTEPFUTURE_H
+#ifndef Hypertable_Master_RecoveryStepFuture_h
+#define Hypertable_Master_RecoveryStepFuture_h
 
 #include <Common/ReferenceCount.h>
 #include <Common/Time.h>
@@ -48,7 +48,7 @@ namespace Hypertable {
 
     void register_locations(StringSet &locations) {
       ScopedLock lock(m_mutex);
-      foreach_ht (const String &location, m_success)
+      for (auto &location : m_success)
         locations.erase(location);
       m_outstanding.clear();
       m_outstanding.insert(locations.begin(), locations.end());
@@ -115,7 +115,7 @@ namespace Hypertable {
       while (!m_outstanding.empty()) {
         if (!m_cond.timed_wait(lock, expire_time)) {
           if (!m_outstanding.empty()) {
-            foreach_ht (const String &location, m_outstanding) {
+            for (auto &location : m_outstanding) {
               iter = m_error_map.find(location);
               if (iter == m_error_map.end())
                 m_error_map[location] = make_pair(Error::REQUEST_TIMEOUT, "");
@@ -150,4 +150,4 @@ namespace Hypertable {
   typedef intrusive_ptr<RecoveryStepFuture> RecoveryStepFuturePtr;
 }
 
-#endif // HYPERTABLE_RECOVERYSTEPFUTURE_H
+#endif // Hypertable_Master_RecoveryStepFuture_h

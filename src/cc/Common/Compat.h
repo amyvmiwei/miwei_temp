@@ -47,8 +47,6 @@
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_DEPRECATED     1
 
-#include "Sweetener.h"
-
 #define HT_UNUSED(x) static_cast<void>(x)
 
 template<typename T, typename... Ts>

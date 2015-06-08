@@ -35,6 +35,7 @@
 #endif
 
 #include <chrono>
+#include <cstdlib>
 #include <thread>
 #include <utility>
 
@@ -43,7 +44,6 @@ extern "C" {
 #include <term.h>
 #include <sigar.h>
 #include <sigar_format.h>
-#include <stdlib.h>
 }
 
 #define HT_FIELD_NOTIMPL(_field_) (_field_ == (uint64_t)-1)
@@ -882,7 +882,7 @@ std::ostream &operator<<(std::ostream &out, const ProcInfo &i) {
   out <<"{ProcInfo: pid="<< i.pid <<" user="<< i.user <<" exe='"<< i.exe
       <<"'\n cwd='"<< i.cwd <<"' root='"<< i.root <<"'\n args=[";
 
-  foreach_ht(const String &arg, i.args)
+  for (const auto &arg : i.args)
     out <<"'"<< arg <<"', ";
 
   out <<"]}";

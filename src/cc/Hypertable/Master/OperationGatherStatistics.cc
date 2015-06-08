@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -25,13 +25,7 @@
  * for fetching statistics from all RangeServers and processing.
  */
 
-#include "Common/Compat.h"
-#include "Common/Path.h"
-#include "Common/StringExt.h"
-
-extern "C" {
-#include <cstdlib>
-}
+#include <Common/Compat.h>
 
 #include "DispatchHandlerOperationGetStatistics.h"
 #include "OperationGatherStatistics.h"
@@ -39,6 +33,11 @@ extern "C" {
 #include "OperationProcessor.h"
 #include "RangeServerStatistics.h"
 #include "LoadBalancer.h"
+
+#include <Common/Path.h>
+#include <Common/StringExt.h>
+
+#include <cstdlib>
 
 using namespace Hypertable;
 using namespace std;
@@ -104,7 +103,7 @@ void OperationGatherStatistics::execute() {
       double numerator_total = 0.0, denominator_total = 0.0;
       std::vector<RangeServerState> rs_states;
       RangeServerState rs_state;
-      foreach_ht (RangeServerStatistics &rs_stats, results) {
+      for (auto &rs_stats : results) {
         if (rs_stats.fetch_error == Error::OK) {
           numerator = denominator = 0.0;
           for (size_t i=0; i<rs_stats.stats->system.fs_stat.size(); i++) {
@@ -145,7 +144,7 @@ void OperationGatherStatistics::execute() {
         // This isn't necessary in above block because OperationSetState does it
         std::vector<NotificationMessage> notifications;
         if (m_context->system_state->get_notifications(notifications)) {
-          foreach_ht (NotificationMessage &msg, notifications)
+          for (auto &msg : notifications)
             m_context->notification_hook(msg.subject, msg.body);
         }
       }

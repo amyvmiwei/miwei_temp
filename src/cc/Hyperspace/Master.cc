@@ -19,13 +19,30 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "Config.h"
+#include "Event.h"
+#include "Notification.h"
+#include "Master.h"
+#include "Session.h"
+#include "SessionData.h"
+
+#include <Common/Thread.h>
+#include <Common/Mutex.h>
+#include <Common/Error.h>
+#include <Common/Path.h>
+#include <Common/FileUtils.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+#include <Common/SystemInfo.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+
 #include <algorithm>
 #include <cstring>
 #include <sstream>
-
 
 extern "C" {
 #include <dirent.h>
@@ -41,22 +58,6 @@ extern "C" {
 #endif
 #include <unistd.h>
 }
-
-#include "Common/Thread.h"
-#include "Common/Mutex.h"
-#include "Common/Error.h"
-#include "Common/Path.h"
-#include "Common/FileUtils.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/SystemInfo.h"
-
-#include "Config.h"
-#include "Event.h"
-#include "Notification.h"
-#include "Master.h"
-#include "Session.h"
-#include "SessionData.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -451,7 +452,7 @@ void Hyperspace::Master::remove_expired_sessions() {
   }
 
   // delete handles open by expired sessions
-  foreach_ht(uint64_t handle, handles) {
+  for (auto handle : handles) {
     if (m_verbose)
       HT_INFOF("Destroying handle %llu", (Llu)handle);
     if (!destroy_handle(handle, error, errmsg, false))
@@ -462,7 +463,7 @@ void Hyperspace::Master::remove_expired_sessions() {
   // delete expired sessions from BDB
   if (expired_sessions.size() > 0) {
     HT_BDBTXN_BEGIN() {
-      foreach_ht (uint64_t expired_session, expired_sessions) {
+      for (auto expired_session : expired_sessions) {
         m_bdb_fs->delete_session(txn, expired_session);
       }
       txn.commit();
@@ -1591,7 +1592,7 @@ void Hyperspace::Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node
 
       lock_granted_event = new EventLockGranted(event_id, next_mode, lock_generation);
 
-      foreach_ht(uint64_t handle, next_lock_handles) {
+      for (auto handle : next_lock_handles) {
         lock_handle(txn, handle, next_mode, node);
         session = m_bdb_fs->get_handle_session(txn, handle);
         lock_granted_notifications[handle] = session;
@@ -1671,7 +1672,7 @@ Hyperspace::Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
   if (has_notifications) {
     String sessions_str;
 
-    foreach_ht (session_id, sessions) {
+    for (auto session_id : sessions) {
       m_keepalive_handler_ptr->deliver_event_notifications(session_id);
       sessions_str += String(" ") + session_id;
     }
@@ -2146,7 +2147,7 @@ void Hyperspace::Master::attr_set(CommandContext &ctx, uint64_t handle,
   std::string attr_names;
   size_t total_value_len = 0;
   if (m_verbose) {
-    foreach_ht (const Attribute& attr, attrs) {
+    for (const auto &attr : attrs) {
       attr_names += attr.name;
       attr_names += ",";
       total_value_len += attr.value_len;
@@ -2163,7 +2164,7 @@ void Hyperspace::Master::attr_set(CommandContext &ctx, uint64_t handle,
     if (!get_handle_node(ctx, handle, attr_names.c_str(), node))
       return;
 
-  foreach_ht (const Attribute& attr, attrs) {
+  for (const auto &attr : attrs) {
     m_bdb_fs->set_xattr(txn, node, attr.name, attr.value, attr.value_len);
     // create event notification and persist
     create_event(ctx, node, EVENT_MASK_ATTR_SET, attr.name);
@@ -2212,7 +2213,7 @@ void Hyperspace::Master::attr_get(CommandContext &ctx, uint64_t handle,
       return;
 
   dbufs.reserve(attrs.size());
-  foreach_ht (const String &attr, attrs) {
+  for (const auto &attr : attrs) {
     dbufs.push_back(new DynamicBuffer());
     if (!m_bdb_fs->get_xattr(txn, node, attr, *dbufs.back()))
       dbufs.back() = 0; // attr not found
@@ -2495,7 +2496,7 @@ void Hyperspace::Master::create_event(CommandContext &ctx, const String &node, u
 /*
  */
 void Hyperspace::Master::deliver_event_notifications(CommandContext &ctx, bool wait_for_notify) {
-  foreach_ht(EventContext& evt, ctx.evts)
+  for (auto &evt : ctx.evts)
     if (evt.persisted_notifications)
       deliver_event_notifications(evt, wait_for_notify);
 }

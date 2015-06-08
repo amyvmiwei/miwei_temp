@@ -41,7 +41,7 @@ using namespace Hypertable;
 TimeWindow::TimeWindow(std::vector<String> crontab_specs) 
   : m_within_window(false), m_enabled(true) {
 
-  foreach_ht (String &spec, crontab_specs) {
+  for (auto &spec : crontab_specs) {
     try {
       boost::trim_if(spec, boost::is_any_of("\"'"));
       if (!spec.empty())
@@ -62,7 +62,7 @@ bool TimeWindow::update_current_time(time_t now) {
   if (now == 0)
     now = time(0);
 
-  foreach_ht (Crontab &crontab, m_crontabs) {
+  for (auto &crontab : m_crontabs) {
     next = crontab.next_event(now);
     HT_ASSERT(next >= now);
     // if next event occurs within the next minute, we're within window

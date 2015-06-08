@@ -232,7 +232,7 @@ void TableInfoMap::merge_unlocked(TableInfoMap *other) {
     else {
       ranges.array.clear();
       (*other_iter).second->get_ranges(ranges);
-      foreach_ht (RangeData &rd, ranges.array)
+      for (auto &rd : ranges.array)
         (*iter).second->add_range(rd.range);
     }
 

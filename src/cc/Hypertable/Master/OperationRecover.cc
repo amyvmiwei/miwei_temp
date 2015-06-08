@@ -363,7 +363,7 @@ void OperationRecover::create_recovery_plan() {
   rsml_reader->get_entities(entities);
 
   try {
-    foreach_ht (MetaLog::EntityPtr &entity, entities) {
+    for (auto &entity : entities) {
       if ((range = dynamic_cast<MetaLogEntityRange *>(entity.get())) != 0) {
         QualifiedRangeSpec spec;
         RangeStateManaged range_state;

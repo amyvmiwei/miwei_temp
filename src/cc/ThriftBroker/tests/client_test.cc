@@ -205,7 +205,7 @@ void test_scan(Thrift::Client *client, std::ostream &out) {
 
   do {
     client->scanner_get_cells(cells, s);
-    foreach_ht(const Hypertable::ThriftGen::Cell &cell, cells)
+    for (const auto &cell : cells)
       out << cell << std::endl;
   } while (cells.size());
 
@@ -223,7 +223,7 @@ void test_scan(Thrift::Client *client, std::ostream &out) {
   s = client->scanner_open(ns, "thrift_test", ss);
   do {
     client->scanner_get_cells(cells, s);
-    foreach_ht(const Hypertable::ThriftGen::Cell &cell, cells)
+    for (const auto &cell : cells)
       out << cell << std::endl;
   } while (cells.size());
   client->scanner_close(s);
@@ -242,7 +242,7 @@ void test_scan_keysonly(Thrift::Client *client, std::ostream &out) {
 
   do {
     client->scanner_get_cells(cells, s);
-    foreach_ht(const Hypertable::ThriftGen::Cell &cell, cells)
+    for (const auto &cell : cells)
       out << cell << std::endl;
   } while (cells.size());
 
@@ -557,7 +557,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
     if (cells.empty())
       break;
     assert(cells.size()==1);
-    foreach_ht(const Hypertable::ThriftGen::Cell &cell, cells) {
+    for (const auto &cell : cells) {
       out << cell << std::endl;
       assert(cell.key.row == "apple");
       assert(cell.value == "red");

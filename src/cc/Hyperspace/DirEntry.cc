@@ -19,11 +19,11 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
-#include "Common/Logger.h"
-
+#include <Common/Compat.h>
 #include "DirEntry.h"
+
+#include <Common/Serialization.h>
+#include <Common/Logger.h>
 
 using namespace Hypertable;
 using namespace Serialization;

@@ -285,14 +285,14 @@ void AccessGroup::split_row_estimate_data_cached(CellList::SplitRowDataMapT &spl
 void AccessGroup::split_row_estimate_data_stored(CellList::SplitRowDataMapT &split_row_data) {
   ScopedLock lock(m_mutex);
   if (!m_in_memory) {
-    foreach_ht (CellStoreInfo &csinfo, m_stores)
+    for (auto &csinfo : m_stores)
       csinfo.cs->split_row_estimate_data(split_row_data);
   }
 }
 
 void AccessGroup::populate_cellstore_index_pseudo_table_scanner(CellListScannerBuffer *scanner) {
   ScopedLock lock(m_mutex);
-  foreach_ht (CellStoreInfo &csinfo, m_stores)
+  for (auto &csinfo : m_stores)
     csinfo.cs->populate_index_pseudo_table_scanner(scanner);
 }
 

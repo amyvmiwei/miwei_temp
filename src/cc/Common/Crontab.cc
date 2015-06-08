@@ -128,7 +128,7 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
   {
     char_separator<char> sep(" ");
     tokenizer< char_separator<char> > tokens(text, sep);
-    foreach_ht (const string& t, tokens) {
+    for (const auto &t : tokens) {
       if (field_count == 5)
         HT_THROW(Error::COMMAND_PARSE_ERROR, "too many fields");
       fields[field_count++] = t;
@@ -141,7 +141,7 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
   {
     char_separator<char> sep(",");
     tokenizer< char_separator<char> > tokens(fields[0], sep);
-    foreach_ht (const string& t, tokens)
+    for (const auto &t : tokens)
       parse_range<60>(t, entry->minute);
   }
 
@@ -149,7 +149,7 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
   {
     char_separator<char> sep(",");
     tokenizer< char_separator<char> > tokens(fields[1], sep);
-    foreach_ht (const string& t, tokens)
+    for (const auto &t : tokens)
       parse_range<24>(t, entry->hour);
   }
 
@@ -160,7 +160,7 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
     else {
       char_separator<char> sep(",");
       tokenizer< char_separator<char> > tokens(fields[2], sep);
-      foreach_ht (const string& t, tokens)
+      for (const auto &t : tokens)
         parse_range<31>(t, entry->dom, false);
     }
   }
@@ -169,7 +169,7 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
   {
     char_separator<char> sep(",");
     tokenizer< char_separator<char> > tokens(fields[3], sep);
-    foreach_ht (const string& t, tokens)
+    for (const auto &t : tokens)
       parse_range<12>(t, entry->month, false);
   }
 
@@ -180,7 +180,7 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
     else {
       char_separator<char> sep(",");
       tokenizer< char_separator<char> > tokens(fields[4], sep);
-      foreach_ht (const string& t, tokens)
+      for (const auto &t : tokens)
         parse_range<8>(t, entry->dow);
       if (entry->dow[7])
         entry->dow[0] = true;
@@ -214,7 +214,7 @@ void Crontab::parse_range(const String &spec, std::bitset<N> &bits,
   {
     char_separator<char> sep("/");
     tokenizer< char_separator<char> > tokens(text, sep);
-    foreach_ht (const string& t, tokens) {
+    for (const auto &t : tokens) {
       if (count == 0)
         range = t;
       else if (count == 1)
@@ -242,7 +242,7 @@ void Crontab::parse_range(const String &spec, std::bitset<N> &bits,
   {
     char_separator<char> sep("-");
     tokenizer< char_separator<char> > tokens(range, sep);
-    foreach_ht (const string& t, tokens) {
+    for (const auto &t : tokens) {
       if (count == 0) {
         if (t == "*") {
           bits.set();

@@ -25,17 +25,18 @@
  * as the central authority for all active balance plans.
  */
 
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
-#include "Common/Mutex.h"
-
-#include <Hypertable/Lib/CommitLogReader.h>
-#include <Hypertable/Lib/LegacyDecoder.h>
+#include <Common/Compat.h>
 
 #include "BalancePlanAuthority.h"
 #include "Context.h"
 #include "MetaLogEntityTypes.h"
 #include "Utility.h"
+
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
+
+#include <Common/Serialization.h>
+#include <Common/Mutex.h>
 
 #include <sstream>
 
@@ -71,7 +72,7 @@ BalancePlanAuthority::display(std::ostream &os)
     it++;
   }
   os << "current_set={";
-  foreach_ht (const RangeMoveSpecPtr &move_spec, m_current_set)
+  for (const auto &move_spec : m_current_set)
     os << *move_spec << " ";
   os << "}";
 }
@@ -137,7 +138,7 @@ void BalancePlanAuthority::remove_from_receiver_plan(const String &location, int
 
     HT_ASSERT(plan && plan->type == type);
 
-    foreach_ht (const QualifiedRangeSpec &spec, specs)
+    for (const auto &spec : specs)
       plan->receiver_plan.remove(spec);
   }
   m_mml_writer->record_state(shared_from_this());
@@ -155,7 +156,7 @@ void BalancePlanAuthority::remove_table_from_receiver_plan(const String &table_i
         specs.clear();
         auto &receiver_plan = iter->second.plans[i]->receiver_plan;
         receiver_plan.get_range_specs(specs);
-        foreach_ht (QualifiedRangeSpec &spec, specs) {
+        for (auto &spec : specs) {
           if (!strcmp(table_id.c_str(), spec.table.id)) {
             receiver_plan.remove(spec);
             changed = true;
@@ -253,7 +254,7 @@ size_t BalancePlanAuthority::encoded_length_internal() const {
     it++;
   }
   len += 4;
-  foreach_ht (const RangeMoveSpecPtr &move_spec, m_current_set)
+  for (const auto &move_spec : m_current_set)
     len += move_spec->encoded_length();
   return len;
 }
@@ -275,7 +276,7 @@ void BalancePlanAuthority::encode_internal(uint8_t **bufp) const {
     it++;
   }
   Serialization::encode_i32(bufp, m_current_set.size());
-  foreach_ht (const RangeMoveSpecPtr &move_spec, m_current_set)
+  for (const auto &move_spec : m_current_set)
     move_spec->encode(bufp);
 }
 
@@ -481,7 +482,7 @@ BalancePlanAuthority::create_range_plan(const String &location, int type,
 
   m_active_iter = m_active.begin();
   // round robin through the locations and assign the fragments
-  foreach_ht (uint32_t fragment, fragments) {
+  for (auto fragment : fragments) {
     if (m_active_iter == m_active.end())
       m_active_iter = m_active.begin();
     plan->replay_plan.insert(fragment, *m_active_iter);
@@ -514,7 +515,7 @@ BalancePlanAuthority::update_range_plan(RangeServerRecovery::PlanPtr &plan,
   }
 
   std::set<QualifiedRangeSpec> purge_ranges;
-  foreach_ht (const QualifiedRangeSpec spec, new_specs)
+  for (const auto spec : new_specs)
     purge_ranges.insert(spec);
 
   m_active_iter = m_active.begin();
@@ -547,7 +548,7 @@ BalancePlanAuthority::register_balance_plan(BalancePlanPtr &plan, int generation
       return false;
 
     // Insert moves into current set
-    foreach_ht (RangeMoveSpecPtr &move, plan->moves)
+    for (auto &move : plan->moves)
       m_current_set.insert(move);
   }
 

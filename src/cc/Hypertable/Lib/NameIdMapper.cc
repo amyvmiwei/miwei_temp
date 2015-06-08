@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,17 +19,17 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include "NameIdMapper.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/StringExt.h"
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/ScopeGuard.h>
+#include <Common/StringExt.h>
 
 #include <boost/algorithm/string.hpp>
-
-#include "boost/tokenizer.hpp"
+#include <boost/tokenizer.hpp>
 
 namespace Hypertable {
 
@@ -371,7 +371,7 @@ void NameIdMapper::get_namespace_listing(const std::vector<DirEntryAttr> &dir_li
   NamespaceListing entry;
   listing.clear();
   listing.reserve(dir_listing.size());
-  foreach_ht(const DirEntryAttr &dir_entry, dir_listing) {
+  for (const auto &dir_entry : dir_listing) {
     if (dir_entry.has_attr) {
       entry.name = (String)((const char*)dir_entry.attr.base);
       entry.is_namespace = dir_entry.is_dir;

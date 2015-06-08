@@ -25,7 +25,7 @@
  * for mapping socket addresses to I/O handlers.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include "IOHandlerAccept.h"
 #include "HandlerMap.h"
@@ -300,7 +300,7 @@ int HandlerMap::add_proxy(const String &proxy, const String &hostname, const Ine
 
   m_proxy_map.update_mapping(proxy, hostname, addr, invalidated_map, new_map);
 
-  foreach_ht(const ProxyMapT::value_type &v, new_map) {
+  for (const auto &v : new_map) {
     IOHandler *handler = lookup_data_handler(v.second.addr);
     if (handler)
       handler->set_proxy(v.first);
@@ -315,7 +315,7 @@ int HandlerMap::remove_proxy(const String &proxy) {
  m_proxy_map.remove_mapping(proxy, remove_map);
  if (!remove_map.empty()) {
    IOHandler *handler;
-   foreach_ht(const ProxyMapT::value_type &v, remove_map) {
+   for (const auto &v : remove_map) {
      handler = lookup_data_handler(v.second.addr);
      if (handler)
        decomission_handler_unlocked(handler);
@@ -340,7 +340,7 @@ void HandlerMap::update_proxy_map(const char *message, size_t message_len) {
 
   m_proxy_map.update_mappings(mappings, invalidated_map, new_map);
 
-  foreach_ht(const ProxyMapT::value_type &v, invalidated_map) {
+  for (const auto &v : invalidated_map) {
     IOHandler *handler = lookup_data_handler(v.second.addr);
     if (handler) {
       if (v.second.hostname == "--DELETED--")
@@ -348,7 +348,7 @@ void HandlerMap::update_proxy_map(const char *message, size_t message_len) {
     }
   }
 
-  foreach_ht(const ProxyMapT::value_type &v, new_map) {
+  for (const auto &v : new_map) {
     IOHandler *handler = lookup_data_handler(v.second.addr);
     if (handler)
       handler->set_proxy(v.first);
@@ -393,7 +393,7 @@ int HandlerMap::propagate_proxy_map(ProxyMapT &mappings) {
   SockAddrMap<IOHandlerData *>::iterator iter;
   String mapping;
 
-  foreach_ht(const ProxyMapT::value_type &v, mappings)
+  for (const auto &v : mappings)
     mapping += v.first + "\t" + v.second.hostname + "\t" + InetAddr::format(v.second.addr) + "\n";
 
   uint8_t *buffer = new uint8_t [ mapping.length() + 1 ];
@@ -419,7 +419,7 @@ int HandlerMap::propagate_proxy_map(ProxyMapT &mappings) {
   }
 
   // Decomission any handlers that failed
-  foreach_ht (IOHandler *handler, decomission)
+  for (auto handler : decomission)
     decomission_handler_unlocked(handler);
 
   return last_error;

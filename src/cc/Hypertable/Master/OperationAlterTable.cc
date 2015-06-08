@@ -173,7 +173,7 @@ void OperationAlterTable::execute() {
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;
       op_handler->get_results(results);
-      foreach_ht (const DispatchHandlerOperation::Result &result, results) {
+      for (const auto &result : results) {
         if (result.error == Error::OK ||
             result.error == Error::TABLE_NOT_FOUND) {
           ScopedLock lock(m_mutex);
@@ -267,10 +267,10 @@ size_t OperationAlterTable::encoded_length_state() const {
     Serialization::encoded_length_vstr(m_schema) +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
-  foreach_ht (const String &location, m_completed)
+  for (auto &location : m_completed)
     length += Serialization::encoded_length_vstr(location);
   length += 4;
-  foreach_ht (const String &location, m_servers)
+  for (auto &location : m_servers)
     length += Serialization::encoded_length_vstr(location);
   length += m_parts.encoded_length();
   return length;
@@ -281,10 +281,10 @@ void OperationAlterTable::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_schema);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
-  foreach_ht (const String &location, m_completed)
+  for (auto &location : m_completed)
     Serialization::encode_vstr(bufp, location);
   Serialization::encode_i32(bufp, m_servers.size());
-  foreach_ht (const String &location, m_servers)
+  for (auto &location : m_servers)
     Serialization::encode_vstr(bufp, location);
   m_parts.encode(bufp);
 }

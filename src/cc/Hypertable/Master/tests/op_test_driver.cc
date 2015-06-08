@@ -236,7 +236,7 @@ namespace {
     mml_reader->get_entities(entities);
 
     // Remove the BalancePlanAuthority object
-    foreach_ht (MetaLog::EntityPtr &entity, entities) {
+    for (auto &entity : entities) {
       if (dynamic_cast<BalancePlanAuthority *>(entity.get()) == 0)
         tmp_entities.push_back(entity);
     }

@@ -34,7 +34,6 @@
 #include <Common/Mutex.h>
 #include <Common/Stopwatch.h>
 #include <Common/String.h>
-#include <Common/Sweetener.h>
 #include <Common/Init.h>
 #include <Common/Usage.h>
 

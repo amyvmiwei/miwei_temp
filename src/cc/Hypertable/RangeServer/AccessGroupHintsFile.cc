@@ -26,18 +26,19 @@
  * boostrapping.
  */
 
-#include "Common/Compat.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/StaticBuffer.h"
-#include "Common/String.h"
-#include "Common/md5.h"
-
-#include "Hypertable/Lib/LoadDataEscape.h"
+#include <Common/Compat.h>
 
 #include "AccessGroupHintsFile.h"
 #include "Global.h"
+
+#include <Hypertable/Lib/LoadDataEscape.h>
+
+#include <Common/DynamicBuffer.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/StaticBuffer.h>
+#include <Common/String.h>
+#include <Common/md5.h>
 
 #include <boost/tokenizer.hpp>
 
@@ -89,7 +90,7 @@ void AccessGroupHintsFile::write(String location) {
     format("Version: %d\nStart Row: %s\nEnd Row: %s\nLocation: %s\n"
            "Access Groups: {\n", HINTS_FILE_VERSION, m_start_row.c_str(),
            m_end_row.c_str(), location.c_str());
-  foreach_ht (const AccessGroup::Hints &h, m_hints)
+  for (const auto &h : m_hints)
     contents += format(ag_hint_format, h.ag_name.c_str(),
                        (Llu)h.latest_stored_revision,
                        (Lld)h.disk_usage, h.files.c_str());
@@ -168,7 +169,7 @@ void AccessGroupHintsFile::read() {
         boost::trim(text);
         boost::char_separator<char> sep(",");
         boost::tokenizer< boost::char_separator<char> > tokens(text, sep);
-        foreach_ht (const String &mapping, tokens) {
+        for (const auto &mapping : tokens) {
           char *end;
           const char *ptr2 = strchr(mapping.c_str(), ':');
           if (ptr2 == 0)

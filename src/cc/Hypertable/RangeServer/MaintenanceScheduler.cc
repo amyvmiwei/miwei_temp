@@ -200,7 +200,7 @@ void MaintenanceScheduler::schedule() {
              Global::low_activity_time.within_window() ? "true" : "false");
 
   // Fetch maintenance data for ranges and thier access groups
-  foreach_ht (RangeData &rd, ranges.array)
+  for (auto &rd : ranges.array)
     rd.data = rd.range->get_maintenance_data(ranges.arena, current_time, flags);
 
   if (ranges.array.empty()) {
@@ -269,7 +269,7 @@ void MaintenanceScheduler::schedule() {
       trace_str += format("before revision_user\t%llu\n", (Llu)revision_user);
     }
 
-    foreach_ht (RangeData &rd, ranges.array) {
+    for (auto &rd : ranges.array) {
 
       if (rd.data->needs_major_compaction && priority <= m_move_compactions_per_interval) {
         rd.data->priority = priority++;
@@ -379,7 +379,7 @@ void MaintenanceScheduler::schedule() {
   // was in progress
   if (!m_initialized) {
     uint32_t level = 0, priority = 0;
-    foreach_ht (RangeData &rd, ranges.array) {
+    for (auto &rd : ranges.array) {
       if (!rd.data->initialized)
         uninitialized_range_seen = true;
       if (rd.data->state == RangeState::SPLIT_LOG_INSTALLED ||
@@ -404,7 +404,7 @@ void MaintenanceScheduler::schedule() {
 
     // Sort the ranges based on priority
     ranges_prioritized.array.reserve( ranges.array.size() );
-    foreach_ht (RangeData &rd, ranges.array) {
+    for (auto &rd : ranges.array) {
       if (rd.data->priority > 0)
         ranges_prioritized.array.push_back(rd);
     }
@@ -415,7 +415,7 @@ void MaintenanceScheduler::schedule() {
     int32_t initialization_created = 0;
     uint32_t level = 0;
 
-    foreach_ht (RangeData &rd, ranges_prioritized.array) {
+    for (auto &rd : ranges_prioritized.array) {
       if (!rd.data->initialized) {
         uninitialized_range_seen = true;
         if (!low_memory && initialization_created < m_initialization_per_interval) {
@@ -518,7 +518,7 @@ void MaintenanceScheduler::write_debug_output(boost::xtime now, Ranges &ranges,
   ofstream out;
   out.open(output_fname.c_str());
   out << header_str << "\n";
-  foreach_ht (RangeData &rd, ranges.array) {
+  for (auto &rd : ranges.array) {
     out << *rd.data << "\n";
     for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
       out << *ag_data << "\n";
@@ -526,7 +526,7 @@ void MaintenanceScheduler::write_debug_output(boost::xtime now, Ranges &ranges,
   StringSet logs;
   Global::remove_ok_logs->get(logs);
   out << "RemoveOkLogs:\n";
-  foreach_ht (const String &log, logs)
+  for (const auto &log : logs)
     cout << log << "\n";
   out.close();
   FileUtils::unlink(System::install_dir + "/run/debug-scheduler");

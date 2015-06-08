@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,24 +19,21 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
-extern "C" {
-#include <poll.h>
-}
-
-#include "Common/Config.h"
-#include "Common/StringExt.h"
-
-#include "IndexTables.h"
-#include "Key.h"
 #include "TableMutatorAsync.h"
-#include "ResultCallback.h"
-#include "TableMutatorSyncDispatchHandler.h"
-#include "Table.h"
-#include "TableMutator.h"
-#include "LoadDataEscape.h"
-#include "IndexMutatorCallback.h"
+
+#include <Hypertable/Lib/IndexTables.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/ResultCallback.h>
+#include <Hypertable/Lib/TableMutatorSyncDispatchHandler.h>
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/TableMutator.h>
+#include <Hypertable/Lib/LoadDataEscape.h>
+#include <Hypertable/Lib/IndexMutatorCallback.h>
+
+#include <Common/Config.h>
+#include <Common/StringExt.h>
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -539,7 +536,7 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
 void TableMutatorAsync::get_unsynced_rangeservers(std::vector<CommAddress> &unsynced) {
   ScopedLock lock(m_member_mutex);
   unsynced.clear();
-  foreach_ht (const CommAddress &comm_addr, m_unsynced_rangeservers)
+  for (const auto &comm_addr : m_unsynced_rangeservers)
     unsynced.push_back(comm_addr);
 }
 
@@ -563,7 +560,7 @@ void TableMutatorAsync::do_sync() {
 
     {
       ScopedLock lock(m_member_mutex);
-      foreach_ht (CommAddress addr, m_unsynced_rangeservers)
+      for (auto addr : m_unsynced_rangeservers)
         sync_handler.add(addr);
     }
 
@@ -629,7 +626,7 @@ TableMutatorAsyncScatterBufferPtr TableMutatorAsync::get_outstanding_buffer(size
 }
 
 void TableMutatorAsync::update_unsynced_rangeservers(const CommAddressSet &unsynced) {
-  foreach_ht (const CommAddress &comm_addr, unsynced)
+  for (const auto &comm_addr : unsynced)
     m_unsynced_rangeservers.insert(comm_addr);
 }
 

@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -295,9 +295,8 @@ void RangeServerConnectionManager::get_valid_connections(StringSet &locations,
 
 void RangeServerConnectionManager::set_servers_balanced(const vector<RangeServerConnectionPtr> &unbalanced) {
   lock_guard<mutex> lock(m_mutex);
-  foreach_ht (const RangeServerConnectionPtr rsc, unbalanced) {
+  for (const auto rsc : unbalanced)
     rsc->set_balanced();
-  }
 }
 
 bool RangeServerConnectionManager::exist_unbalanced_servers() {

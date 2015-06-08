@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -185,7 +185,7 @@ void CellStoreV1::create_bloom_filter(bool is_approx) {
                  << m_trailer.num_filter_items << " items - "<< e << HT_END;
   }
 
-  foreach_ht(const Blob &blob, *m_bloom_filter_items)
+  for (const auto &blob : *m_bloom_filter_items)
     m_bloom_filter->insert(blob.start, blob.size);
 
   delete m_bloom_filter_items;
@@ -736,7 +736,7 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
         boost::scoped_array<char> rowcol(new char[rowlen + 2]);
         memcpy(rowcol.get(), scan_context->start_row.c_str(), rowlen + 1);
 
-        foreach_ht(const char *col, scan_context->spec->columns) {
+        for (auto col : scan_context->spec->columns) {
           uint8_t column_family_id = schema->get_column_family(col)->get_id();
           rowcol[rowlen + 1] = column_family_id;
 

@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,14 +19,17 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/Logger.h"
-#include "FsBroker/Lib/Client.h"
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/old/RangeServerMetaLog.h"
-#include "Hypertable/Lib/old/RangeServerMetaLogReader.h"
-#include "Hypertable/Lib/old/MasterMetaLogReader.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/old/RangeServerMetaLog.h>
+#include <Hypertable/Lib/old/RangeServerMetaLogReader.h>
+#include <Hypertable/Lib/old/MasterMetaLogReader.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <Common/Init.h>
+#include <Common/Logger.h>
 
 using namespace Hypertable;
 using namespace Hypertable::OldMetaLog;
@@ -61,7 +64,7 @@ void dump_range_states(RangeServerMetaLogReader *rdr) {
     std::cout << "Found recover entry" << std::endl;
   else
     std::cout << "Recover entry not found" << std::endl;
-  foreach_ht(const RangeStateInfo *i, rstates) std::cout << *i;
+  for (const auto i : rstates) std::cout << *i;
 }
 
 void dump_metalog(Filesystem &fs, const String &path, PropertiesPtr &cfg) {

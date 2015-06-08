@@ -153,7 +153,7 @@ namespace Hypertable {
      */
     void dump_error_history() {
       ScopedLock lock(m_mutex);
-      foreach_ht(Exception &e, m_last_errors)
+      for (auto &e : m_last_errors)
         HT_ERROR_OUT << e << HT_END;
       m_last_errors.clear();
     }

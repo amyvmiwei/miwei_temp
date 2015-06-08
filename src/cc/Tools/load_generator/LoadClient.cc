@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,12 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+
+#include <Common/Compat.h>
+
 #include "LoadClient.h"
 
 #ifdef HT_WITH_THRIFT
-#include "ThriftBroker/Client.h"
-#include "ThriftBroker/Config.h"
+#include <ThriftBroker/Client.h>
+#include <ThriftBroker/Config.h>
 #endif
 
 LoadClient::LoadClient(const String &config_file, bool thrift)
@@ -99,7 +101,7 @@ LoadClient::set_cells(const Cells &cells)
   if (m_thrift) {
 #ifdef HT_WITH_THRIFT
     vector<ThriftGen::Cell> thrift_cells;
-    foreach_ht(const Cell &cell , cells) {
+    for (const auto &cell : cells) {
       thrift_cells.push_back(ThriftGen::make_cell((const char*)cell.row_key,
           (const char*)cell.column_family,(const char*)cell.column_qualifier,
           string((const char*)cell.value, cell.value_len), cell.timestamp,
@@ -194,7 +196,7 @@ LoadClient::get_all_cells()
 
     do {
       m_thrift_client->next_cells(cells, m_thrift_scanner);
-      foreach_ht(const ThriftGen::Cell &cell, cells) {
+      for (const auto &cell : cells) {
         bytes_scanned += cell.key.row.size() + cell.key.column_family.size()
                          + cell.key.column_qualifier.size() + 8 + 8 + 2
                          + cell.value.size();

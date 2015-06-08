@@ -56,7 +56,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
   boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC_);
   xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
-  foreach_ht(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
+  for (const auto &replica : cfg->get_strs("Hyperspace.Replica.Host")) {
     m_hyperspace_replicas.push_back(replica);
   }
 

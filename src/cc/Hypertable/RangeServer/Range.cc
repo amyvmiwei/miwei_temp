@@ -155,7 +155,7 @@ void Range::initialize() {
   // Read hints file and load AGname-to-hints map
   std::map<String, const AccessGroup::Hints *> hints_map;
   m_hints_file.read();
-  foreach_ht (const AccessGroup::Hints &h, m_hints_file.get())
+  for (const auto &h : m_hints_file.get())
     hints_map[h.ag_name] = &h;
 
   RangeSpecManaged range_spec;
@@ -291,7 +291,7 @@ void Range::load_cell_stores() {
 
   {
     ScopedLock schema_lock(m_schema_mutex);
-    foreach_ht (AccessGroupPtr ag, m_access_group_vector)
+    for (auto ag : m_access_group_vector)
       ag->pre_load_cellstores();
   }
 
@@ -378,7 +378,7 @@ void Range::load_cell_stores() {
 
   {
     ScopedLock schema_lock(m_schema_mutex);
-    foreach_ht (AccessGroupPtr ag, m_access_group_vector)
+    for (auto ag : m_access_group_vector)
       ag->post_load_cellstores();
   }
 
@@ -524,7 +524,7 @@ CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
   scanner = new CellListScannerBuffer(scan_ctx);
 
   try {
-    foreach_ht (AccessGroupPtr &ag, ag_vector)
+    for (auto &ag : ag_vector)
       ag->populate_cellstore_index_pseudo_table_scanner(scanner);
   }
   catch (Exception &e) {
@@ -988,11 +988,11 @@ void Range::split_install_log() {
       CellList::SplitRowDataMapT(LtCstr(), CellList::SplitRowDataAlloc(arena));
 
     // Fetch CellStore block index split row data from
-    foreach_ht (const AccessGroupPtr &ag, ag_vector)
+    for (const auto &ag : ag_vector)
       ag->split_row_estimate_data_stored(split_row_data);
 
     // Fetch CellCache split row data from
-    foreach_ht (const AccessGroupPtr &ag, ag_vector)
+    for (const auto &ag : ag_vector)
       ag->split_row_estimate_data_cached(split_row_data);
 
     // Estimate split row from split row data
@@ -1013,7 +1013,7 @@ void Range::split_install_log() {
     if (split_row.compare(end_row) >= 0 || split_row.compare(start_row) <= 0) {
       LoadDataEscape escaper;
       String escaped_start_row, escaped_end_row, escaped_split_row;
-      foreach_ht (CellList::SplitRowDataMapT::value_type &entry, split_row_data) {
+      for (auto &entry : split_row_data) {
 	escaper.escape(entry.first, strlen(entry.first), escaped_split_row);
 	HT_ERRORF("[split_row_data] %lld %s", (Lld)entry.second, escaped_split_row.c_str());
       }

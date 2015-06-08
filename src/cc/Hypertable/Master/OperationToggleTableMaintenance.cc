@@ -215,10 +215,10 @@ size_t OperationToggleTableMaintenance::encoded_length_state() const {
   size_t length = 1 + Serialization::encoded_length_vstr(m_name) +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
-  foreach_ht (const String &location, m_servers)
+  for (const auto &location : m_servers)
     length += Serialization::encoded_length_vstr(location);
   length += 4;
-  foreach_ht (const String &location, m_completed)
+  for (const auto &location : m_completed)
     length += Serialization::encoded_length_vstr(location);
   return length;
 }
@@ -228,10 +228,10 @@ void OperationToggleTableMaintenance::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_bool(bufp, m_toggle_on);
   Serialization::encode_i32(bufp, m_servers.size());
-  foreach_ht (const String &location, m_servers)
+  for (const auto &location : m_servers)
     Serialization::encode_vstr(bufp, location);
   Serialization::encode_i32(bufp, m_completed.size());
-  foreach_ht (const String &location, m_completed)
+  for (const auto &location : m_completed)
     Serialization::encode_vstr(bufp, location);
 }
 

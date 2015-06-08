@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc
  *
  * This file is part of Hypertable.
@@ -19,7 +19,8 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "ReplayBuffer.h"
 #include "ReplayDispatchHandler.h"
 
@@ -42,10 +43,10 @@ ReplayBuffer::ReplayBuffer(PropertiesPtr &props, Comm *comm,
 
   StringSet locations;
   m_plan.get_locations(locations);
-  foreach_ht(const String &location, locations) {
+  for (const auto &location : locations) {
     vector<QualifiedRangeSpec> specs;
     m_plan.get_range_specs(location, specs);
-    foreach_ht(QualifiedRangeSpec &spec, specs) {
+    for (auto &spec : specs) {
       RangeReplayBufferPtr replay_buffer
           = new RangeReplayBuffer(location, spec);
       m_buffer_map[spec] = replay_buffer;
@@ -84,7 +85,7 @@ void ReplayBuffer::add(const TableIdentifier &table, SerializedKey &key,
 void ReplayBuffer::flush() {
   ReplayDispatchHandler handler(m_comm, m_location, m_plan_generation, m_timeout_ms);
 
-  foreach_ht(ReplayBufferMap::value_type &vv, m_buffer_map) {
+  for (auto &vv : m_buffer_map) {
 
     if (vv.second->memory_used() > 0) {
       RangeReplayBuffer &buffer = *(vv.second.get());

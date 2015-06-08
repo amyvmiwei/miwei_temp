@@ -725,7 +725,7 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   if (cb.normal_mode) {
     cb.total_cells = cells.size();
 
-    foreach_ht(const Cell &cell, cells) {
+    for (const auto &cell : cells) {
       cb.total_keys_size += cell.column_qualifier
           ? (strlen(cell.column_qualifier) + 1) : 0;
       cb.total_values_size += cell.value_len;
@@ -779,7 +779,7 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
     }
   }
   else {
-    foreach_ht(const string &col, state.delete_columns) {
+    for (const auto &col : state.delete_columns) {
       ++cb.total_cells;
 
       key.column_family = col.c_str();
@@ -817,7 +817,7 @@ cmd_get_listing(NamespacePtr &ns, ParserState &state,
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   std::vector<NamespaceListing> listing;
   ns->get_listing(false, listing);
-  foreach_ht (const NamespaceListing &entry, listing) {
+  for (const auto &entry : listing) {
     if (entry.is_namespace && !state.tables_only)
       cb.on_return(entry.name + "\t(namespace)");
     else if (!entry.is_namespace)

@@ -408,18 +408,18 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
   cell_intervals.reserve(ss.cell_intervals.size());
   column_predicates.reserve(ss.column_predicates.size());
 
-  foreach_ht(const char *c, ss.columns)
+  for (auto c : ss.columns)
     add_column(arena, c);
 
-  foreach_ht(const RowInterval &ri, ss.row_intervals)
+  for (const auto &ri : ss.row_intervals)
     add_row_interval(arena, ri.start, ri.start_inclusive,
                      ri.end, ri.end_inclusive);
 
-  foreach_ht(const CellInterval &ci, ss.cell_intervals)
+  for (const auto &ci : ss.cell_intervals)
     add_cell_interval(arena, ci.start_row, ci.start_column, ci.start_inclusive,
                       ci.end_row, ci.end_column, ci.end_inclusive);
 
-  foreach_ht(const ColumnPredicate &cp, ss.column_predicates)
+  for (const auto &cp : ss.column_predicates)
     add_column_predicate(arena, cp.column_family, cp.column_qualifier,
                          cp.operation, cp.value, cp.value_len);
 }

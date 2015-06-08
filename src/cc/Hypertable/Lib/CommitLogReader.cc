@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -150,8 +150,8 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
 }
 
 void CommitLogReader::get_init_fragment_ids(vector<uint32_t> &ids) {
-  foreach_ht(uint32_t id, m_init_fragments) {
-    ids.push_back(id);
+  for (auto id : m_init_fragments) {
+    ids.push_back((uint32_t)id);
   }
 }
 
@@ -307,7 +307,7 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
     parent->purge_dirs.insert(log_dir);
   else {
     m_init_fragments.clear();
-    foreach_ht(const CommitLogFileInfo *fragment, m_fragment_queue)
+    for (const auto fragment : m_fragment_queue)
       m_init_fragments.push_back(fragment->num);
   }
 

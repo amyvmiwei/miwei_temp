@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
         std::set<RangeServerConnectionPtr, ltrsc> rsc_set;
 
         entities2.reserve(entities.size());
-        foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        for (auto &entity : entities) {
           if (dynamic_cast<RangeServerConnection *>(entity.get())) {
             RangeServerConnectionPtr rsc {dynamic_pointer_cast<RangeServerConnection>(entity)};
             if (rsc_set.count(rsc) > 0)
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
           }
         }
         // Insert uniq'ed RangeServerConnections
-        foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
+        for (const auto &rsc : rsc_set)
           entities2.push_back(rsc);
         entities.swap(entities2);
       }
@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
       context->op->wait_for_empty();
 
       // Then reconstruct state and start execution
-      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+      for (auto &entity : entities) {
         Operation *op = dynamic_cast<Operation *>(entity.get());
         if (op) {
           operation = dynamic_pointer_cast<Operation>(entity);
@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
 
       // For each RangeServerConnection that doesn't already have an
       // outstanding OperationRecover, create and add one
-      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+      for (auto &entity : entities) {
         if (dynamic_cast<RangeServerConnection *>(entity.get())) {
           rsc = dynamic_pointer_cast<RangeServerConnection>(entity);
           if (recovery_ops.find(rsc->location()) == recovery_ops.end())

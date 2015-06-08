@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,11 +19,13 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+
 #include <iostream>
 #include <map>
 #include <cassert>
-#include "Hypertable/Lib/Client.h"
 
 using namespace Hypertable;
 
@@ -206,7 +208,7 @@ test_escaped_regexps(void)
   // now make sure that the values were correctly escaped
   Cell cell;
   FILE *fout=fopen("indices_test.output", "wt");
-  foreach_ht (Query &q, queries) {
+  for (auto &q : queries) {
     ScanSpecBuilder ssb;
     ssb.add_column_predicate("a", "", q.second, q.first);
     String s=escape(q.first, strlen(q.first));

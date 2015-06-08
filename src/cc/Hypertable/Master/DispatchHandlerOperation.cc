@@ -26,22 +26,18 @@
  * range servers.
  */
 
-
-#include "Common/Compat.h"
-#include "AsyncComm/Protocol.h"
-
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "Context.h"
 #include "DispatchHandlerOperation.h"
 
+#include <AsyncComm/Protocol.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+
 using namespace Hypertable;
 
-
-/**
- *
- */
 DispatchHandlerOperation::DispatchHandlerOperation(ContextPtr &context)
   : m_context(context), m_rsclient(Comm::instance()), m_outstanding(0), m_error_count(0) {
 }
@@ -98,7 +94,7 @@ void DispatchHandlerOperation::handle(EventPtr &event) {
 void DispatchHandlerOperation::process_events() {
   RangeServerConnectionPtr rsc;
 
-  foreach_ht (const EventPtr &event, m_events) {
+  for (const auto &event : m_events) {
 
     if (m_context->rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
       Result result(rsc->location());

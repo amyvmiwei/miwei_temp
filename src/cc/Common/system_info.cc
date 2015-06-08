@@ -24,9 +24,9 @@
  * Command line tool to print information about the system.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/SystemInfo.h"
+#include <Common/Compat.h>
+#include <Common/Init.h>
+#include <Common/SystemInfo.h>
 
 using namespace std;
 using namespace Hypertable;
@@ -81,7 +81,7 @@ int main(int ac, char *av[]) {
   if (has("property")) {
     Strings strs = get_strs("property");
 
-    foreach_ht(const String &s, strs)
+    for (auto &s : strs)
       cout << Properties::to_str((*properties)[s]) << endl;
 
     has_option = true;

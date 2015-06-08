@@ -242,7 +242,7 @@ void OperationProcessor::activate(const String &name) {
 #if 0      
       {
         String str;
-        foreach_ht (const String &tag, names)
+        for (const auto &tag : names)
           str += tag + " ";
         HT_INFOF("Activating %s with obstructions %s", (*iter)->label().c_str(), str.c_str());
       }
@@ -589,7 +589,7 @@ void OperationProcessor::state_description(String &output) {
     first = true;
     names.clear();
     m_context.ops[*vp.first]->dependencies(names);
-    foreach_ht (const String &str, names) {
+    for (const auto &str : names) {
       if (!first)
         oss << ",";
       oss << str;
@@ -600,7 +600,7 @@ void OperationProcessor::state_description(String &output) {
     first = true;
     names.clear();
     m_context.ops[*vp.first]->obstructions(names);
-    foreach_ht (const String &str, names) {
+    for (const auto &str : names) {
       if (!first)
         oss << ",";
       oss << str;
@@ -611,7 +611,7 @@ void OperationProcessor::state_description(String &output) {
     first = true;
     names.clear();
     m_context.ops[*vp.first]->exclusivities(names);
-    foreach_ht (const String &str, names) {
+    for (const auto &str : names) {
       if (!first)
         oss << ",";
       oss << str;

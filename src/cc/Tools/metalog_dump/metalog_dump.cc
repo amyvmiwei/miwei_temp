@@ -233,7 +233,7 @@ int main(int argc, char **argv) {
       }
     }
     else if (print_logs) {
-      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+      for (auto &entity : entities) {
         entity_range = dynamic_cast<MetaLogEntityRange *>(entity.get());
         if (entity_range) {
           String log = entity_range->get_transfer_log();

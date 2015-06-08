@@ -315,7 +315,7 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   // shallow copy
   const char *start_row;
   const char *end_row;
-  foreach_ht(const ThriftGen::RowInterval &ri, tss.row_intervals) {
+  for (const auto &ri : tss.row_intervals) {
     start_row = ri.__isset.start_row ?
                 ri.start_row.c_str() :
                 ri.__isset.start_row_binary ?
@@ -331,7 +331,7 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
       end_row, ri.__isset.end_inclusive && ri.end_inclusive));
   }
 
-  foreach_ht(const ThriftGen::CellInterval &ci, tss.cell_intervals)
+  for (const auto &ci : tss.cell_intervals)
     hss.cell_intervals.push_back(Hypertable::CellInterval(
         ci.__isset.start_row ? ci.start_row.c_str() : "",
         ci.start_column.c_str(),
@@ -340,10 +340,10 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
         ci.end_column.c_str(),
         ci.__isset.end_inclusive && ci.end_inclusive));
 
-  foreach_ht(const std::string &col, tss.columns)
+  for (const auto &col : tss.columns)
     hss.columns.push_back(col.c_str());
 
-  foreach_ht(const ThriftGen::ColumnPredicate &cp, tss.column_predicates) {
+  for (const auto &cp : tss.column_predicates) {
     HT_INFOF("%s:%s %s", cp.column_family.c_str(), cp.column_qualifier.c_str(),
              cp.__isset.value ? cp.value.c_str() : "");
     hss.column_predicates.push_back(
@@ -582,7 +582,7 @@ int32_t convert_cells(const Hypertable::Cells &hcells, ThriftCells &tcells) {
 
 void convert_cells(const ThriftCells &tcells, Hypertable::Cells &hcells) {
   // shallow copy
-  foreach_ht(const ThriftGen::Cell &tcell, tcells) {
+  for (const auto &tcell : tcells) {
     Hypertable::Cell hcell;
     convert_cell(tcell, hcell);
     hcells.push_back(hcell);
@@ -620,7 +620,7 @@ int32_t convert_cells(Hypertable::Cells &hcells, CellsSerialized &tcells) {
 void
 convert_cells(const ThriftCellsAsArrays &tcells, Hypertable::Cells &hcells) {
   // shallow copy
-  foreach_ht(const CellAsArray &tcell, tcells) {
+  for (const auto &tcell : tcells) {
     Hypertable::Cell hcell;
     convert_cell(tcell, hcell);
     hcells.push_back(hcell);

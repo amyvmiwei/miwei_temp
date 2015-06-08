@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,17 +18,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/Error.h"
+
+#include <Common/Compat.h>
+
+#include "BalanceAlgorithmOffload.h"
+#include "Utility.h"
+
+#include <Hypertable/Lib/Client.h>
+
+#include <Common/Error.h>
 
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
-
-#include "Hypertable/Lib/Client.h"
-
-#include "BalanceAlgorithmOffload.h"
-#include "Utility.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -47,7 +49,7 @@ void BalanceAlgorithmOffload::compute_plan(BalancePlanPtr &plan,
   StringSet::iterator locations_it;
   String root_location = Utility::root_range_location(m_context);
 
-  foreach_ht(const RangeServerStatistics &stats, m_statistics) {
+  for (const auto &stats : m_statistics) {
     if (m_offload_servers.find(stats.location) == m_offload_servers.end()) {
       if (!stats.stats || !stats.stats->live || !m_context->can_accept_ranges(stats))
         continue;

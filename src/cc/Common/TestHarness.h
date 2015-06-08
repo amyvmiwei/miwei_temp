@@ -27,19 +27,19 @@
 #ifndef Common_TestHarness_h
 #define Common_TestHarness_h
 
+#include "Logger.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
 
 extern "C" {
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 }
-
-#include "Logger.h"
-
 
 namespace Hypertable {
 

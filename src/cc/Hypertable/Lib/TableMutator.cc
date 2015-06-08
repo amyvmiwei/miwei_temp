@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -278,7 +278,7 @@ TableMutator::show_failed(const Exception &e, std::ostream &out) {
   ScopedLock lock(m_mutex);
 
   if (!m_failed_mutations.empty()) {
-    foreach_ht(const FailedMutation &v, m_failed_mutations) {
+    for (const auto &v : m_failed_mutations) {
       out << "Failed: (" << v.first.row_key << "," << v.first.column_family;
 
       if (v.first.column_qualifier && *(v.first.column_qualifier))

@@ -148,7 +148,7 @@ namespace Hypertable {
           container.push_back(timer);
         m_timer_heap.pop();
       }
-      foreach_ht (const ExpireTimer &t, container)
+      for (const auto &t : container)
         m_timer_heap.push(t);
     }
 

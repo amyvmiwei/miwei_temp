@@ -254,7 +254,7 @@ namespace {
 
     log_reader->get_linked_logs(linked_logs);
 
-    foreach_ht (const String &name, linked_logs)
+    for (const auto &name : linked_logs)
       std::cout << name << "\n";
     std::cout << std::flush;
 

@@ -356,7 +356,7 @@ int HsCommandInterpreter::execute_line(const String &line) {
         attrs.clear();
         m_session->attr_list(handle, attrs);
 
-        foreach_ht(const String &attr, attrs) {
+        for (const auto &attr : attrs) {
           if (attr == lock_attr || attr == generation_attr)
             continue;
           value.clear();
@@ -391,7 +391,7 @@ int HsCommandInterpreter::execute_line(const String &line) {
           else
             continue;
         }
-        foreach_ht(const struct DirEntry &entry, listing) {
+        for (const auto &entry : listing) {
           // if dir save it
           if(entry.is_dir)
             tmp_dirs.push_back(fname + "/" + entry.name);
@@ -408,7 +408,7 @@ int HsCommandInterpreter::execute_line(const String &line) {
             attrs.clear();
             m_session->attr_list(handle, attrs);
 
-            foreach_ht(const String &attr, attrs) {
+            for (const auto &attr : attrs) {
               if (attr == lock_attr || attr == generation_attr)
                 continue;
               value.clear();

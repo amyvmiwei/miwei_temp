@@ -128,7 +128,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   if (!primary_spec.column_predicates.empty()) {
     size_t id = 0;
 
-    foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates) {
+    for (const auto &cp : primary_spec.column_predicates) {
 
       if ((cf_spec = table->schema()->get_column_family(cp.column_family)) == 0)
         return false;
@@ -217,7 +217,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
                 has_row_interval = true;
                 ++row_intervals_applied_count;
                 index_row_prefix = (const char *)index_row_buf.base;
-                foreach_ht (const RowInterval &primary_ri, primary_spec.row_intervals) {
+                for (const auto &primary_ri : primary_spec.row_intervals) {
                   index_spec.add_row_interval(
                     index_row_prefix + primary_ri.start, primary_ri.start_inclusive,
                     index_row_prefix + primary_ri.end, primary_ri.end_inclusive);
@@ -227,7 +227,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
               else if (primary_spec.cell_intervals.size()) {
                 has_row_interval = true;
                 index_row_prefix = (const char *)index_row_buf.base;
-                foreach_ht (const CellInterval &primary_ci, primary_spec.cell_intervals) {
+                for (const auto &primary_ci : primary_spec.cell_intervals) {
                   index_spec.add_row_interval(
                     index_row_prefix + primary_ci.start_row, true,
                     index_row_prefix + primary_ci.end_row, true);
@@ -291,7 +291,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
           // primary row intervals
           if (primary_spec.row_intervals.size()) {
             ++row_intervals_applied_count;
-            foreach_ht (const RowInterval &primary_ri, primary_spec.row_intervals) {
+            for (const auto &primary_ri : primary_spec.row_intervals) {
               index_spec.add_row_interval(
                 index_row_prefix + primary_ri.start, primary_ri.start_inclusive,
                 index_row_prefix + primary_ri.end, primary_ri.end_inclusive);
@@ -299,7 +299,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
           }
           // primary cell intervals
           else if (primary_spec.cell_intervals.size()) {
-            foreach_ht (const CellInterval &primary_ci, primary_spec.cell_intervals) {
+            for (const auto &primary_ci : primary_spec.cell_intervals) {
               index_spec.add_row_interval(
                 index_row_prefix + primary_ci.start_row, true,
                 index_row_prefix + primary_ci.end_row, true);
@@ -342,13 +342,12 @@ void TableScannerAsync::transform_primary_scan_spec(ScanSpecBuilder &primary_spe
 
     // Load predicate_columns set
     CstrSet predicate_columns;
-    foreach_ht (const ColumnPredicate &predicate,
-                primary_spec.get().column_predicates)
+    for (const auto &predicate : primary_spec.get().column_predicates)
       predicate_columns.insert(predicate.column_family);
 
     // If selected columns empty, add all columns referenced in predicates
     if (primary_spec.get().columns.empty()) {
-      foreach_ht (const char *column, predicate_columns)
+      for (auto column : predicate_columns)
         primary_spec.add_column(column);
     }
     else {
@@ -356,7 +355,7 @@ void TableScannerAsync::transform_primary_scan_spec(ScanSpecBuilder &primary_spe
       const char *colon;
       StringSet selected_columns;
       // If columns selected that are not referenced in predicate, throw error
-      foreach_ht (const char *column, primary_spec.get().columns) {
+      for (auto column : primary_spec.get().columns) {
         family.clear();
         if ((colon = strchr(column, ':')) != 0)
           family.append(column, colon-column);
@@ -370,8 +369,7 @@ void TableScannerAsync::transform_primary_scan_spec(ScanSpecBuilder &primary_spe
       }
 
       // Add predicate columns that are missing from selection set
-      foreach_ht (const ColumnPredicate &predicate,
-                  primary_spec.get().column_predicates)
+      for (const auto &predicate : primary_spec.get().column_predicates)
         if (selected_columns.count(predicate.column_family) == 0)
           primary_spec.add_column(predicate.column_family);
     }
@@ -453,7 +451,7 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
       ScanSpec rowset_scan_spec;
       scan_spec.base_copy(rowset_scan_spec);
       rowset_scan_spec.row_intervals.reserve(scan_spec.row_intervals.size());
-      foreach_ht (const RowInterval& ri, scan_spec.row_intervals) {
+      for (const auto &ri : scan_spec.row_intervals) {
         if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.scan_and_filter_rows = false;

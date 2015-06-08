@@ -38,7 +38,6 @@
 #include <Common/ScopeGuard.h>
 #include <Common/Serialization.h>
 #include <Common/StringExt.h>
-#include <Common/Sweetener.h>
 #include <Common/System.h>
 #include <Common/md5.h>
 
@@ -130,7 +129,7 @@ void OperationBalance::execute() {
       if (!m_plan->moves.empty()) {
         uint32_t wait_millis = m_plan->duration_millis / m_plan->moves.size();
 
-        foreach_ht (RangeMoveSpecPtr &move, m_plan->moves) {
+        for (auto &move : m_plan->moves) {
           addr.set_proxy(move->source_location);
           try {
             rsc.relinquish_range(addr, move->table, move->range);
@@ -145,7 +144,7 @@ void OperationBalance::execute() {
           }
         }
         std::stringstream sout;
-        foreach_ht (RangeMoveSpecPtr &move, m_plan->moves) {
+        for (auto &move : m_plan->moves) {
           sout.str("");
           sout << *move;
           HT_INFOF("%s", sout.str().c_str());

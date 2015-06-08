@@ -19,12 +19,13 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
-#include "Common/Logger.h"
-#include "Common/DynamicBuffer.h"
+#include <Common/Compat.h>
 
 #include "DirEntryAttr.h"
+
+#include <Common/Serialization.h>
+#include <Common/Logger.h>
+#include <Common/DynamicBuffer.h>
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -34,7 +35,7 @@ namespace Hyperspace {
 
   size_t encoded_length_dir_entry_attr(const DirEntryAttr &entry) {
     size_t len = 2 + encoded_length_vstr(entry.name) + 4 + entry.attr.size + 4;
-    foreach_ht(const DirEntryAttr &sub_entry, entry.sub_entries) 
+    for (const auto &sub_entry : entry.sub_entries) 
       len += encoded_length_dir_entry_attr(sub_entry);
     return len;
   }
@@ -45,7 +46,7 @@ namespace Hyperspace {
     encode_vstr(bufp, entry.name);
     encode_bytes32(bufp, (void *)entry.attr.base, entry.attr.size);
     encode_i32(bufp, entry.sub_entries.size());
-    foreach_ht(const DirEntryAttr &sub_entry, entry.sub_entries) 
+    for (const auto &sub_entry : entry.sub_entries) 
       encode_dir_entry_attr(bufp, sub_entry);
   }
 

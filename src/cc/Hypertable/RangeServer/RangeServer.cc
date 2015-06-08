@@ -570,7 +570,7 @@ namespace {
     sort(listing.begin(), listing.end(), ByFragmentNumber());
 
     // Remove zero-length files
-    foreach_ht (Filesystem::Dirent &entry, listing) {
+    for (auto &entry : listing) {
       String fragment_file = logdir + "/" + entry.name;
       try {
         if (Global::log_dfs->length(fragment_file) == 0) {
@@ -714,7 +714,7 @@ void Apps::RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         ranges.array.clear();
         replay_map.get_ranges(ranges);
-        foreach_ht(RangeData &rd, ranges.array) {
+        for (auto &rd : ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -764,7 +764,7 @@ void Apps::RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         ranges.array.clear();
         replay_map.get_ranges(ranges);
-        foreach_ht(RangeData &rd, ranges.array) {
+        for (auto &rd : ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -818,7 +818,7 @@ void Apps::RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         ranges.array.clear();
         replay_map.get_ranges(ranges);
-        foreach_ht (RangeData &rd, ranges.array) {
+        for (auto &rd : ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -877,7 +877,7 @@ void Apps::RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         ranges.array.clear();
         replay_map.get_ranges(ranges);
-        foreach_ht(RangeData &rd, ranges.array) {
+        for (auto &rd : ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -1194,7 +1194,7 @@ Apps::RangeServer::compact(ResponseCallback *cb, const TableIdentifier &table,
       else {
         ranges.array.clear();
         table_info->get_ranges(ranges);
-        foreach_ht(RangeData &rd, ranges.array)
+        for (auto &rd : ranges.array)
           rd.range->set_compaction_type_needed(compaction_type);
         range_count = ranges.array.size();
       }
@@ -1212,7 +1212,7 @@ Apps::RangeServer::compact(ResponseCallback *cb, const TableIdentifier &table,
               Lib::RangeServer::Protocol::COMPACT_FLAG_METADATA) {
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
-            foreach_ht(RangeData &rd, ranges.array)
+            for (auto &rd : ranges.array)
               rd.range->set_compaction_type_needed(compaction_type);
             range_count += ranges.array.size();
           }
@@ -1220,7 +1220,7 @@ Apps::RangeServer::compact(ResponseCallback *cb, const TableIdentifier &table,
                    Lib::RangeServer::Protocol::COMPACT_FLAG_ROOT) {
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
-            foreach_ht(RangeData &rd, ranges.array) {
+            for (auto &rd : ranges.array) {
               if (rd.range->is_root()) {
                 rd.range->set_compaction_type_needed(compaction_type);
                 range_count++;
@@ -1233,7 +1233,7 @@ Apps::RangeServer::compact(ResponseCallback *cb, const TableIdentifier &table,
           if ((flags & Lib::RangeServer::Protocol::COMPACT_FLAG_SYSTEM) == Lib::RangeServer::Protocol::COMPACT_FLAG_SYSTEM) {
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
-            foreach_ht(RangeData &rd, ranges.array)
+            for (auto &rd : ranges.array)
               rd.range->set_compaction_type_needed(compaction_type);
             range_count += ranges.array.size();
           }
@@ -1242,7 +1242,7 @@ Apps::RangeServer::compact(ResponseCallback *cb, const TableIdentifier &table,
           if ((flags & Lib::RangeServer::Protocol::COMPACT_FLAG_USER) == Lib::RangeServer::Protocol::COMPACT_FLAG_USER) {
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
-            foreach_ht(RangeData &rd, ranges.array)
+            for (auto &rd : ranges.array)
               rd.range->set_compaction_type_needed(compaction_type);
             range_count += ranges.array.size();
           }
@@ -1293,7 +1293,7 @@ namespace {
 
   void do_metadata_sync(Ranges &ranges, TableMutatorPtr &mutator,
                         const char *table_id, bool do_start_row, bool do_location) {
-    foreach_ht(RangeData &rd, ranges.array)
+    for (auto &rd : ranges.array)
       do_metadata_sync(rd, mutator, table_id, do_start_row, do_location);
   }
 
@@ -1958,7 +1958,7 @@ Apps::RangeServer::acknowledge_load(Response::Callback::AcknowledgeLoad *cb,
   RangePtr range;
   map<QualifiedRangeSpec, int> error_map;
 
-  foreach_ht (const QualifiedRangeSpec &rr, specs) {
+  for (const auto &rr : specs) {
 
     if (!m_log_replay_barrier->wait(cb->event()->deadline(),
                                     rr.table, rr.range))
@@ -2195,11 +2195,11 @@ Apps::RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier &table
   // Set "drop" bit on all ranges
   ranges.array.clear();
   table_info->get_ranges(ranges);
-  foreach_ht(RangeData &rd, ranges.array)
+  for (auto &rd : ranges.array)
     rd.range->drop();
 
   // Disable maintenance for range and remove the range from the RSML
-  foreach_ht(RangeData &rd, ranges.array) {
+  for (auto &rd : ranges.array) {
     rd.range->disable_maintenance();
     try {
       MetaLogEntityRangePtr entity = rd.range->metalog_entity();
@@ -2223,7 +2223,7 @@ Apps::RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier &table
     // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
     metadata_prefix = String("") + table.id + ":";
-    foreach_ht (RangeData &rd, ranges.array) {
+    for (auto &rd : ranges.array) {
       // Mark Location column
       metadata_key = metadata_prefix + rd.range->end_row();
       key.row = metadata_key.c_str();
@@ -2263,7 +2263,7 @@ void Apps::RangeServer::dump(ResponseCallback *cb, const char *outfile,
 
     m_context->live_map->get_ranges(ranges);
     time_t now = time(0);
-    foreach_ht (RangeData &rd, ranges.array) {
+    for (auto &rd : ranges.array) {
       rd.data = rd.range->get_maintenance_data(ranges.arena, now, 0);
       out << "RANGE " << rd.range->get_name() << "\n";
       out << *rd.data << "\n";
@@ -2273,7 +2273,7 @@ void Apps::RangeServer::dump(ResponseCallback *cb, const char *outfile,
 
     // dump keys
     if (!nokeys) {
-      foreach_ht (RangeData &rd, ranges.array)
+      for (auto &rd : ranges.array)
         for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
           ag_data->ag->dump_keys(out);
     }
@@ -2349,7 +2349,7 @@ Apps::RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier
     scan_ctx->timeout_ms = cb->event()->header.timeout_ms;
 
     table_info->get_ranges(ranges);
-    foreach_ht(RangeData &rd, ranges.array) {
+    for (auto &rd : ranges.array) {
       scanner = rd.range->create_scanner_pseudo_table(scan_ctx, pseudo_table);
       while (scanner->get(key, value)) {
         cf_spec = Global::pseudo_tables->cellstore_index->get_column_family(key.column_family_code);
@@ -2509,7 +2509,7 @@ void
 
   uint64_t disk_total = 0;
   uint64_t disk_avail = 0;
-  foreach_ht (struct FsStat &fss, m_stats->system.fs_stat) {
+  for (auto &fss : m_stats->system.fs_stat) {
     disk_total += fss.total;
     disk_avail += fss.avail;
   }
@@ -2613,7 +2613,7 @@ void
     ranges = new Ranges();
     m_context->live_map->get_ranges(*ranges);
   }
-  foreach_ht (RangeData &rd, ranges->array) {
+  for (auto &rd : ranges->array) {
 
     if (rd.data == 0)
       rd.data = rd.range->get_maintenance_data(ranges->arena, now, 0, mutator.get());
@@ -2933,7 +2933,7 @@ void Apps::RangeServer::replay_fragments(ResponseCallback *cb, int64_t op_id,
     CommAddress addr;
     uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
     Timer timer(replay_timeout, true);
-    foreach_ht(const String &receiver, receivers) {
+    for (const auto &receiver : receivers) {
       addr.set_proxy(receiver);
       m_conn_manager->add(addr, timeout_ms, "RangeServer");
       if (!m_conn_manager->wait_for_connection(addr, timer.remaining())) {
@@ -3242,7 +3242,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
 
     phantom_map = phantom_range_map->get_tableinfo_map();
 
-    foreach_ht(const QualifiedRangeSpec &rr, specs) {
+    for (const auto &rr : specs) {
       phantom_table_info = 0;
       HT_ASSERT(phantom_map->lookup(rr.table.id, phantom_table_info));
       TableInfoPtr table_info;
@@ -3483,7 +3483,7 @@ void Apps::RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_i
 
     phantom_map = phantom_range_map->get_tableinfo_map();
 
-    foreach_ht(const QualifiedRangeSpec &rr, specs) {
+    for (const auto &rr : specs) {
 
       RangePtr range;
       PhantomRangePtr phantom_range;
@@ -3621,7 +3621,7 @@ void Apps::RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_i
 bool Apps::RangeServer::live(const vector<QualifiedRangeSpec> &ranges) {
   TableInfoPtr table_info;
   size_t live_count = 0;
-  foreach_ht (const QualifiedRangeSpec &qrs, ranges) {
+  for (const auto &qrs : ranges) {
     if (m_context->live_map->lookup(qrs.table.id, table_info)) {
       if (table_info->has_range(qrs.range))
         live_count++;

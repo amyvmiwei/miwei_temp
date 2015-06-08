@@ -24,8 +24,8 @@
 /// This file contains declarations for BlockCompressionCodec, an abstract base
 /// class for block compressors.
 
-#ifndef HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
-#define HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
+#ifndef Hypertable_Lib_BlockCompressionCodec_h
+#define Hypertable_Lib_BlockCompressionCodec_h
 
 #include <Common/Error.h>
 #include <Common/ReferenceCount.h>
@@ -90,7 +90,7 @@ namespace Hypertable {
     /// @param args Compressor specific arguments
     /// @throws Exception Code set to Error::BLOCK_COMPRESSOR_INVALID_ARG
     virtual void set_args(const Args &args) {
-      foreach_ht (const std::string &arg, args)
+      for (const auto &arg : args)
         HT_THROWF(Error::BLOCK_COMPRESSOR_INVALID_ARG, "Unrecognized argument "
                   "to %s codec: '%s'", get_compressor_name(get_type()),
                   arg.c_str());
@@ -111,4 +111,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
+#endif // Hypertable_Lib_BlockCompressionCodec_h

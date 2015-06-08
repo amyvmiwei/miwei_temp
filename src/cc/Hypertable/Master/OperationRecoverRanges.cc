@@ -19,14 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/md5.h"
-#include "Common/PageArenaAllocator.h"
-#include "Common/FailureInducer.h"
-
-#include <Hypertable/Lib/CommitLogReader.h>
-#include <Hypertable/Lib/LegacyDecoder.h>
+#include <Common/Compat.h>
 
 #include "BalancePlanAuthority.h"
 #include "OperationMoveRange.h"
@@ -34,6 +27,14 @@
 #include "OperationRecoveryBlocker.h"
 #include "OperationProcessor.h"
 #include "Utility.h"
+
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/LegacyDecoder.h>
+
+#include <Common/Error.h>
+#include <Common/md5.h>
+#include <Common/PageArenaAllocator.h>
+#include <Common/FailureInducer.h>
 
 #include <algorithm>
 #include <chrono>
@@ -274,7 +275,7 @@ void OperationRecoverRanges::initialize_obstructions_dependencies() {
 
   vector<QualifiedRangeSpec> specs;
   m_plan.receiver_plan.get_range_specs(specs);
-  foreach_ht (QualifiedRangeSpec &spec, specs)
+  for (auto &spec : specs)
     m_dependencies.insert(format("OperationMove %s[%s..%s]",
                                  spec.table.id, spec.range.start_row,
                                  spec.range.end_row));
@@ -332,7 +333,7 @@ bool OperationRecoverRanges::phantom_load_ranges() {
   vector<int32_t> fragments;
 
   m_plan.replay_plan.get_fragments(fragments);
-  foreach_ht (const String &location, locations) {
+  for (const auto &location : locations) {
     addr.set_proxy(location);
     vector<QualifiedRangeSpec> specs;
     vector<RangeState> states;
@@ -462,7 +463,7 @@ bool OperationRecoverRanges::replay_fragments() {
 
   future->register_locations(locations);
 
-  foreach_ht(const String &location, locations) {
+  for (const auto &location : locations) {
     try {
       fragments.clear();
       m_plan.replay_plan.get_fragments(location, fragments);
@@ -528,7 +529,7 @@ bool OperationRecoverRanges::prepare_to_commit() {
 
   future->register_locations(locations);
 
-  foreach_ht(const String &location, locations) {
+  for (const auto &location : locations) {
     addr.set_proxy(location);
     vector<QualifiedRangeSpec> specs;
     m_plan.receiver_plan.get_range_specs(location, specs);
@@ -588,12 +589,12 @@ bool OperationRecoverRanges::commit() {
     m_plan.receiver_plan.get_locations(locations);
 
   // Erase locations marked for "redo"
-  foreach_ht (const String &location, m_redo_set)
+  for (const auto &location : m_redo_set)
     locations.erase(location);
 
   future->register_locations(locations);
 
-  foreach_ht(const String &location, locations) {
+  for (const auto &location : locations) {
     addr.set_proxy(location);
     vector<QualifiedRangeSpec> specs;
     m_plan.receiver_plan.get_range_specs(location, specs);
@@ -650,10 +651,10 @@ bool OperationRecoverRanges::acknowledge() {
     m_plan.receiver_plan.get_locations(locations);
 
   // Erase locations marked for "redo"
-  foreach_ht (const String &location, m_redo_set)
+  for (const auto &location : m_redo_set)
     locations.erase(location);
 
-  foreach_ht(const String &location, locations) {
+  for (const auto &location : locations) {
     addr.set_proxy(location);
     vector<QualifiedRangeSpec> specs;
     vector<QualifiedRangeSpec *> range_ptrs;
@@ -661,7 +662,7 @@ bool OperationRecoverRanges::acknowledge() {
     map<QualifiedRangeSpec, int>::iterator response_map_it;
 
     m_plan.receiver_plan.get_range_specs(location, specs);
-    foreach_ht(QualifiedRangeSpec &range, specs)
+    for (auto &range : specs)
       range_ptrs.push_back(&range);
     try {
       HT_INFOF("Issue acknowledge_load for %d ranges to %s",
@@ -693,7 +694,7 @@ bool OperationRecoverRanges::acknowledge() {
   // Purge successfully acknowledged ranges from recovery plan(s)
   if (!acknowledged.empty()) {
     bpa->remove_from_receiver_plan(m_location, m_type, acknowledged);
-    foreach_ht (const QualifiedRangeSpec &spec, acknowledged)
+    for (const auto &spec : acknowledged)
       m_plan.receiver_plan.remove(spec);
   }
 

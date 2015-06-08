@@ -24,9 +24,9 @@
  * Based on boost::program_options, the options are configured in Config.h.
  */
 
-#include "Common/Compat.h"
-#include "Common/Properties.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
+#include <Common/Properties.h>
+#include <Common/Logger.h>
 
 #include <errno.h>
 #include <fstream>
@@ -214,7 +214,7 @@ void Properties::sync_aliases() {
   if (!m_need_alias_sync)
     return;
 
-  foreach_ht(const AliasMap::value_type &v, m_alias_map) {
+  for (const auto &v : m_alias_map) {
     Map::iterator it1 = m_map.find(v.first);
     Map::iterator it2 = m_map.find(v.second);
 
@@ -272,7 +272,7 @@ String Properties::to_str(const boost::any &v) {
 
 void
 Properties::print(std::ostream &out, bool include_default) {
-  foreach_ht(const Map::value_type &kv, m_map) {
+  for (const auto &kv : m_map) {
     bool isdefault = kv.second.defaulted();
 
     if (include_default || !isdefault) {

@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INDEXSCANNERCALLBACK_H
-#define HYPERTABLE_INDEXSCANNERCALLBACK_H
+#ifndef Hypertable_Lib_IndexScannerCallback_h
+#define Hypertable_Lib_IndexScannerCallback_h
 
 #include <Hypertable/Lib/Client.h>
 #include <Hypertable/Lib/LoadDataEscape.h>
@@ -170,7 +170,7 @@ namespace Hypertable {
 
       {
         ScopedLock lock(m_scanner_mutex);
-        foreach_ht (TableScannerAsync *s, m_scanners)
+        for (auto s : m_scanners)
           delete s;
       }
 
@@ -179,7 +179,7 @@ namespace Hypertable {
     }
 
     void sspecs_clear() {
-      foreach_ht (ScanSpecBuilder *ssb, m_sspecs)
+      for (auto ssb : m_sspecs)
         delete ssb;
       m_sspecs.clear();
       m_sspecs_cond.notify_one();
@@ -303,7 +303,7 @@ namespace Hypertable {
       LoadDataEscape escaper_qualifier;
       LoadDataEscape escaper_value;
       scancells->get(cells);
-      foreach_ht (Cell &cell, cells) {
+      for (auto &cell : cells) {
         char *qv = (char *)cell.row_key;
 
         // get unescaped row
@@ -475,8 +475,8 @@ namespace Hypertable {
         ssb.set_row_regexp(primary_spec.row_regexp);
 
         // Fetch primary columns and restrict by time interval
-        foreach_ht (const std::string &s, primary_spec.columns)
-          ssb.add_column(s.c_str());
+        for (auto col : primary_spec.columns)
+          ssb.add_column(col);
         ssb.set_time_interval(primary_spec.time_interval.first, 
                               primary_spec.time_interval.second);
 
@@ -581,17 +581,17 @@ namespace Hypertable {
       //
       // see below for more comments
 #if defined (TEST_SSB_QUEUE)
-      foreach_ht (Cell &cell, cells) {
+      for (auto &cell : cells) {
         if (!strcmp(last, (const char *)cell.row_key))
           continue;
         last = (const char *)cell.row_key;
 
         ScanSpecBuilder *ssb = new ScanSpecBuilder;
-        foreach_ht (const std::string &s, primary_spec.columns)
+        for (const auto &s : primary_spec.columns)
           ssb->add_column(s.c_str());
         ssb->set_max_versions(primary_spec.max_versions);
         ssb->set_return_deletes(primary_spec.return_deletes);
-        foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates)
+        for (const auto &cp : primary_spec.column_predicates)
           ssb->add_column_predicate(cp.column_family, cp.operation,
                   cp.value, cp.value_len);
         if (primary_spec.value_regexp)
@@ -619,8 +619,8 @@ namespace Hypertable {
       //
       // Create a new ScanSpec
       ScanSpecBuilder *ssb = new ScanSpecBuilder;
-      foreach_ht (const std::string &s, primary_spec.columns)
-        ssb->add_column(s.c_str());
+      for (auto col : primary_spec.columns)
+        ssb->add_column(col);
       ssb->set_max_versions(primary_spec.max_versions);
       ssb->set_return_deletes(primary_spec.return_deletes);
       ssb->set_keys_only(primary_spec.keys_only);
@@ -633,7 +633,7 @@ namespace Hypertable {
       // the primary table, but make sure that each rowkey is only inserted
       // ONCE
       if (primary_spec.and_column_predicates) {
-        foreach_ht (Cell &cell, cells) {
+        for (auto &cell : cells) {
 
           HT_ASSERT(cell.value_len == sizeof(matching));
           memcpy(&matching, cell.value, sizeof(matching));
@@ -658,7 +658,7 @@ namespace Hypertable {
         }
       }
       else {
-        foreach_ht (Cell &cell, cells) {
+        for (auto &cell : cells) {
           if (!strcmp(last, (const char *)cell.row_key))
             continue;
           // then add the key to the ScanSpec
@@ -741,7 +741,7 @@ namespace Hypertable {
                        ? m_last_rowkey_tracking.c_str() 
                        : "";
       bool skip_row = false;
-      foreach_ht (Cell &cell, cells) {
+      for (auto &cell : cells) {
         bool new_row = false;
         if (strcmp(last, cell.row_key)) {
           new_row = true;
@@ -797,7 +797,7 @@ namespace Hypertable {
     }
 
     bool row_intervals_match(const RowIntervals &rivec, const char *row) {
-      foreach_ht (const RowInterval &ri, rivec) {
+      for (const auto &ri : rivec) {
         if (ri.start && ri.start[0]) {
           if (ri.start_inclusive) {
             if (strcmp(row, ri.start)<0)
@@ -825,7 +825,7 @@ namespace Hypertable {
 
     bool cell_intervals_match(const CellIntervals &civec, const char *row,
             const char *column) {
-      foreach_ht (const CellInterval &ci, civec) {
+      for (const auto &ci : civec) {
         if (ci.start_row && ci.start_row[0]) {
           int s=strcmp(row, ci.start_row);
           if (s>0)
@@ -985,4 +985,4 @@ namespace Hypertable {
   }
 } // namespace Hypertable
 
-#endif // HYPERTABLE_INDEXSCANNERCALLBACK_H
+#endif // Hypertable_Lib_IndexScannerCallback_h

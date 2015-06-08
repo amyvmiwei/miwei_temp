@@ -19,19 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INDEXMUTATORCALLBACK_H
-#define HYPERTABLE_INDEXMUTATORCALLBACK_H
+#ifndef Hypertable_Lib_IndexMutatorCallback_h
+#define Hypertable_Lib_IndexMutatorCallback_h
 
 #include <vector>
 #include <deque>
 #include <map>
 #include <boost/thread/condition.hpp>
 
-#include "Common/Mutex.h"
 #include "ResultCallback.h"
 #include "Key.h"
 #include "KeySpec.h"
 #include "TableMutatorAsync.h"
+
+#include <Common/Mutex.h>
 
 namespace Hypertable {
 
@@ -127,7 +128,7 @@ namespace Hypertable {
       m_error = error;
 
       // remove failed updates from the keymap
-      foreach_ht (const FailedMutation &fm, failures) {
+      for (const auto &fm : failures) {
         const Cell &cell = fm.first;
         
         // get the original row key
@@ -149,7 +150,7 @@ namespace Hypertable {
 
       ScopedLock lock(m_mutex);
 
-      foreach_ht (const FailedRow &fail, m_failed_rows) {
+      for (const auto &fail : m_failed_rows) {
         // add all cells with this row key to the failed mutations and
         // purge them from the keymap
         std::pair<KeyMap::iterator, KeyMap::iterator> it =
@@ -221,4 +222,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_INDEXMUTATORCALLBACK_H
+#endif // Hypertable_Lib_IndexMutatorCallback_h

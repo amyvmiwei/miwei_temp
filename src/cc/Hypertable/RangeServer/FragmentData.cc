@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -67,7 +67,7 @@ void FragmentData::merge(TableIdentifier &table, RangePtr &range,
   size_t kv_pairs = 0;
 
   // de-serialize all objects
-  foreach_ht(EventPtr &event, m_data) {
+  for (auto &event : m_data) {
     const uint8_t *ptr = event->payload;
     size_t remain = event->payload_len;
     Lib::RangeServer::Request::Parameters::PhantomUpdate params;
