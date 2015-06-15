@@ -56,7 +56,7 @@ void ReaderTable::get_range_metrics(const char *server, RangeMetricsMap &range_m
   scan_spec.columns.push_back("range_start_row");
   scan_spec.columns.push_back("range_move");
 
-  TableScannerPtr scanner = m_table->create_scanner(scan_spec);
+  TableScannerPtr scanner( m_table->create_scanner(scan_spec) );
   while (scanner->next(cell)) {
     table = strchr(cell.row_key, ':') + 1;
     end_row = cell.column_qualifier;
@@ -84,7 +84,7 @@ void ReaderTable::get_server_metrics(vector<ServerMetrics> &server_metrics) {
   ScanSpec scan_spec;
   scan_spec.columns.push_back("server");
 
-  TableScannerPtr scanner = m_table->create_scanner(scan_spec);
+  TableScannerPtr scanner( m_table->create_scanner(scan_spec) );
   Cell cell;
   bool empty=true;
 

@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 
     boost::trim_right_if(log_dir, boost::is_any_of("/"));    
 
-    CommitLogReaderPtr log_reader = new CommitLogReader(fs, log_dir);
+    CommitLogReaderPtr log_reader = make_shared<CommitLogReader>(fs, log_dir);
 
     if (block_summary) {
       printf("LOG %s\n", log_dir.c_str());

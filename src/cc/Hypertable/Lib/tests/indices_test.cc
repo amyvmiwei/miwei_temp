@@ -259,7 +259,7 @@ assert_scan(
 
   int cell_count = 0;
   {
-    TableScannerPtr s = table->create_scanner(ssb.get());
+    TableScannerPtr s(table->create_scanner(ssb.get()));
     Cell cell;
     while (s->next(cell)) {
       HT_ASSERT(validate(cell));
@@ -281,7 +281,7 @@ test_column_predicate(void)
     char rowbuf[100];
     char valbuf[100];
 
-    TableMutatorPtr tm = table->create_mutator();
+    TableMutatorPtr tm(table->create_mutator());
 
     for (int i = 0; i < 10000; i++) {
       int mod100 = i % 100;

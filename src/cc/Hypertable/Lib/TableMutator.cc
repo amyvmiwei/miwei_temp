@@ -65,9 +65,10 @@ TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table, Range
   ApplicationQueueInterfacePtr app_queue = m_queue;
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
-  m_mutator = new TableMutatorAsync(m_queue_mutex, m_cond, props, comm, 
-          app_queue, table, range_locator, timeout_ms, &m_callback, 
-          flags, false, this);
+  m_mutator =
+    make_shared<TableMutatorAsync>(m_queue_mutex, m_cond, props, comm, app_queue,
+                                   table, range_locator, timeout_ms, &m_callback, 
+                                   flags, false, this);
 }
 
 TableMutator::~TableMutator() {
@@ -307,6 +308,6 @@ void TableMutator::update_error(int error, FailedMutations &failures) {
   // copy all failed updates
   m_last_error = error;
   if (!m_failed_cells)
-    m_failed_cells = new CellsBuilder(failures.size());
+    m_failed_cells = make_shared<CellsBuilder>(failures.size());
   m_failed_cells->copy_failed_mutations(failures, m_failed_mutations);
 }

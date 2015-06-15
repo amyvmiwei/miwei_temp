@@ -19,25 +19,24 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SESSIONDATA_H
-#define HYPERSPACE_SESSIONDATA_H
-
-#include <list>
-#include <set>
-
-#include <boost/thread/mutex.hpp>
-
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
+#ifndef Hyperspace_SessionData_h
+#define Hyperspace_SessionData_h
 
 #include "Notification.h"
 
+#include <Common/Time.h>
+
+#include <boost/thread/mutex.hpp>
+
+#include <list>
+#include <memory>
+#include <set>
 
 namespace Hyperspace {
 
   using namespace Hypertable;
 
-  class SessionData : public ReferenceCount {
+  class SessionData {
   public:
     SessionData(const sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id)
       : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
@@ -159,7 +158,7 @@ namespace Hyperspace {
     String name;
   };
 
-  typedef boost::intrusive_ptr<SessionData> SessionDataPtr;
+  typedef std::shared_ptr<SessionData> SessionDataPtr;
 
   struct LtSessionData {
     bool operator()(const SessionDataPtr &x, const SessionDataPtr &y) const {
@@ -169,4 +168,4 @@ namespace Hyperspace {
 
 }
 
-#endif // HYPERSPACE_SESSIONDATA_H
+#endif // Hyperspace_SessionData_h

@@ -135,9 +135,9 @@ int main(int argc, char **argv) {
       uint16_t port = get_i16("port");
       listen_addr = InetAddr(INADDR_ANY, port);
 
-      Hyperspace::SessionPtr hyperspace = new Hyperspace::Session(Comm::instance(), properties);
-      context = new Context(properties, hyperspace);
-      context->monitoring = new Monitoring(context.get());
+      Hyperspace::SessionPtr hyperspace = make_shared<Hyperspace::Session>(Comm::instance(), properties);
+      context = make_shared<Context>(properties, hyperspace);
+      context->monitoring = make_shared<Monitoring>(context.get());
       context->op = make_unique<OperationProcessor>(context, get_i32("workers"));
 
       ConnectionHandlerFactoryPtr connection_handler_factory(new HandlerFactory(context));
@@ -155,9 +155,8 @@ int main(int argc, char **argv) {
       HT_INFOF("Cluster id is %llu", (Llu)ClusterId::get());
 
       context->mml_definition =
-        new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
-      context->monitoring = new Monitoring(context.get());
-
+        make_shared<MetaLog::DefinitionMaster>(context, format("%s_%u", "master", port).c_str());
+      
       if (has("induce-failure")) {
         if (FailureInducer::instance == 0)
           FailureInducer::instance = new FailureInducer();
@@ -177,8 +176,8 @@ int main(int argc, char **argv) {
         + context->mml_definition->name();
       BalancePlanAuthority *bpa {};
 
-      mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
-                                       log_dir);
+      mml_reader = make_shared<MetaLog::Reader>(context->dfs, context->mml_definition,
+                                                log_dir);
       mml_reader->get_entities(entities);
 
       // Uniq-ify the RangeServerConnection and BalancePlanAuthority objects
@@ -218,8 +217,9 @@ int main(int argc, char **argv) {
       if (!context->recovered_servers)
         context->recovered_servers = make_shared<RecoveredServers>();
 
-      context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                                log_dir, entities);
+      context->mml_writer =
+        make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                     log_dir, entities);
 
       if (bpa) {
         bpa->set_mml_writer(context->mml_writer);

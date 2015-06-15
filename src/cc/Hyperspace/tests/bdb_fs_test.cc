@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,7 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hyperspace/BerkeleyDbFilesystem.h>
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/String.h>
+#include <Common/System.h>
+#include <Common/Init.h>
+#include <Common/Properties.h>
+#include <Common/Config.h>
+#include <Common/Thread.h>
+
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
@@ -28,18 +41,6 @@
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/String.h"
-#include "Common/System.h"
-#include "Common/Init.h"
-#include "Common/Properties.h"
-#include "Common/Config.h"
-#include "Common/Thread.h"
-
-#include "Hyperspace/BerkeleyDbFilesystem.h"
 
 using namespace Hyperspace;
 using namespace Hypertable;
@@ -51,7 +52,7 @@ int main(int argc, char **argv) {
   FILE *fp;
   int ret = 0;
   bool isdir;
-  PropertiesPtr props = new Properties();
+  PropertiesPtr props = make_shared<Properties>();
   init_with_policy<DefaultPolicy>(argc, argv);
 
   System::initialize(System::locate_install_dir(argv[0]));

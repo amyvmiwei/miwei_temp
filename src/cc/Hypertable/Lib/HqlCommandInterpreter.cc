@@ -19,24 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Schema.h"
-
-#include <cassert>
-#include <cstdio>
-#include <cstring>
-
-#include <boost/progress.hpp>
-#include <boost/timer.hpp>
-#include <boost/thread/xtime.hpp>
-
-extern "C" {
-#include <time.h>
-}
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Stopwatch.h"
+#include <Common/Compat.h>
 
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
@@ -44,6 +27,24 @@ extern "C" {
 #include "HqlParser.h"
 #include "Key.h"
 #include "LoadDataSource.h"
+#include "Schema.h"
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Stopwatch.h>
+
+#include <boost/progress.hpp>
+#include <boost/timer.hpp>
+#include <boost/thread/xtime.hpp>
+
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <memory>
+
+extern "C" {
+#include <time.h>
+}
 
 using namespace std;
 using namespace Hypertable;
@@ -53,34 +54,31 @@ namespace {
 
   struct CommandCallback : HqlInterpreter::Callback {
     CommandInterpreter &commander;
-    int command;
-    boost::progress_display *progress;
+    int command {};
+    unique_ptr<boost::progress_display> progress;
     Stopwatch stopwatch;
     bool m_profile {};
 
     CommandCallback(CommandInterpreter &interp, bool profile=false)
       : HqlInterpreter::Callback(interp.normal_mode()), commander(interp),
-        command(0), progress(0), m_profile(profile) {
+        m_profile(profile) {
       format_ts_in_nanos = interp.timestamp_output_format()
           == CommandInterpreter::TIMESTAMP_FORMAT_NANOS;
       output = stdout; // set to stdout
     }
 
     ~CommandCallback() {
-      if (progress)
-        delete progress;
-
       if (output == stdout || output == stderr)
         fflush(output);
       else if (output)
         fclose(output);
     }
 
-    virtual void on_parsed(ParserState &state) { command = state.command; }
+    void on_parsed(ParserState &state) override { command = state.command; }
 
-    virtual void on_return(const string &str) { cout << str << endl; }
+    void on_return(const string &str) override { cout << str << endl; }
 
-    virtual void on_update(size_t total) {
+    void on_update(size_t total) override {
       if (!normal_mode)
         return;
 
@@ -90,16 +88,16 @@ namespace {
         HT_ASSERT(!progress);
         cout <<"\nLoading "<< format_number(total)
              <<" bytes of input data..." << endl;
-        progress = new boost::progress_display(total);
+        progress = make_unique<boost::progress_display>(total);
       }
     }
 
-    virtual void on_progress(size_t amount) {
+    void on_progress(size_t amount) override {
       HT_ASSERT(progress);
       *progress += amount;
     }
 
-    virtual void on_finish(TableMutator *mutator) {
+    void on_finish(TableMutatorPtr &mutator) override {
       Callback::on_finish(mutator);
       stopwatch.stop();
 
@@ -145,7 +143,7 @@ namespace {
       }
     }
 
-    virtual void on_finish(TableScanner *scanner) {
+    void on_finish(TableScannerPtr &scanner) override {
       if (scanner && m_profile) {
         fputc('\n', stderr);
         fprintf(stderr, "  Elapsed time:  %lld ms\n", (Lld)stopwatch.elapsed_millis());

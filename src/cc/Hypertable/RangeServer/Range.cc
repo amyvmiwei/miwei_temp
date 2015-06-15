@@ -91,7 +91,7 @@ Range::Range(Lib::Master::ClientPtr &master_client, SchemaPtr &schema,
 }
 
 void Range::initialize() {
-  AccessGroup *ag;
+  AccessGroupPtr ag;
   String start_row, end_row;
 
   m_metalog_entity->get_boundary_rows(start_row, end_row);
@@ -165,7 +165,7 @@ void Range::initialize() {
     std::map<String, const AccessGroup::Hints *>::iterator iter = hints_map.find(ag_spec->get_name());
     if (iter != hints_map.end())
       h = iter->second;
-    ag = new AccessGroup(&m_table, m_schema, ag_spec, &range_spec, h);
+    ag = make_shared<AccessGroup>(&m_table, m_schema, ag_spec, &range_spec, h);
     m_access_group_map[ag_spec->get_name()] = ag;
     m_access_group_vector.push_back(ag);
 
@@ -228,7 +228,7 @@ void Range::deferred_initialization(boost::xtime expire_time) {
 void Range::split_install_log_rollback_metadata() {
   String metadata_key_str, start_row, end_row;
   KeySpec key;
-  TableMutatorPtr mutator = Global::metadata_table->create_mutator();
+  TableMutatorPtr mutator(Global::metadata_table->create_mutator());
 
   m_metalog_entity->get_boundary_rows(start_row, end_row);
 
@@ -264,7 +264,7 @@ namespace {
 
 void Range::load_cell_stores() {
   Metadata *metadata = 0;
-  AccessGroup *ag;
+  AccessGroupPtr ag;
   CellStorePtr cellstore;
   const char *base, *ptr, *end;
   std::vector<String> csvec;
@@ -390,7 +390,7 @@ void Range::update_schema(SchemaPtr &schema) {
   ScopedLock lock(m_schema_mutex);
 
   vector<AccessGroupSpec*> new_access_groups;
-  AccessGroup *ag;
+  AccessGroupPtr ag;
   AccessGroupMap::iterator ag_iter;
   size_t max_column_family_id = schema->get_max_column_family_id();
 
@@ -425,7 +425,7 @@ void Range::update_schema(SchemaPtr &schema) {
     RangeSpecManaged range_spec;
     m_metalog_entity->get_range_spec(range_spec);
     for (auto ag_spec : new_access_groups) {
-      ag = new AccessGroup(&m_table, schema, ag_spec, &range_spec, 0);
+      ag = make_shared<AccessGroup>(&m_table, schema, ag_spec, &range_spec);
       m_access_group_map[ag_spec->get_name()] = ag;
       m_access_group_vector.push_back(ag);
       for (auto cf_spec : ag_spec->columns()) {
@@ -493,8 +493,8 @@ void Range::create_scanner(ScanContextPtr &scan_ctx, MergeScannerRangePtr &scann
 
   try {
     for (auto & ag : ag_vector) {
-      if (ag->include_in_scan(scan_ctx))
-        scanner->add_scanner(ag->create_scanner(scan_ctx));
+      if (ag->include_in_scan(scan_ctx.get()))
+        scanner->add_scanner(ag->create_scanner(scan_ctx.get()));
     }
   }
   catch (Exception &e) {
@@ -764,7 +764,7 @@ void Range::relinquish_install_log() {
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
-    m_transfer_log = new CommitLog(Global::dfs, logname, !m_table.is_user());
+    m_transfer_log = make_shared<CommitLog>(Global::dfs, logname, !m_table.is_user());
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
   }
@@ -797,7 +797,7 @@ void Range::relinquish_compact() {
 
   // Record "move" in sys/RS_METRICS
   if (Global::rs_metrics_table) {
-    TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
+    TableMutatorPtr mutator(Global::rs_metrics_table->create_mutator());
     KeySpec key;
     String row = location + ":" + m_table.id;
     key.row = row.c_str();
@@ -1078,7 +1078,7 @@ void Range::split_install_log() {
     m_split_row = split_row;
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
-    m_transfer_log = new CommitLog(Global::dfs, logname, !m_table.is_user());
+    m_transfer_log = make_shared<CommitLog>(Global::dfs, logname, !m_table.is_user());
   }
 
   HT_MAYBE_FAIL("split-1");
@@ -1163,7 +1163,7 @@ void Range::split_compact_and_shrink() {
   KeySpec key_low, key_high;
   char buf[32];
 
-  TableMutatorPtr mutator = Global::metadata_table->create_mutator();
+  TableMutatorPtr mutator(Global::metadata_table->create_mutator());
 
   // For new range with existing end row, update METADATA entry with new
   // 'StartRow' column.
@@ -1581,13 +1581,13 @@ void Range::recovery_finalize() {
       (state & RangeState::RELINQUISH_LOG_INSTALLED)
       == RangeState::RELINQUISH_LOG_INSTALLED) {
     CommitLogReaderPtr commit_log_reader =
-      new CommitLogReader(Global::dfs, m_metalog_entity->get_transfer_log());
+      make_shared<CommitLogReader>(Global::dfs, m_metalog_entity->get_transfer_log());
 
     replay_transfer_log(commit_log_reader.get());
 
     commit_log_reader = 0;
 
-    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->get_transfer_log(),
+    m_transfer_log = make_shared<CommitLog>(Global::dfs, m_metalog_entity->get_transfer_log(),
                                    !m_table.is_user());
 
     // re-initiate compaction

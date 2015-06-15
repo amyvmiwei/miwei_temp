@@ -25,14 +25,14 @@
  * for computing application load statistics.
  */
 
+#ifndef Hypertable_RangeServer_LoadStatistics_h
+#define Hypertable_RangeServer_LoadStatistics_h
 
-#ifndef HYPERTABLE_LOADSTATISTICS_H
-#define HYPERTABLE_LOADSTATISTICS_H
+#include <Common/Logger.h>
+#include <Common/Mutex.h>
+#include <Common/Time.h>
 
-#include "Common/Logger.h"
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
+#include <memory>
 
 namespace Hypertable {
 
@@ -48,7 +48,7 @@ namespace Hypertable {
    * while the statistics being gathered for the current time period are stored
    * in the #m_running member.
    */
-  class LoadStatistics : public ReferenceCount {
+  class LoadStatistics {
   public:
 
     /** POD-style structure to hold statistics.
@@ -241,11 +241,11 @@ namespace Hypertable {
   };
 
   /// Smart pointer to LoadStatistics
-  typedef intrusive_ptr<LoadStatistics> LoadStatisticsPtr;
+  typedef std::shared_ptr<LoadStatistics> LoadStatisticsPtr;
 
   /** @} */
 }
 
-#endif // HYPERTABLE_LOADSTATISTICS_H
+#endif // Hypertable_RangeServer_LoadStatistics_h
 
 

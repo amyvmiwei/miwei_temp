@@ -19,14 +19,14 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_DIRENTRYATTR_H
-#define HYPERSPACE_DIRENTRYATTR_H
+#ifndef Hyperspace_DirEntryAttr_h
+#define Hyperspace_DirEntryAttr_h
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include <Common/StaticBuffer.h>
 
 #include <string>
 #include <vector>
-#include "Common/StaticBuffer.h"
 
 namespace Hyperspace {
 
@@ -105,4 +105,4 @@ namespace Hyperspace {
 
 }
 
-#endif // HYPERSPACE_DIRENTRYATTR_H
+#endif // Hyperspace_DirEntryAttr_h

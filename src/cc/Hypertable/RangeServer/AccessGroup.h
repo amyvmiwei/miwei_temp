@@ -40,7 +40,6 @@
 #include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/PageArena.h>
-#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 #include <Common/StringExt.h>
 
@@ -50,6 +49,7 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <queue>
 #include <set>
 #include <vector>
@@ -60,7 +60,7 @@ namespace Hypertable {
   /// @{
 
   /// Access group
-  class AccessGroup : public ReferenceCount {
+  class AccessGroup {
 
   public:
 
@@ -132,7 +132,7 @@ namespace Hypertable {
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
                 AccessGroupSpec *ag_spec, const RangeSpec *range,
-                const Hints *hints=0);
+                const Hints *hints=nullptr);
 
     /// Adds a key/value pair
     /// @param key Key
@@ -164,9 +164,9 @@ namespace Hypertable {
       m_mutex.unlock();
     }
 
-    MergeScannerAccessGroup *create_scanner(ScanContextPtr &scan_ctx);
+    MergeScannerAccessGroup *create_scanner(ScanContext *scan_ctx);
 
-    bool include_in_scan(ScanContextPtr &scan_ctx);
+    bool include_in_scan(ScanContext *scan_ctx);
     uint64_t disk_usage();
     uint64_t memory_usage();
     void space_usage(int64_t *memp, int64_t *diskp);
@@ -297,7 +297,8 @@ namespace Hypertable {
     bool m_dirty {};
     bool m_cellcache_needs_compaction {};
   };
-  typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
+
+  typedef std::shared_ptr<AccessGroup> AccessGroupPtr;
 
   std::ostream &operator<<(std::ostream &os, const AccessGroup::MaintenanceData &mdata);
 

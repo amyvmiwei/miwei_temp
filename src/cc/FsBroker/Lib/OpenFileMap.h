@@ -21,8 +21,8 @@
 
 #include <Common/Mutex.h>
 #include <Common/Logger.h>
-#include <Common/ReferenceCount.h>
 
+#include <memory>
 #include <unordered_map>
 
 extern "C" {
@@ -36,13 +36,13 @@ namespace Lib {
   /// @addtogroup FsBrokerLib
   /// @{
 
-  class OpenFileData : public ReferenceCount {
+  class OpenFileData {
   public:
     virtual ~OpenFileData() { return; }
     struct sockaddr_in addr;
   };
 
-  typedef intrusive_ptr<OpenFileData> OpenFileDataPtr;
+  typedef std::shared_ptr<OpenFileData> OpenFileDataPtr;
 
 
   class OpenFileMap {

@@ -26,6 +26,7 @@
 #include <Hypertable/Lib/Client.h>
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 using namespace Hypertable;
@@ -35,7 +36,7 @@ namespace {
 
   typedef std::map<String, uint32_t> RangeDistributionMap;
 
-  class TableSummary : public ReferenceCount {
+  class TableSummary {
   public:
     TableSummary() : total_ranges(0), ranges_per_server(0) { }
     uint32_t total_ranges;
@@ -43,7 +44,7 @@ namespace {
     RangeDistributionMap range_dist;
   };
 
-  typedef intrusive_ptr<TableSummary> TableSummaryPtr;
+  typedef std::shared_ptr<TableSummary> TableSummaryPtr;
 
   // map of table_id to TableSummary
   typedef std::map<const String, TableSummaryPtr> TableSummaryMap;
@@ -191,7 +192,7 @@ void BalanceAlgorithmEvenRanges::compute_plan(BalancePlanPtr &plan,
       for (auto &table : rs.stats->tables) {
         TableSummaryMap::iterator it = state.table_summaries.find(table.table_id.c_str());
         if (it == state.table_summaries.end()) {
-          ts = new TableSummary;
+          ts = make_shared<TableSummary>();
           state.table_summaries[table.table_id.c_str()] = ts;
         }
         else
@@ -240,7 +241,7 @@ void BalanceAlgorithmEvenRanges::compute_plan(BalancePlanPtr &plan,
     scan_spec.columns.push_back(start_row.c_str());
     scan_spec.max_versions = 1;
 
-    TableScannerPtr scanner = m_context->metadata_table->create_scanner(scan_spec);
+    TableScannerPtr scanner(m_context->metadata_table->create_scanner(scan_spec));
     while (scanner->next(cell)) {
       // don't move root METADATA range
       if (!strcmp(cell.row_key, Key::END_ROOT_ROW)) {

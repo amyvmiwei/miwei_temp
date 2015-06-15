@@ -42,24 +42,17 @@ namespace {
 }
 
 
-/**
- *
- */
-BlockCompressionCodecLzo::BlockCompressionCodecLzo(const Args &args) {
+BlockCompressionCodecLzo::BlockCompressionCodecLzo(const Args &args) 
+  : m_workmem(new uint8_t [LZO1X_1_MEM_COMPRESS + 4]) {
   if (lzo_init() != LZO_E_OK)
     HT_THROW(Error::BLOCK_COMPRESSOR_INIT_ERROR,
              "Problem initializing lzo library");
-  m_workmem = new uint8_t [LZO1X_1_MEM_COMPRESS + 4];
   memcpy(&m_workmem[LZO1X_1_MEM_COMPRESS], fence_marker, 4);
   set_args(args);
 }
 
 
-/**
- *
- */
 BlockCompressionCodecLzo::~BlockCompressionCodecLzo() {
-  delete [] m_workmem;
 }
 
 
@@ -82,7 +75,7 @@ BlockCompressionCodecLzo::deflate(const DynamicBuffer &input,
   memcpy(fence_ptr, fence_marker, 4);
 
   ret = lzo1x_1_compress(input.base, input.fill(), output.base+header.encoded_length(),
-                         &out_len, m_workmem);
+                         &out_len, m_workmem.get());
   assert(ret == LZO_E_OK);
   (void)ret;
 

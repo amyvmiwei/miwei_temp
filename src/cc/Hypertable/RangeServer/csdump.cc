@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
      * Open cellStore
      */
     CellStorePtr cellstore = CellStoreFactory::open(fname, 0, 0);
-    CellListScanner *scanner = 0;
+    CellListScannerPtr scanner;
 
     /**
      * Dump keys
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
       if (tsv_format)
         cout << "#timestamp\trow\tcolumn\tvalue\n";
 
-      scanner = cellstore->create_scanner(scan_ctx);
+      scanner = cellstore->create_scanner(scan_ctx.get());
       while (scanner->get(key_comps, value)) {
 
         if (!hit_start) {
@@ -233,7 +233,6 @@ int main(int argc, char **argv) {
         }
         scanner->forward();
       }
-      delete scanner;
     }
 
     if (tsv_format)

@@ -42,7 +42,7 @@ usage() {
   echo "valgrind as follows:"
   echo
   echo "  valgrind -v --log-file=vg.master.%p --leak-check=full \\"
-  echo "           --num-callers=20 htMaster ..."
+  echo "           --num-callers=50 htMaster ..."
   echo
   echo "If the --heapcheck option is supplied, then the Master process is run with"
   echo "heap checking enabled as follows:"
@@ -75,7 +75,7 @@ usage() {
 while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.master.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.master.%p --leak-check=full --num-callers=50 "
       shift
       ;;
     --heapcheck)

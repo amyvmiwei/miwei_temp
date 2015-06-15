@@ -217,9 +217,9 @@ namespace {
       cb.clear();
       ss.add_row(fruits[ii]);
       outfile << "Issuing scans for '" << fruits[ii] << "'" << endl;
-      scanner_color     = table_color->create_scanner_async(&cb, ss.get());
-      scanner_location  = table_location->create_scanner_async(&cb, ss.get());
-      scanner_energy    = table_energy->create_scanner_async(&cb, ss.get());
+      scanner_color.reset(table_color->create_scanner_async(&cb, ss.get()));
+      scanner_location.reset(table_location->create_scanner_async(&cb, ss.get()));
+      scanner_energy.reset(table_energy->create_scanner_async(&cb, ss.get()));
       cb.wait_for_completion();
       outfile << "Got result = " << cb.get_fruit() << endl;
     }
@@ -248,9 +248,9 @@ namespace {
     table_location    = ns->open_table("FruitLocation");
     table_energy      = ns->open_table("FruitEnergy");
 
-    mutator_color     = table_color->create_mutator_async(&cb);
-    mutator_location  = table_location->create_mutator_async(&cb);
-    mutator_energy    = table_energy->create_mutator_async(&cb);
+    mutator_color.reset(table_color->create_mutator_async(&cb));
+    mutator_location.reset(table_location->create_mutator_async(&cb));
+    mutator_energy.reset(table_energy->create_mutator_async(&cb));
 
     key.column_family = "data";
     key.column_qualifier = 0;

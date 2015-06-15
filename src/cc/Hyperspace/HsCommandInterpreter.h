@@ -22,14 +22,20 @@
 #ifndef Hyperspace_HsCommandInterpreter_h
 #define Hyperspace_HsCommandInterpreter_h
 
-#include "Tools/Lib/CommandInterpreter.h"
+#include "DirEntryAttr.h"
 #include "HsClientState.h"
-#include "Common/String.h"
-#include "Session.h"
+
+#include <Tools/Lib/CommandInterpreter.h>
+
+#include <Common/String.h>
+
+#include <memory>
+#include <vector>
 
 namespace Hyperspace {
 
   using namespace std;
+
   class Session;
 
   class HsCommandInterpreter : public CommandInterpreter {
@@ -44,7 +50,7 @@ namespace Hyperspace {
     Session* m_session;
   };
 
-  typedef intrusive_ptr<HsCommandInterpreter> HsCommandInterpreterPtr;
+  typedef std::shared_ptr<HsCommandInterpreter> HsCommandInterpreterPtr;
 
 }
 

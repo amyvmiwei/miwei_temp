@@ -37,11 +37,11 @@ using namespace Hypertable;
 
 
 MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
-                                                 ScanContextPtr &scan_ctx,
+                                                 ScanContext *scan_ctx,
                                                  uint32_t flags)
   : m_flags(flags), m_return_deletes(flags & RETURN_DELETES),
     m_accumulate_counters(flags & ACCUMULATE_COUNTERS), m_prev_cf(-1),
-    m_counted_value(12), m_scan_context(scan_ctx.get())
+    m_counted_value(12), m_scan_context(scan_ctx)
 { 
   m_start_timestamp = scan_ctx->time_interval.first;
   m_end_timestamp = scan_ctx->time_interval.second;
@@ -76,8 +76,6 @@ MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
 
 MergeScannerAccessGroup::~MergeScannerAccessGroup() {
   try {
-    for (auto scanner : m_scanners)
-      delete scanner;
     if (m_release_callback)
       m_release_callback();
   }
@@ -399,7 +397,7 @@ void MergeScannerAccessGroup::initialize() {
 
   for (size_t i=0; i<m_scanners.size(); i++) {
     if (m_scanners[i]->get(sstate.key, sstate.value)) {
-      sstate.scanner = m_scanners[i];
+      sstate.scanner = m_scanners[i].get();
       m_queue.push(sstate);
     }
   }

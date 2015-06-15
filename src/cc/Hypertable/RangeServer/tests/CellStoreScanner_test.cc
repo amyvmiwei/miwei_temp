@@ -619,12 +619,12 @@ int main(int argc, char **argv) {
     //String csname = testdir + format("/cs_pid%d", getpid());
 
     String csname = testdir + "/cs0";
-    PropertiesPtr cs_props = new Properties();
+    PropertiesPtr cs_props = make_shared<Properties>();
     AccessGroupOptions::parse_bloom_filter("rows+cols", cs_props);
 
-    SchemaPtr schema = Schema::new_instance(schema_str);
+    SchemaPtr schema ( Schema::new_instance(schema_str) );
 
-    cs = new CellStoreV7(Global::dfs.get(), schema.get());
+    cs = make_shared<CellStoreV7>(Global::dfs.get(), schema);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     cs->set_replaced_files(replaced_files_write);
 
@@ -747,9 +747,9 @@ int main(int argc, char **argv) {
       if (!strcmp(keyv[i].row, select_cf_row))
         column = cf_foo + ":"+ keyv[i].column_qualifier;
       ssbuilder.add_cell(keyv[i].row, column.c_str());
-      scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+      scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                      schema);
-      scanner = cs->create_scanner(scan_ctx);
+      scanner = cs->create_scanner(scan_ctx.get());
       count = display_scan(scanner, out);
 
       if (strcmp(keyv[i].row, delete_row) && strcmp(keyv[i].row, delete_cf)) {
@@ -765,10 +765,10 @@ int main(int argc, char **argv) {
     ssbuilder.add_row_interval("http://www.Texas.com/", true,
                                "http://www.Texas.com/", true);
     ssbuilder.add_column("tag:^s");
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
     out << "may_contain(ROW=\"http://www.Texas.com/\", COL=\"tag:^s\") == ";
-    out << ((cs->may_contain(scan_ctx)) ? "true" : "false") << "\n";
+    out << ((cs->may_contain(scan_ctx.get())) ? "true" : "false") << "\n";
 
     /**
      * Row operations
@@ -778,288 +778,288 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", true,
                                "http://www.Boulangism.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[first-block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", false,
                                "http://www.Boulangism.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[first-block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", true,
                                "http://www.Boulangism.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[first-block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Balak.com/", false,
                                "http://www.Boulangism.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", true,
                                "http://www.unscramble.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", false,
                                "http://www.unscramble.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", true,
                                "http://www.unscramble.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.unlawfully.com/", false,
                                "http://www.unscramble.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", true,
                                "http://www.Texas.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", false,
                                "http://www.Texas.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", true,
                                "http://www.Texas.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.Philistia.com/", false,
                                "http://www.Texas.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", true,
                                "http://www.carlings.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", false,
                                "http://www.carlings.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", true,
                                "http://www.carlings.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.antiholiday.com/", false,
                                "http://www.carlings.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", true,
                                "http://www.omega.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", false,
                                "http://www.omega.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", true,
                                "http://www.omega.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.nonvenous.com/", false,
                                "http://www.omega.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-5]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", true,
                                "http://www.oometry.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-6]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", false,
                                "http://www.oometry.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-7]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", true,
                                "http://www.oometry.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-row-scan-8]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.omega.com/", false,
                                "http://www.oometry.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", true,
                                "http://www.vipresident.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", false,
                                "http://www.vipresident.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", true,
                                "http://www.vipresident.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.urolithology.com/", false,
                                "http://www.vipresident.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", true,
                                "http://www.younglet.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", false,
                                "http://www.younglet.com/", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", true,
                                "http://www.younglet.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-row-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_row_interval("http://www.utick.com/", false,
                                "http://www.younglet.com/", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     /**
@@ -1071,18 +1071,18 @@ int main(int argc, char **argv) {
     String deleted_row = (String) delete_row;
     String deleted_column = (String)"tag:" + delete_test;
     ssbuilder.add_cell(deleted_row.c_str(), deleted_column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[delete-cf-cell-scan]\n";
     ssbuilder.clear();
     deleted_row = (String) delete_cf;
     ssbuilder.add_cell(deleted_row.c_str(), deleted_column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     /**
@@ -1091,18 +1091,18 @@ int main(int argc, char **argv) {
     out << "[select-column-family-scan]\n";
     ssbuilder.clear();
     ssbuilder.add_column(cf_foo.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[select-column-family-row-scan]\n";
     ssbuilder.clear();
     String cf_foo_row = (String) select_cf_row;
     ssbuilder.add_cell(cf_foo_row.c_str(), cf_foo.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     /**
@@ -1113,216 +1113,216 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", true,
         "http://www.Boulangism.com/", "tag:laminiplantar", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[first-block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", false,
         "http://www.Boulangism.com/", "tag:laminiplantar", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[first-block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", true,
         "http://www.Boulangism.com/", "tag:laminiplantar", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[first-block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Balak.com/", "tag:micasize", false,
         "http://www.Boulangism.com/", "tag:laminiplantar", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         true, "http://www.unscramble.com/", "tag:milliform", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         false, "http://www.unscramble.com/", "tag:milliform", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         true, "http://www.unscramble.com/", "tag:milliform", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.unlawfully.com/", "tag:bridgepot",
         false, "http://www.unscramble.com/", "tag:milliform", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic", true,
         "http://www.Texas.com/", "tag:semimembranosus", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic",
         false, "http://www.Texas.com/", "tag:semimembranosus", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic", true,
         "http://www.Texas.com/", "tag:semimembranosus", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[short-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.Philistia.com/", "tag:tropic",
         false, "http://www.Texas.com/", "tag:semimembranosus", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         true, "http://www.carlings.com/", "tag:dilogy", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         false, "http://www.carlings.com/", "tag:dilogy", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         true, "http://www.carlings.com/", "tag:dilogy", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.antiholiday.com/", "tag:benzolize",
         false, "http://www.carlings.com/", "tag:dilogy", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         true, "http://www.omega.com/", "tag:muskroot", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         false, "http://www.omega.com/", "tag:muskroot", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         true, "http://www.omega.com/", "tag:muskroot", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.nonvenous.com/", "tag:overbloom",
         false, "http://www.omega.com/", "tag:muskroot", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-5]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", true,
         "http://www.oometry.com/", "tag:nubigenous", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-6]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", false,
         "http://www.oometry.com/", "tag:nubigenous", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-7]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", true,
         "http://www.oometry.com/", "tag:nubigenous", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[big-cell-scan-8]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.omega.com/", "tag:muskroot", false,
         "http://www.oometry.com/", "tag:nubigenous", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-cell-scan-1]\n";
@@ -1330,9 +1330,9 @@ int main(int argc, char **argv) {
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", true, "http://www.vipresident.com/", "tag:coiling",
         true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-cell-scan-2]\n";
@@ -1340,9 +1340,9 @@ int main(int argc, char **argv) {
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", false, "http://www.vipresident.com/", "tag:coiling",
         true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-cell-scan-3]\n";
@@ -1350,9 +1350,9 @@ int main(int argc, char **argv) {
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", true, "http://www.vipresident.com/", "tag:coiling",
         false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-short-cell-scan-4]\n";
@@ -1360,45 +1360,45 @@ int main(int argc, char **argv) {
     ssbuilder.add_cell_interval("http://www.urolithology.com/",
         "tag:presynaptic", false, "http://www.vipresident.com/", "tag:coiling",
         false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-1]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", true,
         "http://www.younglet.com/", "tag:laeotropism", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-2]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", false,
         "http://www.younglet.com/", "tag:laeotropism", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-3]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", true,
         "http://www.younglet.com/", "tag:laeotropism", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[last-block-cell-scan-4]\n";
     ssbuilder.clear();
     ssbuilder.add_cell_interval("http://www.utick.com/", "tag:frike", false,
         "http://www.younglet.com/", "tag:laeotropism", false);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[replaced-files-0]\n";
@@ -1411,9 +1411,9 @@ int main(int argc, char **argv) {
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[cs-range-1]\n";
@@ -1421,16 +1421,16 @@ int main(int argc, char **argv) {
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true, Key::END_ROW_MARKER, true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     csname = testdir + "/cs1";
-    cs_props = new Properties();
+    cs_props = make_shared<Properties>();
     cs_props->set("blocksize", (int32_t)10000);
     cs_props->set("compressor", String("none"));
-    cs = new CellStoreV7(Global::dfs.get(), schema.get());
+    cs = make_shared<CellStoreV7>(Global::dfs.get(), schema);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     // should not coalesce and be in a separate block from trailer
     replaced_files_write.push_back("1/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
@@ -1480,8 +1480,8 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("row000050", true,
                                "row000450", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[range-restriction-2]\n";
@@ -1489,8 +1489,8 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("row000071", true,
                                "row000365", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[range-restriction-3]\n";
@@ -1498,8 +1498,8 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("row000300", true,
                                Key::END_ROW_MARKER, true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
 
@@ -1508,8 +1508,8 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("row000364", true,
                                Key::END_ROW_MARKER, true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
 
@@ -1518,8 +1518,8 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("", true,
                                Key::END_ROW_MARKER, true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[range-restriction-6]\n";
@@ -1527,19 +1527,19 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("row000250", true,
                                "row000275", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range, schema);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     /**
      * test trailer
      */
     csname = testdir + "/cs2";
-    cs_props = new Properties();
+    cs_props = make_shared<Properties>();
 
-    schema = Schema::new_instance(schema2_str);
+    schema.reset( Schema::new_instance(schema2_str) );
 
-    cs = new CellStoreV7(Global::dfs.get(), schema.get());
+    cs = make_shared<CellStoreV7>(Global::dfs.get(), schema);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     // should coalesce and be in 2 blocks, with the 2nd block also containing the trailer
     replaced_files_write.push_back("7/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
@@ -1589,11 +1589,11 @@ int main(int argc, char **argv) {
     // issue 1017
     out << "[issue1017]\n";
     csname = testdir + "/cs3";
-    cs_props = new Properties();
+    cs_props = make_shared<Properties>();
     AccessGroupOptions::parse_bloom_filter("rows", cs_props);
-    schema = Schema::new_instance(schema_str);
+    schema.reset( Schema::new_instance(schema_str) );
 
-    cs = new CellStoreV7(Global::dfs.get(), schema.get());
+    cs = make_shared<CellStoreV7>(Global::dfs.get(), schema);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 735, cs_props, &table_id));
     strcpy((char *)rowbuf, "the only row");
     value = "Dummy value";
@@ -1613,15 +1613,15 @@ int main(int argc, char **argv) {
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("the only row", true, "the only row", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()),&range,schema);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()),&range,schema);
     out << "may_contain(ROW=\"the only row\") == ";
-    out << ((cs->may_contain(scan_ctx)) ? "true" : "false") << "\n";
+    out << ((cs->may_contain(scan_ctx.get())) ? "true" : "false") << "\n";
 
     ssbuilder.clear();
     ssbuilder.add_row_interval("absent row", true, "absent row", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()),&range,schema);
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()),&range,schema);
     out << "may_contain(ROW=\"absent row\") == ";
-    out << ((cs->may_contain(scan_ctx)) ? "true" : "false") << "\n";
+    out << ((cs->may_contain(scan_ctx.get())) ? "true" : "false") << "\n";
 
     cs = 0;
 

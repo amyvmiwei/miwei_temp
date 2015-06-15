@@ -19,25 +19,24 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MONITORING_H
-#define HYPERTABLE_MONITORING_H
-
-#include <map>
-#include <deque>
-#include <vector>
-
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StatsSystem.h"
-#include "Common/String.h"
-
-#include "Hypertable/Lib/KeySpec.h"
-#include "Hypertable/Lib/StatsRangeServer.h"
-#include "Hypertable/Lib/StatsTable.h"
+#ifndef Hypertable_Master_Monitoring_h
+#define Hypertable_Master_Monitoring_h
 
 #include "RangeServerStatistics.h"
-#include "Hypertable/Lib/NameIdMapper.h"
 
+#include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/StatsRangeServer.h>
+#include <Hypertable/Lib/StatsTable.h>
+
+#include <Common/Mutex.h>
+#include <Common/StatsSystem.h>
+#include <Common/String.h>
+
+#include <map>
+#include <memory>
+#include <deque>
+#include <vector>
 
 namespace Hypertable {
 
@@ -45,7 +44,7 @@ namespace Hypertable {
 
   /**
    */
-  class Monitoring : public ReferenceCount {
+  class Monitoring {
 
   public:
     /**
@@ -173,8 +172,8 @@ namespace Hypertable {
     bool m_disable_rrdtool;
   };
 
-  typedef intrusive_ptr<Monitoring> MonitoringPtr;
+  typedef std::shared_ptr<Monitoring> MonitoringPtr;
 }
 
 
-#endif // HYPERTABLE_MONITORING_H
+#endif // Hypertable_Master_Monitoring_h

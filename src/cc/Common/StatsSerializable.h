@@ -23,15 +23,13 @@
  * Base class managing serialized statistics.
  */
 
-#ifndef HYPERTABLE_STATSSERIALIZABLE_H
-#define HYPERTABLE_STATSSERIALIZABLE_H
+#ifndef Common_StatsSerializable_h
+#define Common_StatsSerializable_h
 
 extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 }
-
-#include "ReferenceCount.h"
 
 namespace Hypertable {
 
@@ -46,7 +44,7 @@ namespace Hypertable {
  * subclasses have to implement functions to serialize and unserialize these
  * groups.
  */
-class StatsSerializable : public ReferenceCount {
+class StatsSerializable {
   public:
     /** Constructor; creates a new object with an ID and a number of groups
      *
@@ -121,8 +119,8 @@ class StatsSerializable : public ReferenceCount {
     uint8_t group_ids[32];
 };
 
-/** @{ */
+/** @} */
 
 }
 
-#endif // HYPERTABLE_STATSSERIALIZABLE_H
+#endif // Common_StatsSerializable_h

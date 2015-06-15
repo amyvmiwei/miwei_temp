@@ -29,13 +29,14 @@
 
 #include <Common/DynamicBuffer.h>
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StaticBuffer.h>
 #include <Common/StringExt.h>
 
+#include <memory>
+
 namespace Hypertable {
 
-  class RangeReplayBuffer : public ReferenceCount {
+  class RangeReplayBuffer {
   public:
     RangeReplayBuffer(const String &location, const QualifiedRangeSpec &range) :
       m_location(location), m_range(range) {
@@ -56,7 +57,7 @@ namespace Hypertable {
     DynamicBuffer m_accum;
   };
 
-  typedef intrusive_ptr<RangeReplayBuffer> RangeReplayBufferPtr;
+  typedef std::shared_ptr<RangeReplayBuffer> RangeReplayBufferPtr;
 
 }
 

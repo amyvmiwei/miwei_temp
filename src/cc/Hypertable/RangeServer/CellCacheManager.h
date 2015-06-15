@@ -35,7 +35,7 @@
 
 #include <Hypertable/Lib/Schema.h>
 
-#include <Common/ReferenceCount.h>
+#include <memory>
 
 namespace Hypertable {
 
@@ -51,7 +51,7 @@ namespace Hypertable {
   /// member functions for freezing the active cache to the immutable cache,
   /// dropping the immutable cache when it is no longer needed, and merging the
   /// two caches back together if a compaction was aborted.
-  class CellCacheManager : public ReferenceCount {
+  class CellCacheManager {
 
   public:
 
@@ -112,7 +112,7 @@ namespace Hypertable {
     /// added
     /// @param scan_ctx Scan context for initializing immutable cache scanner
     void add_immutable_scanner(MergeScannerAccessGroup *mscanner,
-                               ScanContextPtr &scan_ctx);
+                               ScanContext *scan_ctx);
 
     /// Creates scanners on the active and immutable caches and adds them to a
     /// merge scanner.  If the active cache is not empty, a scanner is
@@ -123,7 +123,7 @@ namespace Hypertable {
     /// added
     /// @param scan_context Scan context for initializing scanners
     void add_scanners(MergeScannerAccessGroup *scanner,
-                      ScanContextPtr &scan_context);
+                      ScanContext *scan_ctx);
 
     /// Populates map of split row data.
     /// This method calls CellCache::split_row_estimate_data() on both the
@@ -137,9 +137,9 @@ namespace Hypertable {
     /// @param scan_ctx Scan context for initializing immutable cache scanner
     /// @return Newly created scanner on the immutable cache, or 0 if an
     /// immutable cache is not installed.
-    CellListScanner *create_immutable_scanner(ScanContextPtr &scan_ctx) {
+    CellListScannerPtr create_immutable_scanner(ScanContext *scan_ctx) {
       return m_immutable_cache ? 
-        m_immutable_cache->create_scanner(scan_ctx) : nullptr;
+        m_immutable_cache->create_scanner(scan_ctx) : CellListScannerPtr();
     }
 
     /// Locks the active cache.
@@ -150,14 +150,14 @@ namespace Hypertable {
 
     /// Returns a pointer to the active cache.
     /// @return Pointer to the active cache.
-    CellCache *active_cache() { return m_active_cache.get(); }
+    CellCachePtr &active_cache() { return m_active_cache; }
 
     /// Returns a pointer to the immutable cache.
     /// Returns a pointer to the immutable cache if it is installed, otherewise
     /// nullptr.
     /// @return Pointer to the immutable cache.
-    CellCache *immutable_cache() {
-      return m_immutable_cache ? m_immutable_cache.get() : nullptr;
+    CellCachePtr &immutable_cache() {
+      return m_immutable_cache;
     }
 
     /// Drops the immutable cache.
@@ -228,10 +228,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to CellCacheManager
-  typedef intrusive_ptr<CellCacheManager> CellCacheManagerPtr;
+  typedef std::shared_ptr<CellCacheManager> CellCacheManagerPtr;
 
   /// @}
 
-} // namespace Hypertable;
+}
 
 #endif // Hypertable_RangeServer_CellCacheManager_h

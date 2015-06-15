@@ -38,10 +38,9 @@
 
 #include <Common/ByteString.h>
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
-#include <Common/ReferenceCount.h>
 #include <Common/atomic.h>
 
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -70,13 +69,12 @@ namespace Hypertable {
    *     corresponding phantom range and the range's newly created transfer
    *     log (see merge())
    */
-  class FragmentData : public ReferenceCount {
+  class FragmentData {
   public:
 
     /** Constructor.
-     * Initializes #m_memory_consumption to 0.
      */
-    FragmentData() : m_memory_consumption(0) {}
+    FragmentData() {}
 
     /** Destructor.
      * Subtracts #m_memory_consumption from global memory tracker
@@ -116,11 +114,11 @@ namespace Hypertable {
     vector<EventPtr> m_data;
 
     /// Amount of memory accumulated (for memory tracking)
-    int64_t m_memory_consumption;
+    int64_t m_memory_consumption {};
   };
 
   /// Smart pointer to FragmentData
-  typedef boost::intrusive_ptr<FragmentData> FragmentDataPtr;
+  typedef std::shared_ptr<FragmentData> FragmentDataPtr;
 
   /// @}
 }

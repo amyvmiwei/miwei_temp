@@ -28,15 +28,12 @@
 #ifndef Hypertable_HyperspaceTableCache_h
 #define Hypertable_HyperspaceTableCache_h
 
-#include <map>
-
-#include <boost/intrusive_ptr.hpp>
-
-#include "Common/ReferenceCount.h"
-
 #include "Hypertable/Lib/Schema.h"
 
 #include "Hyperspace/Session.h"
+
+#include <map>
+#include <memory>
 
 namespace Hypertable {
 
@@ -47,7 +44,7 @@ namespace Hypertable {
   /// This class efficiently reads schema and <i>maintenance_disabled</i> attribute
   /// for all tables in Hyperspace into memory and provides an API for fast
   /// lookup.
-  class HyperspaceTableCache : public ReferenceCount {
+  class HyperspaceTableCache {
   public:
 
     /// Cache entry for Hyperspace table data
@@ -98,7 +95,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to HyperspaceTableCache
-  typedef boost::intrusive_ptr<HyperspaceTableCache> HyperspaceTableCachePtr;
+  typedef std::shared_ptr<HyperspaceTableCache> HyperspaceTableCachePtr;
 
   /// @}
 }

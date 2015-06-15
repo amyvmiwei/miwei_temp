@@ -36,11 +36,11 @@
 
 #include <Common/Mutex.h>
 #include <Common/Error.h>
-#include <Common/ReferenceCount.h>
 #include <Common/Timer.h>
 #include <Common/Properties.h>
 
 #include <deque>
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -64,7 +64,7 @@ namespace Hypertable {
   /** Locates containing range given a key.  This class does the METADATA range
    * searching to find the location of the range that contains a row key.
    */
-  class RangeLocator : public ReferenceCount {
+  class RangeLocator {
 
   public:
 
@@ -194,7 +194,8 @@ namespace Hypertable {
     uint32_t               m_root_metadata_retry_interval;
   };
 
-  typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;
+  /// Smart pointer to RangeLocator
+  typedef std::shared_ptr<RangeLocator> RangeLocatorPtr;
 
 }
 

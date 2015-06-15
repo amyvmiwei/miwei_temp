@@ -25,6 +25,7 @@
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
+using namespace std;
 
 bool ScanCells::add(EventPtr &event, int *scanner_id) {
   ScanBlockPtr scanblock = std::make_shared<ScanBlock>();
@@ -55,7 +56,7 @@ ScanCells::load(SchemaPtr &schema, const string &end_row, bool end_inclusive,
   for(size_t ii=0; ii < m_scanblocks.size(); ++ii)
     total_cells += m_scanblocks[ii]->size();
 
-  m_cells = new CellsBuilder(total_cells);
+  m_cells = make_shared<CellsBuilder>(total_cells);
 
   for (size_t ii=0; ii < m_scanblocks.size(); ++ii) {
     scanblock = m_scanblocks[ii].get();
@@ -151,6 +152,6 @@ ScanCells::load(SchemaPtr &schema, const string &end_row, bool end_inclusive,
 
 void ScanCells::add(Cell &cell, bool own) {
   if (!m_cells)
-    m_cells = new CellsBuilder();
+    m_cells = make_shared<CellsBuilder>();
   m_cells->add(cell, own);
 }

@@ -52,15 +52,14 @@ void GcWorker::gc() {
 
 
 void GcWorker::scan_metadata(CountMap &files_map) {
-  TableScannerPtr scanner;
   ScanSpec scan_spec;
 
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Files");
 
-  scanner = m_context->metadata_table->create_scanner(scan_spec);
+  TableScannerPtr scanner(m_context->metadata_table->create_scanner(scan_spec));
 
-  TableMutatorPtr mutator = m_context->metadata_table->create_mutator();
+  TableMutatorPtr mutator(m_context->metadata_table->create_mutator());
 
   Cell cell;
   string last_row;

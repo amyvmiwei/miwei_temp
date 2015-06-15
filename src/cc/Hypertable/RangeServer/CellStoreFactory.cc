@@ -51,9 +51,10 @@
 #include <boost/shared_array.hpp>
 
 using namespace Hypertable;
+using namespace std;
 
-CellStore *CellStoreFactory::open(const String &name,
-                                  const char *start_row, const char *end_row) {
+CellStorePtr CellStoreFactory::open(const String &name,
+                                    const char *start_row, const char *end_row) {
   String start = (start_row) ? start_row : "";
   String end = (end_row) ? end_row : Key::END_ROW_MARKER;
   int64_t file_length;
@@ -62,6 +63,7 @@ CellStore *CellStoreFactory::open(const String &name,
   uint64_t offset;
   uint16_t version;
   uint32_t oflags = 0;
+  CellStorePtr cellstore;
 
   /** Get the file length **/
   file_length = Global::dfs->length(name, false);
@@ -102,7 +104,6 @@ CellStore *CellStoreFactory::open(const String &name,
 
   if (version == 7) {
     CellStoreTrailerV7 trailer_v7;
-    CellStoreV7 *cellstore_v7;
 
     if (amount < trailer_v7.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -123,16 +124,15 @@ CellStore *CellStoreFactory::open(const String &name,
       throw;
     }
 
-    cellstore_v7 = new CellStoreV7(Global::dfs.get());
-    cellstore_v7->open(name, start, end, fd, file_length, &trailer_v7);
-    if (!cellstore_v7)
+    cellstore = make_shared<CellStoreV7>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v7);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v7;
+    return cellstore;
   }
   else if (version == 6) {
     CellStoreTrailerV6 trailer_v6;
-    CellStoreV6 *cellstore_v6;
 
     if (amount < trailer_v6.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -153,16 +153,15 @@ CellStore *CellStoreFactory::open(const String &name,
       throw;
     }
 
-    cellstore_v6 = new CellStoreV6(Global::dfs.get());
-    cellstore_v6->open(name, start, end, fd, file_length, &trailer_v6);
-    if (!cellstore_v6)
+    cellstore = make_shared<CellStoreV6>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v6);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v6;
+    return cellstore;
   }
   else if (version == 5) {
     CellStoreTrailerV5 trailer_v5;
-    CellStoreV5 *cellstore_v5;
 
     if (amount < trailer_v5.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -171,16 +170,15 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v5.deserialize(trailer_buf.get() + (amount - trailer_v5.size()));
 
-    cellstore_v5 = new CellStoreV5(Global::dfs.get());
-    cellstore_v5->open(name, start, end, fd, file_length, &trailer_v5);
-    if (!cellstore_v5)
+    cellstore = make_shared<CellStoreV5>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v5);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v5;
+    return cellstore;
   }
   else if (version == 4) {
     CellStoreTrailerV4 trailer_v4;
-    CellStoreV4 *cellstore_v4;
 
     if (amount < trailer_v4.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -189,16 +187,15 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v4.deserialize(trailer_buf.get() + (amount - trailer_v4.size()));
 
-    cellstore_v4 = new CellStoreV4(Global::dfs.get());
-    cellstore_v4->open(name, start, end, fd, file_length, &trailer_v4);
-    if (!cellstore_v4)
+    cellstore = make_shared<CellStoreV4>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v4);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v4;
+    return cellstore;
   }
   else if (version == 3) {
     CellStoreTrailerV3 trailer_v3;
-    CellStoreV3 *cellstore_v3;
 
     if (amount < trailer_v3.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -207,16 +204,15 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v3.deserialize(trailer_buf.get() + (amount - trailer_v3.size()));
 
-    cellstore_v3 = new CellStoreV3(Global::dfs.get());
-    cellstore_v3->open(name, start, end, fd, file_length, &trailer_v3);
-    if (!cellstore_v3)
+    cellstore = make_shared<CellStoreV3>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v3);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v3;
+    return cellstore;
   }
   else if (version == 2) {
     CellStoreTrailerV2 trailer_v2;
-    CellStoreV2 *cellstore_v2;
 
     if (amount < trailer_v2.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -225,16 +221,15 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v2.deserialize(trailer_buf.get() + (amount - trailer_v2.size()));
 
-    cellstore_v2 = new CellStoreV2(Global::dfs.get());
-    cellstore_v2->open(name, start, end, fd, file_length, &trailer_v2);
-    if (!cellstore_v2)
+    cellstore = make_shared<CellStoreV2>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v2);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v2;
+    return cellstore;
   }
   else if (version == 1) {
     CellStoreTrailerV1 trailer_v1;
-    CellStoreV1 *cellstore_v1;
 
     if (amount < trailer_v1.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -243,16 +238,15 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v1.deserialize(trailer_buf.get() + (amount - trailer_v1.size()));
 
-    cellstore_v1 = new CellStoreV1(Global::dfs.get());
-    cellstore_v1->open(name, start, end, fd, file_length, &trailer_v1);
-    if (!cellstore_v1)
+    cellstore = make_shared<CellStoreV1>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v1);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v1;
+    return cellstore;
   }
   else if (version == 0) {
     CellStoreTrailerV0 trailer_v0;
-    CellStoreV0 *cellstore_v0;
 
     if (amount < trailer_v0.size())
       HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
@@ -261,12 +255,12 @@ CellStore *CellStoreFactory::open(const String &name,
 
     trailer_v0.deserialize(trailer_buf.get() + (amount - trailer_v0.size()));
 
-    cellstore_v0 = new CellStoreV0(Global::dfs.get());
-    cellstore_v0->open(name, start, end, fd, file_length, &trailer_v0);
-    if (!cellstore_v0)
+    cellstore = make_shared<CellStoreV0>(Global::dfs.get());
+    cellstore->open(name, start, end, fd, file_length, &trailer_v0);
+    if (!cellstore)
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
-    return cellstore_v0;
+    return cellstore;
   }
   else {
     Global::dfs->close(fd);
@@ -278,5 +272,5 @@ CellStore *CellStoreFactory::open(const String &name,
     HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
 	      "Unrecognized cell store version %d", (int)version);
   }
-  return 0;
+  return CellStorePtr();
 }

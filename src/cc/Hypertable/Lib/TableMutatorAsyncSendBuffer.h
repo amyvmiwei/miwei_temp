@@ -19,12 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATORASYNCSENDBUFFER_H
-#define HYPERTABLE_TABLEMUTATORASYNCSENDBUFFER_H
-
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_Lib_TableMutatorAsyncSendBuffer_h
+#define Hypertable_Lib_TableMutatorAsyncSendBuffer_h
 
 #include "TableMutatorAsyncCompletionCounter.h"
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -37,7 +37,7 @@ namespace Hypertable {
   /**
    *
    */
-  class TableMutatorAsyncSendBuffer : public ReferenceCount {
+  class TableMutatorAsyncSendBuffer {
   public:
     TableMutatorAsyncSendBuffer(const TableIdentifier *tid,
         TableMutatorAsyncCompletionCounter *counterp_, RangeLocator *rl)
@@ -121,8 +121,9 @@ namespace Hypertable {
     RangeLocator *m_range_locator;
   };
 
-  typedef intrusive_ptr<TableMutatorAsyncSendBuffer> TableMutatorAsyncSendBufferPtr;
+  /// Smart pointer to TableMutatorAsyncSendBuffer
+  typedef std::shared_ptr<TableMutatorAsyncSendBuffer> TableMutatorAsyncSendBufferPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLEMUTATORSENDBUFFER_H
+#endif // Hypertable_Lib_TableMutatorAsyncSendBuffer_h

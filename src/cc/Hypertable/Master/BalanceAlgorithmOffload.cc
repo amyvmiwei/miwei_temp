@@ -90,7 +90,7 @@ void BalanceAlgorithmOffload::compute_plan(BalancePlanPtr &plan,
   scan_spec.columns.push_back(start_row.c_str());
   scan_spec.max_versions = 1;
 
-  TableScannerPtr scanner = m_context->metadata_table->create_scanner(scan_spec);
+  TableScannerPtr scanner(m_context->metadata_table->create_scanner(scan_spec));
   while (scanner->next(cell)) {
     if (last_key == cell.row_key) {
       if (location == cell.column_family)

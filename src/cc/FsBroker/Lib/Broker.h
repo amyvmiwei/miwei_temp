@@ -31,8 +31,9 @@
 #include "Response/Callback/Status.h"
 #include "Response/Callback/Exists.h"
 
-#include <Common/ReferenceCount.h>
 #include <Common/StaticBuffer.h>
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -47,7 +48,7 @@ namespace Lib {
 
   /** Abstract class to be implemented by brokers
    */
-  class Broker : public ReferenceCount {
+  class Broker {
   public:
     virtual ~Broker() { return; }
     /**
@@ -237,7 +238,7 @@ namespace Lib {
   };
 
   /// Smart pointer to Broker
-  typedef boost::intrusive_ptr<Broker> BrokerPtr;
+  typedef std::shared_ptr<Broker> BrokerPtr;
 
   /// @}
 

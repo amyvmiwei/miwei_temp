@@ -26,8 +26,8 @@
  * order.
  */
 
-#ifndef HYPERTABLE_OPERATIONPROCESSOR_H
-#define HYPERTABLE_OPERATIONPROCESSOR_H
+#ifndef Hypertable_Master_OperationProcessor_h
+#define Hypertable_Master_OperationProcessor_h
 
 #include <Hypertable/Master/Context.h>
 #include <Hypertable/Master/Operation.h>
@@ -35,7 +35,6 @@
 
 #include <Common/Mutex.h>
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 #include <Common/Thread.h>
 
@@ -55,7 +54,7 @@ namespace Hypertable {
 
   /** Runs a set of operaions with dependency relationships.
    */
-  class OperationProcessor : public ReferenceCount {
+  class OperationProcessor {
   public:
     OperationProcessor(ContextPtr &context, size_t thread_count);
     ~OperationProcessor();
@@ -242,6 +241,6 @@ namespace Hypertable {
 
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONPROCESSOR_H
+#endif // Hypertable_Master_OperationProcessor_h

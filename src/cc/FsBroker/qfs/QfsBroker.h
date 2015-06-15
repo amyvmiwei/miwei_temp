@@ -60,7 +60,7 @@ namespace FsBroker {
   class OpenFileDataQfsPtr : public OpenFileDataPtr {
   public:
   OpenFileDataQfsPtr() : OpenFileDataPtr() { }
-  OpenFileDataQfsPtr(OpenFileDataQfs *ofdq) : OpenFileDataPtr(ofdq, true) {}
+  OpenFileDataQfsPtr(OpenFileDataQfs *ofdq) : OpenFileDataPtr(ofdq) {}
     OpenFileDataQfs *operator->() const {
       return (OpenFileDataQfs*) get();
     }

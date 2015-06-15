@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLCACHE_H
-#define HYPERTABLE_CELLCACHE_H
+#ifndef Hypertable_RangeServer_CellCache_h
+#define Hypertable_RangeServer_CellCache_h
 
 #include <Hypertable/RangeServer/CellCacheAllocator.h>
 #include <Hypertable/RangeServer/CellListScanner.h>
@@ -31,6 +31,7 @@
 #include <Common/Mutex.h>
 
 #include <map>
+#include <memory>
 #include <set>
 
 namespace Hypertable {
@@ -49,7 +50,7 @@ namespace Hypertable {
    * All updates get written to the CellCache and later get "compacted"
    * into a CellStore on disk.
    */
-  class CellCache : public CellList {
+  class CellCache : public CellList, public std::enable_shared_from_this<CellCache> {
 
   public:
 
@@ -81,9 +82,9 @@ namespace Hypertable {
     virtual void split_row_estimate_data(SplitRowDataMapT &split_row_data);
 
     /** Creates a CellCacheScanner object that contains an shared pointer
-     * (intrusive_ptr) to this CellCache.
+     * to this CellCache.
      */
-    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
+    CellListScannerPtr create_scanner(ScanContext *scan_ctx) override;
 
     void lock()   { m_mutex.lock(); }
     void unlock() { m_mutex.unlock(); }
@@ -159,8 +160,8 @@ namespace Hypertable {
 
   };
 
-  typedef intrusive_ptr<CellCache> CellCachePtr;
+  typedef std::shared_ptr<CellCache> CellCachePtr;
 
 } // namespace Hypertable;
 
-#endif // HYPERTABLE_CELLCACHE_H
+#endif // Hypertable_RangeServer_CellCache_h

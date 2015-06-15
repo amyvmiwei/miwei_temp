@@ -34,7 +34,7 @@ namespace Hypertable {
    */
   class CellCacheScanner : public CellListScanner {
   public:
-    CellCacheScanner(CellCachePtr &cellcache, ScanContextPtr &scan_ctx);
+    CellCacheScanner(CellCachePtr cellcache, ScanContext *scan_ctx);
     virtual ~CellCacheScanner() { return; }
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
@@ -64,11 +64,11 @@ namespace Hypertable {
     Mutex                         &m_cell_cache_mutex;
     CellCacheEntry                 m_cur_entry;
     std::vector<CellCacheEntry>    m_entry_cache;
-    size_t                         m_entry_cache_next;
+    size_t                         m_entry_cache_next {};
     CellCacheMap                   m_deletes;
-    bool                           m_in_deletes;
-    bool                           m_eos;
-    bool                           m_keys_only;
+    bool                           m_in_deletes {};
+    bool                           m_eos {};
+    bool                           m_keys_only {};
   };
 }
 

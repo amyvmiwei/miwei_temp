@@ -127,7 +127,7 @@ namespace {
 
   typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
-  MetaLog::DefinitionPtr g_test_definition = new MetaLog::TestDefinition();
+  MetaLog::DefinitionPtr g_test_definition = make_shared<MetaLog::TestDefinition>();
 
   vector<MetaLog::EntityPtr> g_entities;
 
@@ -201,9 +201,9 @@ main(int ac, char *av[]) {
      *  Write initital log
      */
 
-    writer = new MetaLog::Writer(fs, g_test_definition,
-                                 testdir + "/" + g_test_definition->name(),
-                                 g_entities);
+    writer = make_shared<MetaLog::Writer>(fs, g_test_definition,
+                                          testdir + "/" + g_test_definition->name(),
+                                          g_entities);
 
     create_entities(32);
 
@@ -211,12 +211,12 @@ main(int ac, char *av[]) {
       ofstream out("metalog_test.out");
       randomly_change_states(writer);
       writer = 0;
-      reader = new MetaLog::Reader(fs, g_test_definition,
-                                   testdir + "/" + g_test_definition->name());
+      reader = make_shared<MetaLog::Reader>(fs, g_test_definition,
+                                            testdir + "/" + g_test_definition->name());
       g_entities.clear();
       reader->get_entities(g_entities);
       display_entities(out);
-      reader = 0;
+      reader.reset();
       out.close();
       HT_ASSERT(system("diff metalog_test.out metalog_test.golden") == 0);
     }
@@ -225,20 +225,20 @@ main(int ac, char *av[]) {
      *  Write some more
      */
 
-    writer = new MetaLog::Writer(fs, g_test_definition,
-                                 testdir + "/" + g_test_definition->name(),
-                                 g_entities);
+    writer = make_shared<MetaLog::Writer>(fs, g_test_definition,
+                                          testdir + "/" + g_test_definition->name(),
+                                          g_entities);
 
     {
       ofstream out("metalog_test2.out");
       randomly_change_states(writer);
-      writer = 0;
-      reader = new MetaLog::Reader(fs, g_test_definition,
-                                   testdir + "/" + g_test_definition->name());
+      writer.reset();
+      reader = make_shared<MetaLog::Reader>(fs, g_test_definition,
+                                            testdir + "/" + g_test_definition->name());
       g_entities.clear();
       reader->get_entities(g_entities);
       display_entities(out);
-      reader = 0;
+      reader.reset();
       out.close();
       HT_ASSERT(system("diff metalog_test2.out metalog_test2.golden") == 0);
     }
@@ -248,9 +248,9 @@ main(int ac, char *av[]) {
      *  Log file rollover test
      */
     Config::properties->set("Hypertable.MetaLog.MaxFileSize", (int64_t)50000);
-    writer = new MetaLog::Writer(fs, g_test_definition,
-                                 testdir + "/" + g_test_definition->name(),
-                                 g_entities);
+    writer = make_shared<MetaLog::Writer>(fs, g_test_definition,
+                                          testdir + "/" + g_test_definition->name(),
+                                          g_entities);
 
     {
       ofstream out("metalog_test3.out");
@@ -258,13 +258,13 @@ main(int ac, char *av[]) {
       randomly_set_values(writer);
       randomly_set_values(writer);
       randomly_set_values(writer);
-      writer = 0;
-      reader = new MetaLog::Reader(fs, g_test_definition,
-                                   testdir + "/" + g_test_definition->name());
+      writer.reset();
+      reader = make_shared<MetaLog::Reader>(fs, g_test_definition,
+                                            testdir + "/" + g_test_definition->name());
       g_entities.clear();
       reader->get_entities(g_entities);
       display_entities(out);
-      reader = 0;
+      reader.reset();
       out.close();
       HT_ASSERT(system("diff metalog_test3.out metalog_test3.golden") == 0);
     }
@@ -275,14 +275,15 @@ main(int ac, char *av[]) {
 
     MetaLog::Writer::skip_recover_entry = true;
 
-    writer = new MetaLog::Writer(fs, g_test_definition,
-                                 testdir + "/" + g_test_definition->name(),
-                                 g_entities);
-    writer = 0;
+    writer = make_shared<MetaLog::Writer>(fs, g_test_definition,
+                                          testdir + "/" + g_test_definition->name(),
+                                          g_entities);
+    writer.reset();
 
     try {
-      reader = new MetaLog::Reader(fs, g_test_definition,
-                                   testdir + "/" + g_test_definition->name());
+      reader =
+        make_shared<MetaLog::Reader>(fs, g_test_definition,
+                                     testdir + "/" + g_test_definition->name());
       HT_ASSERT(!"METALOG missing RECOVER entity exception not thrown");
     }
     catch (Exception &e) {

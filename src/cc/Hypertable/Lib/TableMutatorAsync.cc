@@ -37,6 +37,7 @@
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
+using namespace std;
 
 void TableMutatorAsync::handle_send_exceptions(const String& info) {
   try {
@@ -94,7 +95,7 @@ void TableMutatorAsync::initialize(PropertiesPtr &props) {
   m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
 
   uint32_t buffer_id = ++m_next_buffer_id;
-  m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, m_app_queue, 
+  m_current_buffer = make_shared<TableMutatorAsyncScatterBuffer>(m_comm, m_app_queue, 
           this, &m_table_identifier, m_schema, m_range_locator, 
           m_table->auto_refresh(), m_timeout_ms, buffer_id);
 
@@ -136,19 +137,23 @@ void TableMutatorAsync::initialize_indices(PropertiesPtr &props)
 
   m_use_index = true;
 
-  m_imc = new IndexMutatorCallback(this, m_cb, m_max_memory);
+  m_imc = make_shared<IndexMutatorCallback>(this, m_cb, m_max_memory);
   m_cb = &(*m_imc);
 
   // create new index mutator
   if (m_table->has_index_table())
-    m_index_mutator = new TableMutatorAsync(props, m_comm, m_app_queue, 
-            m_table->get_index_table().get(), 
-            m_range_locator, m_timeout_ms, m_cb, m_flags);
+    m_index_mutator =
+      make_shared<TableMutatorAsync>(props, m_comm, m_app_queue, 
+                                     m_table->get_index_table().get(), 
+                                     m_range_locator, m_timeout_ms, m_cb,
+                                     m_flags);
   // create new qualifier index mutator
   if (m_table->has_qualifier_index_table())
-    m_qualifier_index_mutator = new TableMutatorAsync(props, m_comm, 
-            m_app_queue, m_table->get_qualifier_index_table().get(), 
-            m_range_locator, m_timeout_ms, m_cb, m_flags);
+    m_qualifier_index_mutator =
+      make_shared<TableMutatorAsync>(props, m_comm, m_app_queue,
+                                     m_table->get_qualifier_index_table().get(), 
+                                     m_range_locator, m_timeout_ms, m_cb,
+                                     m_flags);
 }
 
 void TableMutatorAsync::wait_for_completion() {
@@ -518,7 +523,7 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
         if (m_outstanding_buffers.size() == 0 && m_cb)
           m_cb->increment_outstanding();
         m_outstanding_buffers[m_current_buffer->get_id()] = m_current_buffer;
-        m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, 
+        m_current_buffer = make_shared<TableMutatorAsyncScatterBuffer>(m_comm, 
                 m_app_queue, this, &m_table_identifier, m_schema, 
                 m_range_locator, m_table->auto_refresh(), m_timeout_ms, 
                 buffer_id);

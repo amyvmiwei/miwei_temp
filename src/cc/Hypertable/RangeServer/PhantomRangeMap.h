@@ -29,11 +29,11 @@
 
 #include <Common/Mutex.h>
 #include <Common/PageArenaAllocator.h>
-#include <Common/ReferenceCount.h>
 
 #include <boost/thread/condition.hpp>
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -42,7 +42,7 @@ namespace Hypertable {
   /**
    * Provides a mapping from table name to TableInfo object.
    */
-  class PhantomRangeMap : public ReferenceCount {
+  class PhantomRangeMap {
   public:
     PhantomRangeMap(int plan_generation);
     virtual ~PhantomRangeMap() { }
@@ -99,7 +99,7 @@ namespace Hypertable {
     int              m_state;
   };
 
-  typedef boost::intrusive_ptr<PhantomRangeMap> PhantomRangeMapPtr;
+  typedef std::shared_ptr<PhantomRangeMap> PhantomRangeMapPtr;
 
 }
 

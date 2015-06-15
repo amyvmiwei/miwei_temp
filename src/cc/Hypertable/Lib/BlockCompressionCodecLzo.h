@@ -24,10 +24,12 @@
 /// This file contains declarations for BlockCompressionCodecLzo, a class for
 /// compressing blocks using the LZO compression algorithm.
 
-#ifndef HYPERTABLE_BLOCKCOMPRESSIONCODECLZO_H
-#define HYPERTABLE_BLOCKCOMPRESSIONCODECLZO_H
+#ifndef Hypertable_Lib_BlockCompressionCodecLzo_h
+#define Hypertable_Lib_BlockCompressionCodecLzo_h
 
 #include <Hypertable/Lib/BlockCompressionCodec.h>
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -52,7 +54,6 @@ namespace Hypertable {
     BlockCompressionCodecLzo(const Args &args);
 
     /// Destructor.
-    /// Deallocates #m_workmem
     virtual ~BlockCompressionCodecLzo();
 
     /// Compresses a buffer using the LZO algorithm.
@@ -95,11 +96,11 @@ namespace Hypertable {
   private:
 
     /// Working memory buffer used by deflate() and inflate()
-    uint8_t *m_workmem;
+    std::unique_ptr<uint8_t[]> m_workmem;
   };
 
   /// @}
 }
 
-#endif // HYPERTABLE_BLOCKCOMPRESSIONCODECLZO_H
+#endif // Hypertable_Lib_BlockCompressionCodecLzo_h
 

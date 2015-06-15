@@ -19,12 +19,11 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATORASYNCCOMPLETIONCOUNTER_H
-#define HYPERTABLE_TABLEMUTATORASYNCCOMPLETIONCOUNTER_H
+#ifndef Hypertable_Lib_TableMutatorAsyncCompletionCounter_h
+#define Hypertable_Lib_TableMutatorAsyncCompletionCounter_h
 
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
-#include "Common/Mutex.h"
+#include <Common/Time.h>
+#include <Common/Mutex.h>
 
 namespace Hypertable {
 
@@ -77,4 +76,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_TABLEMUTATORASYNCCOMPLETIONCOUNTER_H
+#endif // Hypertable_Lib_TableMutatorAsyncCompletionCounter_h

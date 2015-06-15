@@ -134,9 +134,9 @@ int main(int argc, char **argv) {
 
     FsBroker::Lib::ClientPtr client = make_shared<FsBroker::Lib::Client>(comm, addr, timeout_ms);
 
-    CommandInterpreterPtr interp = new fsbroker::CommandInterpreter(client, nowait);
+    CommandInterpreterPtr interp = make_shared<fsbroker::CommandInterpreter>(client, nowait);
 
-    CommandShellPtr shell = new CommandShell("fsbroker", "FsBroker", interp, properties);
+    CommandShellPtr shell = make_shared<CommandShell>("fsbroker", "FsBroker", interp, properties);
 
     error = shell->run();
   }

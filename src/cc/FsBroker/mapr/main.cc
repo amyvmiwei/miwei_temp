@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 
     Comm *comm = Comm::instance();
     ApplicationQueuePtr app_queue = make_shared<ApplicationQueue>(worker_count);
-    BrokerPtr broker = new MaprBroker(properties);
+    BrokerPtr broker = make_shared<MaprBroker>(properties);
     ConnectionHandlerFactoryPtr handler_factory =
       make_shared<FsBroker::Lib::ConnectionHandlerFactory>(comm, app_queue, broker);
     InetAddr listen_addr(INADDR_ANY, port);

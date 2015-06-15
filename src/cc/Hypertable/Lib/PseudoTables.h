@@ -25,13 +25,12 @@
  * that holds Schema objects for the pseudo tables.
  */
 
-#ifndef HYPERTABLE_PSEUDOTABLE_H
-#define HYPERTABLE_PSEUDOTABLE_H
-
-#include "Common/ReferenceCount.h"
-#include "Common/Mutex.h"
+#ifndef Hypertable_Lib_PseudoTables_h
+#define Hypertable_Lib_PseudoTables_h
 
 #include "Schema.h"
+
+#include <Common/Mutex.h>
 
 namespace Hypertable {
 
@@ -41,7 +40,7 @@ namespace Hypertable {
 
   /** Singleton class holding Schema objects for pseudo tables.
    */
-  class PseudoTables : public ReferenceCount {
+  class PseudoTables {
 
   public:
 
@@ -101,4 +100,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // HYPERTABLE_PSEUDOTABLE_H
+#endif // Hypertable_Lib_PseudoTables_h

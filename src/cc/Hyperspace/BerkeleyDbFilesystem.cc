@@ -494,7 +494,7 @@ void BerkeleyDbFilesystem::init_db_handles(const std::vector<Thread::id> &thread
   // Assign per thread handles but don't open them yet
   std::stringstream tid_str;
   for (auto thread_id : thread_ids) {
-    db_handles = new BDbHandles();
+    db_handles = std::make_shared<BDbHandles>();
     m_thread_handle_map[thread_id] = db_handles;
     tid_str << thread_id;
     HT_INFOF("Created DB handles for thread: %s", tid_str.str().c_str());

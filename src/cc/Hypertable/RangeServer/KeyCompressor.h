@@ -19,12 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_KEYCOMPRESSOR_H
-#define HYPERTABLE_KEYCOMPRESSOR_H
+#ifndef Hypertable_RangeServer_KeyCompressor_h
+#define Hypertable_RangeServer_KeyCompressor_h
 
-#include "Common/ReferenceCount.h"
+#include <Hypertable/Lib/Key.h>
 
-#include "Hypertable/Lib/Key.h"
+#include <memory>
 
 namespace Hypertable {
 
@@ -32,7 +32,7 @@ namespace Hypertable {
     enum { NONE=0, PREFIX=1 };
   }
 
-  class KeyCompressor : public ReferenceCount {
+  class KeyCompressor {
   public:
     virtual void reset() = 0;
     virtual void add(const Key &key) = 0;
@@ -41,8 +41,9 @@ namespace Hypertable {
     virtual void write(uint8_t *buf) = 0;
     virtual void write_uncompressed(uint8_t *buf) = 0;
   };
-  typedef intrusive_ptr<KeyCompressor> KeyCompressorPtr;
+
+  typedef std::shared_ptr<KeyCompressor> KeyCompressorPtr;
 
 }
 
-#endif // HYPERTABLE_KEYCOMPRESSOR_H
+#endif // Hypertable_RangeServer_KeyCompressor_h

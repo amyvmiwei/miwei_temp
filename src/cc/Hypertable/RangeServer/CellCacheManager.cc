@@ -54,16 +54,16 @@ void CellCacheManager::merge_caches(SchemaPtr &schema) {
 
   Key key;
   ByteString value;
-  CellCachePtr merged_cache = new CellCache();
-  ScanContextPtr scan_context = new ScanContext(schema);
-  CellListScannerPtr scanner = m_immutable_cache->create_scanner(scan_context);
+  CellCachePtr merged_cache = make_shared<CellCache>();
+  ScanContextPtr scan_ctx = make_shared<ScanContext>(schema);
+  CellListScannerPtr scanner = m_immutable_cache->create_scanner(scan_ctx.get());
   while (scanner->get(key, value)) {
     merged_cache->add(key, value);
     scanner->forward();
   }
 
   // Add cell cache
-  scanner = m_active_cache->create_scanner(scan_context);
+  scanner = m_active_cache->create_scanner(scan_ctx.get());
   while (scanner->get(key, value)) {
     merged_cache->add(key, value);
     scanner->forward();
@@ -82,16 +82,16 @@ void CellCacheManager::add(CellListScannerPtr &scanner) {
 }
 
 void CellCacheManager::add_immutable_scanner(MergeScannerAccessGroup *mscanner,
-                                             ScanContextPtr &scan_ctx) {
+                                             ScanContext *scan_ctx) {
   if (m_immutable_cache)
     mscanner->add_scanner(m_immutable_cache->create_scanner(scan_ctx));
 }
 
 void CellCacheManager::add_scanners(MergeScannerAccessGroup *scanner,
-                                    ScanContextPtr &scan_context) {
+                                    ScanContext *scan_ctx) {
   if (!m_active_cache->empty())
-    scanner->add_scanner(m_active_cache->create_scanner(scan_context));
-  add_immutable_scanner(scanner, scan_context);
+    scanner->add_scanner(m_active_cache->create_scanner(scan_ctx));
+  add_immutable_scanner(scanner, scan_ctx);
 }
 
 
@@ -126,7 +126,7 @@ int32_t CellCacheManager::delete_count() {
 
 void CellCacheManager::freeze() {
   m_immutable_cache = m_active_cache;
-  m_active_cache = new CellCache();
+  m_active_cache = make_shared<CellCache>();
 }
 
 void CellCacheManager::populate_key_set(KeySet &keys) {

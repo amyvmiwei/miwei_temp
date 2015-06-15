@@ -116,7 +116,7 @@ EntityPtr DefinitionMaster::create(const EntityHeader &header) {
   }
   else if (header.type == EntityType::BALANCE_PLAN_AUTHORITY) {
     MetaLog::WriterPtr mml_writer = m_context ? m_context->mml_writer : 0;
-    return make_shared<BalancePlanAuthority>(m_context.get(), mml_writer, header);
+    return make_shared<BalancePlanAuthority>(m_context, mml_writer, header);
   }
   else {
     if (header.type == EntityType::OPERATION_INITIALIZE)

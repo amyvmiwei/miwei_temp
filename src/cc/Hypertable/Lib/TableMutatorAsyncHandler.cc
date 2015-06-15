@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,31 +19,26 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "AsyncComm/Protocol.h"
-
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "TableMutatorAsyncHandler.h"
 #include "TableMutatorAsync.h"
 #include "TableMutatorAsyncScatterBuffer.h"
 
+#include <AsyncComm/Protocol.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+
 using namespace Hypertable;
 using namespace Serialization;
 
 
-/**
- *
- */
 TableMutatorAsyncHandler::TableMutatorAsyncHandler(TableMutatorAsync *mutator,
     uint32_t scatter_buffer) : ApplicationHandler(0),
     m_mutator(mutator), m_scatter_buffer(scatter_buffer) {
 }
 
-/**
- *
- */
 void TableMutatorAsyncHandler::run() {
   // The scatter buffer will get destroyed when the TableMutator releases it
   // and this method goes out of scope

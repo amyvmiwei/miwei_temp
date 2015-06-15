@@ -32,10 +32,10 @@
 
 #include <Common/StringExt.h>
 
-#include <boost/intrusive_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include <map>
+#include <memory>
 #include <string>
 
 namespace Hypertable {
@@ -65,7 +65,7 @@ namespace Hypertable {
    * current set of live ranges and the set of transfer logs in
    * MetaLogEntityRemoveOkLogs.
    */
-  class TableInfoMap : public ReferenceCount {
+  class TableInfoMap {
   public:
 
     /** Constructor. */
@@ -221,7 +221,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to TableInfoMap
-  typedef boost::intrusive_ptr<TableInfoMap> TableInfoMapPtr;
+  typedef std::shared_ptr<TableInfoMap> TableInfoMapPtr;
 
   /// @}
 }

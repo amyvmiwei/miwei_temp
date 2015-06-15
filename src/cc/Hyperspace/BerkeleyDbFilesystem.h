@@ -25,8 +25,8 @@
  * implements the Hyperspace filesystem on top of BerkeleyDB.
  */
 
-#ifndef HT_BERKELEYDBFILESYSTEM_H
-#define HT_BERKELEYDBFILESYSTEM_H
+#ifndef Hyperspace_BerkeleyDbFilesystem_h
+#define Hyperspace_BerkeleyDbFilesystem_h
 
 #include <Common/Compat.h>
 
@@ -49,6 +49,7 @@
 #include <boost/thread/condition.hpp>
 
 #include <map>
+#include <memory>
 #include <ostream>
 #include <unordered_map>
 #include <vector>
@@ -134,7 +135,7 @@ namespace Hyperspace {
   };
 
   /** Manages <i>namespace</i> and transient <i>state</i> database handles */
-  class BDbHandles: public ReferenceCount {
+  class BDbHandles {
   public:
 
     /** Constructor. */
@@ -177,7 +178,7 @@ namespace Hyperspace {
   };
 
   /// Smart pointer to BDbHandles
-  typedef intrusive_ptr<BDbHandles> BDbHandlesPtr;
+  typedef std::shared_ptr<BDbHandles> BDbHandlesPtr;
 
   /** Manages transaction state */
   class BDbTxn {
@@ -820,4 +821,4 @@ namespace Hyperspace {
 
 } // namespace Hyperspace
 
-#endif // HT_BERKELEYDBFILESYSTEM_H
+#endif // Hyperspace_BerkeleyDbFilesystem_h

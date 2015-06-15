@@ -176,7 +176,7 @@ namespace Hypertable {
      * @return CommBuf object holding the proxy map update message (to be freed
      * by caller).
      */
-    CommBuf *create_update_message();
+    CommBufPtr create_update_message();
 
     String to_str();
 

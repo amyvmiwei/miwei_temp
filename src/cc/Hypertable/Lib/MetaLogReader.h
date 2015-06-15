@@ -25,17 +25,17 @@
  * a %MetaLog.
  */
 
-#ifndef HYPERTABLE_METALOGREADER_H
-#define HYPERTABLE_METALOGREADER_H
+#ifndef Hypertable_Lib_MetaLogReader_h
+#define Hypertable_Lib_MetaLogReader_h
 
-#include "Common/Filesystem.h"
-#include "Common/ReferenceCount.h"
+#include "MetaLogDefinition.h"
+
+#include <Common/Filesystem.h>
 
 #include <deque>
 #include <map>
+#include <memory>
 #include <vector>
-
-#include "MetaLogDefinition.h"
 
 namespace Hypertable {
 
@@ -53,7 +53,7 @@ namespace Hypertable {
    * to the latest versions of live MetaLog entities that have been persisted in
    * the log.
    */
-    class Reader : public ReferenceCount {
+    class Reader {
 
     public:
 
@@ -210,10 +210,10 @@ namespace Hypertable {
     };
 
     /// Smart pointer to Reader
-    typedef intrusive_ptr<Reader> ReaderPtr;
+    typedef std::shared_ptr<Reader> ReaderPtr;
 
     /** @}*/
   }
 }
 
-#endif // HYPERTABLE_METALOGREADER_H
+#endif // Hypertable_Lib_MetaLogReader_h

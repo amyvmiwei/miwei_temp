@@ -31,6 +31,7 @@
 
 #include <AsyncComm/ConnectionManager.h>
 
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -43,7 +44,7 @@ namespace Hypertable {
   /**
    * The API of HQL interpreter
    */
-  class HqlInterpreter : public ReferenceCount {
+  class HqlInterpreter {
   public:
     /** Callback interface/base class for execute */
     struct Callback {
@@ -70,7 +71,7 @@ namespace Hypertable {
       virtual void on_return(const std::string &) { }
 
       /** Called when interpreter is ready to scan */
-      virtual void on_scan(TableScanner &) { }
+      virtual void on_scan(TableScannerPtr &) { }
 
       /** Called when interpreter is ready to dump */
       virtual void on_dump(TableDumper &) { }
@@ -85,18 +86,22 @@ namespace Hypertable {
        * Note: mutator pointer maybe NULL in case of things like
        * LOAD DATA ... INTO file
        */
-      virtual void on_finish(TableMutator *mutator = 0) {
-        if (mutator) try {
-          mutator->flush();
-        }
-        catch (Exception &e) {
-          mutator->show_failed(e);
-          throw;
+      virtual void on_finish(TableMutatorPtr &mutator) {
+        if (mutator) {
+          try {
+            mutator->flush();
+          }
+          catch (Exception &e) {
+            mutator->show_failed(e);
+            throw;
+          }
         }
       }
 
+      virtual void on_finish() { }
+
       /** Called when scan is finished. */
-      virtual void on_finish(TableScanner *scanner) {  }
+      virtual void on_finish(TableScannerPtr &scanner) {  }
 
     };
 
@@ -108,9 +113,9 @@ namespace Hypertable {
       SmallCallback(CellsBuilder &builder, std::vector<String> &strs)
         : cells(builder), retstrs(strs) { }
 
-      virtual void on_return(const std::string &ret) { retstrs.push_back(ret); }
-      virtual void on_scan(TableScanner &scanner) { copy(scanner, cells); }
-      virtual void on_dump(TableDumper &dumper) { copy(dumper, cells); }
+      void on_return(const std::string &ret) override { retstrs.push_back(ret); }
+      void on_scan(TableScannerPtr &scanner) override { copy(*scanner, cells); }
+      void on_dump(TableDumper &dumper) override { copy(dumper, cells); }
     };
 
     /** Construct from hypertable client */
@@ -144,8 +149,9 @@ namespace Hypertable {
     bool m_immutable_namespace;
   };
 
-  typedef intrusive_ptr<HqlInterpreter> HqlInterpreterPtr;
+  /// Smart pointer to HqlInterpreter
+  typedef std::shared_ptr<HqlInterpreter> HqlInterpreterPtr;
 
-} // namespace Hypertable
+}
 
 #endif // Hypertable_Lib_HqlInterpreter_h

@@ -61,7 +61,6 @@ CommitLog::CommitLog(FilesystemPtr &fs, const string &log_dir, bool is_meta)
 }
 
 CommitLog::~CommitLog() {
-  delete m_compressor;
   close();
 }
 
@@ -86,7 +85,7 @@ CommitLog::initialize(const string &log_dir, PropertiesPtr &props,
     m_max_fragment_size = cfg.get_i64("RollLimit");
     compressor = cfg.get_str("Compressor"));
 
-  m_compressor = CompressorFactory::create_block_codec(compressor);
+  m_compressor.reset(CompressorFactory::create_block_codec(compressor));
 
   boost::trim_right_if(m_log_dir, boost::is_any_of("/"));
 

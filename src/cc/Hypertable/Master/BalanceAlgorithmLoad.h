@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_BALANCEALGORITHMLOAD_H
-#define HYPERTABLE_BALANCEALGORITHMLOAD_H
+#ifndef Hypertable_Master_BalanceAlgorithmLoad_h
+#define Hypertable_Master_BalanceAlgorithmLoad_h
 
 
 #include <Hypertable/Lib/RS_METRICS/RangeMetrics.h>
@@ -119,4 +119,4 @@ namespace Hypertable {
                 const BalanceAlgorithmLoad::RangeMetricSummary &summary);
 } // namespace Hypertable
 
-#endif // HYPERTABLE_BALANCEALGORITHMLOAD_H
+#endif // Hypertable_Master_BalanceAlgorithmLoad_h

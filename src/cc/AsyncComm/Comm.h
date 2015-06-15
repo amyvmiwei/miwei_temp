@@ -36,7 +36,6 @@
 #include "RawSocketHandler.h"
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 
 /** %Hypertable definitions
  */
@@ -57,7 +56,7 @@ namespace Hypertable {
    * method ReactorFactory#initialize must be called prior to constructing this
    * class in order to create the system-wide I/O reactor threads.
    */
-  class Comm : public ReferenceCount {
+  class Comm {
   public:
 
     /** Creates/returns singleton instance of the Comm class.

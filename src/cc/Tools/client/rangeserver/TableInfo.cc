@@ -48,7 +48,7 @@ namespace rangeserver {
 
     hyperspace->attr_get(table_file, "schema", valbuf);
 
-    m_schema = Schema::new_instance((const char *)valbuf.base);
+    m_schema.reset( Schema::new_instance((const char *)valbuf.base) );
 
     m_table.generation = m_schema->get_generation();
   }

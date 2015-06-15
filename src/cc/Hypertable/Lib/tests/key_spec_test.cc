@@ -83,7 +83,6 @@ int main(int argc, char **argv) {
      * Load data
      */
     {
-      TableMutatorPtr mutator;
       boost::xtime now;
 
       ns->drop_table("KeyTest", true);
@@ -91,7 +90,7 @@ int main(int argc, char **argv) {
 
       table = ns->open_table("KeyTest");
 
-      mutator = table->create_mutator();
+      TableMutatorPtr mutator(table->create_mutator());
 
       key.row = "foo";
       key.row_len = strlen("foo");
@@ -107,10 +106,9 @@ int main(int argc, char **argv) {
     }
 
     {
-      TableScannerPtr scanner;
       ScanSpec scan_spec;
 
-      scanner = table->create_scanner(scan_spec);
+      TableScannerPtr scanner(table->create_scanner(scan_spec));
 
       while (scanner->next(cell)) {
         // Verify that revision number assigned is greater than

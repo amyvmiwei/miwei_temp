@@ -26,13 +26,13 @@
  * CellStore)
  */
 
-#ifndef HYPERTABLE_CELLLISTSCANNERBUFFER_H
-#define HYPERTABLE_CELLLISTSCANNERBUFFER_H
-
-#include "Common/PageArena.h"
-#include "Common/StlAllocator.h"
+#ifndef Hypertable_RangeServer_CellListScannerBuffer_h
+#define Hypertable_RangeServer_CellListScannerBuffer_h
 
 #include "CellListScanner.h"
+
+#include <Common/PageArena.h>
+#include <Common/StlAllocator.h>
 
 namespace Hypertable {
 
@@ -88,6 +88,9 @@ namespace Hypertable {
       }
     };
 
+    /// Scan context
+    ScanContextPtr m_scan_context;
+
     /// Buffer (array) of cells to be returned
     KeyValueVectorT m_cells;
 
@@ -98,13 +101,11 @@ namespace Hypertable {
     ByteArena m_arena;
 
     /// Flag indicating if #initialize_for_scan has been called
-    bool m_initialized_for_scan;
+    bool m_initialized_for_scan {};
   };
 
-  /// Smart pointer to CellListScannerBuffer
-  typedef boost::intrusive_ptr<CellListScannerBuffer> CellListScannerBufferPtr;
   /** @}*/
 }
 
-#endif // HYPERTABLE_CELLLISTSCANNERBUFFER_H
+#endif // Hypertable_RangeServer_CellListScannerBuffer_h
 

@@ -24,13 +24,13 @@
  * This is a base class implementing a discrete random generator.
  */
 
-#ifndef HYPERTABLE_DISCRETERANDOMGENERATOR_H
-#define HYPERTABLE_DISCRETERANDOMGENERATOR_H
+#ifndef Common_DiscreteRandomGenerator_h
+#define Common_DiscreteRandomGenerator_h
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 
-#include "Common/ReferenceCount.h"
+#include <memory>
 
 namespace Hypertable {
 
@@ -43,7 +43,7 @@ namespace Hypertable {
    * in the range [0, max_val] by transforming a
    * uniform [0, 1] distribution into the desired distribution
    */
-  class DiscreteRandomGenerator : public ReferenceCount {
+  class DiscreteRandomGenerator {
 
   public:
     /** Default constructor; sets up a random number generator with a
@@ -136,11 +136,10 @@ namespace Hypertable {
     double *m_cmf;
   };
 
-  typedef boost::intrusive_ptr<DiscreteRandomGenerator>
-            DiscreteRandomGeneratorPtr;
+  typedef std::shared_ptr<DiscreteRandomGenerator> DiscreteRandomGeneratorPtr;
 
   /** @}*/
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_DISCRETERANDOMGENERATOR_H
+#endif // Common_DiscreteRandomGenerator_h

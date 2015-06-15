@@ -87,7 +87,7 @@ void OperationRecreateIndexTables::execute() {
       string schema_str;
       if (!fetch_schema(schema_str))
         break;
-      SchemaPtr schema = Schema::new_instance(schema_str);
+      SchemaPtr schema( Schema::new_instance(schema_str) );
       uint8_t parts = 0;
       for (auto cf_spec : schema->get_column_families()) {
         if (m_params.parts().value_index() && cf_spec->get_value_index())

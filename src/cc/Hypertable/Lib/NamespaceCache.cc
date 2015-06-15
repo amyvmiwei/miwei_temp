@@ -42,7 +42,6 @@ NamespacePtr NamespaceCache::get(const string &name) {
   ScopedLock lock(m_mutex);
   string id;
   bool is_namespace = false;
-  NamespacePtr ns;
   NamespaceMap::iterator it = m_namespace_map.find(name);
 
   if (it != m_namespace_map.end()) {
@@ -52,9 +51,11 @@ NamespacePtr NamespaceCache::get(const string &name) {
   if (!m_namemap->name_to_id(name, id, &is_namespace) || !is_namespace)
     HT_THROW(Error::NAMESPACE_DOES_NOT_EXIST, name);
 
-  ns = new Namespace(name, id, m_props, m_conn_manager, m_hyperspace,
-                     m_app_queue, m_namemap, m_master_client, m_range_locator,
-                     m_table_cache, m_timeout_ms, m_client);
+  NamespacePtr ns =
+    make_shared<Namespace>(name, id, m_props, m_conn_manager, m_hyperspace,
+                           m_app_queue, m_namemap, m_master_client,
+                           m_range_locator, m_table_cache, m_timeout_ms,
+                           m_client);
   m_namespace_map.insert(make_pair(name, ns));
   return ns;
 }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,11 +19,13 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "Unique.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/TableMutator.h"
-#include "Hypertable/Lib/TableScanner.h"
+
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableMutator.h>
+#include <Hypertable/Lib/TableScanner.h>
 
 namespace Hypertable { namespace HyperAppHelper {
 
@@ -48,29 +50,29 @@ create_cell_unique(const TablePtr &table, const KeySpec &key,
     guid=generate_guid();
 
   // now insert the cell with a regular mutator
-  TableMutator *mutator=table->create_mutator();
-  mutator->set(key, guid);
-  mutator->flush();
-  delete mutator;
+  {
+    TableMutatorPtr mutator( table->create_mutator() );
+    mutator->set(key, guid);
+    mutator->flush();
+  }
 
   // and check if it was really inserted or if another client was faster
-  ScanSpecBuilder ssb;
-  ssb.add_row((const char *)key.row);
-  ssb.add_column(key.column_family);
-  ssb.set_cell_limit(1);
-  TableScanner *scanner=table->create_scanner(ssb.get());
-  Cell c;
-  if (!scanner->next(c)) {
-    delete scanner;
-    HT_THROW(Error::FAILED_EXPECTATION, 
-            "Inserted GUID was not found");
+  {
+    ScanSpecBuilder ssb;
+    ssb.add_row((const char *)key.row);
+    ssb.add_column(key.column_family);
+    ssb.set_cell_limit(1);
+    TableScannerPtr scanner( table->create_scanner(ssb.get()) );
+    Cell c;
+    if (!scanner->next(c)) {
+      HT_THROW(Error::FAILED_EXPECTATION, 
+               "Inserted GUID was not found");
+    }
+    if (c.value_len!=guid.size() || memcmp(c.value, guid.c_str(), c.value_len)) {
+      HT_THROW(Error::ALREADY_EXISTS, 
+               "The inserted cell already exists and is not unique");
+    }
   }
-  if (c.value_len!=guid.size() || memcmp(c.value, guid.c_str(), c.value_len)) {
-    delete scanner;
-    HT_THROW(Error::ALREADY_EXISTS, 
-            "The inserted cell already exists and is not unique");
-  }
-  delete scanner;
 }
 
 }} // namespace HyperAppHelper, HyperTable

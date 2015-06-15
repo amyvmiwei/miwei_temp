@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTOREINFO_H
-#define HYPERTABLE_CELLSTOREINFO_H
+#ifndef Hypertable_RangeServer_CellStoreInfo_h
+#define Hypertable_RangeServer_CellStoreInfo_h
 
 #include "CellCache.h"
 #include "CellStoreV6.h"
@@ -29,11 +29,6 @@ namespace Hypertable {
 
   class CellStoreInfo {
   public:
-    CellStoreInfo(CellStore *csp) :
-      cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0), bloom_filter_accesses(0),
-      bloom_filter_maybes(0), bloom_filter_fps(0) {
-      init_from_trailer();
-    }
     CellStoreInfo(CellStorePtr &csp) :
       cs(csp), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0), bloom_filter_accesses(0),
       bloom_filter_maybes(0), bloom_filter_fps(0) {
@@ -114,4 +109,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_CELLSTOREINFO_H
+#endif // Hypertable_RangeServer_CellStoreInfo_h

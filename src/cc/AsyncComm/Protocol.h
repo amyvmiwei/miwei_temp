@@ -26,11 +26,12 @@
  */
 
 
-#ifndef AsyncComm_PROTOCOL_H
-#define AsyncComm_PROTOCOL_H
+#ifndef AsyncComm_Protocol_h
+#define AsyncComm_Protocol_h
 
 #include "Event.h"
 #include "CommHeader.h"
+#include "CommBuf.h"
 
 namespace Hypertable {
 
@@ -124,7 +125,7 @@ namespace Hypertable {
      * @param msg %Error message
      * @return Pointer to Commbuf message holding standard error response
      */
-    static CommBuf *
+    static CommBufPtr
       create_error_message(CommHeader &header, int error, const char *msg);
 
     /** Returns the string representation of a command code.  Each protocol
@@ -142,4 +143,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // AsyncComm_PROTOCOL_H
+#endif // AsyncComm_Protocol_h

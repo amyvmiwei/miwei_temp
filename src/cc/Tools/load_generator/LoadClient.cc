@@ -28,6 +28,8 @@
 #include <ThriftBroker/Config.h>
 #endif
 
+using namespace std;
+
 LoadClient::LoadClient(const String &config_file, bool thrift)
   : m_thrift(thrift), m_native_client(0), m_ns(0), m_native_table(0),
     m_native_table_open(false), m_native_mutator(0), m_native_scanner(0) {
@@ -46,7 +48,7 @@ LoadClient::LoadClient(const String &config_file, bool thrift)
 #endif
   }
   else {
-    m_native_client = new Hypertable::Client(config_file);
+    m_native_client = make_shared<Hypertable::Client>(config_file);
     m_ns = m_native_client->open_namespace("/");
   }
 }
@@ -69,7 +71,7 @@ LoadClient::LoadClient(bool thrift)
 #endif
   }
   else {
-    m_native_client = new Hypertable::Client();
+    m_native_client = make_shared<Hypertable::Client>();
     m_ns = m_native_client->open_namespace("/");
   }
 }
@@ -89,9 +91,8 @@ LoadClient::create_mutator(const String &tablename, int mutator_flags,
       m_native_table = m_ns->open_table(tablename);
       m_native_table_open = true;
     }
-    m_native_mutator = 
-      m_native_table->create_mutator(0, mutator_flags,
-                                     shared_mutator_flush_interval);
+    m_native_mutator.reset(m_native_table->create_mutator(0, mutator_flags,
+                                                          shared_mutator_flush_interval));
   }
 }
 
@@ -182,7 +183,7 @@ LoadClient::create_scanner(const String &tablename, const ScanSpec &scan_spec)
       m_native_table = m_ns->open_table(tablename);
       m_native_table_open = true;
     }
-    m_native_scanner = m_native_table->create_scanner(scan_spec);
+    m_native_scanner.reset(m_native_table->create_scanner(scan_spec));
   }
 }
 

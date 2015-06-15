@@ -24,10 +24,9 @@
  * for the counterpart.
  */
 
-#ifndef HYPERTABLE_STRINGDECOMPRESSORPREFIX_H
-#define HYPERTABLE_STRINGDECOMPRESSORPREFIX_H
+#ifndef Common_StringDecompressorPrefix_h
+#define Common_StringDecompressorPrefix_h
 
-#include "ReferenceCount.h"
 #include "String.h"
 
 namespace Hypertable {
@@ -39,7 +38,7 @@ namespace Hypertable {
   /**
    * A class to decompress prefix-compressed strings.
    */
-  class StringDecompressorPrefix : public ReferenceCount {
+  class StringDecompressorPrefix {
   public:
     /** Constructor; creates a new decompressor */
     StringDecompressorPrefix()
@@ -94,10 +93,8 @@ namespace Hypertable {
     size_t m_compressed_len;
   };
 
-  typedef intrusive_ptr<StringDecompressorPrefix> StringDecompressorPrefixPtr;
-
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_STRINGDECOMPRESSORPREFIX_H
+#endif // Common_StringDecompressorPrefix_h

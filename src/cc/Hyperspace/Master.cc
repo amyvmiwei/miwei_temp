@@ -274,7 +274,7 @@ uint64_t Hyperspace::Master::create_session(struct sockaddr_in &addr) {
     session_id = m_bdb_fs->get_next_id_i64(txn, SESSION, true);
     m_bdb_fs->create_session(txn, session_id, addr_str);
     // in mem updates
-    session_data = new SessionData(addr, m_lease_interval, session_id);
+    session_data = make_shared<SessionData>(addr, m_lease_interval, session_id);
     m_session_map[session_id] = session_data;
     m_session_heap.push_back(session_data);
 
@@ -841,7 +841,7 @@ Hyperspace::Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     ctx.reset(&txn);
     dbufs.clear();
     if (attrs.size() == 1) { // if only one attr it might return HYPERSPACE_ATTR_NOT_FOUND
-      dbufs.push_back(new DynamicBuffer());
+      dbufs.push_back(make_shared<DynamicBuffer>());
       attr_get(ctx, handle, name, attrs.front().c_str(), *dbufs.back());
     }
     else
@@ -1317,7 +1317,7 @@ Hyperspace::Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t
       event_id = m_bdb_fs->get_next_id_i64(txn, EVENT, true);
       m_bdb_fs->create_event(txn, EVENT_TYPE_LOCK_ACQUIRED, event_id, EVENT_MASK_LOCK_ACQUIRED,
                              mode);
-      lock_acquired_event = new EventLockAcquired(event_id, mode);
+      lock_acquired_event = make_shared<EventLockAcquired>(event_id, mode);
       if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_LOCK_ACQUIRED,
                                                     lock_acquired_notifications)) {
         persist_event_notifications(txn, event_id, lock_acquired_notifications);
@@ -1530,7 +1530,7 @@ void Hyperspace::Master::release_lock(BDbTxn &txn, uint64_t handle, const String
   if (!m_bdb_fs->node_has_shared_lock_handles(txn, node)) {
     HT_INFO("Persisting lock released notifications");
     uint64_t event_id = m_bdb_fs->get_next_id_i64(txn, EVENT, true);
-    release_event = new EventLockReleased(event_id);
+    release_event = make_shared<EventLockReleased>(event_id);
     m_bdb_fs->create_event(txn, EVENT_TYPE_LOCK_RELEASED, event_id,
                            release_event->get_mask());
     if (m_bdb_fs->get_node_event_notification_map(txn, node, release_event->get_mask(),
@@ -1590,7 +1590,7 @@ void Hyperspace::Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node
       m_bdb_fs->set_xattr_i64(txn, node, "lock.generation", lock_generation);
       m_bdb_fs->set_node_cur_lock_mode(txn, node, next_mode);
 
-      lock_granted_event = new EventLockGranted(event_id, next_mode, lock_generation);
+      lock_granted_event = make_shared<EventLockGranted>(event_id, next_mode, lock_generation);
 
       for (auto handle : next_lock_handles) {
         lock_handle(txn, handle, next_mode, node);
@@ -1604,7 +1604,7 @@ void Hyperspace::Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node
       event_id = m_bdb_fs->get_next_id_i64(txn, EVENT, true);
       m_bdb_fs->create_event(txn, EVENT_TYPE_LOCK_ACQUIRED, event_id, EVENT_MASK_LOCK_ACQUIRED,
                              next_mode);
-      lock_acquired_event = new EventLockAcquired(event_id, next_mode);
+      lock_acquired_event = make_shared<EventLockAcquired>(event_id, next_mode);
       // persist lock acquired notifications
       if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_LOCK_ACQUIRED,
                                                     lock_acquired_notifications))
@@ -1796,8 +1796,8 @@ Hyperspace::Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
         uint64_t event_id = m_bdb_fs->get_next_id_i64(txn, EVENT, true);
         m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id,
                                EVENT_MASK_CHILD_NODE_REMOVED, child_node);
-        node_removed_event = new EventNamed(event_id, EVENT_MASK_CHILD_NODE_REMOVED,
-                                            child_node);
+        node_removed_event = make_shared<EventNamed>(event_id, EVENT_MASK_CHILD_NODE_REMOVED,
+                                                     child_node);
         if (m_bdb_fs->get_node_event_notification_map(txn, parent_node,
             EVENT_MASK_CHILD_NODE_REMOVED, node_removed_notifications)) {
           persist_event_notifications(txn, event_id, node_removed_notifications);
@@ -2062,7 +2062,7 @@ void Hyperspace::Master::open(CommandContext &ctx, const char *name,
                               EVENT_MASK_LOCK_ACQUIRED, lock_mode);
 
       std::vector<EventContext>::iterator it = ctx.evts.insert(ctx.evts.end(),
-        EventContext(new EventLockAcquired(lock_acquired_event_id, lock_mode)));
+          EventContext(make_shared<EventLockAcquired>(lock_acquired_event_id, lock_mode)));
 
       if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_LOCK_ACQUIRED,
                                                 it->notifications)) {
@@ -2214,7 +2214,7 @@ void Hyperspace::Master::attr_get(CommandContext &ctx, uint64_t handle,
 
   dbufs.reserve(attrs.size());
   for (const auto &attr : attrs) {
-    dbufs.push_back(new DynamicBuffer());
+    dbufs.push_back(make_shared<DynamicBuffer>());
     if (!m_bdb_fs->get_xattr(txn, node, attr, *dbufs.back()))
       dbufs.back() = 0; // attr not found
   }
@@ -2482,7 +2482,7 @@ void Hyperspace::Master::create_event(CommandContext &ctx, const String &node, u
   m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, event_mask, name);
 
   std::vector<EventContext>::iterator it = ctx.evts.insert(ctx.evts.end(),
-    EventContext(new EventNamed(event_id, event_mask, name)));
+       EventContext(make_shared<EventNamed>(event_id, event_mask, name)));
 
   if (m_bdb_fs->get_node_event_notification_map(txn, node, event_mask,
                                                 it->notifications)) {

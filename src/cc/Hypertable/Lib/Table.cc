@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,20 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cstring>
-
-#include <boost/algorithm/string.hpp>
-
-#include "Common/String.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-
-#include "Hyperspace/HandleCallback.h"
-#include "Hyperspace/Session.h"
+#include <Common/Compat.h>
 
 #include "Table.h"
 #include "TableScanner.h"
@@ -41,9 +28,22 @@
 #include "TableMutatorAsync.h"
 #include "ScanSpec.h"
 
+#include <AsyncComm/ApplicationQueue.h>
+
+#include <Common/String.h>
+#include <Common/DynamicBuffer.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
+
+#include <Hyperspace/HandleCallback.h>
+#include <Hyperspace/Session.h>
+
+#include <boost/algorithm/string.hpp>
+
+#include <cstring>
+
 using namespace Hypertable;
 using namespace Hyperspace;
-
 
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
              ConnectionManagerPtr &conn_manager, 
@@ -113,7 +113,7 @@ void Table::initialize() {
                tablefile.c_str());
   }
 
-  m_schema = Schema::new_instance((const char *)value_buf.base);
+  m_schema.reset( Schema::new_instance((const char *)value_buf.base) );
 
   if (is_index && m_schema->get_version() < 1)
     HT_THROW(Error::BAD_FORMAT, "Unsupported index format.  Indexes must be "

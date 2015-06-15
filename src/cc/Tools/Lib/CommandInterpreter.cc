@@ -23,19 +23,17 @@
 
 #include "CommandInterpreter.h"
 
+#include <cassert>
+
 using namespace Hypertable;
+using namespace std;
 
-
-/**
- */
 CommandInterpreter::CommandInterpreter()
   : m_timestamp_output_format(TIMESTAMP_FORMAT_DEFAULT), m_silent(false),
     m_test_mode(false) {
 }
 
 
-/**
- */
 void
 CommandInterpreter::set_timestamp_output_format(const String &format) {
   if (format == "default")

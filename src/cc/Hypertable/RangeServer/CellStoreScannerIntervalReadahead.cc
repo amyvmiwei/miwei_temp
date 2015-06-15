@@ -47,11 +47,9 @@ namespace {
 
 
 template <typename IndexT>
-CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(CellStore *cellstore,
-     IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
-  m_cellstore(cellstore), m_end_key(end_key), m_zcodec(0), m_fd(-1), m_offset(0),
-  m_end_offset(0), m_check_for_range_end(false), m_eos(false), m_scan_ctx(scan_ctx),
-  m_oflags(0) {
+CellStoreScannerIntervalReadahead<IndexT>::CellStoreScannerIntervalReadahead(CellStorePtr &cellstore,
+     IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContext *scan_ctx) :
+  m_cellstore(cellstore), m_end_key(end_key), m_scan_ctx(scan_ctx) {
   int64_t start_offset;
 
   memset(&m_block, 0, sizeof(m_block));

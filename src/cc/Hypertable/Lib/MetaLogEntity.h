@@ -31,7 +31,6 @@
 #include "MetaLogEntityHeader.h"
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/Serializable.h>
 
 #include <boost/algorithm/string.hpp>

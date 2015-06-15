@@ -19,25 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-
-#include <cassert>
-#include <iostream>
-
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "CommBuf.h"
 #include "Event.h"
 #include "Protocol.h"
 
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
+
+#include <cassert>
+#include <iostream>
+
 using namespace Hypertable;
 using namespace Serialization;
+using namespace std;
 
-/**
- *
- */
 int32_t Protocol::response_code(const Event *event) {
   if (event->type == Event::ERROR)
     return event->error;
@@ -50,10 +48,6 @@ int32_t Protocol::response_code(const Event *event) {
 }
 
 
-
-/**
- *
- */
 String Protocol::string_format_message(const Event *event) {
   int error = Error::OK;
 
@@ -83,13 +77,9 @@ String Protocol::string_format_message(const Event *event) {
 }
 
 
-
-/**
- *
- */
-CommBuf *
+CommBufPtr
 Protocol::create_error_message(CommHeader &header, int error, const char *msg){
-  CommBuf *cbuf = new CommBuf(header, 4 + encoded_length_str16(msg));
+  CommBufPtr cbuf = make_shared<CommBuf>(header, 4 + encoded_length_str16(msg));
   cbuf->append_i32(error);
   cbuf->append_str16(msg);
   return cbuf;

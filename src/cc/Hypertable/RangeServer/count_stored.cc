@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
     int timeout = get_i32("FsBroker.Timeout");
 
     // Create Hypertable client object
-    ClientPtr hypertable_client = new Hypertable::Client(argv[0]);
+    ClientPtr hypertable_client = make_shared<Hypertable::Client>(argv[0]);
     NamespacePtr ns = hypertable_client->open_namespace("/");
     ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>();
     FsBroker::Lib::ClientPtr dfs = std::make_shared<FsBroker::Lib::Client>(conn_mgr, properties);
@@ -128,11 +128,11 @@ int main(int argc, char **argv) {
        * Open cellStore
        */
       CellStorePtr cell_store_ptr = CellStoreFactory::open(file_vector[i].file, 0, 0);
-      CellListScanner *scanner = 0;
+      CellListScannerPtr scanner;
 
       hit_start = (file_vector[i].start_row == "") ? true : false;
       store_count = 0;
-      scanner = cell_store_ptr->create_scanner(scan_context_ptr);
+      scanner = cell_store_ptr->create_scanner(scan_context_ptr.get());
 
       while (scanner->get(key, value)) {
         if (!hit_start) {
@@ -148,7 +148,6 @@ int main(int argc, char **argv) {
         store_count++;
         scanner->forward();
       }
-      delete scanner;
 
       cout << store_count << "\t" << file_vector[i].file << "["
            << file_vector[i].start_row << ".." << file_vector[i].end_row << "]"
@@ -200,7 +199,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
     scan_spec.columns.push_back("StartRow");
 
     // Create a scanner on the 'METADATA' table
-    scanner_ptr = table_ptr->create_scanner(scan_spec);
+    scanner_ptr.reset( table_ptr->create_scanner(scan_spec) );
 
   }
   catch (std::exception &e) {

@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLECALLBACK_H
-#define HYPERTABLE_TABLECALLBACK_H
+#ifndef Hypertable_Lib_TableCallback_h
+#define Hypertable_Lib_TableCallback_h
 
 #include "ResultCallback.h"
 
@@ -78,7 +78,7 @@ namespace Hypertable {
     TableMutator *m_mutator;
 
   };
-  typedef intrusive_ptr<TableCallback> TableCallbackPtr;
-} // namesapce Hypertable
 
-#endif // HYPERTABLE_TABLECALLBACK_H
+}
+
+#endif // Hypertable_Lib_TableCallback_h

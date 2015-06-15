@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   try {
 
     // Create Hypertable client object
-    client_ptr = new Client( System::locate_install_dir(argv[0]) );
+    client_ptr = make_shared<Client>( System::locate_install_dir(argv[0]) );
 
     // Open the root namespace
     namespace_ptr = client_ptr->open_namespace("/");
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     // Create a mutator object on the
     // 'LogDb' table
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr.reset(table_ptr->create_mutator());
 
   }
   catch (Exception &e) {

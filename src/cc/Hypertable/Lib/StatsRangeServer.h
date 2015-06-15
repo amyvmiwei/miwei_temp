@@ -19,21 +19,21 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_STATSRANGESERVER_H
-#define HYPERTABLE_STATSRANGESERVER_H
+#ifndef Hypertable_Lib_StatsRangeServer_h
+#define Hypertable_Lib_StatsRangeServer_h
 
-#include <vector>
+#include "StatsTable.h"
+
+#include <Common/Properties.h>
+#include <Common/StatsSerializable.h>
+#include <Common/StatsSystem.h>
+#include <Common/StringExt.h>
+#include <Common/SystemInfo.h>
 
 #include <boost/algorithm/string.hpp>
 
-#include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StatsSerializable.h"
-#include "Common/StatsSystem.h"
-#include "Common/StringExt.h"
-#include "Common/SystemInfo.h"
-
-#include "StatsTable.h"
+#include <memory>
+#include <vector>
 
 namespace Hypertable {
 
@@ -98,10 +98,12 @@ namespace Hypertable {
     virtual void decode_group(int group, uint16_t len, const uint8_t **bufp, size_t *remainp);
 
   };
-  typedef intrusive_ptr<StatsRangeServer> StatsRangeServerPtr;
+
+  /// Smart pointer to StatsRangeServer
+  typedef std::shared_ptr<StatsRangeServer> StatsRangeServerPtr;
 
 }
 
-#endif // HYPERTABLE_STATSRANGESERVER_H
+#endif // Hypertable_Lib_StatsRangeServer_h
 
 

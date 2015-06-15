@@ -93,11 +93,11 @@ int main(int argc, char **argv) {
   String format_str = (String)"%0" + format("%lulu", (unsigned long)key_size);
 
   try {
-    hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]), "./hypertable.cfg");
+    hypertable_client_ptr = make_shared<Hypertable::Client>(System::locate_install_dir(argv[0]), "./hypertable.cfg");
     namespace_ptr = hypertable_client_ptr->open_namespace("/");
     table_ptr = namespace_ptr->open_table("LoadTest");
     // Do asynchronous scan
-    FuturePtr future_ptr = new Future(5000000);
+    FuturePtr future_ptr = make_shared<Future>(5000000);
     vector<TableScannerAsyncPtr> scanners;
     TableScannerAsyncPtr scanner;
     ResultPtr result;
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
       }
       scan_spec = ssbuilder.get();
       cout << "Creating scanner with start_row=" << start_str << endl;
-      scanner = table_ptr->create_scanner_async(future_ptr.get(), scan_spec);
+      scanner.reset(table_ptr->create_scanner_async(future_ptr.get(), scan_spec));
       scanners.push_back(scanner);
     }
 

@@ -56,7 +56,7 @@ namespace FsBroker {
   public:
     OpenFileDataLocalPtr() : OpenFileDataPtr() { }
     OpenFileDataLocalPtr(OpenFileDataLocal *ofdl)
-      : OpenFileDataPtr(ofdl, true) { }
+      : OpenFileDataPtr(ofdl) { }
     OpenFileDataLocal *operator->() const {
       return (OpenFileDataLocal *)get();
     }

@@ -18,24 +18,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#ifndef HYPERTABLE_NOTIFIER_H
-#define HYPERTABLE_NOTIFIER_H
+
+#ifndef Tools_Lib_Notifier_h
+#define Tools_Lib_Notifier_h
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/CommAddress.h>
+#include <AsyncComm/CommBuf.h>
+
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
 
 #include <cstdio>
+#include <memory>
 #include <string>
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/CommAddress.h"
-#include "AsyncComm/CommBuf.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/ReferenceCount.h"
-
 
 namespace Hypertable {
-  /**
+
+  /*
    * Helper class which sends notification to specified address.
    */
-  class Notifier : public ReferenceCount {
+  class Notifier {
   public:
     Notifier(const char *addr_str) {
       DispatchHandlerPtr null_handler(0);
@@ -50,9 +53,7 @@ namespace Hypertable {
       m_comm->create_datagram_receive_socket(m_send_addr, 0x10, null_handler);
     }
 
-    Notifier() : m_comm(0) {
-      return;
-    }
+    Notifier() { }
 
     void notify() {
       if (m_comm) {
@@ -68,11 +69,13 @@ namespace Hypertable {
     }
 
   private:
-    Comm *m_comm;
+    Comm *m_comm {};
     CommAddress m_addr;
     CommAddress m_send_addr;
-  };// class Hypertable::Notifier
-  typedef boost::intrusive_ptr<Notifier> NotifierPtr;
+  };
 
-} // namepace Hypertable
-#endif // HYPERTABLE_NOTIFIER_H
+  typedef std::shared_ptr<Notifier> NotifierPtr;
+
+}
+
+#endif // Tools_Lib_Notifier_h

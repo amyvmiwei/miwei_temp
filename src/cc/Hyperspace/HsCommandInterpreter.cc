@@ -97,7 +97,7 @@ int HsCommandInterpreter::execute_line(const String &line) {
         HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR,
                  "Error: no filename supplied.");
 
-      HandleCallbackPtr callback = new FileHandleCallback(event_mask);
+      HandleCallbackPtr callback = make_shared<FileHandleCallback>(event_mask);
       handle = m_session->open(fname,open_flag,callback);
 
       // store opened handle in global HsClientState namespace
@@ -119,7 +119,7 @@ int HsCommandInterpreter::execute_line(const String &line) {
         HT_THROW(Error::HYPERSPACE_CLI_PARSE_ERROR,
                  "Error: no filename supplied.");
 
-      HandleCallbackPtr callback = new FileHandleCallback(event_mask);
+      HandleCallbackPtr callback = make_shared<FileHandleCallback>(event_mask);
       handle = m_session->create(fname,open_flag,callback,state.attrs);
 
       // store opened handle in global HsClientState namespace

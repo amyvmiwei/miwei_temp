@@ -87,7 +87,7 @@ void get_table_server_set(ContextPtr &context, const String &id,
   ri.end = end_row.c_str();
   scan_spec.row_intervals.push_back(ri);
 
-  scanner = context->metadata_table->create_scanner(scan_spec);
+  scanner.reset( context->metadata_table->create_scanner(scan_spec) );
 
   while (scanner->next(cell)) {
     location = String((const char *)cell.value, cell.value_len);
@@ -123,7 +123,7 @@ bool table_exists(ContextPtr &context, const String &name, String &id) {
 
 TableParts get_index_parts(const std::string &schema) {
   uint8_t parts {};
-  SchemaPtr s = Schema::new_instance(schema);
+  SchemaPtr s(Schema::new_instance(schema));
 
   for (auto cf_spec : s->get_column_families()) {
     if (cf_spec && !cf_spec->get_deleted()) {
@@ -214,7 +214,7 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
   // for this table in DFS
   String table_basedir = context->toplevel_dir + "/tables/" + table_id + "/";
 
-  SchemaPtr schema = Schema::new_instance(schema_str);
+  SchemaPtr schema(Schema::new_instance(schema_str));
 
   for (auto ag_spec : schema->get_access_groups()) {
     String agdir = table_basedir + ag_spec->get_name();
@@ -231,7 +231,7 @@ void prepare_index(ContextPtr &context, const String &name,
                    String &index_name, String &index_schema_str)
 {
   // load the schema of the primary table
-  SchemaPtr primary_schema = Schema::new_instance(schema_str);
+  SchemaPtr primary_schema( Schema::new_instance(schema_str) );
 
   // create a new schema and fill it 
   AccessGroupSpec *ag_spec = new AccessGroupSpec("default");
@@ -279,7 +279,7 @@ void create_table_write_metadata(ContextPtr &context, TableIdentifier *table) {
     return;
   }
 
-  TableMutatorPtr mutator_ptr = context->metadata_table->create_mutator();
+  TableMutatorPtr mutator_ptr(context->metadata_table->create_mutator());
 
   String metadata_key_str = String(table->id) + ":" + Key::END_ROW_MARKER;
   String start_row;

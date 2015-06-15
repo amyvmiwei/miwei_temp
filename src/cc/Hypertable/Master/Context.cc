@@ -72,7 +72,7 @@ Context::Context(PropertiesPtr &p, Hyperspace::SessionPtr hs) : props(p), hypers
   response_manager = make_unique<ResponseManager>();
   response_manager_thread = make_unique<Thread>(*response_manager);
   dfs = std::make_shared<FsBroker::Lib::Client>(conn_manager, props);
-  rsc_manager = new RangeServerConnectionManager();
+  rsc_manager = make_shared<RangeServerConnectionManager>();
   metrics_handler = std::make_shared<MetricsHandler>(props);
   metrics_handler->start_collecting();
 
@@ -80,7 +80,7 @@ Context::Context(PropertiesPtr &p, Hyperspace::SessionPtr hs) : props(p), hypers
   app_queue = make_shared<ApplicationQueue>(worker_count);
 
   if (hyperspace) {
-    namemap = new NameIdMapper(hyperspace, toplevel_dir);
+    namemap = make_shared<NameIdMapper>(hyperspace, toplevel_dir);
     master_file = make_unique<HyperspaceMasterFile>(props, hyperspace);
   }
 
@@ -185,23 +185,23 @@ void Context::set_balance_plan_authority(MetaLog::EntityPtr bpa) {
 BalancePlanAuthority *Context::get_balance_plan_authority() {
   ScopedLock lock(mutex);
   if (!m_balance_plan_authority)
-    m_balance_plan_authority = make_shared<BalancePlanAuthority>(this, mml_writer);
+    m_balance_plan_authority = make_shared<BalancePlanAuthority>(shared_from_this(), mml_writer);
   return static_cast<BalancePlanAuthority *>(m_balance_plan_authority.get());
 }
 
 void Context::get_balance_plan_authority(MetaLog::EntityPtr &entity) {
   ScopedLock lock(mutex);
   if (!m_balance_plan_authority)
-    m_balance_plan_authority = make_shared<BalancePlanAuthority>(this, mml_writer);
+    m_balance_plan_authority = make_shared<BalancePlanAuthority>(shared_from_this(), mml_writer);
   entity = m_balance_plan_authority;
 }
 
-Table* Context::new_table(const std::string &name) {
+TablePtr Context::new_table(const std::string &name) {
   if (!range_locator)
-    range_locator = new RangeLocator(props, conn_manager, hyperspace, request_timeout * 1000);
+    range_locator = make_shared<RangeLocator>(props, conn_manager, hyperspace, request_timeout * 1000);
   ApplicationQueueInterfacePtr aq = app_queue;
-  return new Table(props, range_locator, conn_manager,
-                    hyperspace, aq, namemap, name);
+  return make_shared<Table>(props, range_locator, conn_manager,
+                            hyperspace, aq, namemap, name);
 }
 
 void Context::replay_status(EventPtr &event) {

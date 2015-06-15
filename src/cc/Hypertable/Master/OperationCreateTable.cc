@@ -96,7 +96,7 @@ void OperationCreateTable::execute() {
 
     // Update table/schema generation number
     {
-      SchemaPtr schema = Schema::new_instance(m_params.schema());
+      SchemaPtr schema( Schema::new_instance(m_params.schema()) );
       int64_t generation = get_ts64();
       schema->update_generation(generation);
       m_schema = schema->render_xml(true);

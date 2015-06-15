@@ -28,11 +28,12 @@
 #define Hypertable_Lib_BlockCompressionCodec_h
 
 #include <Common/Error.h>
-#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 
 #include <Hypertable/Lib/BlockHeader.h>
 
+#include <cassert>
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -43,7 +44,7 @@ namespace Hypertable {
   /// @{
 
   /// Abstract base class for block compression codecs.
-  class BlockCompressionCodec : public ReferenceCount {
+  class BlockCompressionCodec {
   public:
 
     /// Enumeration for compression type.
@@ -105,10 +106,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to BlockCompressionCodec
-  typedef boost::intrusive_ptr<BlockCompressionCodec> BlockCompressionCodecPtr;
+  typedef std::shared_ptr<BlockCompressionCodec> BlockCompressionCodecPtr;
 
   /// @}
 
-} // namespace Hypertable
+}
 
 #endif // Hypertable_Lib_BlockCompressionCodec_h

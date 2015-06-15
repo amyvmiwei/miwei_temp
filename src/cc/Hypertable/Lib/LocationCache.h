@@ -19,21 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOCATIONCACHE_H
-#define HYPERTABLE_LOCATIONCACHE_H
+#ifndef Hypertable_Lib_LocationCache_h
+#define Hypertable_Lib_LocationCache_h
+
+#include "RangeLocationInfo.h"
+
+#include <Common/Mutex.h>
+#include <Common/FlyweightString.h>
+#include <Common/InetAddr.h>
+#include <Common/StringExt.h>
 
 #include <cstring>
 #include <ostream>
 #include <map>
 #include <set>
-
-#include "Common/Mutex.h"
-#include "Common/FlyweightString.h"
-#include "Common/InetAddr.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
-
-#include "RangeLocationInfo.h"
 
 namespace Hypertable {
 
@@ -83,7 +82,7 @@ namespace Hypertable {
   /**
    *  This class acts as a cache of Range location information.  It
    */
-  class LocationCache : public ReferenceCount {
+  class LocationCache {
   public:
     /**
      */
@@ -139,9 +138,10 @@ namespace Hypertable {
     FlyweightString m_strings;
   };
 
-  typedef intrusive_ptr<LocationCache> LocationCachePtr;
+  /// Smart pointer to LocationCache
+  typedef std::shared_ptr<LocationCache> LocationCachePtr;
 
-} // namespace Hypertable
+}
 
 
-#endif // HYPERTABLE_LOCATIONCACHE_H
+#endif // Hypertable_Lib_LocationCache_h

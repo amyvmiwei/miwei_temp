@@ -19,10 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_KEYDECOMPRESSORPREFIX_H
-#define HYPERTABLE_KEYDECOMPRESSORPREFIX_H
-
-#include "Common/DynamicBuffer.h"
+#ifndef Hypertable_RangeServer_KeyDecompressorPrefix_h
+#define Hypertable_RangeServer_KeyDecompressorPrefix_h
 
 #include "KeyDecompressor.h"
 
@@ -30,18 +28,17 @@ namespace Hypertable {
 
   class KeyDecompressorPrefix : public KeyDecompressor {
   public:
-    virtual void reset();
-    virtual const uint8_t *add(const uint8_t *ptr);
-    virtual bool less_than(SerializedKey serialized_key);
-    virtual void load(Key &key);
+    void reset() override;
+    const uint8_t *add(const uint8_t *ptr) override;
+    bool less_than(SerializedKey serialized_key) override;
+    void load(Key &key) override;
   private:
     SerializedKey m_serialized_key;
     DynamicBuffer m_bufs[2];
     const uint8_t *m_current_base;
     bool m_first;
   };
-  typedef intrusive_ptr<KeyDecompressorPrefix> KeyDecompressorPrefixPtr;
 
 }
 
-#endif // HYPERTABLE_KEYDECOMPRESSORPREFIX_H
+#endif // Hypertable_RangeServer_KeyDecompressorPrefix_h

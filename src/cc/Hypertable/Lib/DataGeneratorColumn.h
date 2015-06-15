@@ -19,8 +19,18 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_DATAGENERATORCOLUMN_H
-#define HYPERTABLE_DATAGENERATORCOLUMN_H
+#ifndef Hypertable_Lib_DataGeneratorColumn_h
+#define Hypertable_Lib_DataGeneratorColumn_h
+
+#include "Cell.h"
+#include "DataGeneratorRowComponent.h"
+#include "DataGeneratorQualifier.h"
+
+#include <Common/Config.h>
+#include <Common/FileUtils.h>
+#include <Common/Random.h>
+#include <Common/String.h>
+#include <Common/WordStream.h>
 
 #include <iostream>
 #include <iterator>
@@ -31,16 +41,6 @@ extern "C" {
 #include <limits.h>
 #include <stdlib.h>
 }
-
-#include "Common/Config.h"
-#include "Common/FileUtils.h"
-#include "Common/Random.h"
-#include "Common/String.h"
-#include "Common/WordStream.h"
-
-#include "Cell.h"
-#include "DataGeneratorRowComponent.h"
-#include "DataGeneratorQualifier.h"
 
 using namespace Hypertable::Config;
 using namespace std;
@@ -94,7 +94,7 @@ namespace Hypertable {
           HT_FATAL("Source file not specified for word stream");
         if (size == -1)
           HT_FATAL("Size not specified for word stream");
-        m_word_stream = new WordStream(s, seed, size, order == RANDOM);
+        m_word_stream = make_shared<WordStream>(s, seed, size, order == RANDOM);
       }
       else {
 
@@ -250,4 +250,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_DATAGENERATORCOLUMN_H
+#endif // Hypertable_Lib_DataGeneratorColumn_h

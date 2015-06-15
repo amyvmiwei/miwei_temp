@@ -19,42 +19,37 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
-#include <cstdlib>
-
-extern "C" {
-#include <poll.h>
-}
-
-#include <boost/algorithm/string.hpp>
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/ScopeGuard.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/Timer.h"
-
-#include "Hyperspace/DirEntry.h"
-#include "Hypertable/Lib/Config.h"
-#include <Hypertable/Lib/TableIdentifier.h>
+#include <Common/Compat.h>
 
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
 
+#include <Hyperspace/DirEntry.h>
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/TableIdentifier.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/ScopeGuard.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+#include <Common/Timer.h>
+
+#include <boost/algorithm/string.hpp>
+
+#include <cassert>
+#include <cstdlib>
 #include <memory>
 
 using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Config;
-
 
 Namespace::Namespace(const string &name, const string &id, PropertiesPtr &props,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
@@ -118,7 +113,7 @@ void Namespace::create_table(const string &table_name, const string &schema_str)
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
 
   // Parse and validate schema
-  SchemaPtr schema = Schema::new_instance(schema_str);
+  SchemaPtr schema( Schema::new_instance(schema_str) );
 
   string full_name = get_full_name(table_name);
   m_master_client->create_table(full_name, schema_str);
@@ -151,7 +146,7 @@ void Namespace::alter_table(const string &table_name, const string &schema_str, 
   if (name.size() && name[0]=='^')
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
   string full_name = get_full_name(table_name);
-  SchemaPtr schema = Schema::new_instance(schema_str);
+  SchemaPtr schema( Schema::new_instance(schema_str) );
   m_master_client->alter_table(full_name, schema_str, force);
 }
 
@@ -178,8 +173,8 @@ TablePtr Namespace::open_table(const string &table_name, int32_t flags) {
 TablePtr Namespace::_open_table(const string &full_name, int32_t flags) {
   TablePtr t;
   if (flags & Table::OPEN_FLAG_BYPASS_TABLE_CACHE)
-    t=new Table(m_props, m_range_locator, m_conn_manager, m_hyperspace,
-                     m_app_queue, m_namemap, full_name, flags, m_timeout_ms);
+    t = make_shared<Table>(m_props, m_range_locator, m_conn_manager, m_hyperspace,
+                           m_app_queue, m_namemap, full_name, flags, m_timeout_ms);
   else
     t=m_table_cache->get_unlocked(full_name, flags);
   t->set_namespace(this);
@@ -299,7 +294,7 @@ void Namespace::rebuild_indices(const std::string &table_name,
     TablePtr table = open_table(table_name);
     ScanSpec scan_spec;
     scan_spec.rebuild_indices = table_parts;
-    TableScannerPtr scanner = table->create_scanner(scan_spec);
+    TableScannerPtr scanner( table->create_scanner(scan_spec) );
     Cell cell;
     while (scanner->next(cell))
       HT_ASSERT(!"Rebuild index scan returned a cell");
@@ -321,7 +316,6 @@ void Namespace::get_table_splits(const string &table_name, TableSplitsContainer 
   TablePtr table;
   TableIdentifierManaged tid;
   SchemaPtr schema;
-  TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
   Cell cell;
   string str;
@@ -360,7 +354,7 @@ void Namespace::get_table_splits(const string &table_name, TableSplitsContainer 
   ri.end = end_row.get();
   scan_spec.row_intervals.push_back(ri);
 
-  scanner_ptr = table->create_scanner(scan_spec);
+  TableScannerPtr scanner_ptr( table->create_scanner(scan_spec) );
 
   m_comm->get_proxy_map(proxy_map);
 

@@ -61,7 +61,7 @@ namespace FsBroker {
   public:
     OpenFileDataMaprPtr() : OpenFileDataPtr() { }
     OpenFileDataMaprPtr(OpenFileDataMapr *ofdl)
-      : OpenFileDataPtr(ofdl, true) { }
+      : OpenFileDataPtr(ofdl) { }
     OpenFileDataMapr *operator->() const {
       return (OpenFileDataMapr *)get();
     }

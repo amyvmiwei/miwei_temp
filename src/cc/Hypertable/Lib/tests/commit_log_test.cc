@@ -160,7 +160,7 @@ namespace {
     write_entries(log, 20, &sum_written, 0);
     delete log;
 
-    log_reader_ptr = new CommitLogReader(fs, fname);
+    log_reader_ptr = make_shared<CommitLogReader>(fs, fname);
     read_entries(log_reader_ptr.get(), &sum_read);
 
     /**
@@ -187,13 +187,13 @@ namespace {
 
     // Open "b", read it, and link it into "a"
     fname = log_dir + "/b";
-    log_reader_ptr = new CommitLogReader(fs, fname);
+    log_reader_ptr = make_shared<CommitLogReader>(fs, fname);
     read_entries(log_reader_ptr.get(), &sum_read);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
 
     // Open "d", read it, and link it into "a"
     fname = log_dir + "/d";
-    log_reader_ptr = new CommitLogReader(fs, fname);
+    log_reader_ptr = make_shared<CommitLogReader>(fs, fname);
     read_entries(log_reader_ptr.get(), &sum_read);
     write_entries(log, 20, &sum_written, log_reader_ptr.get());
 
@@ -201,7 +201,7 @@ namespace {
 
     sum_read = 0;
     fname = log_dir + "/a";
-    log_reader_ptr = new CommitLogReader(fs, fname);
+    log_reader_ptr = make_shared<CommitLogReader>(fs, fname);
     read_entries(log_reader_ptr.get(), &sum_read);
 
     HT_ASSERT(sum_read == sum_written);

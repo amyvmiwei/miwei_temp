@@ -58,7 +58,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
                          SchemaPtr &schema, AccessGroupSpec *ag_spec,
                          const RangeSpec *range, const Hints *hints)
   : m_identifier(*identifier), m_schema(schema), m_name(ag_spec->get_name()),
-    m_cell_cache_manager {new CellCacheManager()},
+    m_cell_cache_manager {make_shared<CellCacheManager>()},
     m_file_tracker(identifier, schema, range, ag_spec->get_name()),
     m_garbage_tracker(Config::properties, m_cell_cache_manager, ag_spec) {
 
@@ -105,7 +105,7 @@ void AccessGroup::update_schema(SchemaPtr &schema,
 
     m_garbage_tracker.update_schema(ag_spec);
 
-    m_cellstore_props = new Properties();
+    m_cellstore_props = make_shared<Properties>();
     m_cellstore_props->set("compressor", ag_spec->get_option_compressor());
     m_cellstore_props->set("blocksize", ag_spec->get_option_blocksize());
     if (ag_spec->get_option_replication() != -1)
@@ -184,11 +184,11 @@ void AccessGroup::add(const Key &key, const ByteString value) {
 }
 
 
-MergeScannerAccessGroup *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
-  uint32_t flags = (scan_context->spec && scan_context->spec->return_deletes) ?
+MergeScannerAccessGroup *AccessGroup::create_scanner(ScanContext *scan_ctx) {
+  uint32_t flags = (scan_ctx->spec && scan_ctx->spec->return_deletes) ?
     MergeScannerAccessGroup::RETURN_DELETES : 0;
   MergeScannerAccessGroup *scanner = 
-    new MergeScannerAccessGroup(m_table_name, scan_context,
+    new MergeScannerAccessGroup(m_table_name, scan_ctx,
                                 flags | MergeScannerAccessGroup::ACCUMULATE_COUNTERS);
 
   CellStoreReleaseCallback callback(this);
@@ -202,15 +202,15 @@ MergeScannerAccessGroup *AccessGroup::create_scanner(ScanContextPtr &scan_contex
     ScopedLock lock(m_mutex);
     uint64_t initial_bytes_read;
 
-    m_cell_cache_manager->add_scanners(scanner, scan_context);
+    m_cell_cache_manager->add_scanners(scanner, scan_ctx);
 
     if (!m_in_memory) {
       bool bloom_filter_disabled;
 
       for (size_t i=0; i<m_stores.size(); ++i) {
 
-        if (scan_context->time_interval.first > m_stores[i].timestamp_max ||
-            scan_context->time_interval.second < m_stores[i].timestamp_min)
+        if (scan_ctx->time_interval.first > m_stores[i].timestamp_max ||
+            scan_ctx->time_interval.second < m_stores[i].timestamp_min)
           continue;
 
         bloom_filter_disabled = boost::any_cast<uint8_t>(m_stores[i].cs->get_trailer()->get("bloom_filter_mode")) == BLOOM_FILTER_DISABLED;
@@ -220,26 +220,26 @@ MergeScannerAccessGroup *AccessGroup::create_scanner(ScanContextPtr &scan_contex
         // Query bloomfilter only if it is enabled and a start row has been specified
         // (ie query is not something like select bar from foo;)
         if (bloom_filter_disabled ||
-            !scan_context->single_row ||
-            scan_context->start_row == "") {
+            !scan_ctx->single_row ||
+            scan_ctx->start_row == "") {
           if (m_stores[i].shadow_cache) {
-            scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_context));
+            scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_ctx));
             m_stores[i].shadow_cache_hits++;
           }
           else
-            scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+            scanner->add_scanner(m_stores[i].cs->create_scanner(scan_ctx));
           callback.add_file(m_stores[i].cs->get_filename());
         }
         else {
           m_stores[i].bloom_filter_accesses++;
-          if (m_stores[i].cs->may_contain(scan_context)) {
+          if (m_stores[i].cs->may_contain(scan_ctx)) {
             m_stores[i].bloom_filter_maybes++;
             if (m_stores[i].shadow_cache) {
-              scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_context));
+              scanner->add_scanner(m_stores[i].shadow_cache->create_scanner(scan_ctx));
               m_stores[i].shadow_cache_hits++;
             }
             else
-              scanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+              scanner->add_scanner(m_stores[i].cs->create_scanner(scan_ctx));
             callback.add_file(m_stores[i].cs->get_filename());
           }
         }
@@ -265,11 +265,11 @@ MergeScannerAccessGroup *AccessGroup::create_scanner(ScanContextPtr &scan_contex
   return scanner;
 }
 
-bool AccessGroup::include_in_scan(ScanContextPtr &scan_context) {
+bool AccessGroup::include_in_scan(ScanContext *scan_ctx) {
   ScopedLock lock(m_schema_mutex);
   for (set<uint8_t>::iterator iter = m_column_families.begin();
        iter != m_column_families.end(); ++iter) {
-    if (scan_context->family_mask[*iter])
+    if (scan_ctx->family_mask[*iter])
       return true;
   }
   return false;
@@ -443,8 +443,8 @@ void AccessGroup::load_cellstore(CellStorePtr &cellstore) {
 
   if (m_in_memory) {
     HT_ASSERT(m_stores.empty());
-    ScanContextPtr scan_context = new ScanContext(m_schema);
-    CellListScannerPtr scanner = cellstore->create_scanner(scan_context);
+    ScanContextPtr scan_ctx = make_shared<ScanContext>(m_schema);
+    CellListScannerPtr scanner = cellstore->create_scanner(scan_ctx.get());
     m_cell_cache_manager->add(scanner);
   }
 
@@ -456,14 +456,14 @@ void AccessGroup::load_cellstore(CellStorePtr &cellstore) {
 }
 
 void AccessGroup::measure_garbage(double *total, double *garbage) {
-  ScanContextPtr scan_context = new ScanContext(m_schema);
+  ScanContextPtr scan_ctx = make_shared<ScanContext>(m_schema);
   MergeScannerAccessGroupPtr mscanner 
-    = make_shared<MergeScannerAccessGroup>(m_table_name, scan_context);
+    = make_shared<MergeScannerAccessGroup>(m_table_name, scan_ctx.get());
   ByteString value;
   Key key;
 
-  CellListScanner *immutable_scanner =
-    m_cell_cache_manager->create_immutable_scanner(scan_context);
+  CellListScannerPtr immutable_scanner =
+    m_cell_cache_manager->create_immutable_scanner(scan_ctx.get());
 
   if (immutable_scanner)
     mscanner->add_scanner(immutable_scanner);
@@ -471,7 +471,7 @@ void AccessGroup::measure_garbage(double *total, double *garbage) {
   if (!m_in_memory) {
     for (size_t i=0; i<m_stores.size(); i++) {
       HT_ASSERT(m_stores[i].cs);
-      mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+      mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_ctx.get()));
     }
   }
 
@@ -576,10 +576,11 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
     int64_t max_num_entries {};
     CellListScannerPtr scanner;
     MergeScannerAccessGroupPtr mscanner;
+    ScanContextPtr scan_ctx;
 
     {
       ScopedLock lock(m_mutex);
-      ScanContextPtr scan_context = new ScanContext(m_schema);
+      scan_ctx = make_shared<ScanContext>(m_schema);
 
       cs_file = format("%s/tables/%s/%s/%s/cs%d",
                        Global::toplevel_dir.c_str(),
@@ -614,51 +615,51 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         }
       }
 
-      cellstore = new CellStoreV7(Global::dfs.get(), m_schema.get());
+      cellstore = make_shared<CellStoreV7>(Global::dfs.get(), m_schema);
 
       max_num_entries = m_cell_cache_manager->immutable_items();
 
       if (m_in_memory) {
-        mscanner = make_shared<MergeScannerAccessGroup>(m_table_name, scan_context,
+        mscanner = make_shared<MergeScannerAccessGroup>(m_table_name, scan_ctx.get(),
                                                         MergeScannerAccessGroup::IS_COMPACTION |
                                                         MergeScannerAccessGroup::ACCUMULATE_COUNTERS);
-        m_cell_cache_manager->add_immutable_scanner(mscanner.get(), scan_context);
-        filtered_cache = new CellCache();
+        m_cell_cache_manager->add_immutable_scanner(mscanner.get(), scan_ctx.get());
+        filtered_cache = make_shared<CellCache>();
       }
       else if (merging) {
-        mscanner = make_shared<MergeScannerAccessGroup>(m_table_name, scan_context,
+        mscanner = make_shared<MergeScannerAccessGroup>(m_table_name, scan_ctx.get(),
                                                              MergeScannerAccessGroup::IS_COMPACTION |
                                                              MergeScannerAccessGroup::RETURN_DELETES);
         // If we're merging up to the end of the vector of stores, add in the cell cache
         if (m_end_merge) {
           HT_ASSERT((merge_offset + merge_length) == m_stores.size());
-          m_cell_cache_manager->add_immutable_scanner(mscanner.get(), scan_context);
+          m_cell_cache_manager->add_immutable_scanner(mscanner.get(), scan_ctx.get());
         }
         else
           max_num_entries = 0;
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
           HT_ASSERT(m_stores[i].cs);
-          mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+          mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_ctx.get()));
           int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV7::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
       }
       else if (major) {
-        mscanner = make_shared<MergeScannerAccessGroup>(m_table_name, scan_context, 
+        mscanner = make_shared<MergeScannerAccessGroup>(m_table_name, scan_ctx.get(), 
                                                         MergeScannerAccessGroup::IS_COMPACTION |
                                                         MergeScannerAccessGroup::ACCUMULATE_COUNTERS);
-        m_cell_cache_manager->add_immutable_scanner(mscanner.get(), scan_context);
+        m_cell_cache_manager->add_immutable_scanner(mscanner.get(), scan_ctx.get());
         for (size_t i=0; i<m_stores.size(); i++) {
           HT_ASSERT(m_stores[i].cs);
-          mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+          mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_ctx.get()));
           int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV7::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
       }
       else {
-        scanner = m_cell_cache_manager->create_immutable_scanner(scan_context);
+        scanner = m_cell_cache_manager->create_immutable_scanner(scan_ctx.get());
         HT_ASSERT(scanner);
       }
     }
@@ -865,7 +866,7 @@ String AccessGroup::describe() {
 
 void AccessGroup::purge_stored_cells_from_cache() {
   ScopedLock lock(m_mutex);
-  ScanContextPtr scan_context = new ScanContext(m_schema);
+  ScanContextPtr scan_ctx = make_shared<ScanContext>(m_schema);
   Key key;
   ByteString value;
 
@@ -873,11 +874,11 @@ void AccessGroup::purge_stored_cells_from_cache() {
   m_earliest_cached_revision = TIMESTAMP_MAX;
 
   CellCachePtr old_cell_cache = m_cell_cache_manager->active_cache();
-  m_cell_cache_manager->install_new_active_cache(new CellCache());
+  m_cell_cache_manager->install_new_active_cache(make_shared<CellCache>());
   
   Locker<CellCacheManager> ccm_lock(*m_cell_cache_manager);
   
-  CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_context);
+  CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_ctx.get());
 
   m_recovering = true;
   while (old_scanner->get(key, value)) {
@@ -897,11 +898,11 @@ void AccessGroup::purge_stored_cells_from_cache() {
 void
 AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
   ScopedLock lock(m_mutex);
-  ScanContextPtr scan_context = new ScanContext(m_schema);
+  ScanContextPtr scan_ctx = make_shared<ScanContext>(m_schema);
   ByteString key;
   ByteString value;
   Key key_comps;
-  CellStore *new_cell_store;
+  CellStorePtr new_cell_store;
   int cmp;
 
   hints->ag_name = m_name;
@@ -928,11 +929,11 @@ AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
 
     m_file_tracker.change_range(m_start_row, m_end_row);
 
-    m_cell_cache_manager->install_new_active_cache(new CellCache());
+    m_cell_cache_manager->install_new_active_cache(make_shared<CellCache>());
     {
       Locker<CellCacheManager> ccm_lock(*m_cell_cache_manager);
 
-      CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_context);
+      CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_ctx.get());
 
       /**
        * Shrink the CellCache

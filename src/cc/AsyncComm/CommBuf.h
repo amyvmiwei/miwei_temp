@@ -26,21 +26,21 @@
  */
 
 
-#ifndef AsyncComm_COMMBUF_H
-#define AsyncComm_COMMBUF_H
+#ifndef AsyncComm_CommBuf_h
+#define AsyncComm_CommBuf_h
 
-#include <string>
+#include "CommHeader.h"
+
+#include <Common/ByteString.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
+#include <Common/StaticBuffer.h>
 
 #include <boost/shared_array.hpp>
 
-#include "Common/ByteString.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Serialization.h"
-#include "Common/StaticBuffer.h"
-
-#include "CommHeader.h"
+#include <memory>
+#include <string>
 
 namespace Hypertable {
 
@@ -76,7 +76,7 @@ namespace Hypertable {
    * </pre>
    *
    */
-  class CommBuf : public ReferenceCount {
+  class CommBuf {
   public:
 
     /** Constructor.  This constructor initializes the CommBuf object by
@@ -302,9 +302,9 @@ namespace Hypertable {
   };
 
   /// Smart pointer to CommBuf
-  typedef intrusive_ptr<CommBuf> CommBufPtr;
+  typedef std::shared_ptr<CommBuf> CommBufPtr;
   /** @}*/
 } // namespace Hypertable
 
 
-#endif // AsyncComm_COMMBUF_H
+#endif // AsyncComm_CommBuf_h

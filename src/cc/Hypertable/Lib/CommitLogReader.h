@@ -24,8 +24,8 @@
 /// This file contains declarations for CommitLogReader, a class for
 /// sequentially reading a commit log.
 
-#ifndef HYPERTABLE_COMMITLOGREADER_H
-#define HYPERTABLE_COMMITLOGREADER_H
+#ifndef Hypertable_Lib_CommitLogReader_h
+#define Hypertable_Lib_CommitLogReader_h
 
 #include <Hypertable/Lib/BlockCompressionCodec.h>
 #include <Hypertable/Lib/BlockHeaderCommitLog.h>
@@ -34,11 +34,11 @@
 #include <Hypertable/Lib/Key.h>
 
 #include <Common/Filesystem.h>
-#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 
 #include <boost/thread/mutex.hpp>
 
+#include <memory>
 #include <stack>
 #include <unordered_map>
 #include <vector>
@@ -98,7 +98,7 @@ namespace Hypertable {
 
     CompressorMap          m_compressor_map;
     uint16_t               m_compressor_type {};
-    BlockCompressionCodec *m_compressor {};
+    BlockCompressionCodecPtr m_compressor;
     std::set<uint32_t>     m_fragment_filter;
     std::vector<int32_t>  m_init_fragments;
     std::map<uint32_t, uint32_t> m_error_map;
@@ -109,11 +109,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to CommitLogReader
-  typedef intrusive_ptr<CommitLogReader> CommitLogReaderPtr;
+  typedef std::shared_ptr<CommitLogReader> CommitLogReaderPtr;
 
   /// @}
+}
 
-} // namespace Hypertable
-
-#endif // HYPERTABLE_COMMITLOGREADER_H
+#endif // Hypertable_Lib_CommitLogReader_h
 

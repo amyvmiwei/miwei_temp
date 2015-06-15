@@ -165,7 +165,7 @@ namespace {
     }
   }
 
-  Hyperspace::Session *hyperspace;
+  Hyperspace::SessionPtr hyperspace;
 
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
     HT_DEBUG_OUT << "Checking hyperspace"<< HT_END;
@@ -186,7 +186,7 @@ namespace {
       quick_exit(EXIT_SUCCESS);
     }
 
-    hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
+    hyperspace = make_shared<Hyperspace::Session>(conn_mgr->get_comm(), properties);
 
     if (!hyperspace->wait_for_connection(max_wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
@@ -213,20 +213,19 @@ namespace {
     }
 
     if (!hyperspace) {
-      hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
+      hyperspace = make_shared<Hyperspace::Session>(conn_mgr->get_comm(), properties);
       if (!hyperspace->wait_for_connection(wait_ms))
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
     }
 
     ApplicationQueueInterfacePtr app_queue = make_shared<ApplicationQueue>(1);
-    Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
 
     String toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(toplevel_dir, boost::is_any_of("/"));
     toplevel_dir = String("/") + toplevel_dir;
 
     Lib::Master::Client *master =
-      new Lib::Master::Client(conn_mgr, hyperspace_ptr,
+      new Lib::Master::Client(conn_mgr, hyperspace,
                               toplevel_dir, wait_ms, app_queue,
                               DispatchHandlerPtr(), ConnectionInitializerPtr());
 

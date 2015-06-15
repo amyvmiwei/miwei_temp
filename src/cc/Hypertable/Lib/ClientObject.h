@@ -25,10 +25,10 @@
  * client objects (e.g. scanner, mutator, ...).
  */
 
-#ifndef HYPERTABLE_CLIENTOBJECT_H
-#define HYPERTABLE_CLIENTOBJECT_H
+#ifndef Hypertable_Lib_ClientObject_h
+#define Hypertable_Lib_ClientObject_h
 
-#include "Common/ReferenceCount.h"
+#include <memory>
 
 namespace Hypertable {
 
@@ -41,16 +41,16 @@ namespace Hypertable {
    * are derived from this class which allows applications to create generic
    * containers to hold heterogenous client objects.
    */
-  class ClientObject : public ReferenceCount {
+  class ClientObject {
   public:
     /** Destructor. */
     virtual ~ClientObject() { }
   };
 
   /// Smart pointer to ClientObject
-  typedef intrusive_ptr<ClientObject> ClientObjectPtr;
+  typedef std::shared_ptr<ClientObject> ClientObjectPtr;
 
   /** @} */
 }
 
-#endif // HYPERTABLE_CLIENTOBJECT_H
+#endif // Hypertable_Lib_ClientObject_h

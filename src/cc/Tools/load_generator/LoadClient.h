@@ -19,16 +19,30 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOAD_GENERATOR_CLIENT
-#define HYPERTABLE_LOAD_GENERATOR_CLIENT
+#ifndef Tools_load_generator_LoadClient_h
+#define Tools_load_generator_LoadClient_h
 
-#include "Common/Compat.h"
-#include "Common/ReferenceCount.h"
+#include <Common/Compat.h>
+
+#ifdef HT_WITH_THRIFT
+#include <ThriftBroker/Client.h>
+#include <ThriftBroker/Config.h>
+#include <ThriftBroker/ThriftHelper.h>
+#endif
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Config.h>
+
+#include <Common/String.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/shared_array.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <cstdio>
 #include <cmath>
+#include <memory>
 
 extern "C" {
 #include <poll.h>
@@ -36,26 +50,12 @@ extern "C" {
 #include <time.h>
 }
 
-#include <boost/algorithm/string.hpp>
-#include <boost/shared_array.hpp>
-
-#include "Common/String.h"
-
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/Config.h"
-
-#ifdef HT_WITH_THRIFT
-#include "ThriftBroker/Client.h"
-#include "ThriftBroker/Config.h"
-#include "ThriftBroker/ThriftHelper.h"
-#endif
-
 using namespace Hypertable;
 using namespace Hypertable::Config;
 using namespace std;
 using namespace boost;
 
-class LoadClient : public ReferenceCount {
+class LoadClient {
   public:
     LoadClient(const String &config_file, bool thrift=false);
     LoadClient(bool thrift=false);
@@ -96,5 +96,6 @@ class LoadClient : public ReferenceCount {
 #endif
 };
 
-typedef intrusive_ptr<LoadClient> LoadClientPtr;
-#endif // LoadClient
+typedef std::shared_ptr<LoadClient> LoadClientPtr;
+
+#endif // Tools_load_generator_LoadClient_h

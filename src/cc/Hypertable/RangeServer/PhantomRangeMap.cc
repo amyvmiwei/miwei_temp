@@ -31,7 +31,7 @@ using namespace Hypertable;
 
 PhantomRangeMap::PhantomRangeMap(int plan_generation) : 
   m_plan_generation(plan_generation), m_state(0) {
-  m_tableinfo_map = new TableInfoMap();
+  m_tableinfo_map = make_shared<TableInfoMap>();
 }
 
 void PhantomRangeMap::reset(int plan_generation) {
@@ -49,7 +49,7 @@ void PhantomRangeMap::insert(const QualifiedRangeSpec &spec,
     QualifiedRangeSpec copied_spec(m_arena, spec);
     RangeState copied_state(m_arena, state);
     m_map[copied_spec] =
-      new PhantomRange(copied_spec, copied_state, schema, fragments);
+      make_shared<PhantomRange>(copied_spec, copied_state, schema, fragments);
   }
 }
 

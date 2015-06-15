@@ -35,7 +35,7 @@ namespace {
 
 void check_results(Table *table) {
   ScanSpec ss;
-  TableScannerPtr scanner = table->create_scanner(ss);
+  TableScannerPtr scanner(table->create_scanner(ss));
   CellsBuilder cb;
 
   copy(scanner, cb);
@@ -46,14 +46,14 @@ void check_results(Table *table) {
 }
 
 void default_test(Table *table)  {
-  TableMutatorPtr mutator = table->create_mutator(0, 0, 500);
+  TableMutatorPtr mutator(table->create_mutator(0, 0, 500));
   mutator->set(KeySpec("rowkey", "col", "cq"), "value");
   sleep(2);
   check_results(table);
 }
 
 void no_log_sync_test(Table *table) {
-  TableMutatorPtr mutator = table->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC, 500);
+  TableMutatorPtr mutator(table->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC, 500));
   mutator->set_delete(KeySpec("rowkey", "col", AUTO_ASSIGN, FLAG_DELETE_COLUMN_FAMILY));
   mutator->set(KeySpec("rowkey", "col", "cq"), "value");
   sleep(2);
@@ -61,7 +61,7 @@ void no_log_sync_test(Table *table) {
 }
 
 void cells_builder_test(Table *table)  {
-  TableMutatorPtr mutator = table->create_mutator();
+  TableMutatorPtr mutator(table->create_mutator());
   mutator->set(KeySpec("1", "col", "cq"), "value1");
   mutator->set(KeySpec("2", "col", ""), "value2");
   mutator->set(KeySpec("3", "col2", "tag"), "value2");
@@ -69,7 +69,7 @@ void cells_builder_test(Table *table)  {
   mutator->flush();
 
   ScanSpec ss;
-  TableScannerPtr scanner = table->create_scanner(ss);
+  TableScannerPtr scanner(table->create_scanner(ss));
   CellsBuilder cb;
   copy(scanner, cb);
 
@@ -84,7 +84,7 @@ void cells_builder_test(Table *table)  {
 
   // clear, scan and check again
   cb.clear();
-  scanner = table->create_scanner(ss);
+  scanner.reset(table->create_scanner(ss));
   copy(scanner, cb);
 
   {
@@ -106,7 +106,7 @@ void cells_builder_test(Table *table)  {
 
   // clear, scan and check again
   cb.clear();
-  scanner = table->create_scanner(ss);
+  scanner.reset(table->create_scanner(ss));
   copy(scanner, cb);
 
  HT_ASSERT(cb.get().size() == 0);
@@ -119,9 +119,9 @@ int main(int argc, char *argv[]) {
   try {
     init_with_policy<DefaultClientPolicy>(argc, argv);
 
-    ClientPtr client = new Hypertable::Client();
+    ClientPtr client = make_shared<Hypertable::Client>();
     NamespacePtr ns = client->open_namespace("/");
-    HqlInterpreterPtr hql = client->create_hql_interpreter();
+    HqlInterpreterPtr hql(client->create_hql_interpreter());
 
     hql->execute("use '/'");
     hql->execute("drop table if exists periodic_flush_test");

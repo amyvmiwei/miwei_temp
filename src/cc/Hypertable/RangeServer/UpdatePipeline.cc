@@ -50,7 +50,7 @@ using namespace Hypertable::RangeServer;
 using namespace std;
 
 UpdatePipeline::UpdatePipeline(ContextPtr &context, QueryCachePtr &query_cache,
-                               TimerHandlerPtr &timer_handler, CommitLog *log,
+                               TimerHandlerPtr &timer_handler, CommitLogPtr &log,
                                Filesystem::Flags flags) :
   m_context(context), m_query_cache(query_cache),
   m_timer_handler(timer_handler), m_log(log), m_flags(flags) {

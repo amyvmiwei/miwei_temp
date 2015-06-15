@@ -24,11 +24,11 @@
  * configuration policies and usage strings.
  */
 
-#ifndef HYPERTABLE_INIT_H
-#define HYPERTABLE_INIT_H
+#ifndef Common_Init_h
+#define Common_Init_h
 
-#include "Common/Config.h"
-#include "Common/System.h"
+#include <Common/Config.h>
+#include <Common/System.h>
 
 namespace Hypertable { namespace Config {
 
@@ -55,7 +55,7 @@ namespace Hypertable { namespace Config {
       System::initialize();
 
       ScopedRecLock lock(rec_mutex);
-      properties = new Properties();
+      properties = std::make_shared<Properties>();
 
       if (desc)
         cmdline_desc(*desc);
@@ -98,6 +98,6 @@ namespace Hypertable { namespace Config {
 
   /** @} */
 
-}} // namespace Hypertable::Config
+}}
 
-#endif /* HYPERTABLE_INIT_H */
+#endif /* Common_Init_h */

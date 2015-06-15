@@ -24,23 +24,23 @@
 /// This file contains declarations for CommitLog, a class for creating and
 /// appending entries to an edit log.
 
-#ifndef HYPERTABLE_COMMITLOG_H
-#define HYPERTABLE_COMMITLOG_H
-
-#include <Common/DynamicBuffer.h>
-#include <Common/ReferenceCount.h>
-#include <Common/String.h>
-#include <Common/Properties.h>
-#include <Common/Filesystem.h>
+#ifndef Hypertable_Lib_CommitLog_h
+#define Hypertable_Lib_CommitLog_h
 
 #include <Hypertable/Lib/BlockCompressionCodec.h>
 #include <Hypertable/Lib/CommitLogBase.h>
 #include <Hypertable/Lib/CommitLogBlockStream.h>
 
+#include <Common/DynamicBuffer.h>
+#include <Common/String.h>
+#include <Common/Properties.h>
+#include <Common/Filesystem.h>
+
 #include <boost/thread/xtime.hpp>
 
 #include <deque>
 #include <map>
+#include <memory>
 #include <stack>
 
 namespace Hypertable {
@@ -211,7 +211,7 @@ namespace Hypertable {
 
     FilesystemPtr           m_fs;
     std::set<CommitLogFileInfo *> m_reap_set;
-    BlockCompressionCodec  *m_compressor;
+    std::unique_ptr<BlockCompressionCodec> m_compressor;
     std::string                  m_cur_fragment_fname;
     int64_t                 m_cur_fragment_length;
     int64_t                 m_max_fragment_size;
@@ -222,10 +222,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to CommitLog
-  typedef intrusive_ptr<CommitLog> CommitLogPtr;
+  typedef std::shared_ptr<CommitLog> CommitLogPtr;
 
   /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_COMMITLOG_H
+#endif // Hypertable_Lib_CommitLog_h

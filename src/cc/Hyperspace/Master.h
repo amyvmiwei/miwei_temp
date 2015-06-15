@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_MASTER_H
-#define HYPERSPACE_MASTER_H
+#ifndef Hyperspace_Master_h
+#define Hyperspace_Master_h
 
 #include <Hyperspace/BerkeleyDbFilesystem.h>
 #include <Hyperspace/MetricsHandler.h>
@@ -45,20 +45,20 @@
 
 #include <Common/Mutex.h>
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 #include <Common/SockAddrMap.h>
 #include <Common/Status.h>
 #include <Common/StringExt.h>
 #include <Common/Time.h>
 #include <Common/atomic.h>
 
+#include <memory>
 #include <queue>
 #include <unordered_map>
 #include <vector>
 
 namespace Hyperspace {
 
-  class Master : public ReferenceCount {
+  class Master {
   public:
 
     enum { TIMER_INTERVAL_MS=1000 };
@@ -358,8 +358,8 @@ namespace Hyperspace {
 
   };
 
-  typedef boost::intrusive_ptr<Master> MasterPtr;
+  typedef std::shared_ptr<Master> MasterPtr;
 
 } // namespace Hyperspace
 
-#endif // HYPERSPACE_MASTER_H
+#endif // Hyperspace_Master_h

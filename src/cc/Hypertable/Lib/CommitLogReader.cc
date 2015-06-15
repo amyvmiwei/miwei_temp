@@ -314,24 +314,21 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
 }
 
 void CommitLogReader::load_compressor(uint16_t ztype) {
-  BlockCompressionCodecPtr compressor_ptr;
 
-  if (m_compressor != 0 && ztype == m_compressor_type)
+  if (m_compressor && ztype == m_compressor_type)
     return;
 
   if (ztype >= BlockCompressionCodec::COMPRESSION_TYPE_LIMIT)
     HT_THROWF(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE,
               "Invalid compression type '%d'", (int)ztype);
 
-  compressor_ptr = m_compressor_map[ztype];
+  m_compressor = m_compressor_map[ztype];
 
-  if (!compressor_ptr) {
-    compressor_ptr = CompressorFactory::create_block_codec(
-        (BlockCompressionCodec::Type)ztype);
-    m_compressor_map[ztype] = compressor_ptr;
+  if (!m_compressor) {
+    m_compressor.reset(CompressorFactory::create_block_codec((BlockCompressionCodec::Type)ztype));
+    m_compressor_map[ztype] = m_compressor;
   }
 
   m_compressor_type = ztype;
-  m_compressor = compressor_ptr.get();
 }
 

@@ -32,7 +32,6 @@
 
 #include <AsyncComm/ApplicationQueueInterface.h>
 
-#include <Common/ReferenceCount.h>
 #include <Common/Mutex.h>
 
 namespace Hyperspace {
@@ -52,7 +51,7 @@ namespace Hypertable {
   class Namespace;
 
   class Table;
-  typedef intrusive_ptr<Table> TablePtr;
+  typedef std::shared_ptr<Table> TablePtr;
 
   /** Represents an open table.
    */

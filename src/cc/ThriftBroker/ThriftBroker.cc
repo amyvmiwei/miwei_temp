@@ -906,9 +906,9 @@ struct HqlCallback : HqlInterpreter::Callback {
     : result(r), handler(*handler), ns(ns), hql(hql), flush(flush),
       buffered(buffered) { }
 
-  virtual void on_return(const String &);
-  virtual void on_scan(TableScanner &);
-  virtual void on_finish(TableMutator *);
+  void on_return(const std::string &) override;
+  void on_scan(TableScannerPtr &) override;
+  void on_finish(TableMutatorPtr &) override;
 
 };
 
@@ -1205,7 +1205,7 @@ public:
 
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
-      Hypertable::SchemaPtr hschema = new Hypertable::Schema();
+      Hypertable::SchemaPtr hschema = make_shared<Hypertable::Schema>();
       convert_schema(schema, hschema);
       namespace_ptr->create_table(table, hschema);
     } RETHROW("namespace=" << ns << " table="<< table)
@@ -1219,7 +1219,7 @@ public:
 
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
-      Hypertable::SchemaPtr hschema = new Hypertable::Schema();
+      Hypertable::SchemaPtr hschema = make_shared<Hypertable::Schema>();
       convert_schema(schema, hschema);
       namespace_ptr->alter_table(table, hschema, false);
     } RETHROW("namespace=" << ns << " table="<< table)
@@ -1495,7 +1495,7 @@ public:
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                          row.c_str(), true));
       ss.max_versions = 1;
-      TableScannerPtr scanner = t->create_scanner(ss);
+      TableScannerPtr scanner(t->create_scanner(ss));
       _next(result, scanner.get(), INT32_MAX);
       LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, ss);
     } RETHROW("namespace=" << ns << " table="<< table <<" row="<< row)
@@ -1514,7 +1514,7 @@ public:
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                          row.c_str(), true));
       ss.max_versions = 1;
-      TableScannerPtr scanner = t->create_scanner(ss);
+      TableScannerPtr scanner(t->create_scanner(ss));
       _next(result, scanner.get(), INT32_MAX);
       LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, ss);
     } RETHROW("namespace=" << ns << " table="<< table <<" row="<< row)
@@ -1534,7 +1534,7 @@ public:
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                          row.c_str(), true));
       ss.max_versions = 1;
-      TableScannerPtr scanner = t->create_scanner(ss);
+      TableScannerPtr scanner(t->create_scanner(ss));
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -1565,7 +1565,7 @@ public:
       ss.max_versions = 1;
 
       Hypertable::Cell cell;
-      TableScannerPtr scanner = t->create_scanner(ss, 0, true);
+      TableScannerPtr scanner(t->create_scanner(ss, 0, true));
 
       if (scanner->next(cell))
         result = String((char *)cell.value, cell.value_len);
@@ -1586,7 +1586,7 @@ public:
     try {
       Hypertable::ScanSpec hss;
       convert_scan_spec(ss, hss);
-      TableScannerPtr scanner = _open_scanner(ns, table, hss);
+      TableScannerPtr scanner(_open_scanner(ns, table, hss));
       _next(result, scanner.get(), INT32_MAX);
       LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, hss);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
@@ -1601,7 +1601,7 @@ public:
     try {
       Hypertable::ScanSpec hss;
       convert_scan_spec(ss, hss);
-      TableScannerPtr scanner = _open_scanner(ns, table, hss);
+      TableScannerPtr scanner(_open_scanner(ns, table, hss));
       _next(result, scanner.get(), INT32_MAX);
       LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, hss);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
@@ -1617,7 +1617,7 @@ public:
       Hypertable::ScanSpec hss;
       convert_scan_spec(ss, hss);
       SerializedCellsWriter writer(0, true);
-      TableScannerPtr scanner = _open_scanner(ns, table, hss);
+      TableScannerPtr scanner(_open_scanner(ns, table, hss));
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -1891,7 +1891,7 @@ public:
     ThriftGen::Namespace id;
     LOG_API_START("namespace =" << ns);
     try {
-      id = get_cached_object_id( m_context.client->open_namespace(ns) );
+      id = get_cached_object_id( dynamic_pointer_cast<ClientObject>(m_context.client->open_namespace(ns)) );
     } RETHROW("namespace " << ns)
     LOG_API_FINISH_E(" id=" << id);
     return id;
@@ -2067,7 +2067,7 @@ public:
           const ThriftGen::Cell &cell) {
     LOG_API_START("ns=" << ns << " table=" << table << " cell=" << cell);
     try {
-      TableMutatorPtr mutator = _open_mutator(ns, table);
+      TableMutatorPtr mutator(_open_mutator(ns, table));
       CellsBuilder cb;
       Hypertable::Cell hcell;
       convert_cell(cell, hcell);
@@ -2083,7 +2083,7 @@ public:
     LOG_API_START("ns=" << ns << " table=" << table << " cell.size="
             << cells.size());
     try {
-      TableMutatorPtr mutator = _open_mutator(ns, table);
+      TableMutatorPtr mutator(_open_mutator(ns, table));
       Hypertable::Cells hcells;
       convert_cells(cells, hcells);
       mutator->set_cells(hcells);
@@ -2099,7 +2099,7 @@ public:
             << cells.size());
 
     try {
-      TableMutatorPtr mutator = _open_mutator(ns, table);
+      TableMutatorPtr mutator(_open_mutator(ns, table));
       Hypertable::Cells hcells;      
       convert_cells(cells, hcells);
       mutator->set_cells(hcells);
@@ -2115,7 +2115,7 @@ public:
     LOG_API_START("ns=" << ns << " table=" << table << " cell_as_array.size="
             << cell.size());
     try {
-      TableMutatorPtr mutator = _open_mutator(ns, table);
+      TableMutatorPtr mutator(_open_mutator(ns, table));
       CellsBuilder cb;
       Hypertable::Cell hcell;
       convert_cell(cell, hcell);
@@ -2132,7 +2132,7 @@ public:
     LOG_API_START("ns=" << ns << " table=" << table <<
             " cell_serialized.size=" << cells.size() << " flush=" << flush);
     try {
-      TableMutatorPtr mutator = _open_mutator(ns, table);
+      TableMutatorPtr mutator(_open_mutator(ns, table));
       CellsBuilder cb;
       Hypertable::Cell hcell;
       SerializedCellsReader reader((void *)cells.c_str(),
@@ -2652,7 +2652,7 @@ public:
   void run_hql_interp(const ThriftGen::Namespace ns, const String &hql,
           HqlInterpreter::Callback &cb) {
     Hypertable::Namespace *namespace_ptr = get_namespace(ns);
-    HqlInterpreterPtr interp = m_context.client->create_hql_interpreter(true);
+    HqlInterpreterPtr interp(m_context.client->create_hql_interpreter(true));
     interp->set_namespace(namespace_ptr->get_name());
     interp->execute(hql, cb);
   }
@@ -2754,10 +2754,17 @@ public:
     return id;
   }
 
-  int64_t get_object_id(ClientObjectPtr co) {
+  int64_t get_object_id(ClientObject *co) {
     ScopedLock lock(m_mutex);
-    int64_t id = reinterpret_cast<int64_t>(co.get());
-    m_object_map.insert(make_pair(id, co)); // no overwrite
+    int64_t id = reinterpret_cast<int64_t>(co);
+    m_object_map.insert(make_pair(id, ClientObjectPtr(co))); // no overwrite
+    return id;
+  }
+
+  int64_t get_object_id(TableMutatorPtr &mutator) {
+    ScopedLock lock(m_mutex);
+    int64_t id = reinterpret_cast<int64_t>(mutator.get());
+    m_object_map.insert(make_pair(id, static_pointer_cast<ClientObject>(mutator))); // no overwrite
     return id;
   }
 
@@ -2770,7 +2777,15 @@ public:
   int64_t get_scanner_id(TableScanner *scanner, ScannerInfoPtr &info) {
     ScopedLock lock(m_mutex);
     int64_t id = reinterpret_cast<int64_t>(scanner);
-    m_object_map.insert(make_pair(id, scanner));
+    m_object_map.insert(make_pair(id, ClientObjectPtr(scanner)));
+    m_scanner_info_map.insert(make_pair(id, info));
+    return id;
+  }
+
+  int64_t get_scanner_id(TableScannerPtr &scanner, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    int64_t id = reinterpret_cast<int64_t>(scanner.get());
+    m_object_map.insert(make_pair(id, static_pointer_cast<ClientObject>(scanner)));
     m_scanner_info_map.insert(make_pair(id, info));
     return id;
   }
@@ -2778,8 +2793,8 @@ public:
   void add_reference(int64_t from, int64_t to) {
     ScopedLock lock(m_mutex);
     ObjectMap::iterator it = m_object_map.find(to);
-    ClientObject *obj = (it != m_object_map.end()) ? it->second.get() : 0;
-    m_reference_map.insert(make_pair(from, obj));
+    if (it != m_object_map.end())
+      m_reference_map.insert(make_pair(from, it->second));
   }
 
   void remove_references(int64_t id) {
@@ -2989,38 +3004,38 @@ private:
 };
 
 template <class ResultT, class CellT>
-void HqlCallback<ResultT, CellT>::on_return(const String &ret) {
+void HqlCallback<ResultT, CellT>::on_return(const std::string &ret) {
   result.results.push_back(ret);
   result.__isset.results = true;
 }
 
 template <class ResultT, class CellT>
-void HqlCallback<ResultT, CellT>::on_scan(TableScanner &s) {
+void HqlCallback<ResultT, CellT>::on_scan(TableScannerPtr &s) {
   if (buffered) {
     Hypertable::Cell hcell;
     CellT tcell;
 
-    while (s.next(hcell)) {
+    while (s->next(hcell)) {
       convert_cell(hcell, tcell);
       result.cells.push_back(tcell);
     }
     result.__isset.cells = true;
 
     if (g_log_slow_queries)
-      s.get_profile_data(profile_data);
+      s->get_profile_data(profile_data);
 
   }
   else {
     ScannerInfoPtr si = make_shared<ScannerInfo>(ns);
     si->hql = hql;
-    result.scanner = handler.get_scanner_id(&s, si);
+    result.scanner = handler.get_scanner_id(s, si);
     result.__isset.scanner = true;
   }
   is_scan = true;
 }
 
 template <class ResultT, class CellT>
-void HqlCallback<ResultT, CellT>::on_finish(TableMutator *m) {
+void HqlCallback<ResultT, CellT>::on_finish(TableMutatorPtr &m) {
   if (flush) {
     Parent::on_finish(m);
   }

@@ -70,8 +70,6 @@ int main(int argc, char **argv) {
     Client *hypertable = new Client(argv[0], "./hypertable.cfg");
     NamespacePtr ns = hypertable->open_namespace("/");
     TablePtr table_ptr;
-    TableMutatorPtr mutator_ptr;
-    TableScannerPtr scanner_ptr;
     KeySpec key;
     Cell cell;
     const char *value1 = "Hello, World! (1)";
@@ -86,7 +84,7 @@ int main(int argc, char **argv) {
 
     table_ptr = ns->open_table("RowDeleteTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    TableMutatorPtr mutator_ptr(table_ptr->create_mutator());
 
     key.row = "foo";
     key.row_len = strlen("foo");
@@ -116,12 +114,12 @@ int main(int argc, char **argv) {
     mutator_ptr->flush();
     key.clear();
 
-    mutator_ptr = 0;
+    mutator_ptr.reset();
 
     ScanSpec scan_spec;
 
     scan_spec.return_deletes = true;
-    scanner_ptr = table_ptr->create_scanner(scan_spec);
+    TableScannerPtr scanner_ptr(table_ptr->create_scanner(scan_spec));
 
     std::vector<String>  values;
     String result;
@@ -157,8 +155,8 @@ int main(int argc, char **argv) {
       }
     }
 
-    scanner_ptr = 0;
-    table_ptr = 0;
+    scanner_ptr.reset();
+    table_ptr.reset();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

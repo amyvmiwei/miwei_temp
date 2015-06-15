@@ -19,12 +19,10 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METALOGDEFINITIONRANGESERVER_H
-#define HYPERTABLE_METALOGDEFINITIONRANGESERVER_H
+#ifndef Hypertable_RangeServer_MetaLogDefinitionRangeServer_h
+#define Hypertable_RangeServer_MetaLogDefinitionRangeServer_h
 
-#include "Common/ReferenceCount.h"
-
-#include "Hypertable/Lib/MetaLogDefinition.h"
+#include <Hypertable/Lib/MetaLogDefinition.h>
 
 namespace Hypertable {
   namespace MetaLog {
@@ -35,9 +33,8 @@ namespace Hypertable {
       const char *name() override;
       EntityPtr create(const EntityHeader &header) override;
     };
-    typedef intrusive_ptr<DefinitionRangeServer> DefinitionRangeServerPtr;
   }
 
 }
 
-#endif // HYPERTABLE_METALOGDEFINITIONRANGESERVER_H
+#endif // Hypertable_RangeServer_MetaLogDefinitionRangeServer_h

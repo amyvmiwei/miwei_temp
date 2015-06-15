@@ -42,8 +42,7 @@ using namespace Hypertable;
 using namespace std;
 using namespace boost;
 
-
-DiscreteRandomGenerator *
+DiscreteRandomGeneratorPtr
 DiscreteRandomGeneratorFactory::create(const String &spec) {
   vector<String> args;
   String name;
@@ -56,19 +55,19 @@ DiscreteRandomGeneratorFactory::create(const String &spec) {
   }
 
   if (name == "uniform")
-    return new DiscreteRandomGeneratorUniform();
+    return make_shared<DiscreteRandomGeneratorUniform>();
 
   if (name == "zipf") {
     if (args.empty())
-      return new DiscreteRandomGeneratorZipf();
+      return make_shared<DiscreteRandomGeneratorZipf>();
     if (starts_with(args[0], "--s=")) {
       String s_str = args[0].substr(4);
       double s_val;
       s_val = strtod(s_str.c_str(), 0);
-      return new DiscreteRandomGeneratorZipf(s_val);
+      return make_shared<DiscreteRandomGeneratorZipf>(s_val);
     }
   }
 
   HT_FATALF("Unrecognized distribution (%s)", name.c_str());
-  return 0;
+  return DiscreteRandomGeneratorPtr();
 }

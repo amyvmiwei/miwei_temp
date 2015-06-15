@@ -31,7 +31,6 @@
 #include <AsyncComm/Comm.h>
 
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 
 #include <map>
 
@@ -40,7 +39,7 @@ namespace Hypertable {
   using namespace Lib;
   using namespace std;
 
-  class ReplayBuffer : public ReferenceCount {
+  class ReplayBuffer {
   public:
     ReplayBuffer(PropertiesPtr &props, Comm *comm,
                  const RangeServerRecovery::ReceiverPlan &plan, const String &location,
@@ -71,8 +70,6 @@ namespace Hypertable {
     int32_t m_timeout_ms {};
     uint32_t m_fragment {};
   };
-
-  typedef intrusive_ptr<ReplayBuffer> ReplayBufferPtr;
 
 }
 

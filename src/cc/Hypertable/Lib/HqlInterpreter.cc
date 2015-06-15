@@ -159,7 +159,7 @@ cmd_show_create_table(NamespacePtr &ns, ParserState &state,
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   string schema_str = ns->get_schema_str(state.table_name, true);
-  SchemaPtr schema = Schema::new_instance(schema_str);
+  SchemaPtr schema( Schema::new_instance(schema_str) );
   string out_str = schema->render_hql(state.table_name);
   out_str += ";\n";
   cb.on_return(out_str);
@@ -177,7 +177,7 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
     string schema_str;
     if (!FileUtils::read(state.input_file, schema_str))
       HT_THROW(Error::FILE_NOT_FOUND, state.input_file);
-    state.create_schema = Schema::new_instance(schema_str);
+    state.create_schema.reset(Schema::new_instance(schema_str));
   }
   ns->create_table(state.table_name, state.create_schema);
   cb.on_finish();
@@ -198,7 +198,7 @@ cmd_alter_table(NamespacePtr &ns, ParserState &state,
     string schema_str;
     if (!FileUtils::read(state.input_file, schema_str))
       HT_THROW(Error::FILE_NOT_FOUND, state.input_file);
-    state.alter_schema = Schema::new_instance(schema_str);
+    state.alter_schema.reset(Schema::new_instance(schema_str));
     force = true;
   }
 
@@ -236,7 +236,6 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableScannerPtr scanner;
   boost::iostreams::filtering_ostream fout;
   FILE *outf = cb.output;
   int out_fd = -1;
@@ -244,7 +243,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   char fs = state.field_separator ? state.field_separator : '\t';
 
   table = ns->open_table(state.table_name);
-  scanner = table->create_scanner(state.scan.builder.get(), 0, true);
+  TableScannerPtr scanner( table->create_scanner(state.scan.builder.get(), 0, true) );
 
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
@@ -279,7 +278,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
       fout << "row" << fs << "column" << fs << "value\n";
   }
   else if (!outf) {
-    cb.on_scan(*scanner.get());
+    cb.on_scan(scanner);
     return 0;
   }
   else {
@@ -397,7 +396,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
 
   fout.strict_sync();
 
-  cb.on_finish(scanner.get());
+  cb.on_finish(scanner);
   return 0;
 }
 
@@ -417,7 +416,7 @@ cmd_dump_table(NamespacePtr &ns,
 
   // verify parameters
 
-  TableDumperPtr dumper = new TableDumper(ns, state.table_name, state.scan.builder.get());
+  TableDumperPtr dumper = make_shared<TableDumper>(ns, state.table_name, state.scan.builder.get());
 
   // whether it's select into file
   if (!state.scan.outfile.empty()) {
@@ -519,7 +518,7 @@ cmd_dump_table(NamespacePtr &ns,
 
   fout.strict_sync();
 
-  cb.on_finish((TableMutator*)0);
+  cb.on_finish();
   return 0;
 }
 
@@ -567,23 +566,22 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
     else
       fout.push(boost::iostreams::null_sink());
     table = ns->open_table(state.table_name);
-    mutator = table->create_mutator(0, mutator_flags);
+    mutator.reset(table->create_mutator(0, mutator_flags));
   }
 
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
 
 
-  LoadDataSourcePtr lds;
   bool is_delete;
 
   // init Fs client if not done yet
   if(state.input_file_src == DFS_FILE && !fs_client)
     fs_client = std::make_shared<FsBroker::Lib::Client>(conn_manager, Config::properties);
 
-  lds = LoadDataSourceFactory::create(fs_client, state.input_file,
-               state.input_file_src, state.header_file, state.header_file_src,
-               state.columns, state.timestamp_column, fs,
-               state.row_uniquify_chars, state.load_flags);
+  LoadDataSourcePtr lds(LoadDataSourceFactory::create(fs_client, state.input_file,
+                                                      state.input_file_src, state.header_file, state.header_file_src,
+                                                      state.columns, state.timestamp_column, fs,
+                                                      state.row_uniquify_chars, state.load_flags));
 
   cb.file_size = lds->get_source_size();
   if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
@@ -695,7 +693,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
 
   fout.strict_sync();
 
-  cb.on_finish(mutator.get());
+  cb.on_finish(mutator);
   return 0;
 }
 
@@ -704,11 +702,10 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableMutatorPtr mutator;
   const Cells &cells = state.inserts.get();
 
   table = ns->open_table(state.table_name);
-  mutator = table->create_mutator();
+  TableMutatorPtr mutator( table->create_mutator() );
 
   try {
     mutator->set_cells(cells);
@@ -733,7 +730,7 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   }
 
   // flush the mutator
-  cb.on_finish(mutator.get());
+  cb.on_finish(mutator);
 
   // report errors during mutator->flush
   if (mutator->get_last_error())
@@ -747,12 +744,11 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableMutatorPtr mutator;
   KeySpec key;
   char *column_qualifier;
 
   table = ns->open_table(state.table_name);
-  mutator = table->create_mutator();
+  TableMutatorPtr mutator(table->create_mutator());
 
   key.row = state.delete_row.c_str();
   key.row_len = state.delete_row.length();
@@ -806,7 +802,7 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
     }
   }
 
-  cb.on_finish(mutator.get());
+  cb.on_finish(mutator);
   return 0;
 }
 
@@ -938,7 +934,7 @@ cmd_rebuild_indices(Client *client, NamespacePtr &ns, ParserState &state,
 
   working_ns->rebuild_indices(table_basename, table_parts);
 
-  cb.on_finish((TableMutator*)0);
+  cb.on_finish();
   return 0;
 }
 
@@ -974,7 +970,7 @@ void HqlInterpreter::set_namespace(const string &ns) {
 }
 
 int HqlInterpreter::execute(const string &line, Callback &cb) {
-  ParserState state(m_namespace.get());
+  ParserState state(m_namespace);
   string stripped_line = line;
 
   boost::trim(stripped_line);

@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
     }
 
     msg = "bar";
-    cbp = new CommBuf(header, encoded_length_str16(msg));
+    cbp = make_shared<CommBuf>(header, encoded_length_str16(msg));
     cbp->append_str16(msg);
     if ((error = comm->send_request(addr, 5000, cbp, resp_handler)) != Error::OK) {
       HT_ERRORF("Problem sending request - %s", Error::get_text(error));

@@ -19,18 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCEPRIORITIZER_H
-#define HYPERTABLE_MAINTENANCEPRIORITIZER_H
-
-#include "Common/Logger.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
+#ifndef Hypertable_RangeServer_MaintenancePrioritizer_h
+#define Hypertable_RangeServer_MaintenancePrioritizer_h
 
 #include "Global.h"
 
+#include <Common/Logger.h>
+#include <Common/Time.h>
+
 namespace Hypertable {
 
-  class MaintenancePrioritizer : public ReferenceCount {
+  class MaintenancePrioritizer {
   public:
 
     class MemoryState {
@@ -71,7 +70,7 @@ namespace Hypertable {
                                           int32_t &priority, String *trace);
 
     bool schedule_necessary_compactions(std::vector<RangeData> &range_data,
-                            CommitLog *log, int64_t prune_threshold,
+                            CommitLogPtr &log, int64_t prune_threshold,
                             MemoryState &memory_state,
                             int32_t &priority, String *trace);
 
@@ -89,10 +88,9 @@ namespace Hypertable {
 
 
   };
-  typedef intrusive_ptr<MaintenancePrioritizer> MaintenancePrioritizerPtr;
 
 }
 
-#endif // HYPERTABLE_MAINTENANCEPRIORITIZER_H
+#endif // Hypertable_RangeServer_MaintenancePrioritizer_h
 
 

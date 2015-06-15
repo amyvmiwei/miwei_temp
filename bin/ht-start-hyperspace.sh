@@ -42,7 +42,7 @@ usage() {
   echo "valgrind as follows:"
   echo
   echo "  valgrind -v --log-file=vg.hyperspace.%p --leak-check=full \\"
-  echo "           --num-callers=20 htHyperspace ..."
+  echo "           --num-callers=50 htHyperspace ..."
   echo
   echo "The output of Hyperspace is piped into cronolog, a log rotation program, which"
   echo "directs its output to the log subdirectory within the Hypertable installation"
@@ -71,7 +71,7 @@ usage() {
 while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.hyperspace.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.hyperspace.%p --leak-check=full --num-callers=50 "
       shift
       ;;
     -h|--help)

@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,11 +17,12 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "Common/Compat.h"
-#include "Common/Logger.h"
-#include "Common/Properties.h"
-#include "Common/Config.h"
-#include "Common/Init.h"
+#include <Common/Compat.h>
+#include <Common/Logger.h>
+#include <Common/Properties.h>
+#include <Common/Config.h>
+#include <Common/Init.h>
+
 #include <iostream>
 
 using namespace Hypertable;

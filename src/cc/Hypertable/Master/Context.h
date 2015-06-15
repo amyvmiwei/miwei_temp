@@ -50,7 +50,6 @@
 
 #include <Common/Filesystem.h>
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 #include <Common/Thread.h>
 
@@ -81,7 +80,7 @@ namespace Hypertable {
   class BalancePlanAuthority;
 
   /// Execution context for the Master.
-  class Context : public ReferenceCount {
+  class Context : public std::enable_shared_from_this<Context> {
 
     class RecoveryState {
       public:
@@ -238,7 +237,7 @@ namespace Hypertable {
     RecoveryState &recovery_state() { return m_recovery_state; }
 
     // Instantiate a new table object
-    Table* new_table(const std::string &name);
+    TablePtr new_table(const std::string &name);
 
   private:
 
@@ -261,7 +260,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to Context
-  typedef intrusive_ptr<Context> ContextPtr;
+  typedef std::shared_ptr<Context> ContextPtr;
 
   /// @}
 

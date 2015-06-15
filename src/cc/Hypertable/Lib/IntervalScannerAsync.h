@@ -31,9 +31,9 @@
 #include <Hypertable/Lib/TableScannerDispatchHandler.h>
 
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 
+#include <memory>
 #include <mutex>
 
 namespace Hypertable {
@@ -43,7 +43,7 @@ namespace Hypertable {
   class Table;
   class TableScannerAsync;
 
-  class IntervalScannerAsync : public ReferenceCount {
+  class IntervalScannerAsync {
 
   public:
     /**
@@ -129,8 +129,9 @@ namespace Hypertable {
     bool m_defer_readahead {};
   };
 
-  typedef intrusive_ptr<IntervalScannerAsync> IntervalScannerAsyncPtr;
+  /// Smart pointer to IntervalScannerAsync
+  typedef std::shared_ptr<IntervalScannerAsync> IntervalScannerAsyncPtr;
 
-} // namespace Hypertable
+}
 
 #endif // Hypertable_Lib_intervalScannerAsync_h

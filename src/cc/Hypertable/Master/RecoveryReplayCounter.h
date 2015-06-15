@@ -22,20 +22,19 @@
 #ifndef Hypertable_Master_RecoveryReplayCounter_h
 #define Hypertable_Master_RecoveryReplayCounter_h
 
+#include <Common/Time.h>
+#include <Common/Timer.h>
+
 #include <boost/thread/condition.hpp>
 
 #include <map>
-
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
-#include "Common/Timer.h"
 
 namespace Hypertable {
 
   /**
    * Tracks outstanding RangeServer recover requests.
    */
-  class RecoveryReplayCounter : public ReferenceCount {
+  class RecoveryReplayCounter {
   public:
     typedef std::map<uint32_t, int> ErrorMap;
 
@@ -132,7 +131,7 @@ namespace Hypertable {
     bool m_timed_out;
     ErrorMap m_error_map;
   };
-  typedef intrusive_ptr<RecoveryReplayCounter> RecoveryReplayCounterPtr;
+
 }
 
 #endif // Hypertable_Master_RecoveryReplayCounter_h

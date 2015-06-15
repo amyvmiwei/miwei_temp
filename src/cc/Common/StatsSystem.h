@@ -23,11 +23,13 @@
  * Collecting and (de)serializing system-wide statistics.
  */
 
-#ifndef HYPERTABLE_STATSSYSTEM_H
-#define HYPERTABLE_STATSSYSTEM_H
+#ifndef Common_StatsSystem_h
+#define Common_StatsSystem_h
 
-#include "Common/StatsSerializable.h"
-#include "Common/SystemInfo.h"
+#include <Common/StatsSerializable.h>
+#include <Common/SystemInfo.h>
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -145,10 +147,10 @@ namespace Hypertable {
     int32_t m_categories;
   };
 
-  typedef intrusive_ptr<StatsSystem> StatsSystemPtr;
+  typedef std::shared_ptr<StatsSystem> StatsSystemPtr;
 
   /** @} */
 
 }
 
-#endif // HYPERTABLE_STATSSYSTEM_H
+#endif // Common_StatsSystem_h

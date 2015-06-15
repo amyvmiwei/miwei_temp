@@ -49,6 +49,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
 using namespace Hypertable::Config;
+using namespace std;
 
 /// @defgroup cluster cluster
 /// @ingroup Tools
@@ -194,7 +195,7 @@ int main(int argc, char **argv) {
     bool display_script {};
 
     System::initialize();
-    Config::properties = new Properties();
+    Config::properties = make_shared<Properties>();
     ReactorFactory::initialize(System::get_processor_count());
 
     // environment settings and cluster options
@@ -261,8 +262,8 @@ int main(int argc, char **argv) {
     if (!arguments.empty())
       exec_command(compiler.output_script(), environment, arguments);
 
-    interp = new ClusterCommandInterpreter(compiler.output_script());
-    shell = new CommandShell("cluster", "Cluster", interp, properties);
+    interp = make_shared<ClusterCommandInterpreter>(compiler.output_script());
+    shell = make_shared<CommandShell>("cluster", "Cluster", interp, properties);
 
     // Entire line is command
     shell->set_line_command_mode(true);

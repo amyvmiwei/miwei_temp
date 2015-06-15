@@ -69,11 +69,8 @@ namespace Hypertable {
     bool m_profile {};
   };
 
-  /// Smart pointer to HqlCommandInterpreter
-  typedef intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
-
   /// @}
 
-} // namespace Hypertable
+}
 
 #endif // Hypertable_Lib_HqlCommandInterpreter_h

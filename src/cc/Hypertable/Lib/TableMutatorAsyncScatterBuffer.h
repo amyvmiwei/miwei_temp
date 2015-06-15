@@ -43,7 +43,6 @@
 #include <Common/atomic.h>
 #include <Common/ByteString.h>
 #include <Common/FlyweightString.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 #include <Common/Timer.h>
 #include <Common/InetAddr.h>
@@ -53,12 +52,19 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
 
   class TableMutatorAsync;
-  class TableMutatorAsyncScatterBuffer : public ReferenceCount {
+
+  class TableMutatorAsyncScatterBuffer;
+
+  /// Smart pointer to TableMutatorAsyncScatterBuffer
+  typedef std::shared_ptr<TableMutatorAsyncScatterBuffer> TableMutatorAsyncScatterBufferPtr;
+
+  class TableMutatorAsyncScatterBuffer {
 
   public:
     TableMutatorAsyncScatterBuffer(Comm *comm, ApplicationQueueInterfacePtr &app_queue,
@@ -75,7 +81,7 @@ namespace Hypertable {
     bool full() { ScopedLock lock(m_mutex); return m_full; }
     void send(uint32_t flags);
     void wait_for_completion();
-    TableMutatorAsyncScatterBuffer *create_redo_buffer(uint32_t id);
+    TableMutatorAsyncScatterBufferPtr create_redo_buffer(uint32_t id);
     uint64_t get_resend_count() { return m_resends; }
     void
     get_failed_mutations(FailedMutations &failed_mutations) {
@@ -114,8 +120,8 @@ namespace Hypertable {
     TableIdentifierManaged m_table_identifier;
     TableMutatorAsyncSendBufferMap m_buffer_map;
     TableMutatorAsyncCompletionCounter m_completion_counter;
-    bool                 m_full;
-    uint64_t             m_resends;
+    bool                 m_full {};
+    uint64_t             m_resends {};
     FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
     boost::mt19937       m_rng;
@@ -126,17 +132,15 @@ namespace Hypertable {
     Timer                m_timer;
     uint32_t             m_id;
     CommAddressSet       m_unsynced_rangeservers;
-    size_t               m_memory_used;
+    size_t               m_memory_used {};
     Mutex                m_mutex;
     boost::condition     m_cond;
-    bool                 m_outstanding;
-    uint32_t             m_send_flags;
+    bool                 m_outstanding {};
+    uint32_t             m_send_flags {};
     uint32_t             m_wait_time;
     const static uint32_t ms_init_redo_wait_time=1000;
-    bool dead;
+    bool dead {};
   };
-
-  typedef intrusive_ptr<TableMutatorAsyncScatterBuffer> TableMutatorAsyncScatterBufferPtr;
 
 }
 

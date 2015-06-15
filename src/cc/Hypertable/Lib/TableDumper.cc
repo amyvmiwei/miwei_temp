@@ -69,7 +69,7 @@ TableDumper::TableDumper(NamespacePtr &ns, const string &name,
     ri.end = m_splits[m_ordering[m_next]].end_row;
     ri.end_inclusive = true;
     m_scan_spec.row_intervals.push_back(ri);
-    scanner = m_table->create_scanner(m_scan_spec);
+    scanner.reset( m_table->create_scanner(m_scan_spec) );
     m_scanners.push_back( scanner );
   }
 
@@ -106,7 +106,7 @@ bool TableDumper::next(Cell &cell) {
       ri.end = m_splits[m_ordering[m_next]].end_row;
       ri.end_inclusive = true;
       tmp_scan_spec.row_intervals.push_back(ri);
-      scanner = m_table->create_scanner(tmp_scan_spec);
+      scanner.reset( m_table->create_scanner(tmp_scan_spec) );
       m_scanners.push_back( scanner );
       m_next++;
     }

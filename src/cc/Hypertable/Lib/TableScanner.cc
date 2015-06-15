@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,22 +19,18 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <vector>
-
-#include "Common/Error.h"
-#include "Common/String.h"
+#include <Common/Compat.h>
 
 #include "Table.h"
 #include "TableScanner.h"
 #include "TableScannerQueue.h"
 
-extern "C" {
-#include <poll.h>
-}
+#include <Common/Error.h>
+#include <Common/String.h>
+
+#include <vector>
 
 using namespace Hypertable;
-
 
 TableScanner::TableScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
@@ -44,8 +40,9 @@ TableScanner::TableScanner(Comm *comm, Table *table,
 
   m_queue = make_shared<TableScannerQueue>();
   ApplicationQueueInterfacePtr app_queue = m_queue;
-  m_scanner = new TableScannerAsync(comm, app_queue, table, range_locator, 
-                                    scan_spec, timeout_ms, &m_callback);
+  m_scanner =
+    make_shared<TableScannerAsync>(comm, app_queue, table, range_locator, 
+                                   scan_spec, timeout_ms, &m_callback);
 }
 
 

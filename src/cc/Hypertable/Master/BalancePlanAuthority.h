@@ -83,7 +83,7 @@ namespace Hypertable {
      * @param header_ MML entity header
      */
     BalancePlanAuthority(ContextPtr context, MetaLog::WriterPtr &mml_writer,
-            const MetaLog::EntityHeader &header_);
+                         const MetaLog::EntityHeader &header_);
 
     /** Destructor. */
     virtual ~BalancePlanAuthority() { }

@@ -225,7 +225,6 @@ void CellCache::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
 
 
 
-CellListScanner *CellCache::create_scanner(ScanContextPtr &scan_ctx) {
-  CellCachePtr cellcache(this);
-  return new CellCacheScanner(cellcache, scan_ctx);
+CellListScannerPtr CellCache::create_scanner(ScanContext *scan_ctx) {
+  return make_shared<CellCacheScanner>(shared_from_this(), scan_ctx);
 }

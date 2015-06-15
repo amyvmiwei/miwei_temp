@@ -19,19 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEDUMPER_H
-#define HYPERTABLE_TABLEDUMPER_H
-
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_Lib_TableDumper_h
+#define Hypertable_Lib_TableDumper_h
 
 #include "Cells.h"
 #include "Namespace.h"
 #include "ScanSpec.h"
 #include "TableSplit.h"
 
+#include <memory>
+
 namespace Hypertable {
 
-  class TableDumper : public ReferenceCount {
+  class TableDumper {
 
   public:
     /**
@@ -64,11 +64,12 @@ namespace Hypertable {
     bool      m_eod;
   };
 
-  typedef intrusive_ptr<TableDumper> TableDumperPtr;
+  /// Smart pointer to TableDumper
+  typedef std::shared_ptr<TableDumper> TableDumperPtr;
 
   void copy(TableDumper &, CellsBuilder &);
   inline void copy(TableDumperPtr &p, CellsBuilder &v) { copy(*p.get(), v); }
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLEDUMPER_H
+#endif // Hypertable_Lib_TableDumper_h

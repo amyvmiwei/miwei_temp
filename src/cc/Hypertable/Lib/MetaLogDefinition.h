@@ -29,10 +29,11 @@
 #ifndef Hypertable_Lib_MetaLogDefinition_h
 #define Hypertable_Lib_MetaLogDefinition_h
 
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
-
 #include "MetaLogEntity.h"
+
+#include <Common/String.h>
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -50,7 +51,7 @@ namespace Hypertable {
      * create() method that is used by the %MetaLog framework for constructing
      * entities from serialized records in a %MetaLog file.
      */
-    class Definition : public ReferenceCount {
+    class Definition {
     public:
 
       /** Constructor.
@@ -110,7 +111,7 @@ namespace Hypertable {
     };
 
     /// Smart pointer to Definition
-    typedef intrusive_ptr<Definition> DefinitionPtr;
+    typedef std::shared_ptr<Definition> DefinitionPtr;
 
     /** @}*/
   }

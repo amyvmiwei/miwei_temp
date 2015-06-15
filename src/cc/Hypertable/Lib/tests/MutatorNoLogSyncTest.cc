@@ -284,8 +284,9 @@ int main(int argc, char **argv) {
   ReactorFactory::initialize(2);
   try {
     assert (config_file != "");
-    hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]),
-                                                   config_file);
+    hypertable_client_ptr =
+      make_shared<Hypertable::Client>(System::locate_install_dir(argv[0]),
+                                      config_file);
     namespace_ptr = hypertable_client_ptr->open_namespace("/");
     namespace_ptr->drop_table("MutatorNoLogSyncTest", true);
     namespace_ptr->create_table("MutatorNoLogSyncTest", schema);
@@ -303,7 +304,7 @@ int main(int argc, char **argv) {
   try {
     // Load up some data so we have at least 3 ranges and do an explicit flush
     {
-      TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, Table::MUTATOR_FLAG_NO_LOG_SYNC);
+      TableMutatorPtr mutator_ptr(table_ptr->create_mutator(0, Table::MUTATOR_FLAG_NO_LOG_SYNC));
       cout << "*** Load 1" << endl;
       for (ii=0; ii<30; ++ii) {
         row_key = numbers[ii];
@@ -323,7 +324,7 @@ int main(int argc, char **argv) {
 
     // Load up a bit more and do an explicit flush
     {
-      TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, Table::MUTATOR_FLAG_NO_LOG_SYNC);
+      TableMutatorPtr mutator_ptr(table_ptr->create_mutator(0, Table::MUTATOR_FLAG_NO_LOG_SYNC));
        cout << "*** Load 2" << endl;
       for (;ii<34; ++ii) {
         row_key = numbers[ii];
@@ -343,7 +344,7 @@ int main(int argc, char **argv) {
 
     // Test flush on mutator destruction
     {
-      TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, Table::MUTATOR_FLAG_NO_LOG_SYNC);
+      TableMutatorPtr mutator_ptr(table_ptr->create_mutator(0, Table::MUTATOR_FLAG_NO_LOG_SYNC));
       cout << "*** Load 3" << endl;
       for (;ii<38; ++ii) {
         row_key = numbers[ii];
@@ -362,7 +363,7 @@ int main(int argc, char **argv) {
     // Do a scan and verify results
     {
       String scan_result;
-      TableScannerPtr scanner_ptr = table_ptr->create_scanner(scan_spec.get());
+      TableScannerPtr scanner_ptr(table_ptr->create_scanner(scan_spec.get()));
 
       int num_cells = expected_output.size();
       sort(expected_output.begin(), expected_output.end());

@@ -43,7 +43,7 @@ usage() {
   echo "valgrind as follows:"
   echo
   echo "  valgrind -v --log-file=vg.thriftbroker.%p --leak-check=full \\"
-  echo "           --num-callers=20 htThriftBroker ..."
+  echo "           --num-callers=50 htThriftBroker ..."
   echo
   echo "If the --heapcheck option is supplied, then the ThriftBroker process is run with"
   echo "heap checking enabled as follows:"
@@ -77,7 +77,7 @@ usage() {
 while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.thriftbroker.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.thriftbroker.%p --leak-check=full --num-callers=50 "
       shift
       ;;
     --heapcheck)

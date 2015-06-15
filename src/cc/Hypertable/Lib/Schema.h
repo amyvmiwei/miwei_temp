@@ -28,7 +28,6 @@
 #define Hypertable_Lib_Schema_h
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/Properties.h>
 #include "Common/PageArenaAllocator.h"
 #include <Common/StringExt.h>
@@ -41,6 +40,7 @@
 
 #include <bitset>
 #include <list>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -50,7 +50,7 @@ namespace Hypertable {
   /// @{
 
   /// %Schema specification.
-  class Schema : public ReferenceCount {
+  class Schema {
   public:
 
     /// Default constructor.
@@ -463,10 +463,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to Schema
-  typedef intrusive_ptr<Schema> SchemaPtr;
+  typedef std::shared_ptr<Schema> SchemaPtr;
 
   /// @}
 
-} // namespace Hypertable
+}
 
 #endif // Hypertable_Lib_Schema_h

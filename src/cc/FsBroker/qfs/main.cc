@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     Comm *comm = Comm::instance();
 
     ApplicationQueuePtr app_queue = make_shared<ApplicationQueue>(worker_count);
-    BrokerPtr broker = new QfsBroker(properties);
+    BrokerPtr broker = make_shared<QfsBroker>(properties);
 
     ConnectionHandlerFactoryPtr handler_factory =
       make_shared<FsBroker::Lib::ConnectionHandlerFactory>(comm, app_queue, broker);

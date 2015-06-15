@@ -27,21 +27,20 @@
 #include <Hypertable/Lib/MetaLogDefinition.h>
 
 namespace Hypertable {
-  namespace MetaLog {
-    class DefinitionMaster : public Definition {
-    public:
-      DefinitionMaster(const char *backup_label) : Definition(backup_label) { }
-      DefinitionMaster(ContextPtr &context, const char *backup_label) : Definition(backup_label)
-          , m_context(context) { }
-      uint16_t version() override;
-      const char *name() override;
-      EntityPtr create(const EntityHeader &header) override;
-    private:
-      ContextPtr m_context;
-    };
-    typedef intrusive_ptr<DefinitionMaster> DefinitionMasterPtr;
-  }
+namespace MetaLog {
 
-}
+  class DefinitionMaster : public Definition {
+  public:
+    DefinitionMaster(const char *backup_label) : Definition(backup_label) { }
+    DefinitionMaster(ContextPtr &context, const char *backup_label) : Definition(backup_label)
+                                                                    , m_context(context) { }
+    uint16_t version() override;
+    const char *name() override;
+    EntityPtr create(const EntityHeader &header) override;
+  private:
+    ContextPtr m_context;
+  };
+
+}}
 
 #endif // Hypertable_Master_MetaLogDefinitionmaster_h

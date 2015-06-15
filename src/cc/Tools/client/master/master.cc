@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
     Comm *comm = Comm::instance();
 
-    Lib::Master::ClientPtr client = new Lib::Master::Client(comm, addr, timeout);
+    Lib::Master::ClientPtr client = make_shared<Lib::Master::Client>(comm, addr, timeout);
 
     DispatchHandlerPtr dispatch_handler_ptr = make_shared<MasterDispatchHandler>(silent);
 
@@ -117,9 +117,9 @@ int main(int argc, char **argv) {
 
     this_thread::sleep_for(chrono::milliseconds(100));
 
-    CommandInterpreterPtr interp = new MasterCommandInterpreter(client);
+    CommandInterpreterPtr interp = make_shared<MasterCommandInterpreter>(client);
 
-    CommandShellPtr shell = new CommandShell("master", "Master", interp, properties);
+    CommandShellPtr shell = make_shared<CommandShell>("master", "Master", interp, properties);
 
     error = shell->run();
   }

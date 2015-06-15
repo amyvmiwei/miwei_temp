@@ -33,7 +33,7 @@ namespace Hypertable {
                             int32_t prioritize, String *trace);
 
   private:
-    void assign_priorities(std::vector<RangeData> &range_data, CommitLog *log,
+    void assign_priorities(std::vector<RangeData> &range_data, CommitLogPtr &log,
                            int64_t prune_threshold, MemoryState &memory_state,
                            int32_t &priority, String *trace);
   };

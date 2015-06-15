@@ -1325,7 +1325,7 @@ void Session::decode_values(Hypertable::EventPtr& event_ptr, std::vector<Dynamic
       void *attr_val = decode_bytes32(&decode_ptr, &decode_remain,
                                       &attr_val_len);
       if (attr_val_len) {
-        value = new DynamicBuffer(attr_val_len+1);
+        value = make_shared<DynamicBuffer>(attr_val_len+1);
         value->add_unchecked(attr_val, attr_val_len);
         // nul-terminate to make caller's lives easier
         *value->ptr = 0;
@@ -1408,12 +1408,8 @@ void Session::normalize_name(const String &name, String &normal) {
     normal += name.substr(0, name.length()-1);
 }
 
-/*
- *
- */
-HsCommandInterpreter *Session::create_hs_interpreter()
-{
-  return new HsCommandInterpreter(this);
+HsCommandInterpreterPtr Session::create_hs_interpreter() {
+  return make_shared<HsCommandInterpreter>(this);
 }
 
 

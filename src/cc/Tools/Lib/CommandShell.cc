@@ -225,7 +225,7 @@ CommandShell::CommandShell(const string &prompt_str, const string &service_name,
   m_notify = m_props->has("notification-address");
   if (m_notify) {
     String notification_address = m_props->get_str("notification-address");
-    m_notifier_ptr = new Notifier(notification_address.c_str());
+    m_notifier_ptr = make_shared<Notifier>(notification_address.c_str());
   }
 
   if (m_props->has("execute")) {

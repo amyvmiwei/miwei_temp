@@ -102,7 +102,7 @@ namespace {
 int main(int argc, char **argv) {
 
   System::initialize();
-  Config::properties = new Properties();
+  Config::properties = make_shared<Properties>();
   ReactorFactory::initialize(System::get_processor_count());
 
   string host_spec;

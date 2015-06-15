@@ -37,7 +37,7 @@ using namespace std;
 
 
 CellListScannerBuffer::CellListScannerBuffer(ScanContextPtr &scan_ctx) 
-  : CellListScanner(scan_ctx), m_arena(524288), m_initialized_for_scan(false) {
+  : CellListScanner(scan_ctx.get()), m_scan_context(scan_ctx), m_arena(524288) {
 }
 
 void CellListScannerBuffer::add(const SerializedKey key, const ByteString value) {

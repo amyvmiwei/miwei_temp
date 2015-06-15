@@ -66,8 +66,8 @@ public:
   }
 
 private:
-  ApplicationQueuePtr   m_app_queue;
-  MasterPtr             m_master;
+  ApplicationQueuePtr m_app_queue;
+  MasterPtr m_master;
 };
 
 
@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
     ConnectionManagerPtr conn_mgr = make_shared<ConnectionManager>(comm);
     ServerKeepaliveHandlerPtr keepalive_handler;
     ApplicationQueuePtr app_queue;
-    MasterPtr master = new Master(conn_mgr, properties,
-                                  keepalive_handler, app_queue);
+    MasterPtr master =
+      make_shared<Master>(conn_mgr, properties, keepalive_handler, app_queue);
     function<void()> sleep_callback = [master]() -> void {master->handle_sleep();};
     function<void()> wakeup_callback = [master]() -> void {master->handle_wakeup();};
     SleepWakeNotifier sleep_wake_notifier(sleep_callback, wakeup_callback);

@@ -50,7 +50,7 @@ namespace FsBroker {
   class OpenFileDataCephPtr : public OpenFileDataPtr {
   public:
     OpenFileDataCephPtr() : OpenFileDataPtr() { }
-    OpenFileDataCephPtr(OpenFileDataCeph *ofdl) : OpenFileDataPtr(ofdl, true) { }
+    OpenFileDataCephPtr(OpenFileDataCeph *ofdl) : OpenFileDataPtr(ofdl) { }
     OpenFileDataCeph *operator->() const { return (OpenFileDataCeph *)get(); }
   };
 

@@ -285,8 +285,11 @@ namespace Hypertable {
 
     class ParserState {
     public:
-      ParserState(Namespace *nsp=0) : nsp(nsp) {
+      ParserState() {
         System::initialize_tm(&tmval);
+      }
+      ParserState(NamespacePtr &ns) : ParserState() {
+        nsp = ns;
       }
       NamespacePtr nsp;
       int command {};
@@ -709,7 +712,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         std::string name = strip_quotes(str, end-str);
         state.table_name = name;
-        state.create_schema = new Schema();
+        state.create_schema = std::make_shared<Schema>();
       }
       ParserState &state;
     };
@@ -720,7 +723,7 @@ namespace Hypertable {
 
         if (!state.clone_table_name.empty()) {
           std::string schema_str = state.nsp->get_schema_str(state.clone_table_name, true);
-          state.create_schema = Schema::new_instance(schema_str);
+          state.create_schema.reset(Schema::new_instance(schema_str));
           state.create_schema->clear_generation();
         }
         else if (state.input_file.empty()) {

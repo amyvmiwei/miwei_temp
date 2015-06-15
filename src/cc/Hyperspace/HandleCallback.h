@@ -19,15 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_HANDLECALLBACK_H
-#define HYPERSPACE_HANDLECALLBACK_H
+#ifndef Hyperspace_HandleCallback_h
+#define Hyperspace_HandleCallback_h
 
+#include <memory>
 #include <string>
 
-#include "Common/ReferenceCount.h"
-
 namespace Hyperspace {
-  using namespace Hypertable;
 
   /*
    * The following event masks are ORed together and
@@ -54,7 +52,7 @@ namespace Hyperspace {
    * object gets inspected to determine what events should be
    * delivered back to the application.
    */
-  class HandleCallback : public ReferenceCount {
+  class HandleCallback {
   public:
     /** Constructor.  Sets the event mask.
      *
@@ -112,8 +110,8 @@ namespace Hyperspace {
     uint32_t m_event_mask;
   };
 
-  typedef intrusive_ptr<HandleCallback> HandleCallbackPtr;
+  typedef std::shared_ptr<HandleCallback> HandleCallbackPtr;
 
 } // namespace Hyperspace
 
-#endif // HYPERSPACE_HANDLECALLBACK_H
+#endif // Hyperspace_HandleCallback_h

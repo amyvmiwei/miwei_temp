@@ -22,12 +22,13 @@
 #ifndef Tools_Lib_CommandInterpreter_h
 #define Tools_Lib_CommandInterpreter_h
 
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
+#include <Common/String.h>
+
+#include <memory>
 
 namespace Hypertable {
 
-  class CommandInterpreter : public ReferenceCount {
+  class CommandInterpreter {
   public:
     enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_NANOS };
 
@@ -50,8 +51,8 @@ namespace Hypertable {
     bool m_interactive;
   };
 
-  typedef intrusive_ptr<CommandInterpreter> CommandInterpreterPtr;
+  typedef std::shared_ptr<CommandInterpreter> CommandInterpreterPtr;
 
-} // namespace Hypertable
+}
 
 #endif // Tools_Lib_CommandInterpreter_h

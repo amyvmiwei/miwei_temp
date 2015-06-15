@@ -171,8 +171,9 @@ namespace {
       break;
     }
 
-    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              g_mml_dir, entities);
+    context->mml_writer =
+      make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                   g_mml_dir, entities);
     
   }
 
@@ -181,8 +182,9 @@ namespace {
     OperationPtr operation;
 
     context->op = make_unique<OperationProcessor>(context, 4);
-    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              g_mml_dir, entities);
+    context->mml_writer =
+      make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                   g_mml_dir, entities);
     for (auto &entity : entities) {
       operation = dynamic_pointer_cast<Operation>(entity);
       if (operation) {
@@ -231,7 +233,8 @@ namespace {
       context->op->join();
 
     context->mml_writer = 0;
-    MetaLog::ReaderPtr mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition, g_mml_dir);
+    MetaLog::ReaderPtr mml_reader =
+      make_shared<MetaLog::Reader>(context->dfs, context->mml_definition, g_mml_dir);
     entities.clear();
     mml_reader->get_entities(entities);
 
@@ -266,8 +269,9 @@ namespace {
 
     context->reference_manager->clear();
 
-    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              g_mml_dir, entities);
+    context->mml_writer =
+      make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                   g_mml_dir, entities);
   }
 
   void create_table(ContextPtr &context,
@@ -302,7 +306,7 @@ namespace {
       HT_FATALF("Unable to determine table ID for table \"%s\"",
                 table_name.c_str());
 
-    context->mml_writer = 0;
+    context->mml_writer.reset();
 
     initialize_test(context, entities);
     this_thread::sleep_for(chrono::milliseconds(100));
@@ -377,19 +381,20 @@ int main(int argc, char **argv) {
     replicas.push_back("localhost");
     properties->set("Hyperspace.Replica.Host", replicas);
 
-    Hyperspace::SessionPtr hyperspace = new Hyperspace::Session(Comm::instance(), properties);
+    Hyperspace::SessionPtr hyperspace = make_shared<Hyperspace::Session>(Comm::instance(), properties);
 
-    context = new Context(properties, hyperspace);
+    context = make_shared<Context>(properties, hyperspace);
     context->test_mode = true;
 
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
-    context->monitoring = new Monitoring(context.get());
+    context->monitoring = make_shared<Monitoring>(context.get());
 
-    context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
+    context->mml_definition = make_shared<MetaLog::DefinitionMaster>(context, "master");
     g_mml_dir = context->toplevel_dir + "/servers/master/log/" + context->mml_definition->name();
-    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              g_mml_dir, entities);
+    context->mml_writer =
+      make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                   g_mml_dir, entities);
 
     MetaLog::EntityPtr entity;
     context->get_balance_plan_authority(entity);
@@ -448,8 +453,9 @@ int main(int argc, char **argv) {
 void create_namespace_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            g_mml_dir, entities);
+  context->mml_writer =
+    make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                 g_mml_dir, entities);
 
   entities.push_back(make_shared<OperationCreateNamespace>(context, "foo", 0) );
 
@@ -476,8 +482,9 @@ void create_namespace_test(ContextPtr &context) {
 void drop_namespace_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            g_mml_dir, entities);
+  context->mml_writer =
+    make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                 g_mml_dir, entities);
 
   entities.push_back(make_shared<OperationDropNamespace>(context, "foo", 0) );
 
@@ -655,8 +662,9 @@ void create_table_with_index_test(ContextPtr &context) {
 void rename_table_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            g_mml_dir, entities);
+  context->mml_writer =
+    make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                 g_mml_dir, entities);
 
   entities.push_back(make_shared<OperationRenameTable>(context, "tablefoo", "tablebar") );
 
@@ -734,8 +742,9 @@ void system_upgrade_test(ContextPtr &context) {
   context->hyperspace->attr_set(handle, "schema", old_schema_str, strlen(old_schema_str));
   context->hyperspace->close(handle);
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            g_mml_dir, entities);
+  context->mml_writer =
+    make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                 g_mml_dir, entities);
 
   MetaLog::EntityPtr entity = make_shared<OperationSystemUpgrade>(context);
   entities.push_back(entity);

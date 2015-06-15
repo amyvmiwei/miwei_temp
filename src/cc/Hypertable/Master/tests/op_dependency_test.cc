@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     init_with_policies<Policies>(argc, argv);
     DependencySet dependencies, exclusivities, obstructions;
     std::vector<OperationPtr> operations;
-    ContextPtr context = new Context(properties);
+    ContextPtr context = make_shared<Context>(properties);
     OperationPtr operation;
     std::vector<String> results;
     std::set<String> seen;
@@ -135,10 +135,11 @@ int main(int argc, char **argv) {
     String log_dir = context->toplevel_dir + "/servers/master/log";
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
-    context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
-    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              log_dir + "/" + context->mml_definition->name(),
-                                              entities);
+    context->mml_definition = make_shared<MetaLog::DefinitionMaster>(context, "master");
+    context->mml_writer =
+      make_shared<MetaLog::Writer>(context->dfs, context->mml_definition,
+                                   log_dir + "/" + context->mml_definition->name(),
+                                   entities);
 
     context->response_manager->set_mml_writer(context->mml_writer);
 

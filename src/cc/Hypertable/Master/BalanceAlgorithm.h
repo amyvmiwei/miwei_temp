@@ -19,25 +19,25 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_BALANCEALGORITHM_H
-#define HYPERTABLE_BALANCEALGORITHM_H
-
-#include "Common/ReferenceCount.h"
-
-#include "Hypertable/Lib/BalancePlan.h"
+#ifndef Hypertable_Master_BalanceAlgorithm_h
+#define Hypertable_Master_BalanceAlgorithm_h
 
 #include "RangeServerConnection.h"
 
+#include <Hypertable/Lib/BalancePlan.h>
+
+#include <memory>
+
 namespace Hypertable {
 
-  class BalanceAlgorithm : public ReferenceCount {
+  class BalanceAlgorithm {
   public:
     virtual void compute_plan(BalancePlanPtr &plan,
                               std::vector<RangeServerConnectionPtr> &balanced) = 0;
 
   };
-  typedef intrusive_ptr<BalanceAlgorithm> BalanceAlgorithmPtr;
+  typedef std::shared_ptr<BalanceAlgorithm> BalanceAlgorithmPtr;
 
 }
 
-#endif // HYPERTABLE_BALANCEALGORITHM_H
+#endif // Hypertable_Master_BalanceAlgorithm_h

@@ -349,7 +349,7 @@ void OperationRecover::create_recovery_plan() {
  void OperationRecover::read_rsml(vector<MetaLog::EntityPtr> &removable_move_ops) {
   // move rsml and commit log to some recovered dir
   MetaLog::DefinitionPtr rsml_definition
-      = new MetaLog::DefinitionRangeServer(m_location.c_str());  
+    = make_shared<MetaLog::DefinitionRangeServer>(m_location.c_str());  
   MetaLogEntityRange *range;
   MetaLog::EntityTaskAcknowledgeRelinquish *ack_task;
   vector<MetaLog::EntityPtr> entities;
@@ -358,7 +358,7 @@ void OperationRecover::create_recovery_plan() {
   String logfile = m_context->toplevel_dir + "/servers/" + m_location + "/log/"
     + rsml_definition->name();
   MetaLog::ReaderPtr rsml_reader = 
-    new MetaLog::Reader(m_context->dfs, rsml_definition, logfile);
+    make_shared<MetaLog::Reader>(m_context->dfs, rsml_definition, logfile);
 
   rsml_reader->get_entities(entities);
 

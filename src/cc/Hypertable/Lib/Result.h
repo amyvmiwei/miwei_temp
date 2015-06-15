@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,11 +17,12 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_RESULT_H
-#define HYPERTABLE_RESULT_H
+#ifndef Hypertable_Lib_Result_h
+#define Hypertable_Lib_Result_h
 
-#include "Common/ReferenceCount.h"
 #include "ScanCells.h"
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -30,7 +31,7 @@ namespace Hypertable {
   class TableMutatorAsync;
   class TableScannerAsync;
 
-  class Result: public ReferenceCount {
+  class Result {
     public:
 
       Result(TableScannerAsync *scanner, ScanCellsPtr &cells);
@@ -66,8 +67,10 @@ namespace Hypertable {
       CellsBuilder m_failed_cells;
       FailedMutations m_failed_mutations;
   };
-  typedef intrusive_ptr<Result> ResultPtr;
+
+  /// Smart pointer to Result
+  typedef std::shared_ptr<Result> ResultPtr;
 }
 
-#endif // HYPERTABLE_FUTURE_H
+#endif // Hypertable_Lib_Result_h
 

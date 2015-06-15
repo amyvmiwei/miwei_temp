@@ -115,14 +115,14 @@ namespace Hypertable {
     /// @param table_name Table name
     /// @param scan_ctx Scan context
     /// @param flags Flags
-    MergeScannerAccessGroup(String &table_name, ScanContextPtr &scan_ctx,
+    MergeScannerAccessGroup(String &table_name, ScanContext *scan_ctx,
                             uint32_t flags=0);
 
     /// Destructor.
     /// Destroys all scanners in #m_scanners and then calls #m_release_callback
     virtual ~MergeScannerAccessGroup();
 
-    void add_scanner(CellListScanner *scanner) {
+    void add_scanner(CellListScannerPtr scanner) {
       m_scanners.push_back(scanner);
     }
 
@@ -317,7 +317,7 @@ namespace Hypertable {
     bool m_done {};
     bool m_initialized {};
 
-    std::vector<CellListScanner *>  m_scanners;
+    std::vector<CellListScannerPtr>  m_scanners;
     std::priority_queue<ScannerState, std::vector<ScannerState>,
         LtScannerState> m_queue;
 

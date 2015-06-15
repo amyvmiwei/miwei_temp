@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,14 +19,16 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Time.h"
+#include <Common/Compat.h>
 
 #include "Future.h"
 #include "TableScannerAsync.h"
 #include "TableMutatorAsync.h"
 
+#include <Common/Time.h>
+
 using namespace Hypertable;
+using namespace std;
 
 bool Future::get(ResultPtr &result) {
   ScopedLock lock(m_outstanding_mutex);
@@ -127,7 +129,7 @@ bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
 }
 
 void Future::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
-  ResultPtr result = new Result(scanner, cells);
+  ResultPtr result = make_shared<Result>(scanner, cells);
   enqueue(result);
 }
 
@@ -146,17 +148,17 @@ void Future::enqueue(ResultPtr &result) {
 
 void Future::scan_error(TableScannerAsync *scanner, int error, const string &error_msg,
                         bool eos) {
-  ResultPtr result = new Result(scanner, error, error_msg);
+  ResultPtr result = make_shared<Result>(scanner, error, error_msg);
   enqueue(result);
 }
 
 void Future::update_ok(TableMutatorAsync *mutator) {
-  ResultPtr result = new Result(mutator);
+  ResultPtr result = make_shared<Result>(mutator);
   enqueue(result);
 }
 
 void Future::update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures) {
-  ResultPtr result = new Result(mutator, error, failures);
+  ResultPtr result = make_shared<Result>(mutator, error, failures);
   enqueue(result);
 }
 

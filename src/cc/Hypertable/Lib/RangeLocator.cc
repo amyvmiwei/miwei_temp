@@ -131,7 +131,7 @@ RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
   boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
   m_toplevel_dir = String("/") + m_toplevel_dir;
 
-  m_cache = new LocationCache(cache_size);
+  m_cache = make_shared<LocationCache>(cache_size);
   // register hyperspace session callback
   m_hyperspace_session_callback.m_rangelocator = this;
   m_hyperspace->add_callback(&m_hyperspace_session_callback);
@@ -165,7 +165,7 @@ void RangeLocator::initialize() {
     return;
   HT_ASSERT(m_hyperspace_connected);
 
-  m_root_handler = new RootFileHandler(this);
+  m_root_handler = make_shared<RootFileHandler>(this);
 
   m_root_file_handle = m_hyperspace->open(m_toplevel_dir + "/root",
                                           OPEN_FLAG_READ, m_root_handler);
@@ -200,7 +200,7 @@ void RangeLocator::initialize() {
     }
   }
 
-  SchemaPtr schema = Schema::new_instance((const char *)valbuf.base);
+  SchemaPtr schema( Schema::new_instance((const char *)valbuf.base) );
 
   m_metadata_table.id = TableIdentifier::METADATA_ID;
   m_metadata_table.generation = schema->get_generation();

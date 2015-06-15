@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include "BalanceAlgorithmEvenRanges.h"
 #include "BalanceAlgorithmLoad.h"
@@ -29,6 +29,7 @@
 #include <cstring>
 
 using namespace Hypertable;
+using namespace std;
 
 LoadBalancer::LoadBalancer(ContextPtr context)
   : m_context(context), m_new_server_added(false), m_paused(false) {
@@ -150,11 +151,11 @@ void LoadBalancer::create_plan(BalancePlanPtr &plan,
     HT_INFOF("LoadBalance(name='%s', args='%s')", name.c_str(), arguments.c_str());
 
     if (name == "offload")
-      algo = new BalanceAlgorithmOffload(m_context, m_statistics, arguments);
+      algo = make_shared<BalanceAlgorithmOffload>(m_context, m_statistics, arguments);
     else if (name == "table_ranges")
-      algo = new BalanceAlgorithmEvenRanges(m_context, m_statistics);
+      algo = make_shared<BalanceAlgorithmEvenRanges>(m_context, m_statistics);
     else if (name == "load")
-      algo = new BalanceAlgorithmLoad(m_context, m_statistics);
+      algo = make_shared<BalanceAlgorithmLoad>(m_context, m_statistics);
     else
       HT_THROWF(Error::MASTER_BALANCE_PREVENTED,
                 "Unrecognized algorithm - %s", name.c_str());

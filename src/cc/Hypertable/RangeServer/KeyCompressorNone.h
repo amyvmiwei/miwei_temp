@@ -19,10 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_KEYCOMPRESSORNONE_H
-#define HYPERTABLE_KEYCOMPRESSORNONE_H
-
-#include "Common/DynamicBuffer.h"
+#ifndef Hypertable_RangeServer_KeyCompressorNone_h
+#define Hypertable_RangeServer_KeyCompressorNone_h
 
 #include "KeyCompressor.h"
 
@@ -40,8 +38,7 @@ namespace Hypertable {
     SerializedKey m_serialized_key;
     size_t m_serialized_key_len;
   };
-  typedef intrusive_ptr<KeyCompressorNone> KeyCompressorNonePtr;
 
 }
 
-#endif // HYPERTABLE_KEYCOMPRESSORNONE_H
+#endif // Hypertable_RangeServer_KeyCompressorNone_h

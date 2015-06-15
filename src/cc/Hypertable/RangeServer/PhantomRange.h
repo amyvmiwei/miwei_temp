@@ -36,9 +36,9 @@
 
 #include <Common/String.h>
 #include <Common/Filesystem.h>
-#include <Common/ReferenceCount.h>
 
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -49,7 +49,7 @@ namespace Hypertable {
   /// @{
 
   /// Represents a "phantom" range.
-  class PhantomRange : public ReferenceCount {
+  class PhantomRange {
 
   public:
     enum State {
@@ -115,7 +115,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to PhantomRange
-  typedef intrusive_ptr<PhantomRange> PhantomRangePtr;
+  typedef std::shared_ptr<PhantomRange> PhantomRangePtr;
 
   /// @}
 

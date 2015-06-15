@@ -45,10 +45,10 @@ namespace Hypertable {
   bool                   Global::row_size_unlimited = false;
   bool                   Global::ignore_cells_with_clock_skew = false;
   bool                   Global::range_initialization_complete = false;
-  CommitLog             *Global::user_log = 0;
-  CommitLog             *Global::system_log = 0;
-  CommitLog             *Global::metadata_log = 0;
-  CommitLog             *Global::root_log = 0;
+  CommitLogPtr           Global::user_log;
+  CommitLogPtr           Global::system_log;
+  CommitLogPtr           Global::metadata_log;
+  CommitLogPtr           Global::root_log;
   MetaLog::WriterPtr     Global::rsml_writer;
   std::string            Global::log_dir = "";
   LocationInitializerPtr Global::location_initializer;

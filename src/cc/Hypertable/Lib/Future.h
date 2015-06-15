@@ -17,15 +17,17 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef HYPERTABLE_FUTURE_H
-#define HYPERTABLE_FUTURE_H
-
-#include <boost/thread/condition.hpp>
-#include <list>
-#include <map>
+#ifndef Hypertable_Lib_Future_h
+#define Hypertable_Lib_Future_h
 
 #include "ResultCallback.h"
 #include "Result.h"
+
+#include <boost/thread/condition.hpp>
+
+#include <list>
+#include <map>
+#include <memory>
 
 namespace Hypertable {
 
@@ -148,7 +150,7 @@ namespace Hypertable {
     ScannerMap m_scanner_map;
     MutatorMap m_mutator_map;
   };
-  typedef intrusive_ptr<Future> FuturePtr;
+  typedef std::shared_ptr<Future> FuturePtr;
 }
 
-#endif // HYPERTABLE_FUTURE_H
+#endif // Hypertable_Lib_Future_h

@@ -32,6 +32,7 @@
 
 using namespace Hypertable;
 using namespace Config;
+using namespace std;
 
 namespace {
 
@@ -75,8 +76,8 @@ int main(int argc, char **argv) {
     }
     else
       hypertable = new Hypertable::Client();
-    interp = new HqlCommandInterpreter(hypertable, profile);
-    shell = new CommandShell("hypertable", "Hypertable", interp, properties);
+    interp = make_shared<HqlCommandInterpreter>(hypertable, profile);
+    shell = make_shared<CommandShell>("hypertable", "Hypertable", interp, properties);
     shell->set_namespace(get_str("namespace"));
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());

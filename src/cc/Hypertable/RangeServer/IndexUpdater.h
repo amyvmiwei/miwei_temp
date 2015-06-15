@@ -101,7 +101,7 @@ namespace Hypertable {
 
   private:
     // Loads a table.
-    static Table *load_table(const String &table_name);
+    static TablePtr load_table(const String &table_name);
 
     typedef std::map<String, TablePtr> TableMap;
 

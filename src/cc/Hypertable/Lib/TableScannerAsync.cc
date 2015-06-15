@@ -94,7 +94,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
 }
 
 
-bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec, 
+bool TableScannerAsync::use_index(Table *table, const ScanSpec &primary_spec, 
                                   ScanSpecBuilder &index_spec,
                                   std::vector<CellPredicate> &cell_predicates,
                                   bool *use_qualifier,
@@ -422,10 +422,10 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
   try {
     if (scan_spec.row_intervals.empty()) {
       if (scan_spec.cell_intervals.empty()) {
-        ri_scanner = 0;
-        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
-                        range_locator, scan_spec, timeout_ms, 
-                        !current_set, this, scanner_id++);
+        ri_scanner =
+          make_shared<IntervalScannerAsync>(comm, app_queue, table, range_locator,
+                                            scan_spec, timeout_ms, !current_set,
+                                            this, scanner_id++);
 
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
@@ -437,10 +437,10 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.cell_intervals.push_back(
               scan_spec.cell_intervals[i]);
-          ri_scanner = 0;
-          ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
-                        range_locator, interval_scan_spec, timeout_ms,
-                        !current_set, this, scanner_id++);
+          ri_scanner =
+            make_shared<IntervalScannerAsync>(comm, app_queue, table, range_locator,
+                                              interval_scan_spec, timeout_ms,
+                                              !current_set, this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
           m_outstanding++;
@@ -456,10 +456,10 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.scan_and_filter_rows = false;
           interval_scan_spec.row_intervals.push_back(ri);
-          ri_scanner = 0;
-          ri_scanner = new IntervalScannerAsync(comm, app_queue, table,
-                        range_locator, interval_scan_spec, timeout_ms,
-                        !current_set, this, scanner_id++);
+          ri_scanner =
+            make_shared<IntervalScannerAsync>(comm, app_queue, table, range_locator,
+                                              interval_scan_spec, timeout_ms,
+                                              !current_set, this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
           m_outstanding++;
@@ -468,10 +468,10 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
           rowset_scan_spec.row_intervals.push_back(ri);
       }
       if (rowset_scan_spec.row_intervals.size()) {
-        ri_scanner = 0;
-        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
-                        range_locator, rowset_scan_spec, timeout_ms, 
-                        !current_set, this, scanner_id++);
+        ri_scanner =
+          make_shared<IntervalScannerAsync>(comm, app_queue, table, range_locator,
+                                            rowset_scan_spec, timeout_ms, 
+                                            !current_set, this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
         m_outstanding++;
@@ -482,10 +482,10 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue
       for (size_t i=0; i<scan_spec.row_intervals.size(); i++) {
         scan_spec.base_copy(interval_scan_spec);
         interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
-        ri_scanner = 0;
-        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
-                        range_locator, interval_scan_spec, timeout_ms, 
-                        !current_set, this, scanner_id++);
+        ri_scanner =
+          make_shared<IntervalScannerAsync>(comm, app_queue, table, range_locator,
+                                            interval_scan_spec, timeout_ms, 
+                                            !current_set, this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
         m_outstanding++;
@@ -644,7 +644,7 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
         // scanner was cancelled and is over
         if (next && m_outstanding==1) {
           do_callback = true;
-          cells = new ScanCells;
+          cells = make_shared<ScanCells>();
         }
         else
           do_callback = false;
@@ -762,7 +762,7 @@ void TableScannerAsync::move_to_next_interval_scanner(int current_scanner) {
           && ((cancelled && m_error == Error::OK)
             || m_error != Error::OK)) {
         do_callback = true;
-        cells = new ScanCells;
+        cells = make_shared<ScanCells>();
       }
       maybe_callback_ok(m_current_scanner, next, do_callback, cells);
     }
@@ -774,7 +774,7 @@ void TableScannerAsync::move_to_next_interval_scanner(int current_scanner) {
       && m_outstanding == 1
       && current_scanner == ((int)m_interval_scanners.size() - 1) 
       && !cells) {
-    cells = new ScanCells;
+    cells = make_shared<ScanCells>();
     maybe_callback_ok(m_current_scanner, true, true, cells);
     m_current_scanner = (int)m_interval_scanners.size() - 1;
   }

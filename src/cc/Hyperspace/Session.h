@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SESSION_H
-#define HYPERSPACE_SESSION_H
+#ifndef Hyperspace_Session_h
+#define Hyperspace_Session_h
 
 #include <Hyperspace/ClientKeepaliveHandler.h>
 #include <Hyperspace/DirEntry.h>
@@ -37,7 +37,6 @@
 
 #include <Common/DynamicBuffer.h>
 #include <Common/Properties.h>
-#include <Common/ReferenceCount.h>
 #include <Common/Status.h>
 #include <Common/String.h>
 #include <Common/Timer.h>
@@ -45,6 +44,7 @@
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -145,7 +145,7 @@ namespace Hyperspace {
    * Hyperspace.GracePeriod=6000
    * </pre>
    */
-  class Session : public ReferenceCount {
+  class Session {
 
   public:
 
@@ -665,9 +665,9 @@ namespace Hyperspace {
     /**
      * Creates a new Hyperspace command interpreter
      *
-     * @return HsCommandInterpreter* ptr to created Hperspace interpreter object
+     * @return HsCommandInterpreter ptr to created Hperspace interpreter object
      */
-     HsCommandInterpreter* create_hs_interpreter();
+     HsCommandInterpreterPtr create_hs_interpreter();
 
     void advance_expire_time(boost::xtime now) {
       ScopedLock lock(m_mutex);
@@ -732,7 +732,7 @@ namespace Hyperspace {
     SleepWakeNotifier *m_sleep_wake_notifier;
   };
 
-  typedef boost::intrusive_ptr<Session> SessionPtr;
+  typedef std::shared_ptr<Session> SessionPtr;
 
   void close_handle(SessionPtr hyperspace, uint64_t handle);
   void close_handle_ptr(SessionPtr hyperspace, uint64_t *handlep);
@@ -741,4 +741,4 @@ namespace Hyperspace {
 
 } // namespace Hyperspace
 
-#endif // HYPERSPACE_SESSION_H
+#endif // Hyperspace_Session_h

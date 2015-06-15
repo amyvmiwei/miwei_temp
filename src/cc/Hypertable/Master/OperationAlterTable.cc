@@ -341,8 +341,8 @@ bool OperationAlterTable::get_schemas(SchemaPtr &original_schema,
       DynamicBuffer value_buf;
       string filename = m_context->toplevel_dir + "/tables/" + m_id;
       m_context->hyperspace->attr_get(filename, "schema", value_buf);
-      original_schema = Schema::new_instance((const char *)value_buf.base);
-      alter_schema = Schema::new_instance(m_params.schema());
+      original_schema.reset( Schema::new_instance((const char *)value_buf.base) );
+      alter_schema.reset( Schema::new_instance(m_params.schema()) );
     }
     catch (Exception &e) {
       complete_error(e);

@@ -226,7 +226,7 @@ MaintenancePrioritizer::schedule_splits_and_relinquishes(std::vector<RangeData> 
 
 bool
 MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &range_data,
-                 CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
+                 CommitLogPtr &log, int64_t prune_threshold, MemoryState &memory_state,
                  int32_t &priority, String *trace) {
   CommitLog::CumulativeSizeMap cumulative_size_map;
   CommitLog::CumulativeSizeMap::iterator iter;

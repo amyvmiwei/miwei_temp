@@ -19,29 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLLIST_H
-#define HYPERTABLE_CELLLIST_H
-
-#include "Common/atomic.h"
-#include "Common/ByteString.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StlAllocator.h"
-#include "Common/StringExt.h"
+#ifndef Hypertable_RangeServer_CellList_h
+#define Hypertable_RangeServer_CellList_h
 
 #include "ScanContext.h"
 
-#include "Hypertable/Lib/Key.h"
+#include <Hypertable/Lib/Key.h>
+
+#include <Common/ByteString.h>
+#include <Common/StlAllocator.h>
+#include <Common/StringExt.h>
 
 namespace Hypertable {
 
-  class CellList;
   class CellListScanner;
+  typedef std::shared_ptr<CellListScanner> CellListScannerPtr;
 
   /**
    * Abstract base class for cell lists (sorted lists of key/value
    * pairs).  Cell lists include cell stores and cell caches.
    */
-  class CellList : public ReferenceCount {
+  class CellList {
   public:
     virtual ~CellList() { return; }
 
@@ -59,8 +57,8 @@ namespace Hypertable {
      * @param scan_ctx smart pointer to scan context
      * @return pointer to newly allocated scanner
      */
-    virtual CellListScanner *
-    create_scanner(ScanContextPtr &scan_ctx) { return 0; }
+    virtual CellListScannerPtr
+    create_scanner(ScanContext *scan_ctx) { return CellListScannerPtr(); }
 
     typedef std::pair<const char *, int64_t> SplitRowDataValue;
     typedef StlAllocator<SplitRowDataValue> SplitRowDataAlloc;
@@ -101,8 +99,7 @@ namespace Hypertable {
     std::string m_start_row;
     std::string m_end_row;
   };
-  typedef boost::intrusive_ptr<CellList> CellListPtr;
 
 }
 
-#endif // HYPERTABLE_CELLLIST_H
+#endif // Hypertable_RangeServer_CellList_h

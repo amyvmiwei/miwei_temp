@@ -19,18 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RESULTCALLBACKINTERFACE_H
-#define HYPERTABLE_RESULTCALLBACKINTERFACE_H
-
-#include <vector>
-#include <map>
-#include <boost/thread/condition.hpp>
-
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_Lib_ResultCallback_h
+#define Hypertable_Lib_ResultCallback_h
 
 #include "ClientObject.h"
 #include "ScanCells.h"
+
+#include <Common/Mutex.h>
+
+#include <boost/thread/condition.hpp>
+
+#include <map>
+#include <memory>
+#include <vector>
 
 namespace Hypertable {
 
@@ -155,7 +156,10 @@ namespace Hypertable {
     Mutex m_outstanding_mutex;
     boost::condition m_outstanding_cond;
   };
-  typedef intrusive_ptr<ResultCallback> ResultCallbackPtr;
-} // namespace Hypertable
+ 
+  /// Smart pointer to ResultCallback
+  typedef std::shared_ptr<ResultCallback> ResultCallbackPtr;
 
-#endif // HYPERTABLE_RESULTCALLBACKINTERFACE_H
+}
+
+#endif // Hypertable_Lib_ResultCallback_h

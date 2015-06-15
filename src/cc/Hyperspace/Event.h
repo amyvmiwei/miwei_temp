@@ -30,7 +30,6 @@
 #include <AsyncComm/CommBuf.h>
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/Serialization.h>
 #include <Common/System.h>
 
@@ -38,6 +37,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <thread>
 
@@ -93,11 +93,10 @@ namespace Hyperspace {
     EVENT_TYPE_LOCK_GRANTED
   };
 
-  class Event : public ReferenceCount {
+  class Event {
   public:
-    Event(uint64_t id, uint32_t mask) : m_id(id), m_mask(mask), m_notification_count(0) {
-    }
-    virtual ~Event() { return; }
+    Event(uint64_t id, uint32_t mask) : m_id(id), m_mask(mask) { }
+    virtual ~Event() { }
 
     uint64_t get_id() { return m_id; }
 
@@ -136,16 +135,15 @@ namespace Hyperspace {
     }
 
   protected:
-    static            BerkeleyDbFilesystem *ms_bdb_fs;
-    Mutex             m_mutex;
-    boost::condition  m_cond;
-    uint64_t m_id;
-    uint32_t m_mask;
-    uint32_t m_notification_count;
+    static BerkeleyDbFilesystem *ms_bdb_fs;
+    Mutex m_mutex;
+    boost::condition m_cond;
+    uint64_t m_id {};
+    uint32_t m_mask {};
+    uint32_t m_notification_count {};
   };
 
-  typedef boost::intrusive_ptr<Event> HyperspaceEventPtr;
-
+  typedef std::shared_ptr<Event> HyperspaceEventPtr;
 
   /*
    * EventNamed class.  Encapsulates named events (e.g. ATTR_SET,

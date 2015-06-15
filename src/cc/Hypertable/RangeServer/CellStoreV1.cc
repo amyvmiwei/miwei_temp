@@ -89,7 +89,7 @@ BlockCompressionCodec *CellStoreV1::create_block_compression_codec() {
 }
 
 
-CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
+CellListScannerPtr CellStoreV1::create_scanner(ScanContext *scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
 
   if (need_index) {
@@ -99,8 +99,8 @@ CellListScanner *CellStoreV1::create_scanner(ScanContextPtr &scan_ctx) {
   }
 
   if (m_64bit_index)
-    return new CellStoreScanner<CellStoreBlockIndexArray<int64_t> >(this, scan_ctx, need_index ? &m_index_map64 : 0);
-  return new CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
+    return make_shared<CellStoreScanner<CellStoreBlockIndexArray<int64_t>>>(shared_from_this(), scan_ctx, need_index ? &m_index_map64 : 0);
+  return make_shared<CellStoreScanner<CellStoreBlockIndexArray<uint32_t>>>(shared_from_this(), scan_ctx, need_index ? &m_index_map32 : 0);
 }
 
 
@@ -715,7 +715,7 @@ void CellStoreV1::load_block_index() {
 }
 
 
-bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
+bool CellStoreV1::may_contain(ScanContext *scan_ctx) {
 
   if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
     return true;
@@ -728,15 +728,15 @@ bool CellStoreV1::may_contain(ScanContextPtr &scan_context) {
 
   switch (m_bloom_filter_mode) {
     case BLOOM_FILTER_ROWS:
-      return may_contain(scan_context->start_row);
+      return may_contain(scan_ctx->start_row);
     case BLOOM_FILTER_ROWS_COLS:
-      if (may_contain(scan_context->start_row)) {
-        SchemaPtr &schema = scan_context->schema;
-        size_t rowlen = scan_context->start_row.length();
+      if (may_contain(scan_ctx->start_row)) {
+        SchemaPtr &schema = scan_ctx->schema;
+        size_t rowlen = scan_ctx->start_row.length();
         boost::scoped_array<char> rowcol(new char[rowlen + 2]);
-        memcpy(rowcol.get(), scan_context->start_row.c_str(), rowlen + 1);
+        memcpy(rowcol.get(), scan_ctx->start_row.c_str(), rowlen + 1);
 
-        for (auto col : scan_context->spec->columns) {
+        for (auto col : scan_ctx->spec->columns) {
           uint8_t column_family_id = schema->get_column_family(col)->get_id();
           rowcol[rowlen + 1] = column_family_id;
 

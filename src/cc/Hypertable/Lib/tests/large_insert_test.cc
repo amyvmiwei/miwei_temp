@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
     table_ptr = ns->open_table("BigTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr.reset(table_ptr->create_mutator());
 
     key.column_family = "data";
     key.column_qualifier = 0;
@@ -126,9 +126,9 @@ int main(int argc, char **argv) {
 
     mutator_ptr->flush();
 
-    mutator_ptr = 0;
+    mutator_ptr.reset();
 
-    scanner_ptr = table_ptr->create_scanner(scan_spec);
+    scanner_ptr.reset( table_ptr->create_scanner(scan_spec) );
 
     memset(&md5_ctx, 0, sizeof(md5_ctx));
     md5_starts(&md5_ctx);
@@ -143,9 +143,8 @@ int main(int argc, char **argv) {
       quick_exit(EXIT_FAILURE);
     }
 
-    scanner_ptr = 0;
-    table_ptr = 0;
-
+    scanner_ptr.reset();
+    table_ptr.reset();
 
     /**
      * Validate large object returned by FETCH_SCANBLOCK
@@ -156,7 +155,7 @@ int main(int argc, char **argv) {
 
     table_ptr = ns->open_table("BigTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr.reset(table_ptr->create_mutator());
 
     key.column_family = "data";
     key.column_qualifier = 0;
@@ -186,9 +185,9 @@ int main(int argc, char **argv) {
 
     mutator_ptr->flush();
 
-    mutator_ptr = 0;
+    mutator_ptr.reset();
 
-    scanner_ptr = table_ptr->create_scanner(scan_spec);
+    scanner_ptr.reset(table_ptr->create_scanner(scan_spec));
 
     memset(&md5_ctx, 0, sizeof(md5_ctx));
     md5_starts(&md5_ctx);
@@ -203,8 +202,8 @@ int main(int argc, char **argv) {
       quick_exit(EXIT_FAILURE);
     }
 
-    scanner_ptr = 0;
-    table_ptr = 0;
+    scanner_ptr.reset();
+    table_ptr.reset();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

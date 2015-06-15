@@ -24,15 +24,14 @@
  * This file contains declarations that are part of the MetaLog system.
  */
 
-#ifndef HYPERTABLE_METALOG_H
-#define HYPERTABLE_METALOG_H
+#ifndef Hypertable_Lib_MetaLog_h
+#define Hypertable_Lib_MetaLog_h
+
+#include <Common/Filesystem.h>
+#include <Common/Mutex.h>
 
 #include <deque>
 #include <iostream>
-
-#include "Common/Filesystem.h"
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
 
 namespace Hypertable {
 
@@ -109,4 +108,4 @@ namespace Hypertable {
    /** @}*/
 }
 
-#endif // HYPERTABLE_METALOG_H
+#endif // Hypertable_Lib_MetaLog_h

@@ -29,8 +29,8 @@
 #include <Hypertable/Lib/Schema.h>
 
 #include <Common/StringExt.h>
-#include <Common/ReferenceCount.h>
 
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -43,7 +43,7 @@ namespace Lib {
    * This class takes allows vector access to a set of cells contained in an EventPtr without
    * any copying.
    */
-  class ScanCells : public ReferenceCount {
+  class ScanCells {
 
   public:
     ScanCells() : m_eos(false){}
@@ -136,10 +136,11 @@ namespace Lib {
     vector<ScanBlockPtr> m_scanblocks;
     CellsBuilderPtr m_cells;
     ProfileDataScanner m_profile_data;
-    bool m_eos;
-  }; // ScanCells
+    bool m_eos {};
+  };
 
-  typedef intrusive_ptr<ScanCells> ScanCellsPtr;
+  /// Smart pointer to ScanCells
+  typedef std::shared_ptr<ScanCells> ScanCellsPtr;
 
 }}
 

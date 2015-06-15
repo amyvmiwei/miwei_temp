@@ -39,6 +39,8 @@
 #include <Common/Filesystem.h>
 #include <Common/Config.h>
 
+using namespace std;
+
 namespace Hypertable {
 
 class IndexUpdaterCallback : public ResultCallback {
@@ -144,7 +146,7 @@ IndexUpdaterPtr IndexUpdaterFactory::create(const String &table_id,
 
   // at least one index table was not cached: load it
   if (!ms_namemap)
-    ms_namemap = new NameIdMapper(Global::hyperspace, Global::toplevel_dir);
+    ms_namemap = make_shared<NameIdMapper>(Global::hyperspace, Global::toplevel_dir);
 
   String table_name;
   if (!ms_namemap->id_to_name(table_id, table_name)) {
@@ -197,12 +199,12 @@ void IndexUpdaterFactory::clear_cache() {
   ms_qualifier_index_cache.clear();
 }
 
-Table *IndexUpdaterFactory::load_table(const String &table_name)
+TablePtr IndexUpdaterFactory::load_table(const String &table_name)
 {
   ApplicationQueueInterfacePtr aq = Global::app_queue;
-  return new Table(Config::properties, Global::range_locator, Global::conn_manager,
-                   Global::hyperspace, aq,
-                   ms_namemap, table_name);
+  return make_shared<Table>(Config::properties, Global::range_locator,
+                            Global::conn_manager, Global::hyperspace, aq,
+                            ms_namemap, table_name);
 }
 
 Mutex IndexUpdaterFactory::ms_mutex;

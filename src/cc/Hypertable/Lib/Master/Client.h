@@ -41,13 +41,14 @@
 #include <AsyncComm/CommBuf.h>
 #include <AsyncComm/ConnectionManager.h>
 
-#include <Common/ReferenceCount.h>
 #include <Common/StatsSystem.h>
 #include <Common/Status.h>
 #include <Common/Timer.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
+
+#include <memory>
 
 namespace Hypertable {
 namespace Lib {
@@ -77,7 +78,7 @@ namespace Master {
    * This class provides a client interface to the Master.  It has methods,
    * both synchronous and asynchronous, that carry out %Master operations.
    */
-  class Client : public ReferenceCount {
+  class Client {
   public:
 
     Client(ConnectionManagerPtr &conn_mgr,
@@ -198,7 +199,7 @@ namespace Master {
   };
 
   /// Smart pointer to Client
-  typedef intrusive_ptr<Client> ClientPtr;
+  typedef std::shared_ptr<Client> ClientPtr;
 
   /// @}
 

@@ -80,14 +80,14 @@ int main(int argc, char **argv) {
   ReactorFactory::initialize(2);
 
   try {
-    hypertable_client_ptr = new Hypertable::Client(System::locate_install_dir(argv[0]), "./hypertable.cfg");
+    hypertable_client_ptr = make_shared<Hypertable::Client>(System::locate_install_dir(argv[0]), "./hypertable.cfg");
     namespace_ptr = hypertable_client_ptr->open_namespace("/");
     table_ptr = namespace_ptr->open_table("LoadTest");
-    scanner = table_ptr->create_scanner(scan_spec.get());
+    scanner.reset(table_ptr->create_scanner(scan_spec.get()));
     while(scanner->next(cell) && ii < num_cells) {
       ++ii;
     }
-    scanner = 0;
+    scanner.reset();
     if (ii != num_cells) {
       cout << "Expected " << num_cells << " cells, received " << ii << endl;
       quick_exit(EXIT_FAILURE);

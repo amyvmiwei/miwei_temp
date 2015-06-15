@@ -127,7 +127,7 @@ fs_conflict_error() {
 while [ $# -gt 0 ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.fsbroker.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.fsbroker.%p --leak-check=full --num-callers=50 "
       shift
       ;;
     -h|--help)

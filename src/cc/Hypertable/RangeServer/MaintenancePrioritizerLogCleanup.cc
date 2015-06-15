@@ -129,7 +129,7 @@ MaintenancePrioritizerLogCleanup::prioritize(std::vector<RangeData> &range_data,
  */
 void
 MaintenancePrioritizerLogCleanup::assign_priorities(std::vector<RangeData> &range_data,
-              CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
+              CommitLogPtr &log, int64_t prune_threshold, MemoryState &memory_state,
               int32_t &priority, String *trace) {
 
   // 1. Schedule deferred initialization tasks

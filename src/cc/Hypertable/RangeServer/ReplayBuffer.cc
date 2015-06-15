@@ -48,7 +48,7 @@ ReplayBuffer::ReplayBuffer(PropertiesPtr &props, Comm *comm,
     m_plan.get_range_specs(location, specs);
     for (auto &spec : specs) {
       RangeReplayBufferPtr replay_buffer
-          = new RangeReplayBuffer(location, spec);
+        = make_shared<RangeReplayBuffer>(location, spec);
       m_buffer_map[spec] = replay_buffer;
     }
   }

@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <deque>
 #include <map>
+#include <memory>
 #include <vector>
 
 // this macro enables the "ScanSpecBuilder queue" test code; it fills the queue
@@ -98,7 +99,7 @@ namespace Hypertable {
 
   public:
 
-    IndexScannerCallback(TableScannerAsync* primary_scanner, TablePtr primary_table,
+    IndexScannerCallback(TableScannerAsync* primary_scanner, Table *primary_table,
                          const ScanSpec &primary_spec,
                          std::vector<CellPredicate> &cell_predicates,
                          ResultCallback *original_cb, uint32_t timeout_ms, 
@@ -106,13 +107,9 @@ namespace Hypertable {
                          bool row_intervals_applied)
       : ResultCallback(), m_primary_scanner(primary_scanner),
         m_primary_table(primary_table), m_primary_spec(primary_spec),
-        m_original_cb(original_cb), m_timeout_ms(timeout_ms), m_mutator(0), 
-        m_row_limit(0), m_cell_limit(0), m_cell_count(0), m_row_offset(0), 
-        m_cell_offset(0), m_row_count(0), m_cell_limit_per_family(0), 
-        m_eos(false), m_limits_reached(false), m_readahead_count(0), 
-        m_cur_matching(0), m_all_matching(0), m_qualifier_scan(qualifier_scan),
-        m_row_intervals_applied(row_intervals_applied),
-        m_tmp_cutoff(0), m_final_decrement(false), m_shutdown(false) {
+        m_original_cb(original_cb), m_timeout_ms(timeout_ms),
+        m_qualifier_scan(qualifier_scan),
+        m_row_intervals_applied(row_intervals_applied) {
       atomic_set(&m_outstanding_scanners, 0);
       m_original_cb->increment_outstanding();
 
@@ -152,9 +149,6 @@ namespace Hypertable {
       ScopedLock lock2(m_mutex);
       m_scanners.clear();
       sspecs_clear();
-      if (m_mutator)
-        delete m_mutator;
-
       if (m_tmp_table) {
         Client *client = m_primary_table->get_namespace()->get_client();
         NamespacePtr nstmp = client->open_namespace("/tmp");
@@ -280,7 +274,7 @@ namespace Hypertable {
         HT_ASSERT(m_final_decrement == false);
         if (!m_final_decrement) {
           // send empty eos package to caller
-          ScanCellsPtr empty = new ScanCells;
+          ScanCellsPtr empty = std::make_shared<ScanCells>();
           empty->set_eos();
           m_original_cb->scan_ok(m_primary_scanner, empty);
           m_original_cb->decrement_outstanding();
@@ -425,10 +419,8 @@ namespace Hypertable {
 
       // reached EOS? then flush the mutator
       if (scancells->get_eos()) {
-        if (m_mutator) {
-          delete m_mutator;
-          m_mutator = 0;
-        }
+        if (m_mutator)
+          m_mutator.reset();
         if (!m_tmp_table && m_tmp_keys.empty()) {
           m_eos = true;
           return;
@@ -536,8 +528,8 @@ namespace Hypertable {
      * with an index are also created for the temporary table
      */
     void create_temp_table() {
-      HT_ASSERT(m_tmp_table == NULL);
-      HT_ASSERT(m_mutator == NULL);
+      HT_ASSERT(!m_tmp_table);
+      HT_ASSERT(!m_mutator);
 
       std::string inner;
       for (auto cf : m_primary_table->schema()->get_column_families()) {
@@ -549,12 +541,12 @@ namespace Hypertable {
       }
 
       Client *client = m_primary_table->get_namespace()->get_client();
-      NamespacePtr nstmp = client->open_namespace("/tmp");
+      NamespacePtr nstmp( client->open_namespace("/tmp") );
       std::string guid = HyperAppHelper::generate_guid();
       nstmp->create_table(guid, format(tmp_schema_outer, inner.c_str()));
       m_tmp_table = nstmp->open_table(guid);
 
-      m_mutator = m_tmp_table->create_mutator_async(this);
+      m_mutator.reset(m_tmp_table->create_mutator_async(this));
     }
 
     void verify_results(ScopedLock &lock, TableScannerAsync *scanner, 
@@ -734,7 +726,7 @@ namespace Hypertable {
 
       // count cells and rows; skip CELL_OFFSET/OFFSET cells/rows and reduce
       // the results to CELL_LIMIT/LIMIT cells/rows
-      ScanCellsPtr scp = new ScanCells();
+      ScanCellsPtr scp = std::make_shared<ScanCells>();
       Cells cells;
       scancells->get(cells);
       const char *last = m_last_rowkey_tracking.size() 
@@ -869,10 +861,10 @@ namespace Hypertable {
     typedef std::map<String, String> CstrMap;
 
     // a weak pointer to the primary scanner
-    TableScannerAsync* m_primary_scanner;
+    TableScannerAsync* m_primary_scanner {};
 
     // a pointer to the primary table
-    TablePtr m_primary_table;
+    Table *m_primary_table {};
 
     // the original scan spec for the primary table
     ScanSpecBuilder m_primary_spec;
@@ -881,10 +873,10 @@ namespace Hypertable {
     std::vector<CellPredicate> m_cell_predicates;
 
     // the original callback object specified by the user
-    ResultCallback *m_original_cb;
+    ResultCallback *m_original_cb {};
 
     // the original timeout value specified by the user
-    uint32_t m_timeout_ms;
+    uint32_t m_timeout_ms {};
 
     // a list of all scanners that are created in this object
     std::vector<TableScannerAsync *> m_scanners;
@@ -905,31 +897,31 @@ namespace Hypertable {
     TablePtr m_tmp_table;
 
     // a mutator for the temporary table
-    TableMutatorAsync *m_mutator;
+    std::unique_ptr<TableMutatorAsync> m_mutator;
 
     // limit and offset values from the original ScanSpec
-    int m_row_limit;
-    int m_cell_limit;
-    int m_cell_count;
-    int m_row_offset;
-    int m_cell_offset;
-    int m_row_count;
-    int m_cell_limit_per_family;
+    int m_row_limit {};
+    int m_cell_limit {};
+    int m_cell_count {};
+    int m_row_offset {};
+    int m_cell_offset {};
+    int m_row_count {};
+    int m_cell_limit_per_family {};
 
     // we reached eos - no need to continue scanning
-    bool m_eos;
+    bool m_eos {};
 
     // track limits and offsets
-    bool m_track_limits;
+    bool m_track_limits {};
 
     // limits were reached, all following keys are discarded
-    bool m_limits_reached;
+    bool m_limits_reached {};
 
     // a mutex 
     Mutex m_mutex;
 
     // counting the read-ahead scans
-    int m_readahead_count;
+    int m_readahead_count {};
 
     // temporary storage to persist pointer data before it goes out of scope
     std::string m_last_rowkey_verify;
@@ -938,16 +930,16 @@ namespace Hypertable {
     std::string m_last_rowkey_tracking;
 
     // Carry-over matching bits for last key
-    uint32_t m_cur_matching;
+    uint32_t m_cur_matching {};
 
     // Bit-pattern for all matching predicates
-    uint32_t m_all_matching;
+    uint32_t m_all_matching {};
 
     // true if this index is a qualifier index
-    bool m_qualifier_scan;
+    bool m_qualifier_scan {};
 
     // true if the row intervals have been applied to the index scan
-    bool m_row_intervals_applied;
+    bool m_row_intervals_applied {};
 
     // buffer for accumulating keys from the index
     CkeyMap m_tmp_keys;
@@ -957,19 +949,17 @@ namespace Hypertable {
 
     // accumulator; if > TMP_CUTOFF then store all index results in a
     // temporary table
-    size_t m_tmp_cutoff;
+    size_t m_tmp_cutoff {};
 
     // keep track whether we called final_decrement() 
-    bool m_final_decrement;
+    bool m_final_decrement {};
 
     // number of outstanding scanners (this is more precise than m_outstanding)
     atomic_t m_outstanding_scanners;
 
     // shutting down this scanner?
-    bool m_shutdown;
+    bool m_shutdown {};
   };
-
-  typedef intrusive_ptr<IndexScannerCallback> IndexScannerCallbackPtr;
 
   inline bool operator<(const KeySpec &lhs, const KeySpec &rhs) {
     size_t len1 = strlen((const char *)lhs.row); 
@@ -983,6 +973,6 @@ namespace Hypertable {
       return true;
     return false;
   }
-} // namespace Hypertable
+}
 
 #endif // Hypertable_Lib_IndexScannerCallback_h

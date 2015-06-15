@@ -24,8 +24,8 @@
  * Based on boost::program_options, the options are configured in Config.h.
  */
 
-#ifndef HYPERTABLE_PROPERTIES_H
-#define HYPERTABLE_PROPERTIES_H
+#ifndef Common_Properties_h
+#define Common_Properties_h
 
 #include <vector>
 #include <string>
@@ -59,10 +59,10 @@ void validate(boost::any& v, const vector<string> &s, std::vector<T>*, int);
 
 }} // namespace boost::program_options
 
+#include <Common/Error.h>
+
 #include <boost/program_options.hpp>
 
-#include "Common/ReferenceCount.h"
-#include "Common/Error.h"
 
 namespace boost { namespace program_options {
 
@@ -205,7 +205,7 @@ typedef Po::positional_options_description PositionalDesc;
  *
  * Implements getters and setters, aliases and default values.
  */
-class Properties : public ReferenceCount {
+class Properties {
   typedef Po::variable_value Value;
   typedef Po::variables_map Map;
   typedef std::pair<Map::iterator, bool> InsRet;
@@ -444,7 +444,7 @@ private:
   AliasMap m_alias_map;
 };
 
-typedef intrusive_ptr<Properties> PropertiesPtr;
+ typedef std::shared_ptr<Properties> PropertiesPtr;
 
 /** Helper class to access parts of the properties.
  *
@@ -528,6 +528,6 @@ private:
 
 /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_PROPERTIES_H
+#endif // Common_Properties_h

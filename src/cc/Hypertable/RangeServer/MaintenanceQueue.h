@@ -23,23 +23,23 @@
 /// Declarations for MaintenanceQueue
 /// This file contains the type declarations for the MaintenanceQueue
 
-#ifndef HYPERTABLE_MAINTENANCEQUEUE_H
-#define HYPERTABLE_MAINTENANCEQUEUE_H
-
-#include <cassert>
-#include <queue>
-#include <set>
-
-#include <boost/thread/condition.hpp>
-
-#include "Common/Mutex.h"
-#include "Common/Thread.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_RangeServer_MaintenanceQueue_h
+#define Hypertable_RangeServer_MaintenanceQueue_h
 
 #include "MaintenanceTask.h"
 #include "MaintenanceTaskMemoryPurge.h"
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Mutex.h>
+#include <Common/Thread.h>
+
+#include <boost/thread/condition.hpp>
+
+#include <cassert>
+#include <memory>
+#include <queue>
+#include <set>
 
 #define MAX_LEVELS 4
 
@@ -51,7 +51,7 @@ namespace Hypertable {
 
   /** Queue for periodic maintenance work
    */
-  class MaintenanceQueue : public ReferenceCount {
+  class MaintenanceQueue {
 
     static int              ms_pause;
     static boost::condition ms_cond;
@@ -394,8 +394,10 @@ namespace Hypertable {
   };
 
   /// Smart pointer to MaintenanceQueue
-  typedef boost::intrusive_ptr<MaintenanceQueue> MaintenanceQueuePtr;
+  typedef std::shared_ptr<MaintenanceQueue> MaintenanceQueuePtr;
+
   /** @}*/
+
 } // namespace Hypertable
 
-#endif // HYPERTABLE_MAINTENANCEQUEUE_H
+#endif // Hypertable_RangeServer_MaintenanceQueue_h

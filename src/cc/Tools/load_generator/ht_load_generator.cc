@@ -152,7 +152,7 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 
 int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
-  PropertiesPtr generator_props = new Properties();
+  PropertiesPtr generator_props = make_shared<Properties>();
   bool flush, to_stdout, thrift;
   ::uint64_t flush_interval=0;
   ::uint64_t shared_mutator_flush_interval=0;
@@ -182,11 +182,11 @@ int main(int argc, char **argv) {
 
     flush = get_bool("flush");
     if (has("no-log"))
-      mutator_flags |= Table::MUTATOR_FLAG_NO_LOG;
+      mutator_flags |= TableMutator::FLAG_NO_LOG;
     else if (get_bool("no-log-sync"))
-      mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
+      mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
     to_stdout = get_bool("stdout");
-    if (mutator_flags & Table::MUTATOR_FLAG_NO_LOG_SYNC)
+    if (mutator_flags & TableMutator::FLAG_NO_LOG_SYNC)
       flush_interval = get_i64("flush-interval");
     shared_mutator_flush_interval = get_i64("shared-mutator-flush-interval");
     thrift = get_bool("thrift");
@@ -378,9 +378,9 @@ generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     boost::progress_display progress_meter(key_limit ? dg.get_max_keys() : adjusted_bytes);
 
     if (config_file != "")
-      load_client_ptr = new LoadClient(config_file, thrift);
+      load_client_ptr = make_shared<LoadClient>(config_file, thrift);
     else
-      load_client_ptr = new LoadClient(thrift);
+      load_client_ptr = make_shared<LoadClient>(thrift);
 
     load_client_ptr->create_mutator(tablename, mutator_flags,
                                     shared_mutator_flush_interval);
@@ -553,7 +553,7 @@ generate_update_load_parallel(PropertiesPtr &props, String &tablename,
     uint32_t adjusted_bytes = 0;
     LoadRec *lrec;
 
-    client = new Hypertable::Client(config_file);
+    client = make_shared<Hypertable::Client>(config_file);
     ht_namespace = client->open_namespace("/");
     table = ht_namespace->open_table(tablename);
 
@@ -727,9 +727,9 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
     uint64_t last_bytes = 0;
 
     if (config_file != "")
-      load_client_ptr = new LoadClient(config_file, thrift);
+      load_client_ptr = make_shared<LoadClient>(config_file, thrift);
     else
-      load_client_ptr = new LoadClient(thrift);
+      load_client_ptr = make_shared<LoadClient>(thrift);
 
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
 
@@ -824,7 +824,7 @@ void generate_query_load_parallel(PropertiesPtr &props, String &tablename,
   boost::progress_display progress(max_keys * parallel);
 
   String config_file = get_str("config");
-  ClientPtr client = new Hypertable::Client(config_file);
+  ClientPtr client = make_shared<Hypertable::Client>(config_file);
   NamespacePtr ht_namespace = client->open_namespace("/");
   TablePtr table = ht_namespace->open_table(tablename);
 

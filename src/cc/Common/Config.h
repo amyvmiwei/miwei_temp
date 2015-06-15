@@ -25,13 +25,13 @@
  * from a command line parameter).
  */
 
-#ifndef HYPERTABLE_CONFIG_H
-#define HYPERTABLE_CONFIG_H
+#ifndef Common_Config_h
+#define Common_Config_h
 
-#include "Common/Mutex.h"
-#include "Common/Logger.h"
-#include "Common/Meta.h"
-#include "Common/Properties.h"
+#include <Common/Mutex.h>
+#include <Common/Logger.h>
+#include <Common/Meta.h>
+#include <Common/Properties.h>
 
 namespace Hypertable { namespace Config {
 
@@ -269,6 +269,6 @@ namespace Hypertable { namespace Config {
 
   /** @}*/
 
-}} // namespace Hypertable::Config
+}}
 
-#endif // HYPERTABLE_CONFIG_H
+#endif // Common_Config_h

@@ -25,8 +25,8 @@
 /// CellStoreScannerIntervalBlockIndex, a class used to scan over a portion of a
 /// CellStore using its block index.
 
-#ifndef HYPERTABLE_CELLSTORESCANNERINTERVALBLOCKINDEX_H
-#define HYPERTABLE_CELLSTORESCANNERINTERVALBLOCKINDEX_H
+#ifndef Hypertable_RangeServer_CellStoreScannerIntervalBlockIndex_h
+#define Hypertable_RangeServer_CellStoreScannerIntervalBlockIndex_h
 
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/CellStoreScannerInterval.h>
@@ -37,7 +37,6 @@
 namespace Hypertable {
 
   class BlockCompressionCodec;
-  class CellStore;
 
   /// @addtogroup RangeServer
   /// @{
@@ -50,8 +49,8 @@ namespace Hypertable {
 
     typedef typename IndexT::iterator IndexIteratorT;
 
-    CellStoreScannerIntervalBlockIndex(CellStore *cellstore, IndexT *index,
-                                       SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx);
+    CellStoreScannerIntervalBlockIndex(CellStorePtr &cellstore, IndexT *index,
+                                       SerializedKey start_key, SerializedKey end_key, ScanContext *scan_ctx);
     virtual ~CellStoreScannerIntervalBlockIndex();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
@@ -61,7 +60,7 @@ namespace Hypertable {
     bool fetch_next_block(bool eob=false);
 
     CellStorePtr          m_cellstore;
-    IndexT               *m_index;
+    IndexT               *m_index {};
     IndexIteratorT        m_iter;
     BlockInfo             m_block;
     Key                   m_key;
@@ -69,19 +68,19 @@ namespace Hypertable {
     ByteString            m_cur_value;
     SerializedKey         m_start_key;
     SerializedKey         m_end_key;
-    const char *          m_end_row;
+    const char *          m_end_row {};
     DynamicBuffer         m_key_buf;
-    BlockCompressionCodec *m_zcodec;
-    KeyDecompressor      *m_key_decompressor;
-    int32_t               m_fd;
-    bool                  m_cached;
-    bool                  m_check_for_range_end;
-    int                   m_file_id;
-    ScanContextPtr        m_scan_ctx;
+    BlockCompressionCodec *m_zcodec {};
+    KeyDecompressor      *m_key_decompressor {};
+    int32_t               m_fd {-1};
+    bool                  m_cached {};
+    bool                  m_check_for_range_end {};
+    int                   m_file_id {};
+    ScanContext          *m_scan_ctx {};
     ScanContext::CstrRowSet& m_rowset;
   };
 
   /// @}
 }
 
-#endif // HYPERTABLE_CELLSTORESCANNERINTERVALBLOCKINDEX_H
+#endif // Hypertable_RangeServer_CellStoreScannerIntervalBlockIndex_h

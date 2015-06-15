@@ -44,9 +44,6 @@ namespace master {
     Lib::Master::ClientPtr m_master;
   };
 
-  typedef intrusive_ptr<MasterCommandInterpreter>
-          MasterCommandInterpreterPtr;
-
 }}}
 
 #endif // Tools_client_master_MasterCommandInterpreter_h

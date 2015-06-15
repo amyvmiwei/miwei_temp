@@ -73,10 +73,10 @@ namespace Hypertable {
     static bool           verbose;
     static bool           row_size_unlimited;
     static bool           ignore_cells_with_clock_skew;
-    static CommitLog     *user_log;
-    static CommitLog     *system_log;
-    static CommitLog     *metadata_log;
-    static CommitLog     *root_log;
+    static CommitLogPtr user_log;
+    static CommitLogPtr system_log;
+    static CommitLogPtr metadata_log;
+    static CommitLogPtr root_log;
     static MetaLog::WriterPtr rsml_writer;
     static std::string    log_dir;
     static LocationInitializerPtr location_initializer;

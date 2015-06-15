@@ -70,7 +70,8 @@ namespace Hypertable {
     };
 
   public:
-    CellStoreV4(Filesystem *filesys, Schema *schema=0);
+    CellStoreV4(Filesystem *filesys);
+    CellStoreV4(Filesystem *filesys, SchemaPtr &schema);
     virtual ~CellStoreV4();
 
     virtual void create(const char *fname, size_t max_entries,
@@ -86,7 +87,7 @@ namespace Hypertable {
     bool may_contain(const String &key) {
       return may_contain(key.data(), key.size());
     }
-    virtual bool may_contain(ScanContextPtr &);
+    bool may_contain(ScanContext *scan_ctx) override;
 
     virtual uint64_t disk_usage() {
       if (m_disk_usage < 0)
@@ -98,7 +99,7 @@ namespace Hypertable {
     virtual int64_t get_total_entries() { return m_trailer.total_entries; }
     virtual std::string &get_filename() { return m_filename; }
     virtual int get_file_id() { return m_file_id; }
-    virtual CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
+    CellListScannerPtr create_scanner(ScanContext *scan_ctx) override;
     virtual BlockCompressionCodec *create_block_compression_codec();
     virtual KeyDecompressor *create_key_decompressor();
     virtual void display_block_info();
@@ -133,42 +134,39 @@ namespace Hypertable {
 
     typedef BlobHashSet<> BloomFilterItems;
 
-    Filesystem            *m_filesys;
-    SchemaPtr              m_schema;
-    int32_t                m_fd;
-    std::string            m_filename;
+    Filesystem *m_filesys {};
+    SchemaPtr m_schema;
+    int32_t m_fd {-1};
+    std::string m_filename;
     CellStoreBlockIndexArray<uint32_t> m_index_map32;
     CellStoreBlockIndexArray<int64_t> m_index_map64;
-    bool                   m_64bit_index;
-    CellStoreTrailerV4     m_trailer;
-    BlockCompressionCodec *m_compressor;
-    DynamicBuffer          m_buffer;
-    IndexBuilder           m_index_builder;
-    DispatchHandlerSynchronizer  m_sync_handler;
-    uint32_t               m_outstanding_appends;
-    int64_t                m_offset;
-    ByteString             m_last_key;
-    int64_t                m_file_length;
-    int64_t                m_disk_usage;
-    int                    m_file_id;
-    float                  m_uncompressed_data;
-    float                  m_compressed_data;
-    int64_t                m_uncompressed_blocksize;
+    bool m_64bit_index {};
+    CellStoreTrailerV4 m_trailer;
+    BlockCompressionCodec *m_compressor {};
+    DynamicBuffer m_buffer;
+    IndexBuilder m_index_builder;
+    DispatchHandlerSynchronizer m_sync_handler;
+    uint32_t m_outstanding_appends {};
+    int64_t m_offset {};
+    ByteString m_last_key;
+    int64_t m_file_length {};
+    int64_t m_disk_usage {};
+    int m_file_id {};
+    float m_uncompressed_data {};
+    float m_compressed_data {};
+    int64_t m_uncompressed_blocksize {};
     BlockCompressionCodec::Args m_compressor_args;
-    size_t                 m_max_entries;
-
-    BloomFilterMode        m_bloom_filter_mode;
-    BloomFilterWithChecksum *m_bloom_filter;
-    BloomFilterItems      *m_bloom_filter_items;
-    int64_t                m_max_approx_items;
-    float                  m_bloom_bits_per_item;
-    float                  m_filter_false_positive_prob;
-    KeyCompressorPtr       m_key_compressor;
-    bool                   m_restricted_range;
-    int64_t               *m_column_ttl;
+    size_t m_max_entries {};
+    BloomFilterMode m_bloom_filter_mode {BLOOM_FILTER_DISABLED};
+    BloomFilterWithChecksum *m_bloom_filter {};
+    BloomFilterItems *m_bloom_filter_items {};
+    int64_t m_max_approx_items {};
+    float m_bloom_bits_per_item {};
+    float m_filter_false_positive_prob {};
+    KeyCompressorPtr m_key_compressor;
+    bool m_restricted_range {};
+    int64_t *m_column_ttl {};
   };
-
-  typedef intrusive_ptr<CellStoreV4> CellStoreV4Ptr;
 
 } // namespace Hypertable
 

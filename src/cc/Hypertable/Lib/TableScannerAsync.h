@@ -148,7 +148,7 @@ namespace Hypertable {
     void maybe_callback_error(int scanner_id, bool next);
     void wait_for_completion();
     void move_to_next_interval_scanner(int current_scanner);
-    bool use_index(TablePtr table, const ScanSpec &primary_spec, 
+    bool use_index(Table *table, const ScanSpec &primary_spec, 
                    ScanSpecBuilder &index_spec,
                    std::vector<CellPredicate> &cell_predicates,
                    bool *use_qualifier, bool *row_intervals_applied);
@@ -175,7 +175,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to TableScannerAsync
-  typedef intrusive_ptr<TableScannerAsync> TableScannerAsyncPtr;
+  typedef std::shared_ptr<TableScannerAsync> TableScannerAsyncPtr;
 
   /// @}
 

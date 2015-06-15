@@ -59,10 +59,10 @@ bool OperationSystemUpgrade::update_schema(const String &name, const String &sch
     return false;
 
   m_context->hyperspace->attr_get(handle, "schema", value_buf);
-  old_schema = Schema::new_instance((const char *)value_buf.base);
+  old_schema.reset( Schema::new_instance((const char *)value_buf.base) );
 
   String schema_str = FileUtils::file_to_string( System::install_dir + schema_file );
-  new_schema = Schema::new_instance(schema_str);
+  new_schema.reset( Schema::new_instance(schema_str) );
 
   if (old_schema->get_generation() < new_schema->get_generation()) {
     m_context->hyperspace->attr_set(handle, "schema", schema_str.c_str(),

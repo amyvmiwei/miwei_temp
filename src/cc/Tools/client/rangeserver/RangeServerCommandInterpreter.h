@@ -66,9 +66,6 @@ namespace rangeserver {
     String m_toplevel_dir;
   };
 
-  typedef intrusive_ptr<RangeServerCommandInterpreter>
-          RangeServerCommandInterpreterPtr;
-
 }}}
 
 #endif // Tools_client_rangeserver_RangeServerCommandInterpreter_h

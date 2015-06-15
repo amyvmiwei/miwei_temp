@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     }
 
     WordStreamPtr word_stream
-        = new WordStream(get_str("word-file"), 1, 2, false);
+      = make_shared<WordStream>(get_str("word-file"), 1, 2, false);
 
     while (true)
       cout << word_stream->next() << "\n";

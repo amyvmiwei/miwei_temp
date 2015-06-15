@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_NAMESPACE_H
-#define HYPERTABLE_NAMESPACE_H
+#ifndef Hypertable_Lib_Namespace_h
+#define Hypertable_Lib_Namespace_h
 
 #include <Hypertable/Lib/ClientObject.h>
 #include <Hypertable/Lib/Master/Client.h>
@@ -40,10 +40,11 @@
 #include <AsyncComm/ConnectionManager.h>
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 
 #include <boost/tokenizer.hpp>
+
+#include <memory>
 
 namespace Hypertable {
 
@@ -330,10 +331,10 @@ namespace Hypertable {
     Client                 *m_client;
   };
 
-  typedef intrusive_ptr<Namespace> NamespacePtr;
+  typedef std::shared_ptr<Namespace> NamespacePtr;
 
   /// @}
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_NAMESPACE_H
+#endif // Hypertable_Lib_Namespace_h

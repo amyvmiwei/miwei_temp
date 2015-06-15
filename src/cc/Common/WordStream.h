@@ -24,15 +24,16 @@
  * and can be randomized.
  */
 
-#ifndef HYPERTABLE_WORDSTREAM_H
-#define HYPERTABLE_WORDSTREAM_H
+#ifndef Common_WordStream_h
+#define Common_WordStream_h
 
-#include "Common/String.h"
-
-#include <vector>
+#include <Common/String.h>
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
+
+#include <memory>
+#include <vector>
 
 namespace Hypertable {
 
@@ -44,7 +45,7 @@ namespace Hypertable {
    * A class generating a stream of words; the words are retrieved from a file
    * and can be randomized.
    */
-  class WordStream : public ReferenceCount {
+  class WordStream {
     public:
     /** Constructor
      *
@@ -104,10 +105,10 @@ namespace Hypertable {
     bool m_random;
   };
 
-  typedef intrusive_ptr<WordStream> WordStreamPtr;
+  typedef std::shared_ptr<WordStream> WordStreamPtr;
 
   /** @} */
 
 }
 
-#endif // HYPERTABLE_WORDSTREAM_H
+#endif // Common_WordStream_h

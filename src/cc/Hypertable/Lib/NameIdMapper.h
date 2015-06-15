@@ -19,18 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_NAMEIDMAPPER_H
-#define HYPERTABLE_NAMEIDMAPPER_H
+#ifndef Hypertable_Lib_NameIdMapper_h
+#define Hypertable_Lib_NameIdMapper_h
 
-#include "Common/Compat.h"
-#include <vector>
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
-
-#include "Hyperspace/Session.h"
+#include <Common/Compat.h>
 
 #include "NamespaceListing.h"
+
+#include <Hyperspace/Session.h>
+
+#include <Common/Mutex.h>
+#include <Common/String.h>
+
+#include <memory>
+#include <vector>
 
 namespace Hyperspace {
   class Session;
@@ -40,7 +42,7 @@ namespace Hypertable {
 
   /** Easy mapping between a Table/Namespace name string to ids and vice versa.
    */
-  class NameIdMapper: public ReferenceCount {
+  class NameIdMapper {
 
   public:
 
@@ -115,8 +117,9 @@ namespace Hypertable {
     size_t m_prefix_components;
   };
 
-  typedef intrusive_ptr<NameIdMapper> NameIdMapperPtr;
+  /// Smart pointer to NameIdMapper
+  typedef std::shared_ptr<NameIdMapper> NameIdMapperPtr;
 
-} // namesapce Hypertable
+}
 
-#endif // HYPERTABLE_NAMEIDMAPPER_H
+#endif // Hypertable_Lib_NameIdMapper_h

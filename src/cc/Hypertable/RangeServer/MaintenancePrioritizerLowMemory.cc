@@ -131,7 +131,7 @@ MaintenancePrioritizerLowMemory::prioritize(std::vector<RangeData> &range_data,
  */
 void
 MaintenancePrioritizerLowMemory::assign_priorities_all(std::vector<RangeData> &range_data,
-            CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
+            CommitLogPtr &log, int64_t prune_threshold, MemoryState &memory_state,
 	    int32_t &priority, String *trace) {
 
   if (!schedule_inprogress_operations(range_data, memory_state, priority, trace))

@@ -33,7 +33,6 @@
 
 #include <Common/Filesystem.h>
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/DispatchHandler.h>
@@ -65,7 +64,7 @@ namespace Hypertable {
      * MetaLog::Writer writer = new MetaLog::Writer(log_fs, definition, log_dir, entities);
      * </pre>
      */
-    class Writer : public ReferenceCount {
+    class Writer {
     public:
 
       /** Constructor.
@@ -279,7 +278,7 @@ namespace Hypertable {
     };
 
     /// Smart pointer to Writer
-    typedef intrusive_ptr<Writer> WriterPtr;
+    typedef std::shared_ptr<Writer> WriterPtr;
     
     /// @}
   }

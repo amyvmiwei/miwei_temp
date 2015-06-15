@@ -527,13 +527,13 @@ int main(int argc, char **argv) {
     String testdir = "/CellStoreScanner_delete_test";
     client->mkdirs(testdir);
 
-    SchemaPtr schema = Schema::new_instance(schema_str);
+    SchemaPtr schema( Schema::new_instance(schema_str) );
 
     String csname = testdir + "/cs0";
-    PropertiesPtr cs_props = new Properties();
+    PropertiesPtr cs_props = make_shared<Properties>();
     // make sure blocks are small so only one key value pair fits in a block
     cs_props->set("blocksize", int32_t(32));
-    cs = new CellStoreV7(Global::dfs.get(), schema.get());
+    cs = make_shared<CellStoreV7>(Global::dfs.get(), schema);
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 24000, cs_props, &table_id));
 
     DynamicBuffer dbuf(512000);
@@ -762,24 +762,24 @@ int main(int argc, char **argv) {
     row = delete_row;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag:a", true,
         row.c_str(), "tag:z", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_row(row.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[delete-cf]\n";
@@ -787,32 +787,32 @@ int main(int argc, char **argv) {
     row = delete_cf;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag:a", true,
         row.c_str(), "tag:z", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag", true,
         row.c_str(), "tag:z", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_row(row.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
 
@@ -821,17 +821,17 @@ int main(int argc, char **argv) {
     row = delete_row_cf;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag", true,
         row.c_str(), "tag", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[delete-cell]\n";
@@ -839,17 +839,17 @@ int main(int argc, char **argv) {
     row = delete_cell;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag", true,
         row.c_str(), "tag", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[delete-cell-version]\n";
@@ -857,17 +857,17 @@ int main(int argc, char **argv) {
     row = delete_cell_version;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     ssbuilder.clear();
     ssbuilder.add_cell_interval(row.c_str(),"tag", true,
         row.c_str(), "tag", true);
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[delete-none]\n";
@@ -875,9 +875,9 @@ int main(int argc, char **argv) {
     row = delete_none;
     column = (String) "tag:"+qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                    schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     out << "[delete-large]\n";
@@ -885,9 +885,9 @@ int main(int argc, char **argv) {
     row = delete_large;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
-    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+    scan_ctx = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
                                schema);
-    scanner = cs->create_scanner(scan_ctx);
+    scanner = cs->create_scanner(scan_ctx.get());
     display_scan(scanner, out);
 
     int64_t delete_count = boost::any_cast<int64_t>(cs->get_trailer()->get("delete_count"));

@@ -121,13 +121,13 @@ namespace Hypertable {
   };
   
   /// Smart pointer to TableScanner.
-  typedef intrusive_ptr<TableScanner> TableScannerPtr;
+  typedef std::shared_ptr<TableScanner> TableScannerPtr;
 
   void copy(TableScanner &scanner, CellsBuilder &b);
   inline void copy(TableScannerPtr &p, CellsBuilder &v) { copy(*p.get(), v); }
 
   /// @}
 
-} // namesapce Hypertable
+}
 
 #endif // Hypertable_Lib_TableScanner_h

@@ -24,10 +24,9 @@
  * counterpart.
  */
 
-#ifndef HYPERTABLE_STRINGCOMPRESSORPREFIX_H
-#define HYPERTABLE_STRINGCOMPRESSORPREFIX_H
+#ifndef Common_StringCompressorPrefix_h
+#define Common_StringCompressorPrefix_h
 
-#include "ReferenceCount.h"
 #include "DynamicBuffer.h"
 #include "String.h"
 #include "Serialization.h"
@@ -41,7 +40,7 @@ namespace Hypertable {
   /**
    * A class to prefix-compress strings.
    */
-  class StringCompressorPrefix: public ReferenceCount {
+  class StringCompressorPrefix {
   public:
     /** Clears the internal state */
     virtual void reset() {
@@ -123,9 +122,7 @@ namespace Hypertable {
     DynamicBuffer m_compressed_string;
   };
 
-  typedef intrusive_ptr<StringCompressorPrefix> StringCompressorPrefixPtr;
-
   /** @} */
 }
 
-#endif // HYPERTABLE_STRINGCOMPRESSORPREFIX_H
+#endif // Common_StringCompressorPrefix_h

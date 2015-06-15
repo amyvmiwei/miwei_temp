@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_BALANCEALGORITHMEVENRANGES_H
-#define HYPERTABLE_BALANCEALGORITHMEVENRANGES_H
+#ifndef Hypertable_Master_BalanceAlgorithmEvenRanges_h
+#define Hypertable_Master_BalanceAlgorithmEvenRanges_h
 
 #include <vector>
 
@@ -44,4 +44,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_BALANCEALGORITHMEVENRANGES_H
+#endif // Hypertable_Master_BalanceAlgorithmEvenRanges_h

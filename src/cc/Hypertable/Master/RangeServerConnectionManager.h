@@ -27,7 +27,6 @@
 #include <AsyncComm/Comm.h>
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 
 #include <boost/multi_index_container.hpp>
@@ -37,6 +36,7 @@
 #include <boost/multi_index/member.hpp>
 
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <utility>
@@ -50,7 +50,7 @@ namespace Hypertable {
     double disk_usage;
   };
 
-  class RangeServerConnectionManager : public ReferenceCount {
+  class RangeServerConnectionManager {
   public:
     RangeServerConnectionManager();
 
@@ -139,7 +139,8 @@ namespace Hypertable {
     size_t m_conn_count {};
     int32_t m_disk_threshold {};
   };
-  typedef intrusive_ptr<RangeServerConnectionManager> RangeServerConnectionManagerPtr;
+
+  typedef std::shared_ptr<RangeServerConnectionManager> RangeServerConnectionManagerPtr;
 
 }
 

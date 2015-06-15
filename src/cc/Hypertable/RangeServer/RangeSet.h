@@ -18,18 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#ifndef HYPERTABLE_RANGESET_H
-#define HYPERTABLE_RANGESET_H
 
-#include "Common/StringExt.h"
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_RangeServer_RangeSet_h
+#define Hypertable_RangeServer_RangeSet_h
+
+#include <Common/StringExt.h>
 
 namespace Hypertable {
 
   /**
    * Interface for removing a range or changing its end row in a Range set.
    */
-  class RangeSet : public ReferenceCount {
+  class RangeSet {
   public:
 
     /**
@@ -63,8 +63,6 @@ namespace Hypertable {
 
   };
 
-  typedef intrusive_ptr<RangeSet> RangeSetPtr;
-
 }
 
-#endif // HYPERTABLE_RANGESET_H
+#endif // Hypertable_RangeServer_RangeSet_h

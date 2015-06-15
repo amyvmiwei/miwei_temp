@@ -102,9 +102,9 @@ int main(int argc, char **argv) {
       client = make_shared<Thrift::Client>(host, port, timeout_ms);
     }
     
-    CommandInterpreterPtr interp = new thriftbroker::CommandInterpreter(client, nowait);
+    CommandInterpreterPtr interp = make_shared<thriftbroker::CommandInterpreter>(client, nowait);
 
-    CommandShellPtr shell = new CommandShell("thriftbroker", "ThriftBroker", interp, properties);
+    CommandShellPtr shell = make_shared<CommandShell>("thriftbroker", "ThriftBroker", interp, properties);
 
     error = shell->run();
   }

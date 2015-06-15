@@ -35,6 +35,7 @@
 
 using namespace Hypertable;
 using namespace Hypertable::Lib;
+using namespace std;
 
 namespace {
   enum {
@@ -437,7 +438,7 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
       // scan is over but there was a create/fetch outstanding, send a ScanCells with 0 cells
       // and just the eos bit set
       *show_results = true;
-      cells = new ScanCells;
+      cells = make_shared<ScanCells>();
     }
     return !has_outstanding_requests();
   }
@@ -475,7 +476,7 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
         }
         else {
           // Send back an empty ScanCells object
-          cells = new ScanCells;
+          cells = make_shared<ScanCells>();
         }
         if (!has_outstanding_requests()) {
           if (m_state == RESTART)
@@ -497,8 +498,8 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
 }
 
 void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
-        bool is_create) {
-  cells = new ScanCells;
+                                      bool is_create) {
+  cells = make_shared<ScanCells>();
   m_cur_scanner_finished = cells->add(event, &m_cur_scanner_id);
 
   if (is_create)

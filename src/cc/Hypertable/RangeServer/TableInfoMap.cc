@@ -37,6 +37,7 @@
 #include <Common/FailureInducer.h>
 
 using namespace Hypertable;
+using namespace std;
 
 TableInfoMap::~TableInfoMap() {
   m_map.clear();
@@ -75,7 +76,7 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
     try {
       DynamicBuffer valbuf;
       Global::hyperspace->attr_get(tablefile, "schema", valbuf);
-      entry.schema = Schema::new_instance((const char *)valbuf.base);
+      entry.schema.reset( Schema::new_instance((const char *)valbuf.base) );
       entry.maintenance_disabled =
         Global::hyperspace->attr_exists(tablefile, "maintenance_disabled");
     }
@@ -91,7 +92,7 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
   table.id = table_id.c_str();
   table.generation = entry.schema->get_generation();
 
-  info = new TableInfo(&table, entry.schema, entry.maintenance_disabled);
+  info = make_shared<TableInfo>(&table, entry.schema, entry.maintenance_disabled);
 
   m_map[table_id] = info;
 }
@@ -108,9 +109,9 @@ void TableInfoMap::promote_staged_range(const TableIdentifier &table, RangePtr &
 
   if (transfer_log && *transfer_log) {
     CommitLogReaderPtr commit_log_reader =
-      new CommitLogReader(Global::log_dfs, transfer_log);
+      make_shared<CommitLogReader>(Global::log_dfs, transfer_log);
     if (!commit_log_reader->empty()) {
-      CommitLog *log;
+      CommitLogPtr log;
       if (range->is_root())
         log = Global::root_log;
       else if (table.is_metadata())

@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     // Maybe connect to Hyperspace
     Hyperspace::SessionPtr hyperspace;
     if (!no_hyperspace) {
-      hyperspace = new Hyperspace::Session(comm, properties);
+      hyperspace = make_shared<Hyperspace::Session>(comm, properties);
       if (!hyperspace->wait_for_connection(timeout)) {
         if (!silent)
           cout << "RangeServer CRITICAL - Unable to connecto to Hyperspace" << endl;
@@ -138,9 +138,9 @@ int main(int argc, char **argv) {
     }
 
     CommandInterpreterPtr interp =
-        new RangeServerCommandInterpreter(hyperspace, addr, client);
+      make_shared<RangeServerCommandInterpreter>(hyperspace, addr, client);
 
-    CommandShellPtr shell = new CommandShell("rangeserver", "RangeServer", interp, properties);
+    CommandShellPtr shell = make_shared<CommandShell>("rangeserver", "RangeServer", interp, properties);
 
     error = shell->run();
   }

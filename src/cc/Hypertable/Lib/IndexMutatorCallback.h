@@ -22,17 +22,19 @@
 #ifndef Hypertable_Lib_IndexMutatorCallback_h
 #define Hypertable_Lib_IndexMutatorCallback_h
 
-#include <vector>
-#include <deque>
-#include <map>
-#include <boost/thread/condition.hpp>
-
-#include "ResultCallback.h"
 #include "Key.h"
 #include "KeySpec.h"
+#include "ResultCallback.h"
 #include "TableMutatorAsync.h"
 
 #include <Common/Mutex.h>
+
+#include <boost/thread/condition.hpp>
+
+#include <vector>
+#include <deque>
+#include <map>
+#include <memory>
 
 namespace Hypertable {
 
@@ -218,7 +220,7 @@ namespace Hypertable {
     int m_error;
   };
 
-  typedef intrusive_ptr<IndexMutatorCallback> IndexMutatorCallbackPtr;
+  typedef std::shared_ptr<IndexMutatorCallback> IndexMutatorCallbackPtr;
 
 } // namespace Hypertable
 

@@ -23,16 +23,12 @@
  * A dynamic, resizable memory buffer.
  */
 
-#ifndef HYPERTABLE_DYNAMICBUFFER_H
-#define HYPERTABLE_DYNAMICBUFFER_H
+#ifndef Common_DynamicBuffer_h
+#define Common_DynamicBuffer_h
 
+#include <cstdint>
 #include <cstring>
-
-extern "C" {
-#include <stdint.h>
-}
-
-#include "ReferenceCount.h"
+#include <memory>
 
 namespace Hypertable {
 
@@ -43,7 +39,7 @@ namespace Hypertable {
   /**
    * A dynamic, resizable and reference counted memory buffer
    */
-  class DynamicBuffer : public ReferenceCount {
+  class DynamicBuffer {
 
   public:
     /**
@@ -208,12 +204,12 @@ namespace Hypertable {
     bool own;
   };
 
-  typedef intrusive_ptr<DynamicBuffer> DynamicBufferPtr;
+  typedef std::shared_ptr<DynamicBuffer> DynamicBufferPtr;
 
   /** @}*/
 
-} // namespace Hypertable
+}
 
 
 
-#endif // HYPERTABLE_DYNAMICBUFFER_H
+#endif // Common_DynamicBuffer_h

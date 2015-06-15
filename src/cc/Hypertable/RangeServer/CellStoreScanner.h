@@ -24,8 +24,8 @@
 /// This file contains the type declarations for CellStoreScanner, a class used
 /// to scan over (query) some portion of a CellStore.
 
-#ifndef HYPERTABLE_CELLSTORESCANNER_H
-#define HYPERTABLE_CELLSTORESCANNER_H
+#ifndef Hypertable_RangeServer_CellStoreScanner_h
+#define Hypertable_RangeServer_CellStoreScanner_h
 
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/CellListScanner.h>
@@ -33,9 +33,9 @@
 
 #include <Common/DynamicBuffer.h>
 
-namespace Hypertable {
+#include <memory>
 
-  class CellStore;
+namespace Hypertable {
 
   /// @addtogroup RangeServer
   /// @{
@@ -46,28 +46,27 @@ namespace Hypertable {
   class CellStoreScanner : public CellListScanner {
   public:
 
-    CellStoreScanner(CellStore *cellstore, ScanContextPtr &scan_ctx,
+    CellStoreScanner(CellStorePtr &&cellstore, ScanContext *scan_ctx,
                      IndexT *indexp=0);
     virtual ~CellStoreScanner();
-    virtual void forward();
-    virtual bool get(Key &key, ByteString &value);
-
-    virtual int64_t get_disk_read();
+    void forward() override;
+    bool get(Key &key, ByteString &value) override;
+    int64_t get_disk_read() override;
 
   private:
-    CellStorePtr              m_cellstore;
-    CellStoreScannerInterval *m_interval_scanners[3];
-    size_t                    m_interval_index;
-    size_t                    m_interval_max;
-    DynamicBuffer             m_key_buf;
-    bool                      m_keys_only;
-    bool                      m_eos;
-    bool m_decrement_blockindex_refcount;
+    CellStorePtr m_cellstore;
+    std::unique_ptr<CellStoreScannerInterval> m_interval_scanners[3];
+    size_t m_interval_index {};
+    size_t m_interval_max {};
+    DynamicBuffer m_key_buf;
+    bool m_keys_only {};
+    bool m_eos {};
+    bool m_decrement_blockindex_refcount {};
   };
 
   /// @}
 
 }
 
-#endif // HYPERTABLE_CELLSTORESCANNER_H
+#endif // Hypertable_RangeServer_CellStoreScanner_h
 

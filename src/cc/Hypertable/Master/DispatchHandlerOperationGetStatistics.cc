@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -30,6 +30,7 @@
 #include <Common/Time.h>
 
 using namespace Hypertable;
+using namespace std;
 
 DispatchHandlerOperationGetStatistics::DispatchHandlerOperationGetStatistics(ContextPtr &context) :
   DispatchHandlerOperation(context), m_timer(context->props->get_i32("Hypertable.Monitoring.Interval")) {
@@ -41,7 +42,7 @@ void DispatchHandlerOperationGetStatistics::initialize(std::vector<RangeServerSt
     m_index[results[i].addr] = &results[i];
     results[i].fetch_error = Error::NO_RESPONSE;
     results[i].fetch_timestamp = now;
-    results[i].stats = new StatsRangeServer();
+    results[i].stats = make_shared<StatsRangeServer>();
   }
   m_context->system_state->get(m_specs, &m_generation);
   m_timer.start();

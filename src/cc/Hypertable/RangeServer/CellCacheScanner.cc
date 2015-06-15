@@ -35,11 +35,10 @@ using namespace Hypertable;
 /**
  *
  */
-CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
-                                   ScanContextPtr &scan_ctx)
+CellCacheScanner::CellCacheScanner(CellCachePtr cellcache,
+                                   ScanContext *scan_ctx)
   : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache),
-    m_cell_cache_mutex(cellcache->m_mutex), m_entry_cache_next(0),
-    m_in_deletes(false), m_eos(false), m_keys_only(false) {
+    m_cell_cache_mutex(cellcache->m_mutex) {
   ScopedLock lock(m_cell_cache_mutex);
   DynamicBuffer current_buf;
   Key current;

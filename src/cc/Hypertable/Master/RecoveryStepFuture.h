@@ -22,13 +22,13 @@
 #ifndef Hypertable_Master_RecoveryStepFuture_h
 #define Hypertable_Master_RecoveryStepFuture_h
 
-#include <Common/ReferenceCount.h>
 #include <Common/Time.h>
 #include <Common/Timer.h>
 
 #include <boost/thread/condition.hpp>
 
 #include <map>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -37,7 +37,7 @@ namespace Hypertable {
   /**
    * Tracks outstanding RangeServer recover requests.
    */
-  class RecoveryStepFuture : public ReferenceCount {
+  class RecoveryStepFuture {
   public:
 
     typedef std::map<String, std::pair<int32_t, String> > ErrorMapT;
@@ -147,7 +147,8 @@ namespace Hypertable {
     int m_plan_generation;
     bool m_extend_timeout;
   };
-  typedef intrusive_ptr<RecoveryStepFuture> RecoveryStepFuturePtr;
+
+  typedef std::shared_ptr<RecoveryStepFuture> RecoveryStepFuturePtr;
 }
 
 #endif // Hypertable_Master_RecoveryStepFuture_h

@@ -25,12 +25,11 @@
  * generators.
  */
 
-#ifndef HYPERTABLE_DISCRETERANDOMGENERATORFACTORY_H
-#define HYPERTABLE_DISCRETERANDOMGENERATORFACTORY_H
+#ifndef Common_DiscreteRandomGeneratorFactory_h
+#define Common_DiscreteRandomGeneratorFactory_h
 
-#include "Common/String.h"
-
-#include "DiscreteRandomGenerator.h"
+#include <Common/DiscreteRandomGenerator.h>
+#include <Common/String.h>
 
 namespace Hypertable {
 
@@ -57,11 +56,11 @@ namespace Hypertable {
        *        above
        * @return Pointer to a newly created DiscreteRandomGenerator object
        */
-      static DiscreteRandomGenerator *create(const String &spec);
+      static DiscreteRandomGeneratorPtr create(const String &spec);
   };
 
   /** @}*/
 
 }
 
-#endif // HYPERTABLE_DISCRETERANDOMGENERATORFACTORY_H
+#endif // Common_DiscreteRandomGeneratorFactory_h

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   try {
 
     // Create Hypertable client object
-    client_ptr = new Client( System::locate_install_dir(argv[0]) );
+    client_ptr = make_shared<Client>( System::locate_install_dir(argv[0]) );
 
     // Open the root namespace
     namespace_ptr = client_ptr->open_namespace("/");
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
       scan_spec_builder.add_column(argv[i]);
 
     // Create a scanner on the 'LogDb' table
-    scanner_ptr = table_ptr->create_scanner(scan_spec_builder.get());
+    scanner_ptr.reset(table_ptr->create_scanner(scan_spec_builder.get()));
 
   }
   catch (std::exception &e) {

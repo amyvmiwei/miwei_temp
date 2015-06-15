@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
       table_ptr = ns->open_table("FutureTest");
 
       for(size_t ii=0; ii<num_mutators; ++ii)
-        mutator_ptrs.push_back(table_ptr->create_mutator_async(&ff));
+        mutator_ptrs.push_back(TableMutatorAsyncPtr(table_ptr->create_mutator_async(&ff)));
 
       key.column_family = "data";
       key.column_qualifier = 0;
@@ -133,11 +133,11 @@ int main(int argc, char **argv) {
     if (num_mutators > 1) {
       Future ff;
       vector<TableMutatorAsyncPtr> mutator_ptrs;
-      set<TableMutatorAsyncPtr> cancelled_mutator_ptrs;
+      set<TableMutatorAsync *> cancelled_mutator_ptrs;
       table_ptr = ns->open_table("FutureTest");
 
       for(size_t ii=0; ii<num_mutators; ++ii)
-        mutator_ptrs.push_back(table_ptr->create_mutator_async(&ff));
+        mutator_ptrs.push_back(TableMutatorAsyncPtr(table_ptr->create_mutator_async(&ff)));
 
       key.column_family = "data";
       key.column_qualifier = 0;
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
       while(true) {
         for (size_t jj=0; jj < num_mutators; ++jj) {
           TableMutatorAsyncPtr mutator_ptr = mutator_ptrs[jj];
-          if (cancelled_mutator_ptrs.find(mutator_ptr) != cancelled_mutator_ptrs.end())
+          if (cancelled_mutator_ptrs.find(mutator_ptr.get()) != cancelled_mutator_ptrs.end())
             continue;
           load_buffer_with_random(buf, 10);
           sprintf(keybuf, "%05u", (unsigned)cells);
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
               && cells >= cancel_after_num_cells) {
             HT_INFOF("Cancelling mutator #%llu", (Llu)jj);
             mutator_ptr->cancel();
-            cancelled_mutator_ptrs.insert(mutator_ptr);
+            cancelled_mutator_ptrs.insert(mutator_ptr.get());
           }
         }
         while (!ff.is_empty() && ff.get(result)) {

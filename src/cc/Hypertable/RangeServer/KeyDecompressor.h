@@ -19,25 +19,23 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_KEYDECOMPRESSOR_H
-#define HYPERTABLE_KEYDECOMPRESSOR_H
+#ifndef Hypertable_RangeServer_KeyDecompressor_h
+#define Hypertable_RangeServer_KeyDecompressor_h
 
-#include "Common/ReferenceCount.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/SerializedKey.h"
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/SerializedKey.h>
 
 namespace Hypertable {
 
-  class KeyDecompressor : public ReferenceCount {
+  class KeyDecompressor {
   public:
+    virtual ~KeyDecompressor() {}
     virtual void reset() = 0;
     virtual const uint8_t *add(const uint8_t *ptr) = 0;
     virtual bool less_than(SerializedKey serialized_key) = 0;
     virtual void load(Key &key) = 0;
   };
-  typedef intrusive_ptr<KeyDecompressor> KeyDecompressorPtr;
 
 }
 
-#endif // HYPERTABLE_KEYDECOMPRESSOR_H
+#endif // Hypertable_RangeServer_KeyDecompressor_h

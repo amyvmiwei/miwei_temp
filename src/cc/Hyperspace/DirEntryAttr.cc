@@ -29,7 +29,6 @@
 
 using namespace Hypertable;
 using namespace Serialization;
-using namespace boost;
 
 namespace Hyperspace {
 

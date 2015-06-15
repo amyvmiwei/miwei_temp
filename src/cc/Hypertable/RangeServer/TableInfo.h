@@ -36,10 +36,10 @@
 
 #include <Common/Mutex.h>
 #include <Common/StringExt.h>
-#include <Common/ReferenceCount.h>
 
 #include <algorithm>
 #include <iterator>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -66,7 +66,7 @@ namespace Hypertable {
   /// Holds vector of RangeData objects and memory arena.
   /// This class is used to hold a set of RangeData objects and a memory arena
   /// that is used to allocate the maintenance data objects.
-  class Ranges : public ReferenceCount {
+  class Ranges {
   public:
     /// Template function for removing ranges that satisfy a predicate.
     /// @tparam Func Predicate function
@@ -85,7 +85,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to Ranges
-  typedef intrusive_ptr<Ranges> RangesPtr;
+  typedef std::shared_ptr<Ranges> RangesPtr;
 
   /// Holds pointer to range and cached start and end rows.
   class RangeInfo {
@@ -306,7 +306,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to TableInfo
-  typedef intrusive_ptr<TableInfo> TableInfoPtr;
+  typedef std::shared_ptr<TableInfo> TableInfoPtr;
 
   /// @}
 

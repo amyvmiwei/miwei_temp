@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATOR_H
-#define HYPERTABLE_TABLEMUTATOR_H
+#ifndef Hypertable_Lib_TableMutator_h
+#define Hypertable_Lib_TableMutator_h
 
 #include "Cells.h"
 #include "ClientObject.h"
@@ -251,8 +251,9 @@ namespace Hypertable {
     CellsBuilderPtr m_failed_cells;
   };
 
-  typedef intrusive_ptr<TableMutator> TableMutatorPtr;
+  /// Smart pointer to TableMutator
+  typedef std::shared_ptr<TableMutator> TableMutatorPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLEMUTATOR_H
+#endif // Hypertable_Lib_TableMutator_h

@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOADDATASOURCE_H
-#define HYPERTABLE_LOADDATASOURCE_H
+#ifndef Hypertable_Lib_LoadDataSource_h
+#define Hypertable_Lib_LoadDataSource_h
 
 #include <Hypertable/Lib/DataSource.h>
 #include <Hypertable/Lib/FixedRandomStringGenerator.h>
@@ -29,13 +29,13 @@
 #include <Common/ByteString.h>
 #include <Common/DynamicBuffer.h>
 #include <Common/String.h>
-#include <Common/ReferenceCount.h>
 
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -47,7 +47,7 @@ namespace Hypertable {
     STDIN
   };
 
-  class LoadDataSource : public ReferenceCount {
+  class LoadDataSource {
 
   public:
     LoadDataSource(const std::string &header_fname,
@@ -150,8 +150,9 @@ namespace Hypertable {
     char m_field_separator;
   };
 
- typedef boost::intrusive_ptr<LoadDataSource> LoadDataSourcePtr;
+  /// Smart pointer to LoadDataSource
+  typedef std::shared_ptr<LoadDataSource> LoadDataSourcePtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_LOADDATASOURCE_H
+#endif // Hypertable_Lib_LoadDataSource_h

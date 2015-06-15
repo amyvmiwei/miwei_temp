@@ -25,8 +25,8 @@
 /// CellStoreScannerIntervalReadahead, a class that provides the ability to
 /// efficiently scan over (query) a portion of a CellStore using readahead.
 
-#ifndef HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
-#define HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
+#ifndef Hypertable_RangeServer_CellStoreScannerIntervalReadahead_h
+#define Hypertable_RangeServer_CellStoreScannerIntervalReadahead_h
 
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/CellStoreScannerInterval.h>
@@ -37,7 +37,6 @@
 namespace Hypertable {
 
   class BlockCompressionCodec;
-  class CellStore;
 
   /// @addtogroup RangeServer
   /// @{
@@ -50,8 +49,8 @@ namespace Hypertable {
 
     typedef typename IndexT::iterator IndexIteratorT;
 
-    CellStoreScannerIntervalReadahead(CellStore *cellstore, IndexT *index,
-                                      SerializedKey start_key,SerializedKey end_key, ScanContextPtr &scan_ctx);
+    CellStoreScannerIntervalReadahead(CellStorePtr &cellstore, IndexT *index,
+                                      SerializedKey start_key,SerializedKey end_key, ScanContext *scan_ctx);
     virtual ~CellStoreScannerIntervalReadahead();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
@@ -65,15 +64,15 @@ namespace Hypertable {
     Key                    m_key;
     SerializedKey          m_end_key;
     ByteString             m_cur_value;
-    BlockCompressionCodec *m_zcodec;
-    KeyDecompressor       *m_key_decompressor;
-    int32_t                m_fd;
-    int64_t                m_offset;
-    int64_t                m_end_offset;
-    bool                   m_check_for_range_end;
-    bool                   m_eos;
-    ScanContextPtr         m_scan_ctx;
-    uint32_t               m_oflags;
+    BlockCompressionCodec *m_zcodec {};
+    KeyDecompressor       *m_key_decompressor {};
+    int32_t                m_fd {-1};
+    int64_t                m_offset {};
+    int64_t                m_end_offset {};
+    bool                   m_check_for_range_end {};
+    bool                   m_eos {};
+    ScanContext           *m_scan_ctx {};
+    uint32_t               m_oflags {};
 
   };
 
@@ -81,4 +80,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
+#endif // Hypertable_RangeServer_CellStoreScannerIntervalReadahead_h

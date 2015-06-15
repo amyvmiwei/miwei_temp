@@ -68,7 +68,7 @@ namespace Hypertable {
     /// @param query_cache Query cache
     /// @param timer_handler Timer handler
     UpdatePipeline(ContextPtr &context, QueryCachePtr &query_cache,
-                   TimerHandlerPtr &timer_handler, CommitLog *log,
+                   TimerHandlerPtr &timer_handler, CommitLogPtr &log,
                    Filesystem::Flags flags);
 
     /// Adds updates to pipeline
@@ -130,7 +130,7 @@ namespace Hypertable {
     TimerHandlerPtr m_timer_handler;
 
     /// Pointer to commit log
-    CommitLog *m_log {};
+    CommitLogPtr m_log {};
 
     /// %Mutex protecting stage 1 input queue
     Mutex m_qualify_queue_mutex;

@@ -42,10 +42,10 @@
 namespace Hypertable {
 
   class TableMutatorAsync;
-  typedef intrusive_ptr<TableMutatorAsync> TableMutatorAsyncPtr;
+  typedef std::shared_ptr<TableMutatorAsync> TableMutatorAsyncPtr;
 
   class IndexMutatorCallback;
-  typedef intrusive_ptr<IndexMutatorCallback> IndexMutatorCallbackPtr;
+  typedef std::shared_ptr<IndexMutatorCallback> IndexMutatorCallbackPtr;
 
   class TableMutator;
 
@@ -264,7 +264,7 @@ namespace Hypertable {
     PropertiesPtr        m_props;
     Comm                *m_comm;
     ApplicationQueueInterfacePtr  m_app_queue;
-    TablePtr             m_table;
+    Table               *m_table;
     SchemaPtr            m_schema;  // needs mutex
     RangeLocatorPtr      m_range_locator;
     TableIdentifierManaged m_table_identifier;    // needs mutex

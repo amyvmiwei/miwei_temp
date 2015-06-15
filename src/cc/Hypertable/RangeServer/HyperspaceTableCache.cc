@@ -66,7 +66,7 @@ void HyperspaceTableCache::map_table_schemas(const String &parent,
     String name = prefix + e.name;
     if (e.has_attr) {
       Entry entry;
-      entry.schema = Schema::new_instance((const char *)e.attr.base);
+      entry.schema.reset( Schema::new_instance((const char *)e.attr.base) );
       m_map.insert(TableEntryMap::value_type(name, entry));
     }
     map_table_schemas(name, e.sub_entries);

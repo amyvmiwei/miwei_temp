@@ -93,7 +93,7 @@ Master::Client::Client(ConnectionManagerPtr &conn_mgr,
   /**
    * Open toplevel_dir + /master Hyperspace file to discover the master.
    */
-  m_master_file_callback = new HyperspaceCallback(this, m_app_queue);
+  m_master_file_callback = make_shared<HyperspaceCallback>(this, m_app_queue);
 
   // register hyperspace session callback
   m_hyperspace_session_callback.m_client = this;

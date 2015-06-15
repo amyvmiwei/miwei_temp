@@ -47,11 +47,10 @@
 using namespace Hypertable;
 
 template <typename IndexT>
-CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(CellStore *cellstore,
-  IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
+CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(CellStorePtr &cellstore,
+  IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContext *scan_ctx) :
   m_cellstore(cellstore), m_index(index), m_start_key(start_key),
-  m_end_key(end_key), m_fd(-1), m_cached(false), m_check_for_range_end(false),
-  m_scan_ctx(scan_ctx), m_rowset(scan_ctx->rowset) {
+  m_end_key(end_key), m_scan_ctx(scan_ctx), m_rowset(scan_ctx->rowset) {
 
   memset(&m_block, 0, sizeof(m_block));
   m_file_id = m_cellstore->get_file_id();

@@ -399,15 +399,15 @@ void OperationRecoverRanges::create_futures() {
   RecoveryStepFuturePtr future;
 
   // Install "replay" future
-  future = new RecoveryStepFuture("replay", m_plan_generation);
+  future = make_shared<RecoveryStepFuture>("replay", m_plan_generation);
   m_context->recovery_state().install_replay_future(id(), future);
 
   // Install "prepare" future
-  future = new RecoveryStepFuture("prepare", m_plan_generation);
+  future = make_shared<RecoveryStepFuture>("prepare", m_plan_generation);
   m_context->recovery_state().install_prepare_future(id(), future);
 
   // Install "commit" future
-  future = new RecoveryStepFuture("commit", m_plan_generation);
+  future = make_shared<RecoveryStepFuture>("commit", m_plan_generation);
   m_context->recovery_state().install_commit_future(id(), future);
 }
 

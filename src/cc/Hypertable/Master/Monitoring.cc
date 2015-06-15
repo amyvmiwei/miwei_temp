@@ -82,13 +82,13 @@ void Monitoring::add_server(const String &location, const StatsSystem &system_in
   RangeServerMap::iterator iter = m_server_map.find(location);
 
   if (iter != m_server_map.end()) {
-    (*iter).second->system_info = new StatsSystem(system_info);
+    (*iter).second->system_info = make_shared<StatsSystem>(system_info);
     return;
   }
 
   m_server_map[location] = new RangeServerStatistics();
   m_server_map[location]->location = location;
-  m_server_map[location]->system_info = new StatsSystem(system_info);
+  m_server_map[location]->system_info = make_shared<StatsSystem>(system_info);
 }
 
 

@@ -26,15 +26,16 @@
  * clients.
  */
 
-#include "Common/Compat.h"
-
-#include <limits>
-#include "Common/Error.h"
+#include <Common/Compat.h>
 
 #include "CommBuf.h"
 #include "CommHeader.h"
 #include "Protocol.h"
 #include "ResponseCallback.h"
+
+#include <Common/Error.h>
+
+#include <limits>
 
 using namespace Hypertable;
 

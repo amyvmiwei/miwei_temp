@@ -67,9 +67,9 @@ int main(int argc, char **argv) {
 
     key_columns.clear();
     String dat_fn = testnames[i] + ".dat";
-    lds = LoadDataSourceFactory::create(null_dfs_client,
-                                        dat_fn.c_str(), LOCAL_FILE, "", LOCAL_FILE,
-                                        key_columns, "", '\t', 0, 0);
+    lds.reset(LoadDataSourceFactory::create(null_dfs_client,
+                                            dat_fn.c_str(), LOCAL_FILE, "", LOCAL_FILE,
+                                            key_columns, "", '\t', 0, 0));
 
     while (lds->next(&key, &value, &value_len, &is_delete, 0)) {
       cerr << "row=" << (const char *)key.row;

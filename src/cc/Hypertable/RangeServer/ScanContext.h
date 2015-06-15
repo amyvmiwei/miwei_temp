@@ -29,7 +29,6 @@
 
 #include <Common/ByteString.h>
 #include <Common/Error.h>
-#include <Common/ReferenceCount.h>
 #include <Common/StringExt.h>
 
 #include <Hypertable/Lib/CellPredicate.h>
@@ -38,9 +37,8 @@
 #include <Hypertable/Lib/ScanSpec.h>
 #include <Hypertable/Lib/Schema.h>
 
-#include <boost/shared_ptr.hpp>
-
 #include <cassert>
+#include <memory>
 #include <utility>
 #include <set>
 
@@ -51,7 +49,7 @@ namespace Hypertable {
   /**
    * Scan context information
    */
-  class ScanContext : public ReferenceCount {
+  class ScanContext {
   public:
     SchemaPtr schema;
     const ScanSpec *spec;
@@ -168,7 +166,7 @@ namespace Hypertable {
     CharArena arena;
   };
 
-  typedef intrusive_ptr<ScanContext> ScanContextPtr;
+  typedef std::shared_ptr<ScanContext> ScanContextPtr;
 
 }
 

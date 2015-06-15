@@ -52,10 +52,10 @@
 #include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/Barrier.h>
-#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -64,7 +64,7 @@ namespace Hypertable {
   /// @{
 
   /// Represents a table row range.
-  class Range : public ReferenceCount {
+  class Range {
 
   public:
 
@@ -115,7 +115,7 @@ namespace Hypertable {
       bool     unsplittable;
     };
 
-    typedef std::map<String, AccessGroup *> AccessGroupMap;
+    typedef std::map<String, AccessGroupPtr> AccessGroupMap;
     typedef std::vector<AccessGroupPtr> AccessGroupVector;
 
     Range(Lib::Master::ClientPtr &, const TableIdentifier &, SchemaPtr &,
@@ -372,7 +372,7 @@ namespace Hypertable {
     TableIdentifier  m_table;
     AccessGroupMap     m_access_group_map;
     AccessGroupVector  m_access_group_vector;
-    std::vector<AccessGroup *>       m_column_family_vector;
+    std::vector<AccessGroupPtr> m_column_family_vector;
     RangeMaintenanceGuard m_maintenance_guard;
     int64_t m_revision {TIMESTAMP_MIN};
     int64_t m_latest_revision {TIMESTAMP_MIN};
@@ -399,7 +399,7 @@ namespace Hypertable {
   };
 
   /// Smart pointer to Range
-  typedef intrusive_ptr<Range> RangePtr;
+  typedef std::shared_ptr<Range> RangePtr;
 
   std::ostream &operator<<(std::ostream &os, const Range::MaintenanceData &mdata);
 

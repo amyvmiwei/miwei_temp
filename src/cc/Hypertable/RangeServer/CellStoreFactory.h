@@ -24,8 +24,8 @@
 /// This file contains the type declarations for CellStoreFactory, an class that
 /// provides an interface for creating CellStore objects from cell store files.
 
-#ifndef HYPERTABLE_CELLSTOREFACTORY_H
-#define HYPERTABLE_CELLSTOREFACTORY_H
+#ifndef Hypertable_RangeServer_CellStoreFactory_h
+#define Hypertable_RangeServer_CellStoreFactory_h
 
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/CellStoreTrailer.h>
@@ -44,12 +44,12 @@ namespace Hypertable {
     /// @param start_row Starting scope
     /// @param end_row Ending scope
     /// @return Pointer to newly allocated CellStore object
-    static CellStore *open(const String &name,
-                           const char *start_row, const char *end_row);
+    static CellStorePtr open(const String &name,
+                             const char *start_row, const char *end_row);
   };
 
   /// @}
 
 }
 
-#endif // HYPERTABLE_CELLSTOREFACTORY_H
+#endif // Hypertable_RangeServer_CellStoreFactory_h

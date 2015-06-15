@@ -1,12 +1,12 @@
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/Properties.h"
-#include "Common/Logger.h"
-#include "Common/Random.h"
+#include <Common/Compat.h>
+#include <Common/Init.h>
+#include <Common/Properties.h>
+#include <Common/Logger.h>
+#include <Common/Random.h>
 
 #include <iostream>
 
-#include "Hypertable/Lib/StatsRangeServer.h"
+#include <Hypertable/Lib/StatsRangeServer.h>
 
 using namespace Hypertable;
 using namespace std;
@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
   Config::init(argc, argv);
-  PropertiesPtr props = new Properties();
+  PropertiesPtr props = make_shared<Properties>();
   String dirs = "/,/tmp";
   StatsRangeServerPtr stats1, stats2;
   char idbuf[32];
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
   props->set("Hypertable.RangeServer.Monitoring.DataDirectories", dirs);
 
-  stats1 = new StatsRangeServer(props);
+  stats1 = make_shared<StatsRangeServer>(props);
   stats1->set_location("rs1");
 
   stats1->timestamp = Random::number64();
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
 
   HT_ASSERT((size_t)(ptr-buf) == len);
 
-  stats2 = new StatsRangeServer();
+  stats2 = make_shared<StatsRangeServer>();
 
   const uint8_t *ptr2 = buf;
   stats2->decode(&ptr2, &len);

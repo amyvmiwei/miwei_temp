@@ -67,7 +67,7 @@ void MetadataNormal::reset_files_scan() {
   scan_spec.columns.push_back("Files");
   scan_spec.columns.push_back("NextCSID");
 
-  TableScannerPtr files_scanner = Global::metadata_table->create_scanner(scan_spec);
+  TableScannerPtr files_scanner(Global::metadata_table->create_scanner(scan_spec));
 
   String ag_name;
 
@@ -107,11 +107,10 @@ bool MetadataNormal::get_next_files(String &ag_name, String &files, uint32_t *ne
 
 
 void MetadataNormal::write_files(const String &ag_name, const String &files, int64_t total_blocks) {
-  TableMutatorPtr mutator;
   KeySpec key;
   char buf[32];
 
-  mutator = Global::metadata_table->create_mutator();
+  TableMutatorPtr mutator(Global::metadata_table->create_mutator());
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();
@@ -130,11 +129,10 @@ void MetadataNormal::write_files(const String &ag_name, const String &files, int
 
 
 void MetadataNormal::write_files(const String &ag_name, const String &files, int64_t total_blocks, uint32_t nextcsid) {
-  TableMutatorPtr mutator;
   KeySpec key;
   char buf[32];
 
-  mutator = Global::metadata_table->create_mutator();
+  TableMutatorPtr mutator(Global::metadata_table->create_mutator());
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();

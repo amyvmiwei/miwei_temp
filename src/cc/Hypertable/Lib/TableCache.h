@@ -29,15 +29,14 @@
 #include <AsyncComm/ApplicationQueueInterface.h>
 
 #include <Common/Mutex.h>
-#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 
+#include <memory>
 #include <unordered_map>
 
 namespace Hypertable {
 
-  class TableCache : public ReferenceCount
-                   , private Hyperspace::SessionCallback {
+  class TableCache : private Hyperspace::SessionCallback {
   public:
 
     TableCache(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
@@ -100,7 +99,8 @@ namespace Hypertable {
     TableMap                m_table_map;
   };
 
-  typedef intrusive_ptr<TableCache> TableCachePtr;
+  /// Smart pointer to TableCache
+  typedef std::shared_ptr<TableCache> TableCachePtr;
 
 }
 

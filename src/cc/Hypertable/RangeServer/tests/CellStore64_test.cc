@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
 
     ssbuilder.add_row("0000004135");
 
-    scan_context = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
+    scan_context = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
     scanner = cs->create_scanner(scan_context);
     while (scanner->get(key_comps, value)) {
       out << key_comps << endl;
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row("0000004136");
 
-    scan_context = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
+    scan_context = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
     scanner = cs->create_scanner(scan_context);
     while (scanner->get(key_comps, value)) {
       out << key_comps << endl;
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("0000004135", true, "0000004143", true);
 
-    scan_context = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
+    scan_context = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
     scanner = cs->create_scanner(scan_context);
     while (scanner->get(key_comps, value)) {
       out << key_comps << endl;
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
     ssbuilder.clear();
     ssbuilder.add_row_interval("0000004136", true, "0000004144", true);
 
-    scan_context = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
+    scan_context = make_shared<ScanContext>(TIMESTAMP_MAX, &(ssbuilder.get()), &range_spec, schema);
     scanner = cs->create_scanner(scan_context);
     while (scanner->get(key_comps, value)) {
       out << key_comps << endl;
