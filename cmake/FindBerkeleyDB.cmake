@@ -46,6 +46,7 @@ find_library(BDB_LIBRARY NAMES ${BDB_NAMES} NO_DEFAULT_PATH PATHS
     /usr/local/BerkeleyDB.4.8/lib
     /usr/local/lib/db48
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /opt/local/lib/db48
     /usr/local/lib
     /usr/lib
