@@ -44,6 +44,7 @@ if (PYTHON_RETURN STREQUAL "0")
                /opt/local/lib
                /usr/local/lib
                /usr/lib
+               /usr/lib/x86_64-linux-gnu
                )
 
   if (PYTHON_INCLUDE_DIR)
