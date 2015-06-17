@@ -43,7 +43,7 @@ cd ~; /bin/rm -rf cronolog-1.6.2*
 
 # SIGAR
 cd ~
-wget http://www.hypertable.com/uploads/hyperic-sigar-1.6.4.zip
+wget http://downloads.sourceforge.net/project/sigar/sigar/1.6/hyperic-sigar-1.6.4.zip
 unzip hyperic-sigar-1.6.4.zip
 cp hyperic-sigar-1.6.4/sigar-bin/include/*.h /usr/local/include
 if [ $ARCH -eq 32 ]; then
