@@ -31,11 +31,8 @@
 
 #include <boost/random.hpp>
 
+#include <ctime>
 #include <mutex>
-
-extern "C" {
-#include <time.h>
-}
 
 namespace Hypertable {
 

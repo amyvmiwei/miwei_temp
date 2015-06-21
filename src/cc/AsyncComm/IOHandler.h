@@ -41,10 +41,8 @@
 
 extern "C" {
 #include <errno.h>
-#include <time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <poll.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>

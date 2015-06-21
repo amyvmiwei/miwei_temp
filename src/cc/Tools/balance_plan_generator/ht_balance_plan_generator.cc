@@ -42,7 +42,6 @@
 extern "C" {
 #include <poll.h>
 #include <stdio.h>
-#include <time.h>
 }
 
 using namespace Hypertable;

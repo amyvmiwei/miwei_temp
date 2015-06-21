@@ -35,7 +35,6 @@
 extern "C" {
 #include <strings.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 }
 

@@ -24,14 +24,13 @@
 /// The Crontab class is used to track the timing of a periodic event.
 /// This is used i.e. in the htMaster to schedule LoadBalancer events.
 
-#ifndef HYPERTABLE_CRONTAB_H
-#define HYPERTABLE_CRONTAB_H
+#ifndef Common_Crontab_h
+#define Common_Crontab_h
 
 #include "String.h"
 
-#include <time.h>
-
 #include <bitset>
+#include <ctime>
 
 namespace Hypertable {
 
@@ -130,4 +129,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_CRONTAB_H
+#endif // Common_Crontab_h

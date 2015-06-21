@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,13 +17,13 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "Common/Compat.h"
-#include "Common/TimeInline.h"
-
-#include <time.h>
-#include <iostream>
+#include <Common/Compat.h>
 
 #include "ThriftHelper.h"
+
+#include <Common/TimeInline.h>
+
+#include <iostream>
 
 namespace Hypertable { namespace ThriftGen {
 

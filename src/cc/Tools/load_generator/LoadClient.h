@@ -36,19 +36,12 @@
 #include <Common/String.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/shared_array.hpp>
 
 #include <iostream>
 #include <fstream>
 #include <cstdio>
 #include <cmath>
 #include <memory>
-
-extern "C" {
-#include <poll.h>
-#include <stdio.h>
-#include <time.h>
-}
 
 using namespace Hypertable;
 using namespace Hypertable::Config;

@@ -49,7 +49,6 @@ extern "C" {
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <time.h>
 }
 
 using namespace Hypertable;

@@ -40,8 +40,6 @@
 #include <iostream>
 #include <memory>
 
-#include <time.h>
-
 namespace Hypertable {
 
   /** @addtogroup AsyncComm

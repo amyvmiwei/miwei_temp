@@ -33,12 +33,9 @@
 #include <Common/md5.h>
 
 #include <chrono>
+#include <ctime>
 #include <string>
 #include <thread>
-
-extern "C" {
-#include <time.h>
-}
 
 namespace Hypertable {
 

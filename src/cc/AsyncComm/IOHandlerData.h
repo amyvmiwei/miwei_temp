@@ -28,19 +28,17 @@
 #ifndef AsyncComm_IOHandlerData_h
 #define AsyncComm_IOHandlerData_h
 
+#include "CommBuf.h"
+#include "IOHandler.h"
+
+#include <Common/Error.h>
+
 #include <list>
 
 extern "C" {
 #include <netdb.h>
 #include <string.h>
-#include <time.h>
 }
-
-#include "Common/Error.h"
-#include "Common/atomic.h"
-
-#include "CommBuf.h"
-#include "IOHandler.h"
 
 namespace Hypertable {
 

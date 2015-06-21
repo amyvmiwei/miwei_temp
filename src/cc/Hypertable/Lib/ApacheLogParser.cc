@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,33 +19,27 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "ApacheLogParser.h"
+#include <Common/Compat.h>
 
-#include <time.h>
+#include "ApacheLogParser.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
+
+#include <ctime>
 
 namespace Io = boost::iostreams;
 namespace Fn = boost::algorithm;
 
 using namespace Hypertable;
+using namespace std;
 
-
-/**
- *
- */
 void ApacheLogParser::load(std::string filename) {
   if (Fn::ends_with(filename, ".gz"))
     m_fin.push(Io::gzip_decompressor());
   m_fin.push(Io::file_source(filename));
 }
 
-
-
-/**
- */
 bool ApacheLogParser::next(ApacheLogEntry &entry) {
   char *base;
 
@@ -101,9 +95,6 @@ bool ApacheLogParser::next(ApacheLogEntry &entry) {
 
 
 
-/**
- *
- */
 char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
   char *ptr;
   while (isspace(*base))
@@ -127,11 +118,6 @@ char *ApacheLogParser::extract_field(char *base, char **field_ptr) {
   return ptr;
 }
 
-
-
-/**
- *
- */
 char *ApacheLogParser::extract_timestamp(char *base, struct tm *tmp) {
   char *end_ptr;
   char *ptr;

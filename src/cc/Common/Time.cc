@@ -23,14 +23,13 @@
  * High resolution time handling based on boost::xtime.
  */
 
-#include "Compat.h"
-
-#include <time.h>
-#include <iomanip>
+#include <Common/Compat.h>
 
 #include "Time.h"
 #include "Mutex.h"
 
+#include <ctime>
+#include <iomanip>
 
 using namespace std;
 

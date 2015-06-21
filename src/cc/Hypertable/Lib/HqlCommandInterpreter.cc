@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -34,17 +34,11 @@
 #include <Common/Stopwatch.h>
 
 #include <boost/progress.hpp>
-#include <boost/timer.hpp>
-#include <boost/thread/xtime.hpp>
 
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <memory>
-
-extern "C" {
-#include <time.h>
-}
 
 using namespace std;
 using namespace Hypertable;

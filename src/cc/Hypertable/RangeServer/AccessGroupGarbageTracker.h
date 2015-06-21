@@ -36,13 +36,10 @@
 
 #include <Common/Properties.h>
 
+#include <ctime>
 #include <fstream>
 #include <mutex>
 #include <vector>
-
-extern "C" {
-#include <time.h>
-}
 
 namespace Hypertable {
 

@@ -38,7 +38,6 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <time.h>
 }
 
 using namespace Hypertable;

@@ -30,10 +30,9 @@
 
 #include <Common/Crontab.h>
 
+#include <ctime>
 #include <mutex>
 #include <vector>
-
-#include <time.h>
 
 namespace Hypertable {
 

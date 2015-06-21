@@ -33,11 +33,6 @@
 #include "ReactorRunner.h"
 
 #include <chrono>
-#include <ctime>
-
-extern "C" {
-#include <time.h>
-}
 
 namespace Hypertable {
 

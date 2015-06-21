@@ -32,11 +32,8 @@
 #include <Common/Serialization.h>
 #include <Common/Time.h>
 
+#include <ctime>
 #include <string>
-
-extern "C" {
-#include <time.h>
-}
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;

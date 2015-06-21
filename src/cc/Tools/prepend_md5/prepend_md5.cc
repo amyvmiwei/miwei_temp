@@ -34,11 +34,6 @@
 #include <iostream>
 #include <string>
 
-extern "C" {
-#include <time.h>
-#include <sys/time.h>
-}
-
 using namespace Hypertable;
 using namespace Hypertable::Config;
 using namespace std;

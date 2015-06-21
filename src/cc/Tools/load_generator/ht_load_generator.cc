@@ -40,8 +40,6 @@
 #include <boost/progress.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/thread/xtime.hpp>
-#include <boost/timer.hpp>
 
 #include <chrono>
 #include <cmath>
@@ -50,11 +48,6 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
-
-extern "C" {
-#include <stdio.h>
-#include <time.h>
-}
 
 using namespace Hypertable;
 using namespace Hypertable::Config;

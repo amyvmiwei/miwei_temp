@@ -39,10 +39,6 @@
 #include <memory>
 #include <mutex>
 
-extern "C" {
-#include <time.h>
-}
-
 namespace Hypertable {
 
   namespace MetaLog {

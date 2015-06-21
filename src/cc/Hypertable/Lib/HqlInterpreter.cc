@@ -54,12 +54,9 @@
 
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <sstream>
 #include <iostream>
-
-extern "C" {
-#include <time.h>
-}
 
 using namespace std;
 using namespace Hypertable;

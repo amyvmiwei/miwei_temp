@@ -43,12 +43,9 @@
 #include <Common/ScopeGuard.h>
 
 #include <chrono>
+#include <ctime>
 #include <sstream>
 #include <thread>
-
-extern "C" {
-#include <time.h>
-}
 
 using namespace Hypertable;
 using namespace Hyperspace;

@@ -52,7 +52,6 @@ extern "C" {
 #include <pthread.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 }
 
 using namespace Hypertable;

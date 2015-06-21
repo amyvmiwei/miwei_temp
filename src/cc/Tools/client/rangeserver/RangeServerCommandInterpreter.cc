@@ -20,11 +20,8 @@
  */
 
 #include <Common/Compat.h>
-#include <Common/Init.h>
-#include <Common/Error.h>
-#include <Common/FileUtils.h>
 
-#include <AsyncComm/DispatchHandlerSynchronizer.h>
+#include "RangeServerCommandInterpreter.h"
 
 #include <Hypertable/Lib/ClusterId.h>
 #include <Hypertable/Lib/HqlHelpText.h>
@@ -36,20 +33,18 @@
 #include <Hypertable/Lib/ScanSpec.h>
 #include <Hypertable/Lib/TestSource.h>
 
-#include <cassert>
-#include <cstdio>
-#include <cstring>
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/progress.hpp>
-#include <boost/thread/xtime.hpp>
-#include <boost/timer.hpp>
 
-extern "C" {
-#include <time.h>
-}
-
-#include "RangeServerCommandInterpreter.h"
+#include <cassert>
+#include <cstdio>
+#include <cstring>
 
 #define BUFFER_SIZE 65536
 

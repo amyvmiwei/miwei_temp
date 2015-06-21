@@ -38,17 +38,17 @@
 #include <boost/spirit/include/classic_core.hpp>
 #include <boost/spirit/include/classic_assign_actor.hpp>
 
-#include <fstream>
-#include <iostream>
-#include <cerrno>
 #include <cctype>
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
+#include <fstream>
+#include <iostream>
 
 extern "C" {
 #include <strings.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 }
 
@@ -58,9 +58,6 @@ using namespace Hypertable;
 using namespace std;
 
 
-/**
- *
- */
 LoadDataSource::LoadDataSource(const string &header_fname, 
                                int row_uniquify_chars, 
                                int load_flags)
@@ -85,9 +82,7 @@ LoadDataSource::LoadDataSource(const string &header_fname,
   return;
 }
 
-String
-LoadDataSource::get_header()
-{
+String LoadDataSource::get_header() {
   string three_column_header = format("#row%ccolumn%cvalue",
                                       m_field_separator, m_field_separator);
   string four_column_header = format("#timestamp%crow%ccolumn%cvalue",

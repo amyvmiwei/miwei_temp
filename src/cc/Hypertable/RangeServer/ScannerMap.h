@@ -32,10 +32,6 @@
 
 #include <Hypertable/Lib/ProfileDataScanner.h>
 
-extern "C" {
-#include <time.h>
-}
-
 #include <atomic>
 #include <mutex>
 #include <unordered_map>

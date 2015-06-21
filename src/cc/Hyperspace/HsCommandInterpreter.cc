@@ -33,13 +33,9 @@
 #include <Common/Stopwatch.h>
 #include <Common/DynamicBuffer.h>
 
-#include <boost/progress.hpp>
-#include <boost/timer.hpp>
-#include <boost/thread/xtime.hpp>
 #include <boost/algorithm/string.hpp>
 
 extern "C" {
-#include <time.h>
 #if defined(__sun__)
 #include <inttypes.h>
 #endif

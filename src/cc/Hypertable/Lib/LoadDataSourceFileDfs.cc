@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -35,7 +35,6 @@
 extern "C" {
 #include <strings.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 }
 
