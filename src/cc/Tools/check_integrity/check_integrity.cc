@@ -39,6 +39,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
 #include <thread>
 
 extern "C" {
@@ -96,12 +97,12 @@ struct RangeInfo
 typedef std::vector<RangeInfo> RangeInfoVec;
 
 std::vector<String> errors;
-Mutex error_mutex;
+std::mutex error_mutex;
 
 void add_error(const String &msg)
 {
   cout << msg << endl;
-  ScopedLock lock(error_mutex);
+  lock_guard<mutex> lock(error_mutex);
   errors.push_back(msg);
 }
 

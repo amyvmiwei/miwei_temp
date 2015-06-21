@@ -56,6 +56,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -193,7 +194,7 @@ namespace Hypertable {
     bool get_relinquish() const { return m_relinquish; }
 
     void recovery_initialize() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       for (size_t i=0; i<m_access_group_vector.size(); i++)
         m_access_group_vector[i]->recovery_initialize();
     }
@@ -240,7 +241,7 @@ namespace Hypertable {
     bool get_transfer_info(RangeTransferInfo &transfer_info, CommitLogPtr &transfer_log,
                            int64_t *latest_revisionp, bool &wait_for_maintenance) {
       bool retval = false;
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
 
       wait_for_maintenance = false;
       *latest_revisionp = m_latest_revision;
@@ -287,12 +288,12 @@ namespace Hypertable {
     void drop() {
       Barrier::ScopedActivator block_updates(m_update_barrier);
       Barrier::ScopedActivator block_scans(m_scan_barrier);
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_dropped = true;
     }
 
     String get_name() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return (String)m_name;
     }
 
@@ -301,14 +302,14 @@ namespace Hypertable {
     }
 
     int32_t get_error() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (!m_metalog_entity->get_load_acknowledged())
         return Error::RANGESERVER_RANGE_NOT_YET_ACKNOWLEDGED;
       return m_error;
     }
 
     void set_needs_compaction(bool needs_compaction) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_metalog_entity->set_needs_compaction(needs_compaction);
     }
 
@@ -317,7 +318,7 @@ namespace Hypertable {
      * type of cm
      */
     void set_compaction_type_needed(int compaction_type_needed) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_compaction_type_needed = compaction_type_needed;
     }
 
@@ -362,8 +363,8 @@ namespace Hypertable {
     uint64_t m_bytes_written {};
     uint64_t m_disk_bytes_read {};
 
-    Mutex            m_mutex;
-    Mutex            m_schema_mutex;
+    std::mutex m_mutex;
+    std::mutex m_schema_mutex;
     Lib::Master::ClientPtr  m_master_client;
     MetaLogEntityRangePtr m_metalog_entity;
     AccessGroupHintsFile m_hints_file;

@@ -33,7 +33,6 @@
 #include <AsyncComm/ApplicationQueueInterface.h>
 #include <AsyncComm/ConnectionManager.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
 #include <memory>
@@ -150,7 +149,6 @@ namespace Hypertable {
     std::string                  m_install_dir;
     TableCachePtr           m_table_cache;
     NamespaceCachePtr       m_namespace_cache;
-    Mutex                   m_mutex;
     bool                    m_hyperspace_reconnect;
     std::string                  m_toplevel_dir;
   };

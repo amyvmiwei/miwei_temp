@@ -28,6 +28,7 @@
 #include <Common/Serialization.h>
 
 using namespace Hypertable;
+using namespace std;
 
 SystemState::SystemState() : MetaLog::Entity(MetaLog::EntityType::SYSTEM_STATE),
                              m_generation(1) {
@@ -51,7 +52,7 @@ SystemState::SystemState(const MetaLog::EntityHeader &header_)
 }
 
 bool SystemState::admin_set(const std::vector<SystemVariable::Spec> &specs) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool changed = false;
   int32_t now = (int32_t)time(0);
   for (auto &spec : specs) {
@@ -78,7 +79,7 @@ bool SystemState::admin_set(const std::vector<SystemVariable::Spec> &specs) {
 }
 
 bool SystemState::admin_set(int code, bool value) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int32_t now = (int32_t)time(0);
   HT_ASSERT(code < (int)m_admin_specified.size());
   String msg = format("System state %s=%s set administratively.",
@@ -102,7 +103,7 @@ bool SystemState::admin_set(int code, bool value) {
 }
 
 bool SystemState::auto_set(int code, bool value, const String &reason) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   String body = format("System state %s=%s %s.",
                        SystemVariable::code_to_string(code),
                        value ? "true" : "false", reason.c_str());
@@ -127,7 +128,7 @@ bool SystemState::auto_set(int code, bool value, const String &reason) {
 
 void SystemState::get(std::vector<SystemVariable::Spec> &specs,
                       uint64_t *generation) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   SystemVariable::Spec spec;
   bool default_value;
   HT_ASSERT(m_admin_specified.size() == m_auto_specified.size());
@@ -146,7 +147,7 @@ void SystemState::get(std::vector<SystemVariable::Spec> &specs,
 }
 
 bool SystemState::get_notifications(std::vector<NotificationMessage> &notifications) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   notifications = m_notifications;
   m_notifications.clear();
   return !notifications.empty();
@@ -155,7 +156,7 @@ bool SystemState::get_notifications(std::vector<NotificationMessage> &notificati
 
 void SystemState::get_non_default(std::vector<SystemVariable::Spec> &specs,
                                   uint64_t *generation) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   SystemVariable::Spec spec;
   bool default_value;
   HT_ASSERT(m_admin_specified.size() == m_auto_specified.size());
@@ -175,7 +176,7 @@ void SystemState::get_non_default(std::vector<SystemVariable::Spec> &specs,
 
 
 void SystemState::display(std::ostream &os) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   os << " generation=" << m_generation << " admin{";
   HT_ASSERT(m_admin_specified.size() == SystemVariable::COUNT);
   os << SystemVariable::specs_to_string(m_admin_specified);

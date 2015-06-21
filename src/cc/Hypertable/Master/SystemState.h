@@ -25,8 +25,8 @@
  * for persisting global system state.
  */
 
-#ifndef HYPERTABLE_SYSTEMSTATE_H
-#define HYPERTABLE_SYSTEMSTATE_H
+#ifndef Hypertable_Master_SystemState_h
+#define Hypertable_Master_SystemState_h
 
 #include <vector>
 
@@ -187,11 +187,11 @@ namespace Hypertable {
     int32_t m_notification_interval;
   };
 
-  /// Smart pointer to SystemState
+  /// Shared smart pointer to SystemState
   typedef std::shared_ptr<SystemState> SystemStatePtr;
 
   /** @}*/
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_SYSTEMSTATE_H
+#endif // Hypertable_Master_SystemState_h

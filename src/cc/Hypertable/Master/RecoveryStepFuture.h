@@ -27,8 +27,10 @@
 
 #include <boost/thread/condition.hpp>
 
+#include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -47,7 +49,7 @@ namespace Hypertable {
       m_extend_timeout(false) { }
 
     void register_locations(StringSet &locations) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       for (auto &location : m_success)
         locations.erase(location);
       m_outstanding.clear();
@@ -56,13 +58,13 @@ namespace Hypertable {
     }
 
     void status(const String &location, int plan_generation) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_extend_timeout = true;
       m_cond.notify_all();
     }
 
     void success(const String &location, int plan_generation) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
 
       if (m_outstanding.empty()) {
         m_cond.notify_all();
@@ -84,7 +86,7 @@ namespace Hypertable {
 
     void failure(const String &location, int plan_generation,
                  int32_t error, const String &message) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
 
       if (plan_generation != m_plan_generation) {
         HT_INFOF("Ignoring response from %s for recovery step %s because "
@@ -105,15 +107,15 @@ namespace Hypertable {
     }
 
     bool wait_for_completion(uint32_t initial_timeout) {
-      ScopedLock lock(m_mutex);
-      boost::xtime expire_time;
+      std::unique_lock<std::mutex> lock(m_mutex);
       ErrorMapT::iterator iter;
 
-      boost::xtime_get(&expire_time, boost::TIME_UTC_);
-      xtime_add_millis(expire_time, initial_timeout);
+      auto expire_time = std::chrono::system_clock::now() +
+        std::chrono::milliseconds(initial_timeout);
 
       while (!m_outstanding.empty()) {
-        if (!m_cond.timed_wait(lock, expire_time)) {
+
+        if (m_cond.wait_until(lock, expire_time) == std::cv_status::timeout) {
           if (!m_outstanding.empty()) {
             for (auto &location : m_outstanding) {
               iter = m_error_map.find(location);
@@ -124,8 +126,8 @@ namespace Hypertable {
           }
         }
         if (m_extend_timeout) {
-          boost::xtime_get(&expire_time, boost::TIME_UTC_);
-          xtime_add_millis(expire_time, initial_timeout);
+          expire_time = std::chrono::system_clock::now() +
+            std::chrono::milliseconds(initial_timeout);
           m_extend_timeout = false;
         }
       }
@@ -133,13 +135,13 @@ namespace Hypertable {
     }
 
     void get_error_map(ErrorMapT &error_map) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       error_map = m_error_map;
     }
 
   protected:
-    Mutex m_mutex;
-    boost::condition m_cond;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
     String m_label;
     StringSet m_outstanding;
     StringSet m_success;

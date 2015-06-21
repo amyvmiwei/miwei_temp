@@ -93,7 +93,7 @@ void OperationCompact::execute() {
       }
     }
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(Dependency::METADATA);
     }
@@ -106,7 +106,7 @@ void OperationCompact::execute() {
     else
       m_context->get_available_servers(servers);
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_servers.clear();
       m_dependencies.clear();
       for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
@@ -131,7 +131,7 @@ void OperationCompact::execute() {
       for (const auto &result : results) {
         if (result.error == Error::OK ||
             result.error == Error::TABLE_NOT_FOUND) {
-          ScopedLock lock(m_mutex);
+          lock_guard<mutex> lock(m_mutex);
           m_completed.insert(result.location);
         }
         else
@@ -140,7 +140,7 @@ void OperationCompact::execute() {
       }
 
       {
-        ScopedLock lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         m_servers.clear();
         m_dependencies.clear();
         m_dependencies.insert(Dependency::METADATA);

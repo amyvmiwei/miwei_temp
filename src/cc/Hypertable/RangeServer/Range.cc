@@ -121,7 +121,7 @@ void Range::initialize() {
       m_metalog_entity->set_soft_limit(soft_limit);
     }
     {
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       m_split_threshold = soft_limit + (Random::number64() % soft_limit);
     }
   }
@@ -281,7 +281,7 @@ void Range::load_cell_stores() {
   m_metalog_entity->get_boundary_rows(start_row, end_row);
 
   if (m_is_root) {
-    ScopedLock schema_lock(m_schema_mutex);
+    lock_guard<mutex> schema_lock(m_schema_mutex);
     metadata = new MetadataRoot(m_schema);
   }
   else
@@ -290,13 +290,13 @@ void Range::load_cell_stores() {
   metadata->reset_files_scan();
 
   {
-    ScopedLock schema_lock(m_schema_mutex);
+    lock_guard<mutex> schema_lock(m_schema_mutex);
     for (auto ag : m_access_group_vector)
       ag->pre_load_cellstores();
   }
 
   while (metadata->get_next_files(ag_name, files, &nextcsid)) {
-    ScopedLock schema_lock(m_schema_mutex);
+    lock_guard<mutex> schema_lock(m_schema_mutex);
     csvec.clear();
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
@@ -377,7 +377,7 @@ void Range::load_cell_stores() {
   }
 
   {
-    ScopedLock schema_lock(m_schema_mutex);
+    lock_guard<mutex> schema_lock(m_schema_mutex);
     for (auto ag : m_access_group_vector)
       ag->post_load_cellstores();
   }
@@ -387,7 +387,7 @@ void Range::load_cell_stores() {
 
 
 void Range::update_schema(SchemaPtr &schema) {
-  ScopedLock lock(m_schema_mutex);
+  lock_guard<mutex> lock(m_schema_mutex);
 
   vector<AccessGroupSpec*> new_access_groups;
   AccessGroupPtr ag;
@@ -419,7 +419,7 @@ void Range::update_schema(SchemaPtr &schema) {
 
   // create new access groups
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_table.generation = schema->get_generation();
     m_metalog_entity->set_table_generation(m_table.generation);
     RangeSpecManaged range_spec;
@@ -486,7 +486,7 @@ void Range::create_scanner(ScanContextPtr &scan_ctx, MergeScannerRangePtr &scann
   HT_ASSERT(m_initialized);
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
     m_scans++;
   }
@@ -513,7 +513,7 @@ CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
     deferred_initialization(scan_ctx->timeout_ms);
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
     m_scans++;
   }
@@ -537,7 +537,7 @@ CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
 
 
 bool Range::need_maintenance() {
-  ScopedLock lock(m_schema_mutex);
+  lock_guard<mutex> lock(m_schema_mutex);
   bool needed = false;
   int64_t mem, disk, disk_total = 0;
   if (!m_metalog_entity->get_load_acknowledged() || m_unsplittable)
@@ -571,7 +571,7 @@ Range::get_maintenance_data(ByteArena &arena, time_t now,
   memset(mdata, 0, sizeof(MaintenanceData));
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
     mdata->load_factors.scans = m_scans;
     mdata->load_factors.updates = m_updates;
@@ -584,7 +584,7 @@ Range::get_maintenance_data(ByteArena &arena, time_t now,
 
   // record starting maintenance generation
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     starting_maintenance_generation = m_maintenance_generation;
     mdata->load_factors.cells_scanned = m_cells_scanned;
     mdata->cells_returned = m_cells_returned;
@@ -643,7 +643,7 @@ Range::get_maintenance_data(ByteArena &arena, time_t now,
   mdata->unsplittable = m_unsplittable;
 
   if (size > Global::range_maximum_size) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (starting_maintenance_generation == m_maintenance_generation)
       m_capacity_exceeded_throttle = true;
   }
@@ -702,7 +702,7 @@ void Range::relinquish() {
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_capacity_exceeded_throttle = false;
     m_maintenance_generation++;
   }
@@ -716,7 +716,7 @@ void Range::relinquish_install_log() {
   AccessGroupVector ag_vector(0);
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
   }
 
@@ -724,7 +724,7 @@ void Range::relinquish_install_log() {
     HT_THROW(Error::CANCELLED, "");
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     logname = TransferLog(Global::log_dfs, Global::toplevel_dir,
                           m_table.id, m_metalog_entity->get_end_row()).name();
@@ -763,7 +763,7 @@ void Range::relinquish_install_log() {
    */
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_transfer_log = make_shared<CommitLog>(Global::dfs, logname, !m_table.is_user());
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
@@ -776,7 +776,7 @@ void Range::relinquish_compact() {
   AccessGroupVector ag_vector(0);
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
   }
 
@@ -827,8 +827,8 @@ void Range::relinquish_finalize() {
   String start_row, end_row;
 
   {
-    ScopedLock lock(m_schema_mutex);
-    ScopedLock lock2(m_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
+    lock_guard<mutex> lock2(m_mutex);
     table_frozen = m_table;
   }
 
@@ -946,7 +946,7 @@ void Range::split() {
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_capacity_exceeded_throttle = false;
     m_maintenance_generation++;
   }
@@ -969,7 +969,7 @@ void Range::split_install_log() {
   m_metalog_entity->get_boundary_rows(start_row, end_row);
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
   }
 
@@ -1031,7 +1031,7 @@ void Range::split_install_log() {
 
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_metalog_entity->set_split_row(split_row);
 
     logname = TransferLog(Global::log_dfs, Global::toplevel_dir,
@@ -1074,7 +1074,7 @@ void Range::split_install_log() {
    */
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_split_row = split_row;
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
@@ -1137,7 +1137,7 @@ void Range::split_compact_and_shrink() {
   split_row = m_metalog_entity->get_split_row();
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
   }
 
@@ -1227,7 +1227,7 @@ void Range::split_compact_and_shrink() {
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     Barrier::ScopedActivator block_scans(m_scan_barrier);
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     // Shrink access groups
     if (m_split_off_high)
@@ -1296,7 +1296,7 @@ void Range::split_compact_and_shrink() {
       table_dir = Global::toplevel_dir + "/tables/" + m_table.id;
 
       {
-        ScopedLock lock(m_schema_mutex);
+        lock_guard<mutex> lock(m_schema_mutex);
         for (auto ag_spec : m_schema->get_access_groups()) {
           // notice the below variables are different "range" vs. "table"
           range_dir = table_dir + "/" + ag_spec->get_name() + "/" + md5DigestStr;
@@ -1311,7 +1311,7 @@ void Range::split_compact_and_shrink() {
    * Persist SPLIT_SHRUNK MetaLog state
    */
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_metalog_entity->set_state(RangeState::SPLIT_SHRUNK, location);
     for (int i=0; true; i++) {
       try {
@@ -1360,7 +1360,7 @@ void Range::split_notify_master() {
 
   // update the latest generation, this should probably be protected
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     table_frozen = m_table;
   }
 
@@ -1451,7 +1451,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
   }
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
   }
 
@@ -1460,7 +1460,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
     // Initiate minor compactions (freeze cell cache)
     {
       Barrier::ScopedActivator block_updates(m_update_barrier);
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       for (size_t i=0; i<ag_vector.size(); i++) {
         if (m_metalog_entity->get_needs_compaction() ||
             subtask_map.compaction(ag_vector[i].get()))
@@ -1504,7 +1504,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
 
   if (m_metalog_entity->get_needs_compaction()) {
     try {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_metalog_entity->set_needs_compaction(false);
       Global::rsml_writer->record_state(m_metalog_entity);
     }
@@ -1514,7 +1514,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_compaction_type_needed = 0;
     m_capacity_exceeded_throttle = false;
     m_maintenance_generation++;
@@ -1543,7 +1543,7 @@ void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
   }
 
   {
-    ScopedLock lock(m_schema_mutex);
+    lock_guard<mutex> lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
   }
 
@@ -1560,7 +1560,7 @@ void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_maintenance_generation++;
   }
 
@@ -1628,7 +1628,7 @@ void Range::unlock() {
     m_access_group_vector[i]->unlock();
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_revision > m_latest_revision)
       m_latest_revision = m_revision;
   }
@@ -1703,7 +1703,7 @@ int64_t Range::get_scan_revision(uint32_t timeout_ms) {
   if (!m_initialized)
     deferred_initialization(timeout_ms);
 
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_latest_revision;
 }
 
@@ -1712,7 +1712,7 @@ void Range::acknowledge_load(uint32_t timeout_ms) {
   if (!m_initialized)
     deferred_initialization(timeout_ms);
 
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_metalog_entity->set_load_acknowledged(true);
 
   if (Global::rsml_writer == 0)

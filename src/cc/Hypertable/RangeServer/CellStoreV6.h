@@ -120,17 +120,17 @@ namespace Hypertable {
     virtual int64_t end_of_last_block() { return m_trailer.fix_index_offset; }
 
     virtual size_t bloom_filter_size() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_bloom_filter ? m_bloom_filter->size() : 0;
     }
 
     virtual int64_t bloom_filter_memory_used() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_index_stats.bloom_filter_memory;
     }
 
     virtual int64_t block_index_memory_used() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_index_stats.block_index_memory;
     }
 
@@ -139,12 +139,12 @@ namespace Hypertable {
     virtual const std::vector<String> &get_replaced_files();
 
     virtual int32_t get_fd() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_fd;
     }
 
     virtual int32_t reopen_fd() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (m_fd != -1)
         m_filesys->close(m_fd);
       m_fd = m_filesys->open(m_filename, 0);

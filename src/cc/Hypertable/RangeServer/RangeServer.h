@@ -71,10 +71,10 @@
 #include <Common/MetricsProcess.h>
 #include <Common/Properties.h>
 
-#include <boost/thread/condition.hpp>
-
+#include <chrono>
 #include <map>
 #include <memory>
+#include <mutex>
 
 using namespace Hyperspace::Lib;
 using namespace Hyperspace;
@@ -119,7 +119,8 @@ namespace Apps {
     void update(Response::Callback::Update *cb, uint64_t cluster_id,
                 const TableIdentifier &table, uint32_t count,
                 StaticBuffer &buffer, uint32_t flags);
-    void batch_update(std::vector<UpdateRecTable *> &updates, boost::xtime expire_time);
+    void batch_update(std::vector<UpdateRecTable *> &updates,
+                      std::chrono::time_point<std::chrono::steady_clock> expire_time);
 
     void commit_log_sync(ResponseCallback *cb, uint64_t cluster_id,
                          const TableIdentifier &table);
@@ -216,7 +217,7 @@ namespace Apps {
 
     void write_profile_data(const String &line) {
       if (m_profile_query) {
-        ScopedLock lock(m_profile_mutex);
+        std::lock_guard<std::mutex> lock(m_profile_mutex);
         m_profile_query_out << line << "\n";
       }
     }
@@ -248,13 +249,13 @@ namespace Apps {
      * @return Previous value of #m_get_statistics_outstanding
      */
     bool test_and_set_get_statistics_outstanding(bool value) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       bool old_value = m_get_statistics_outstanding;
       m_get_statistics_outstanding = value;
       return old_value;
     }
 
-    Mutex m_mutex;
+    std::mutex m_mutex;
     ContextPtr m_context;
     LogReplayBarrierPtr m_log_replay_barrier;
 
@@ -273,7 +274,7 @@ namespace Apps {
     /// Flush method for USER commit log updates
     Filesystem::Flags m_log_flush_method_user {};
 
-    Mutex m_stats_mutex;
+    std::mutex m_stats_mutex;
 
     /// Configuration properties
     PropertiesPtr m_props;
@@ -289,7 +290,7 @@ namespace Apps {
 
     typedef map<String, PhantomRangeMapPtr> FailoverPhantomRangeMap;
     FailoverPhantomRangeMap m_failover_map;
-    Mutex                  m_failover_mutex;
+    std::mutex                  m_failover_mutex;
 
     ConnectionManagerPtr   m_conn_manager;
     ApplicationQueuePtr    m_app_queue;
@@ -335,13 +336,13 @@ namespace Apps {
     LoadFactors m_load_factors;
     size_t m_metric_samples {};
     size_t m_cores {};
-    Mutex m_pending_metrics_mutex;
+    std::mutex m_pending_metrics_mutex;
     CellsBuilder *m_pending_metrics_updates {};
     boost::xtime m_last_control_file_check;
     int32_t m_control_file_check_interval {};
     std::ofstream m_profile_query_out;
     bool m_profile_query {};
-    Mutex m_profile_mutex;
+    std::mutex m_profile_mutex;
 
     /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;
@@ -350,7 +351,7 @@ namespace Apps {
     MetricsProcess m_metrics_process;
   };
 
-  /// Smart pointer to RangeServer
+  /// Shared smart pointer to RangeServer
   typedef std::shared_ptr<RangeServer> RangeServerPtr;
 
   /// @}

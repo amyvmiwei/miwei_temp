@@ -30,13 +30,13 @@
 #include <AsyncComm/ApplicationQueue.h>
 #include <AsyncComm/DispatchHandler.h>
 
-#include <Common/Mutex.h>
 #include <Common/Time.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
 
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -153,7 +153,7 @@ namespace Hypertable {
   private:
 
     /// %Mutex for serializing access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Comm object
     Comm *m_comm {};

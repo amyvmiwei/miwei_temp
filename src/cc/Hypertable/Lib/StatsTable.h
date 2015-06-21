@@ -19,10 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_STATSTABLE_H
-#define HYPERTABLE_STATSTABLE_H
+#ifndef Hypertable_Lib_StatsTable_h
+#define Hypertable_Lib_StatsTable_h
 
-#include "Common/StatsSerializable.h"
+#include <Common/StatsSerializable.h>
+
+#include <string>
 
 namespace Hypertable {
 
@@ -99,6 +101,6 @@ namespace Hypertable {
 }
 
 
-#endif // HYPERTABLE_STATSTABLE_H
+#endif // Hypertable_Lib_StatsTable_h
 
 

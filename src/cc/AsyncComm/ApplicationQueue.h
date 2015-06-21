@@ -32,17 +32,16 @@
 #include <AsyncComm/ApplicationHandler.h>
 
 #include <Common/Logger.h>
-#include <Common/Mutex.h>
 #include <Common/StringExt.h>
 #include <Common/Thread.h>
 
-#include <boost/thread/condition.hpp>
-#include <boost/thread/xtime.hpp>
-
 #include <cassert>
+#include <chrono>
+#include <condition_variable>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -138,13 +137,13 @@ namespace Hypertable {
       GroupStateMap group_state_map;
 
       /// %Mutex for serializing concurrent access
-      Mutex mutex;
+      std::mutex mutex;
 
       /// Condition variable to signal pending handlers
-      boost::condition cond;
+      std::condition_variable cond;
 
       /// Condition variable used to signal <i>quiesced</i> queue
-      boost::condition quiesce_cond;
+      std::condition_variable quiesce_cond;
 
       /// Idle thread count
       size_t threads_available;
@@ -175,7 +174,7 @@ namespace Hypertable {
 
         while (true) {
           {
-            ScopedLock lock(m_state.mutex);
+            std::unique_lock<std::mutex> lock(m_state.mutex);
 
             m_state.threads_available++;
             while ((m_state.paused || m_state.queue.empty()) &&
@@ -272,7 +271,7 @@ namespace Hypertable {
        */
       void remove(RequestRec *rec) {
         if (rec->group_state) {
-          ScopedLock ulock(m_state.mutex);
+          std::lock_guard<std::mutex> ulock(m_state.mutex);
           rec->group_state->running = false;
           rec->group_state->outstanding--;
           if (rec->group_state->outstanding == 0) {
@@ -384,13 +383,11 @@ namespace Hypertable {
      * @return <i>false</i> if <code>deadline</code> was reached before queue
      * became idle, <i>true</i> otherwise
      */
-    bool wait_for_idle(boost::xtime &deadline, int reserve_threads=0) {
-      ScopedLock lock(m_state.mutex);
-      while (m_state.threads_available < (m_state.threads_total-reserve_threads)) {
-        if (!m_state.quiesce_cond.timed_wait(lock, deadline))
-          return false;
-      }
-      return true;
+    bool wait_for_idle(std::chrono::time_point<std::chrono::steady_clock> deadline,
+                       int reserve_threads=0) {
+      std::unique_lock<std::mutex> lock(m_state.mutex);
+      return m_state.quiesce_cond.wait_until(lock, deadline,
+					     [this, reserve_threads](){ return m_state.threads_available >= (m_state.threads_total-reserve_threads); });
     }
 
     /**
@@ -407,7 +404,7 @@ namespace Hypertable {
     /** Starts application queue.
      */
     void start() {
-      ScopedLock lock(m_state.mutex);
+      std::lock_guard<std::mutex> lock(m_state.mutex);
       m_state.paused = false;
       m_state.cond.notify_all();
     }
@@ -417,7 +414,7 @@ namespace Hypertable {
      * call are allowed to complete.
      */
     void stop() {
-      ScopedLock lock(m_state.mutex);
+      std::lock_guard<std::mutex> lock(m_state.mutex);
       m_state.paused = true;
     }
 
@@ -437,7 +434,7 @@ namespace Hypertable {
       HT_ASSERT(app_handler);
 
       if (group_id != 0) {
-        ScopedLock ulock(m_state.mutex);
+        std::lock_guard<std::mutex> ulock(m_state.mutex);
         if ((uiter = m_state.group_state_map.find(group_id))
             != m_state.group_state_map.end()) {
           rec->group_state = (*uiter).second;
@@ -451,7 +448,7 @@ namespace Hypertable {
       }
 
       {
-        ScopedLock lock(m_state.mutex);
+        std::lock_guard<std::mutex> lock(m_state.mutex);
         if (app_handler->is_urgent()) {
           m_state.urgent_queue.push_back(rec);
           if (m_dynamic_threads && m_state.threads_available == 0) {
@@ -482,12 +479,12 @@ namespace Hypertable {
     /// the request queues for a thread to become available
     /// @return Request backlog
     size_t backlog() {
-      ScopedLock lock(m_state.mutex);
+      std::lock_guard<std::mutex> lock(m_state.mutex);
       return m_state.queue.size() + m_state.urgent_queue.size();
     }
   };
 
-  /// Smart pointer to ApplicationQueue object
+  /// Shared smart pointer to ApplicationQueue object
   typedef std::shared_ptr<ApplicationQueue> ApplicationQueuePtr;
   /** @}*/
 }

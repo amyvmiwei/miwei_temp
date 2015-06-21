@@ -33,6 +33,7 @@
 using namespace Hypertable;
 using namespace Hypertable::RangeServer;
 using namespace Hypertable::Config;
+using namespace std;
 
 GroupCommitTimerHandler::GroupCommitTimerHandler(Comm *comm, Apps::RangeServer *range_server,
                                                  ApplicationQueuePtr &app_queue) 
@@ -48,7 +49,7 @@ void GroupCommitTimerHandler::start() {
 
 
 void GroupCommitTimerHandler::handle(Hypertable::EventPtr &event_ptr) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error;
 
   if (m_shutdown)
@@ -62,7 +63,7 @@ void GroupCommitTimerHandler::handle(Hypertable::EventPtr &event_ptr) {
 
 
 void GroupCommitTimerHandler::shutdown() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_shutdown = true;
   m_comm->cancel_timer(shared_from_this());
 }

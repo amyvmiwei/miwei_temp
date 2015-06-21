@@ -32,7 +32,6 @@
 #include "MetaLogEntity.h"
 
 #include <Common/Filesystem.h>
-#include <Common/Mutex.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/DispatchHandler.h>
@@ -174,7 +173,7 @@ namespace Hypertable {
         /// %Mutex for serializing access to members
         std::mutex m_mutex;
         /// Condition variable to signal when timer has stopped
-        condition_variable m_cond;
+        std::condition_variable m_cond;
         /// Pointer to MetaLogWriter
         Writer *m_writer {};
         /// Pointer to Comm layer

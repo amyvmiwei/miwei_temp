@@ -25,14 +25,16 @@
  * and providing access to dynamic server state.
  */
 
-#include "Common/Compat.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "ServerState.h"
 
-using namespace Hypertable;
+#include <Common/Logger.h>
 
-ServerState::ServerState() : m_generation(0) {
+using namespace Hypertable;
+using namespace std;
+
+ServerState::ServerState() {
   SystemVariable::Spec spec;
   for (int i=0; i<SystemVariable::COUNT; i++) {
     spec.code = i;
@@ -46,7 +48,7 @@ bool ServerState::readonly() {
 }
 
 void ServerState::set(int64_t generation, const std::vector<SystemVariable::Spec> &specs) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (generation > m_generation) {
     for (auto &spec : specs) {
       if (spec.code < (int)m_specs.size())

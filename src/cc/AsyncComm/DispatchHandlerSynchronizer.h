@@ -31,11 +31,9 @@
 #include "DispatchHandler.h"
 #include "Event.h"
 
-#include <Common/Mutex.h>
-
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <queue>
 
 namespace Hypertable {
@@ -115,17 +113,17 @@ namespace Hypertable {
   private:
 
     /// Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Condition variable for signalling change in queue state
-    boost::condition m_cond;
+    std::condition_variable m_cond;
 
     /// Event queue
     std::queue<EventPtr> m_receive_queue;
 
   };
 
-  /// Smart pointer to DispatchHandlerSynchronizer
+  /// Shared smart pointer to DispatchHandlerSynchronizer
   typedef std::shared_ptr<DispatchHandlerSynchronizer> DispatchHandlerSynchronizerPtr;
 
   /** @}*/

@@ -39,6 +39,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -77,7 +78,7 @@ namespace Hypertable {
     void create_range(Lib::Master::ClientPtr &master_client, TableInfoPtr &table_info,
                       FilesystemPtr &log_dfs);
     RangePtr& get_range() {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       return m_range;
     }
 
@@ -102,7 +103,8 @@ namespace Hypertable {
                       MetaLogEntityRangePtr &range_entity);
 
     typedef std::map<int32_t, FragmentDataPtr> FragmentMap;
-    Mutex            m_mutex;
+
+    std::mutex m_mutex;
     FragmentMap      m_fragments;
     QualifiedRangeSpec m_range_spec;
     RangeState       m_range_state;
@@ -114,7 +116,7 @@ namespace Hypertable {
     int              m_state;
   };
 
-  /// Smart pointer to PhantomRange
+  /// Shared smart pointer to PhantomRange
   typedef std::shared_ptr<PhantomRange> PhantomRangePtr;
 
   /// @}

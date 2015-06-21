@@ -23,11 +23,10 @@
 
 #include <AsyncComm/DispatchHandler.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
+#include <mutex>
 #include <queue>
 
 namespace Hypertable {
@@ -56,8 +55,8 @@ namespace Lib {
 
     void read_ahead();
 
-    Mutex                m_mutex;
-    boost::condition     m_cond;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
     std::queue<EventPtr> m_queue;
     Client *m_client;
     uint32_t             m_fd;

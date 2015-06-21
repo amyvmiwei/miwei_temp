@@ -45,6 +45,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 
 using namespace std;
 using namespace Hypertable;
@@ -152,7 +153,7 @@ void Namespace::alter_table(const string &table_name, const string &schema_str, 
 
 
 TablePtr Namespace::open_table(const string &table_name, int32_t flags) {
-  Locker<TableCache> lock(*m_table_cache);
+  lock_guard<TableCache> lock(*m_table_cache);
   string full_name = get_full_name(table_name);
   TablePtr table = _open_table(full_name, flags);
 
@@ -332,7 +333,7 @@ void Namespace::get_table_splits(const string &table_name, TableSplitsContainer 
   table->get(tid, schema);
 
   {
-    Locker<TableCache> lock(*m_table_cache);
+    lock_guard<TableCache> lock(*m_table_cache);
     table = _open_table(TableIdentifier::METADATA_NAME);
   }
 

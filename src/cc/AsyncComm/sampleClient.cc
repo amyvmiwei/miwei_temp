@@ -34,14 +34,14 @@
 #include <Common/Usage.h>
 #include <Common/Serialization.h>
 
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <chrono>
+#include <condition_variable>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <queue>
 #include <string>
 #include <thread>
@@ -97,17 +97,17 @@ class ResponseHandler : public DispatchHandler {
 
 public:
 
-  ResponseHandler() : m_queue(), m_mutex(), m_cond() { return; }
-  virtual ~ResponseHandler() { return; }
+  ResponseHandler() { }
+  virtual ~ResponseHandler() { }
 
   virtual void handle(EventPtr &event_ptr) = 0;
 
   virtual bool get_response(EventPtr &event_ptr) = 0;
 
 protected:
-  std::queue<EventPtr>   m_queue;
-  Mutex             m_mutex;
-  boost::condition  m_cond;
+  std::queue<EventPtr> m_queue;
+  std::mutex m_mutex;
+  std::condition_variable m_cond;
 };
 
 
@@ -124,10 +124,10 @@ class ResponseHandlerTCP : public ResponseHandler {
 
 public:
 
-  ResponseHandlerTCP() : ResponseHandler(), m_connected(false) { return; }
+  ResponseHandlerTCP() { }
 
   virtual void handle(EventPtr &event_ptr) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
       if (g_verbose)
         HT_INFOF("Connection Established - %s", event_ptr->to_str().c_str());
@@ -155,7 +155,7 @@ public:
   }
 
   bool wait_for_connection() {
-    ScopedLock lock(m_mutex);
+    std::unique_lock<std::mutex> lock(m_mutex);
     if (m_connected)
       return true;
     m_cond.wait(lock);
@@ -163,7 +163,7 @@ public:
   }
 
   virtual bool get_response(EventPtr &event_ptr) {
-    ScopedLock lock(m_mutex);
+    std::unique_lock<std::mutex> lock(m_mutex);
     while (m_queue.empty()) {
       if (m_connected == false)
         return false;
@@ -175,7 +175,7 @@ public:
   }
 
 private:
-  bool m_connected;
+  bool m_connected {};
 };
 
 
@@ -211,7 +211,7 @@ public:
   ResponseHandlerUDP() : ResponseHandler() { return; }
 
   virtual void handle(EventPtr &event_ptr) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (event_ptr->type == Event::MESSAGE) {
       m_queue.push(event_ptr);
       m_cond.notify_one();
@@ -223,10 +223,8 @@ public:
   }
 
   virtual bool get_response(EventPtr &event_ptr) {
-    ScopedLock lock(m_mutex);
-    while (m_queue.empty()) {
-      m_cond.wait(lock);
-    }
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_cond.wait(lock, [this](){ return !m_queue.empty(); });
     event_ptr = m_queue.front();
     m_queue.pop();
     return true;

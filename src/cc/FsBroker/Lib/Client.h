@@ -35,11 +35,11 @@
 
 #include <Common/Filesystem.h>
 #include <Common/InetAddr.h>
-#include <Common/Mutex.h>
 #include <Common/Properties.h>
 #include <Common/Status.h>
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -221,7 +221,7 @@ namespace Lib {
     /// @param timer Deadline timer
     void send_message(CommBufPtr &cbuf, DispatchHandler *handler, Timer *timer=0);
 
-    Mutex m_mutex;
+    std::mutex m_mutex;
     Comm *m_comm;
     ConnectionManagerPtr m_conn_mgr;
     InetAddr m_addr;

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,21 +19,19 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "AsyncComm/Protocol.h"
-
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "TableMutatorAsyncDispatchHandler.h"
 #include "TableMutatorAsyncHandler.h"
 
+#include <AsyncComm/Protocol.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+
 using namespace Hypertable;
 using namespace Serialization;
 
-/**
- *
- */
 TableMutatorAsyncDispatchHandler::TableMutatorAsyncDispatchHandler(
     ApplicationQueueInterfacePtr &app_queue, TableMutatorAsync *mutator,
     uint32_t scatter_buffer, TableMutatorAsyncSendBuffer *send_buffer, bool auto_refresh)
@@ -42,9 +40,6 @@ TableMutatorAsyncDispatchHandler::TableMutatorAsyncDispatchHandler(
     m_auto_refresh(auto_refresh) {
 }
 
-/**
- *
- */
 void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
   int32_t error;
 

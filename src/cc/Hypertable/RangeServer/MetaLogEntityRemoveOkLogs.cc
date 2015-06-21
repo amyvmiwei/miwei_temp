@@ -30,13 +30,13 @@
 
 #include "MetaLogEntityRemoveOkLogs.h"
 
-#include <Common/Mutex.h>
 #include <Common/Serialization.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
+using namespace std;
 
 MetaLogEntityRemoveOkLogs::MetaLogEntityRemoveOkLogs(const EntityHeader &header_) 
   : Entity(header_) {
@@ -52,24 +52,24 @@ MetaLogEntityRemoveOkLogs::MetaLogEntityRemoveOkLogs()
 }
 
 void MetaLogEntityRemoveOkLogs::insert(const String &pathname) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HT_ASSERT(!boost::ends_with(pathname, "/"));
   m_log_set.insert(pathname);
 }
 
 void MetaLogEntityRemoveOkLogs::insert(StringSet &logs) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_log_set.insert(logs.begin(), logs.end());
 }
 
 void MetaLogEntityRemoveOkLogs::remove(StringSet &logs) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for (const auto &path : logs)
     m_log_set.erase(path);
 }
 
 void MetaLogEntityRemoveOkLogs::get(StringSet &logs) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   logs = m_log_set;
 }
 
@@ -127,7 +127,7 @@ const String MetaLogEntityRemoveOkLogs::name() {
 }
 
 void MetaLogEntityRemoveOkLogs::display(std::ostream &os) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool first = true;
   for (const auto &pathname : m_log_set) {
     os << (first ? " " : ", ") << pathname;

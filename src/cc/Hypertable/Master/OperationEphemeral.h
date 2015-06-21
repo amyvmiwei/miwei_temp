@@ -26,15 +26,14 @@
  * to the MML.
  */
 
-#ifndef HYPERTABLE_OPERATION_EPHEMERAL_H
-#define HYPERTABLE_OPERATION_EPHEMERAL_H
+#ifndef Hypertable_Master_OperationEphemeral_h
+#define Hypertable_Master_OperationEphemeral_h
 
 #include <ctime>
 #include <set>
 
 #include "AsyncComm/Event.h"
 
-#include "Common/Mutex.h"
 #include "Common/ScopeGuard.h"
 #include "Common/Time.h"
 
@@ -139,6 +138,6 @@ namespace Hypertable {
 
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATION_EPHEMERAL_H
+#endif // Hypertable_Master_OperationEphemeral_h

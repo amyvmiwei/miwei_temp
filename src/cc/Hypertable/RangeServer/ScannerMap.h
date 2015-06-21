@@ -32,13 +32,12 @@
 
 #include <Hypertable/Lib/ProfileDataScanner.h>
 
-#include <boost/thread/mutex.hpp>
-
 extern "C" {
 #include <time.h>
 }
 
 #include <atomic>
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -126,7 +125,7 @@ namespace Hypertable {
     static std::atomic<int> ms_next_id;
 
     /// %Mutex for serializing access to members
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Holds scanner information.
     struct ScanInfo {

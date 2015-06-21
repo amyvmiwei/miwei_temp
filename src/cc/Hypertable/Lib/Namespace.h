@@ -39,7 +39,6 @@
 #include <AsyncComm/ApplicationQueueInterface.h>
 #include <AsyncComm/ConnectionManager.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
 #include <boost/tokenizer.hpp>
@@ -325,12 +324,12 @@ namespace Hypertable {
     RangeLocatorPtr         m_range_locator;
     std::string                  m_toplevel_dir;
     bool                    m_hyperspace_reconnect;
-    Mutex                   m_mutex;
     TableCachePtr           m_table_cache;
     uint32_t                m_timeout_ms;
     Client                 *m_client;
   };
 
+  /// Shared smart pointer to Namespace
   typedef std::shared_ptr<Namespace> NamespacePtr;
 
   /// @}

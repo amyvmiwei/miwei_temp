@@ -32,7 +32,7 @@
 
 #include <AsyncComm/ApplicationQueueInterface.h>
 
-#include <Common/Mutex.h>
+#include <mutex>
 
 namespace Hyperspace {
   class Session;
@@ -131,18 +131,18 @@ namespace Hypertable {
                                             int32_t flags = 0);
 
     void get_identifier(TableIdentifier *table_id_p) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       refresh_if_required();
       *table_id_p = m_table;
     }
 
     const std::string& get_name() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_name;
     }
 
     SchemaPtr schema() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       refresh_if_required();
       return m_schema;
     }
@@ -166,12 +166,12 @@ namespace Hypertable {
     void refresh(TableIdentifierManaged &table_identifier, SchemaPtr &schema);
 
     bool need_refresh() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_stale;
     }
 
     void invalidate() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_stale = true;
     }
 
@@ -183,7 +183,7 @@ namespace Hypertable {
 
     /** returns true if this table requires a index table */
     bool needs_index_table() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       for (auto cf : m_schema->get_column_families()) {
         if (cf->get_deleted())
           continue;
@@ -195,7 +195,7 @@ namespace Hypertable {
 
     /** returns true if this table requires a qualifier index table */
     bool needs_qualifier_index_table() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       for (auto cf : m_schema->get_column_families()) {
         if (cf->get_deleted())
           continue;
@@ -207,27 +207,27 @@ namespace Hypertable {
 
     /** returns true if this table has an index */
     bool has_index_table() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return (m_index_table!=0);
     }
 
     /** returns true if this table has a qualifier index */
     bool has_qualifier_index_table() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return (m_qualifier_index_table != 0);
     }
 
     /** sets the index table. The index table is created by the Namespace,
      * because it's the only object with access to the TableCache  */
     void set_index_table(TablePtr idx) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(idx != 0 ? m_index_table == 0 : 1);
       m_index_table = idx;
     }
 
     /** sets the qualifier index table */
     void set_qualifier_index_table(TablePtr idx) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(idx != 0 ? m_qualifier_index_table == 0 : 1);
       m_qualifier_index_table = idx;
     }
@@ -254,7 +254,8 @@ namespace Hypertable {
     void initialize();
     void refresh_if_required();
 
-    Mutex                  m_mutex;
+    /// Mutex for serializing member access
+    std::mutex m_mutex;
     PropertiesPtr          m_props;
     Comm                  *m_comm;
     ConnectionManagerPtr   m_conn_manager;

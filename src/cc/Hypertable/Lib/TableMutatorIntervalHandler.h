@@ -23,14 +23,13 @@
  * is used as the timer handler for periodically flushing a shared mutator.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATOR_INTERVAL_HANDLER_H
-#define HYPERTABLE_TABLEMUTATOR_INTERVAL_HANDLER_H
+#ifndef Hypertable_Lib_TableMutatorIntervalHandler_h
+#define Hypertable_Lib_TableMutatorIntervalHandler_h
 
-#include "Common/Mutex.h"
+#include <AsyncComm/DispatchHandler.h>
 
-#include "AsyncComm/DispatchHandler.h"
-
-#include <boost/thread/condition.hpp>
+#include <condition_variable>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -94,19 +93,18 @@ namespace Hypertable {
      * until #complete becomes <i>true</i>.
      */
     void stop() {
-      ScopedLock lock(mutex);
+      std::unique_lock<std::mutex> lock(mutex);
       active = false;
-      while (!complete)
-	cond.wait(lock);
+      cond.wait(lock, [this](){ return complete; });
     }
 
   private:
 
     /// %Mutex for serializing access to members
-    Mutex mutex;
+    std::mutex mutex;
 
     /// Condition variable signalled when #complete is set to <i>true</i>
-    boost::condition cond;
+    std::condition_variable cond;
 
     /// Set to <i>false</i> to deactivate and prevent further timer interrupts
     bool active;
@@ -130,6 +128,6 @@ namespace Hypertable {
 
   /** @}*/
 
-} // namespace Hypertable
+}
 
-#endif /* HYPERTABLE_TABLEMUTATOR_INTERVAL_HANDLER_H */
+#endif /// Hypertable_Lib_TableMutatorIntervalHandler_h

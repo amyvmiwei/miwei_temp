@@ -50,7 +50,7 @@ extern "C" {
 // convenient local macros to record errors for debugging
 #define SAVE_ERR(_code_, _msg_) \
   do { \
-    ScopedLock lock(m_mutex); \
+    lock_guard<mutex> lock(m_mutex); \
     m_last_errors.push_back(HT_EXCEPTION(_code_, _msg_)); \
     while (m_last_errors.size() > m_max_error_queue_length) \
       m_last_errors.pop_front(); \
@@ -58,7 +58,7 @@ extern "C" {
 
 #define SAVE_ERR2(_code_, _ex_, _msg_) \
   do { \
-    ScopedLock lock(m_mutex); \
+    lock_guard<mutex> lock(m_mutex); \
     m_last_errors.push_back(HT_EXCEPTION2(_code_, _ex_, _msg_)); \
     while (m_last_errors.size() > m_max_error_queue_length) \
       m_last_errors.pop_front(); \
@@ -141,14 +141,14 @@ RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
 
 void RangeLocator::hyperspace_disconnected()
 {
-  ScopedLock lock(m_hyperspace_mutex);
+  lock_guard<mutex> lock(m_hyperspace_mutex);
   m_hyperspace_init = false;
   m_hyperspace_connected = false;
 }
 
 void RangeLocator::hyperspace_reconnected()
 {
-  ScopedLock lock(m_hyperspace_mutex);
+  lock_guard<mutex> lock(m_hyperspace_mutex);
   HT_ASSERT(!m_hyperspace_init);
   m_hyperspace_connected = true;
 }
@@ -293,7 +293,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     addr = m_root_range_info.addr;
   }
 
@@ -616,7 +616,7 @@ int RangeLocator::read_root_location(Timer &timer) {
   CommAddress old_addr;
 
   {
-    ScopedLock lock(m_hyperspace_mutex);
+    lock_guard<mutex> lock(m_hyperspace_mutex);
     if (m_hyperspace_init)
       m_hyperspace->attr_get(m_root_file_handle, "Location", value);
     else if (m_hyperspace_connected) {
@@ -628,7 +628,7 @@ int RangeLocator::read_root_location(Timer &timer) {
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     old_addr = m_root_range_info.addr;
     m_root_range_info.start_row  = "";
     m_root_range_info.end_row    = Key::END_ROOT_ROW;

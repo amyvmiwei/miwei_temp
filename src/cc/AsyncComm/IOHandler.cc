@@ -25,11 +25,16 @@
  * from which I/O handlers are derived.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "IOHandler.h"
+#include "Reactor.h"
+#include "ReactorRunner.h"
+
+#include <Common/Logger.h>
 
 #include <cstdio>
 #include <iostream>
-using namespace std;
 
 extern "C" {
 #include <errno.h>
@@ -41,13 +46,8 @@ extern "C" {
 #endif
 }
 
-#include "Common/Logger.h"
-
-#include "IOHandler.h"
-#include "Reactor.h"
-#include "ReactorRunner.h"
-
 using namespace Hypertable;
+using namespace std;
 
 #define HANDLE_POLL_INTERFACE_MODIFY \
   if (ReactorFactory::use_poll) \

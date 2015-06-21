@@ -19,15 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
-#define HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
-
-#include <set>
-
-#include "Common/Mutex.h"
+#ifndef Hyperspace_request_RequestHandlerRenewSession_h
+#define Hyperspace_request_RequestHandlerRenewSession_h
 
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
+
+#include <set>
 
 namespace Hyperspace {
   using namespace Hypertable;
@@ -56,4 +54,4 @@ namespace Hyperspace {
   };
 }
 
-#endif // HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
+#endif // Hyperspace_request_RequestHandlerRenewSession_h

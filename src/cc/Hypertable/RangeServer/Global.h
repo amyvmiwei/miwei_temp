@@ -26,7 +26,6 @@
 
 #include <boost/thread/thread.hpp>
 
-#include "Common/Mutex.h"
 #include "Common/Properties.h"
 #include "Common/Filesystem.h"
 #include "Common/TimeWindow.h"
@@ -52,13 +51,15 @@
 #include "MetaLogEntityRemoveOkLogs.h"
 #include "TableInfo.h"
 
+#include <mutex>
+
 namespace Hypertable {
 
   using namespace Lib;
 
   class Global {
   public:
-    static Mutex          mutex;
+    static std::mutex mutex;
     static Hyperspace::SessionPtr hyperspace;
     static Hypertable::FilesystemPtr dfs;
     static Hypertable::FilesystemPtr log_dfs;

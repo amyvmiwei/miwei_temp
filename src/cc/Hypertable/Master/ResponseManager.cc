@@ -29,7 +29,10 @@
 
 #include "ResponseManager.h"
 
+#include <chrono>
+
 using namespace Hypertable;
+using namespace std;
 
 void ResponseManager::operator()() {
   ResponseManagerContext::OperationExpirationTimeIndex &op_expiration_time_index = m_context->expirable_ops.get<1>();
@@ -47,7 +50,7 @@ void ResponseManager::operator()() {
     while (!shutdown) {
 
       {
-        ScopedLock lock(m_context->mutex);
+        unique_lock<mutex> lock(m_context->mutex);
 
         timed_wait = false;
         if (!op_expiration_time_index.empty()) {
@@ -62,8 +65,9 @@ void ResponseManager::operator()() {
         }
 
         if (timed_wait) {
-          boost::xtime xt = expire_time;
-          m_context->cond.timed_wait(lock, xt);
+          auto millis = chrono::milliseconds((expire_time.sec * 1000) + (expire_time.nsec / 1000000LL));
+          std::chrono::time_point<std::chrono::system_clock> xt(millis);
+          m_context->cond.wait_until(lock, xt);
         }
         else
           m_context->cond.wait(lock);
@@ -117,7 +121,7 @@ void ResponseManager::operator()() {
 
 
 void ResponseManager::add_delivery_info(int64_t operation_id, EventPtr &event) {
-  ScopedLock lock(m_context->mutex);
+  lock_guard<mutex> lock(m_context->mutex);
   ResponseManagerContext::OperationIdentifierIndex &operation_identifier_index = m_context->expirable_ops.get<2>();
   ResponseManagerContext::OperationIdentifierIndex::iterator iter;
   ResponseManagerContext::DeliveryRec delivery_rec;
@@ -147,7 +151,7 @@ void ResponseManager::add_delivery_info(int64_t operation_id, EventPtr &event) {
 
 
 void ResponseManager::add_operation(OperationPtr &operation) {
-  ScopedLock lock(m_context->mutex);
+  lock_guard<mutex> lock(m_context->mutex);
   ResponseManagerContext::DeliveryIdentifierIndex &delivery_identifier_index = m_context->delivery_list.get<2>();
   ResponseManagerContext::DeliveryIdentifierIndex::iterator iter;
 
@@ -173,7 +177,7 @@ void ResponseManager::add_operation(OperationPtr &operation) {
 
 
 void ResponseManager::shutdown() {
-  ScopedLock lock(m_context->mutex);
+  lock_guard<mutex> lock(m_context->mutex);
   m_context->shutdown = true;
   m_context->cond.notify_all();
 }

@@ -19,12 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONTIMEDBARRIER_H
-#define HYPERTABLE_OPERATIONTIMEDBARRIER_H
-
-#include <boost/thread/condition.hpp>
-
-#include "Common/Time.h"
+#ifndef Hypertable_Master_OperationTimedBarrier_h
+#define Hypertable_Master_OperationTimedBarrier_h
 
 #include "OperationEphemeral.h"
 
@@ -48,13 +44,13 @@ namespace Hypertable {
     void shutdown();
 
   private:
-    boost::condition m_cond;
-    HiResTime m_expire_time;
+    std::condition_variable m_cond;
+    std::chrono::time_point<std::chrono::steady_clock> m_expire_time;
     String m_block_dependency;
     String m_wakeup_dependency;
     bool m_shutdown;
   };
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONTIMEDBARRIER_H
+#endif // Hypertable_Master_OperationTimedBarrier_h

@@ -35,7 +35,7 @@
 #include "HandlerMap.h"
 #include "RawSocketHandler.h"
 
-#include <Common/Mutex.h>
+#include <mutex>
 
 /** %Hypertable definitions
  */
@@ -68,7 +68,7 @@ namespace Hypertable {
      * system-wide I/O reactor threads.
      */
     static Comm *instance() {
-      ScopedLock lock(ms_mutex);
+      std::lock_guard<std::mutex> lock(ms_mutex);
 
       if (!ms_instance)
         ms_instance = new Comm();
@@ -502,7 +502,7 @@ namespace Hypertable {
     static atomic_t ms_next_request_id;
 
     /// %Mutex for serializing access to #ms_instance
-    static Mutex ms_mutex;
+    static std::mutex ms_mutex;
     
     /// Pointer to IOHandler map    
     HandlerMapPtr m_handler_map;
@@ -519,6 +519,6 @@ namespace Hypertable {
 
   /** @}*/
 
-} // namespace Hypertable
+}
 
 #endif // AsyncComm_Comm_h

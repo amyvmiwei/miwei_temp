@@ -28,13 +28,11 @@
 #include <AsyncComm/DispatchHandler.h>
 #include <AsyncComm/Comm.h>
 
-#include <Common/Mutex.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/condition.hpp>
 #include <boost/thread/xtime.hpp>
 
+#include <condition_variable>
 #include <map>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -46,8 +44,7 @@ namespace Hypertable {
     ReplayDispatchHandler(Comm *comm, const String &location, 
                           int plan_generation, int32_t timeout_ms) :
       m_rsclient(comm, timeout_ms), m_recover_location(location),
-      m_error(Error::OK), m_plan_generation(plan_generation),
-      m_outstanding(0) { }
+      m_plan_generation(plan_generation) { }
 
     virtual void handle(EventPtr &event);
 
@@ -57,14 +54,14 @@ namespace Hypertable {
     void wait_for_completion();
 
   private:
-    Mutex         m_mutex;
-    boost::condition m_cond;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
     RangeServer::Client m_rsclient;
     String m_recover_location;
     String m_error_msg;
-    int32_t m_error;
-    int m_plan_generation;
-    size_t  m_outstanding;
+    int32_t m_error {};
+    int m_plan_generation {};
+    size_t m_outstanding {};
   };
 }
 

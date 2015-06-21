@@ -65,26 +65,22 @@ TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm,
         RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
         ResultCallback *cb,  uint32_t flags, bool explicit_block_only)
   : m_comm(comm), m_app_queue(app_queue), m_table(table), 
-    m_range_locator(range_locator), m_memory_used(0), m_resends(0), 
+    m_range_locator(range_locator),
     m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags), m_mutex(m_buffer_mutex),
-    m_cond(m_buffer_cond), m_explicit_block_only(explicit_block_only),
-    m_next_buffer_id(0), m_cancelled(false), m_mutated(false), m_imc(0), 
-    m_use_index(false), m_mutator(0) {
+    m_cond(m_buffer_cond), m_explicit_block_only(explicit_block_only) {
   initialize(props);
 }
 
 
-TableMutatorAsync::TableMutatorAsync(Mutex &mutex, boost::condition &cond,
+TableMutatorAsync::TableMutatorAsync(std::mutex &mutex, std::condition_variable &cond,
         PropertiesPtr &props, Comm *comm, ApplicationQueueInterfacePtr &app_queue, 
         Table *table, RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
         ResultCallback *cb, uint32_t flags, bool explicit_block_only,
         TableMutator *mutator)
   : m_comm(comm), m_app_queue(app_queue), m_table(table), 
-    m_range_locator(range_locator), m_memory_used(0), m_resends(0), 
+    m_range_locator(range_locator),
     m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags), m_mutex(mutex), 
-    m_cond(cond), m_explicit_block_only(explicit_block_only), 
-    m_next_buffer_id(0), m_cancelled(false), m_mutated(false), m_imc(0),
-    m_use_index(false), m_mutator(mutator) {
+    m_cond(cond), m_mutator(mutator), m_explicit_block_only(explicit_block_only) {
   initialize(props);
 }
 
@@ -157,9 +153,8 @@ void TableMutatorAsync::initialize_indices(PropertiesPtr &props)
 }
 
 void TableMutatorAsync::wait_for_completion() {
-  ScopedLock lock(m_mutex);
-  while (m_outstanding_buffers.size() > 0)
-    m_cond.wait(lock);
+  unique_lock<mutex> lock(m_mutex);
+  m_cond.wait(lock, [this](){ return m_outstanding_buffers.empty(); });
 }
 
 void
@@ -197,7 +192,7 @@ void
 TableMutatorAsync::set(const KeySpec &key, const void *value, 
         uint32_t value_len) {
   {
-    ScopedLock lock(m_member_mutex);
+    lock_guard<mutex> lock(m_member_mutex);
     ColumnFamilySpec *cf = 0;
 
     try {
@@ -232,7 +227,7 @@ TableMutatorAsync::set(const KeySpec &key, const void *value,
         __LINE__));
       throw;
     }
-  } // ScopedLock
+  }
 
   if (m_imc && m_imc->needs_flush())
     flush();
@@ -299,7 +294,7 @@ void
 TableMutatorAsync::set_cells(Cells::const_iterator it, 
         Cells::const_iterator end) {
   {
-    ScopedLock lock(m_member_mutex);
+    lock_guard<mutex> lock(m_member_mutex);
     ColumnFamilySpec *cf = 0;
 
     try {
@@ -346,7 +341,7 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
         __LINE__));
       throw;
     }
-  } // ScopedLock
+  }
 
   if (m_imc && m_imc->needs_flush())
     flush();
@@ -356,7 +351,7 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
   Key full_key;
 
   {
-    ScopedLock lock(m_member_mutex);
+    lock_guard<mutex> lock(m_member_mutex);
     ColumnFamilySpec *cf = 0;
 
     try {
@@ -396,7 +391,7 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
         __LINE__));
       throw;
     }
-  } // ScopedLock
+  }
 
   if (m_imc && m_imc->needs_flush())
     flush();
@@ -452,17 +447,17 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
 }
 
 void TableMutatorAsync::cancel() {
-  ScopedLock lock(m_member_mutex);
+  lock_guard<mutex> lock(m_member_mutex);
   m_cancelled = true;
 }
 
 bool TableMutatorAsync::is_cancelled() {
-  ScopedLock lock(m_member_mutex);
+  lock_guard<mutex> lock(m_member_mutex);
   return m_cancelled;
 }
 
 bool TableMutatorAsync::needs_flush() {
-  ScopedLock lock(m_member_mutex);
+  lock_guard<mutex> lock(m_member_mutex);
   if (m_current_buffer->full() || m_memory_used > m_max_memory)
     return true;
   if (m_use_index)
@@ -515,8 +510,8 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
 
   try {
     {
-      ScopedLock lock(m_mutex);
-      ScopedLock member_lock(m_member_mutex);
+      lock_guard<mutex> lock(m_mutex);
+      lock_guard<mutex> member_lock(m_member_mutex);
       if (m_current_buffer->memory_used() > 0) {
         m_current_buffer->send(flags);
         uint32_t buffer_id = ++m_next_buffer_id;
@@ -539,7 +534,7 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
 }
 
 void TableMutatorAsync::get_unsynced_rangeservers(std::vector<CommAddress> &unsynced) {
-  ScopedLock lock(m_member_mutex);
+  lock_guard<mutex> lock(m_member_mutex);
   unsynced.clear();
   for (const auto &comm_addr : m_unsynced_rangeservers)
     unsynced.push_back(comm_addr);
@@ -549,7 +544,7 @@ void TableMutatorAsync::do_sync() {
   TableIdentifierManaged table_identifier;
 
   {
-    ScopedLock lock(m_member_mutex);
+    lock_guard<mutex> lock(m_member_mutex);
     if (m_unsynced_rangeservers.empty())
       return;
     table_identifier = m_table_identifier;
@@ -564,7 +559,7 @@ void TableMutatorAsync::do_sync() {
             m_timeout_ms);
 
     {
-      ScopedLock lock(m_member_mutex);
+      lock_guard<mutex> lock(m_member_mutex);
       for (auto addr : m_unsynced_rangeservers)
         sync_handler.add(addr);
     }
@@ -585,7 +580,7 @@ void TableMutatorAsync::do_sync() {
                       Error::get_text(errors[i].error));
         }
         if (do_refresh) {
-          ScopedLock lock(m_member_mutex);
+          lock_guard<mutex> lock(m_member_mutex);
           m_table->refresh(m_table_identifier, m_schema);
           m_current_buffer->refresh_schema(m_table_identifier, m_schema);
         }
@@ -622,7 +617,7 @@ void TableMutatorAsync::do_sync() {
 }
 
 TableMutatorAsyncScatterBufferPtr TableMutatorAsync::get_outstanding_buffer(size_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   TableMutatorAsyncScatterBufferPtr buffer;
   ScatterBufferAsyncMap::iterator it = m_outstanding_buffers.find(id);
   if (it != m_outstanding_buffers.end())
@@ -654,13 +649,13 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
   ScatterBufferAsyncMap::iterator it;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     it = m_outstanding_buffers.find(id);
     HT_ASSERT(it != m_outstanding_buffers.end());
 
     buffer = it->second;
     {
-      ScopedLock lock(m_member_mutex);
+      lock_guard<mutex> lock(m_member_mutex);
       m_failed_mutations.clear();
       update_unsynced_rangeservers(buffer->get_unsynced_rangeservers());
       cancelled = m_cancelled;
@@ -675,7 +670,7 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
     if (error != Error::OK) {
       if (error == Error::RANGESERVER_GENERATION_MISMATCH ||
           (!mutated && error == Error::TABLE_NOT_FOUND)) {
-        ScopedLock lock(m_member_mutex);
+        lock_guard<mutex> lock(m_member_mutex);
         // retry possible
         m_table->refresh(m_table_identifier, m_schema);
         buffer->refresh_schema(m_table_identifier, m_schema);
@@ -686,7 +681,7 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
           buffer->set_retries_to_fail(error);
         // send error to callback
         {
-          ScopedLock lock(m_member_mutex);
+          lock_guard<mutex> lock(m_member_mutex);
           buffer->get_failed_mutations(m_failed_mutations);
           if (m_cb != 0)
             m_cb->update_error(this, error, m_failed_mutations);
@@ -697,11 +692,11 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
     }
 
     next_id = ++m_next_buffer_id;
-  } // ScopedLock
+  }
 
   if (retry) {
     // create & send redo buffer
-    ScopedLock lock(m_member_mutex);
+    lock_guard<mutex> lock(m_member_mutex);
     try {
       redo = buffer->create_redo_buffer(next_id);
     }
@@ -711,11 +706,11 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
     }
   }
 
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (retry) {
     if (!redo) {
       {
-        ScopedLock lock(m_member_mutex);
+        lock_guard<mutex> lock(m_member_mutex);
         buffer->get_failed_mutations(m_failed_mutations);
         // send error to callback
         if (m_cb != 0)
@@ -734,7 +729,7 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
   else {
     // everything went well
     {
-      ScopedLock lock(m_member_mutex);
+      lock_guard<mutex> lock(m_member_mutex);
       m_mutated = true;
     }
     if (m_cb != 0)

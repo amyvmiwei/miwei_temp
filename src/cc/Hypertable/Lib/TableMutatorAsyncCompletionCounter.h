@@ -23,7 +23,8 @@
 #define Hypertable_Lib_TableMutatorAsyncCompletionCounter_h
 
 #include <Common/Time.h>
-#include <Common/Mutex.h>
+
+#include <mutex>
 
 namespace Hypertable {
 
@@ -37,18 +38,17 @@ namespace Hypertable {
    */
   class TableMutatorAsyncCompletionCounter {
   public:
-    TableMutatorAsyncCompletionCounter()
-      : m_outstanding(0), m_done(false), m_retries(false), m_errors(false) { }
+    TableMutatorAsyncCompletionCounter() {}
 
     void set(size_t count) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_outstanding = count;
       m_done = (m_outstanding == 0) ? true : false;
       m_errors = m_retries = false;
     }
 
     bool decrement() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(m_outstanding > 0);
       m_outstanding--;
       if (m_outstanding == 0) {
@@ -56,22 +56,22 @@ namespace Hypertable {
       }
       return m_done;
     }
-    void set_retries() { ScopedLock lock(m_mutex); m_retries = true; }
+    void set_retries() { std::lock_guard<std::mutex> lock(m_mutex); m_retries = true; }
 
-    void set_errors() { ScopedLock lock(m_mutex); m_errors = true; }
+    void set_errors() { std::lock_guard<std::mutex> lock(m_mutex); m_errors = true; }
 
-    bool has_retries() { ScopedLock lock(m_mutex); return m_retries; }
+    bool has_retries() { std::lock_guard<std::mutex> lock(m_mutex); return m_retries; }
 
-    bool has_errors() { ScopedLock lock(m_mutex); return m_errors; }
+    bool has_errors() { std::lock_guard<std::mutex> lock(m_mutex); return m_errors; }
 
-    void clear_errors() { ScopedLock lock(m_mutex); m_errors = false; }
+    void clear_errors() { std::lock_guard<std::mutex> lock(m_mutex); m_errors = false; }
 
   private:
-    Mutex m_mutex;
-    size_t m_outstanding;
-    bool m_done;
-    bool m_retries;
-    bool m_errors;
+    std::mutex m_mutex;
+    size_t m_outstanding {};
+    bool m_done {};
+    bool m_retries {};
+    bool m_errors {};
   };
 
 }

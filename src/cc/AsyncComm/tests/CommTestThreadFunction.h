@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -21,7 +21,7 @@
 
 #define MAX_MESSAGES 50000
 
-#include "Common/InetAddr.h"
+#include <Common/InetAddr.h>
 
 /**
  *  Forward declarations

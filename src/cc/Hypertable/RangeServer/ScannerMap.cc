@@ -37,7 +37,7 @@ atomic<int> ScannerMap::ms_next_id {};
  */
 int32_t ScannerMap::put(MergeScannerRangePtr &scanner, RangePtr &range,
                          const TableIdentifier &table, ProfileDataScanner &profile_data) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   ScanInfo scaninfo;
   scaninfo.scanner = scanner;
   scaninfo.range = range;
@@ -56,7 +56,7 @@ int32_t ScannerMap::put(MergeScannerRangePtr &scanner, RangePtr &range,
 bool
 ScannerMap::get(int32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
                 TableIdentifierManaged &table,ProfileDataScanner *profile_data){
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   auto iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
     return false;
@@ -73,13 +73,13 @@ ScannerMap::get(int32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
 /**
  */
 bool ScannerMap::remove(int32_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return (m_scanner_map.erase(id) == 0) ? false : true;
 }
 
 
 void ScannerMap::purge_expired(int32_t max_idle_millis) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int64_t now_millis = get_timestamp_millis();
   auto iter = m_scanner_map.begin();
   while (iter != m_scanner_map.end()) {
@@ -100,7 +100,7 @@ void ScannerMap::purge_expired(int32_t max_idle_millis) {
 
 
 void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count_map) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   CstrToInt32Map::iterator tsc_iter;
 
   *totalp = m_scanner_map.size();
@@ -113,7 +113,7 @@ void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count
 }
 
 void ScannerMap::update_profile_data(int32_t id, ProfileDataScanner &profile_data) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   auto iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
     HT_WARNF("Unable to locate scanner ID %u in scanner map", (unsigned)id);

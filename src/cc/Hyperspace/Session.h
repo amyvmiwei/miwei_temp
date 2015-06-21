@@ -41,10 +41,9 @@
 #include <Common/String.h>
 #include <Common/Timer.h>
 
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -670,7 +669,7 @@ namespace Hyperspace {
      HsCommandInterpreterPtr create_hs_interpreter();
 
     void advance_expire_time(boost::xtime now) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_expire_time = now;
       xtime_add_millis(m_expire_time, m_lease_interval);
     }
@@ -707,8 +706,8 @@ namespace Hyperspace {
     void normalize_name(const std::string &name, std::string &normal);
     uint64_t open(ClientHandleStatePtr &, CommBufPtr &, Timer *timer);
 
-    Mutex                     m_mutex;
-    boost::condition          m_cond;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
     Comm                      *m_comm;
     PropertiesPtr             m_cfg;
     bool                      m_verbose;
@@ -724,7 +723,7 @@ namespace Hyperspace {
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
     CallbackMap               m_callbacks;
     uint64_t                  m_last_callback_id;
-    Mutex                     m_callback_mutex;
+    std::mutex m_callback_mutex;
     vector<String>            m_hyperspace_replicas;
     String                    m_hyperspace_master;
 

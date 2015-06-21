@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,26 +19,21 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "MaintenanceTaskSplit.h"
 
 using namespace Hypertable;
+using namespace std;
 
-
-/**
- *
- */
-MaintenanceTaskSplit::MaintenanceTaskSplit(uint32_t level, int priority, boost::xtime &stime, RangePtr &range)
+MaintenanceTaskSplit::MaintenanceTaskSplit(uint32_t level, int priority,
+                                           chrono::time_point<chrono::steady_clock> &stime,
+                                           RangePtr &range)
   : MaintenanceTask(level, priority, stime, range, String("SPLIT ") + range->get_name()) {
   set_retry_delay(5000);
   set_retry(true);
 }
 
-
-
-/**
- *
- */
 void MaintenanceTaskSplit::execute() {
   m_range->split();
 }

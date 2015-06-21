@@ -60,9 +60,6 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-/**
- *
- */
 Reactor::Reactor() : m_interrupt_in_progress(false) {
   struct sockaddr_in addr;
 
@@ -125,7 +122,7 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
              (int)ntohs(addr.sin_port), strerror(errno));
 
   if (ReactorFactory::use_poll) {
-    ScopedLock lock(m_polldata_mutex);
+    lock_guard<mutex> lock(m_polldata_mutex);
     if ((size_t)m_interrupt_sd >= m_polldata.size()) {
       size_t i = m_polldata.size();
       m_polldata.resize(m_interrupt_sd+1);
@@ -178,7 +175,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
 
   while(true) {
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       IOHandler *handler;
       DispatchHandler *dh;
 
@@ -230,7 +227,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
     }
 
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
 
       if (!m_timer_heap.empty()) {
         timer = m_timer_heap.top();
@@ -387,7 +384,7 @@ int Reactor::poll_loop_continue() {
 
 
 int Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
-  ScopedLock lock(m_polldata_mutex);
+  lock_guard<mutex> lock(m_polldata_mutex);
   int error;
 
   if (m_polldata.size() <= (size_t)sd) {
@@ -404,7 +401,7 @@ int Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
   m_polldata[sd].handler = handler;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     error = poll_loop_interrupt();
   }
   if (error != Error::OK) {
@@ -417,7 +414,7 @@ int Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
 
 int Reactor::remove_poll_interest(int sd) {
   {
-    ScopedLock lock(m_polldata_mutex);
+    lock_guard<mutex> lock(m_polldata_mutex);
 
     HT_ASSERT(m_polldata.size() > (size_t)sd);
     if ((size_t)sd == m_polldata.size()-1) {
@@ -432,24 +429,24 @@ int Reactor::remove_poll_interest(int sd) {
       m_polldata[sd].handler = 0;
     }
   }
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return poll_loop_interrupt();
 }
 
 int Reactor::modify_poll_interest(int sd, short events) {
   {
-    ScopedLock lock(m_polldata_mutex);
+    lock_guard<mutex> lock(m_polldata_mutex);
     HT_ASSERT(m_polldata.size() > (size_t)sd);
     m_polldata[sd].pollfd.events = events;
   }
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return poll_loop_interrupt();
 }
 
 
 void Reactor::fetch_poll_array(std::vector<struct pollfd> &fdarray,
 			       std::vector<IOHandler *> &handlers) {
-  ScopedLock lock(m_polldata_mutex);
+  lock_guard<mutex> lock(m_polldata_mutex);
 
   fdarray.clear();
   handlers.clear();

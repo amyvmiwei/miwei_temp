@@ -30,13 +30,14 @@
 
 #include "MetaLogEntityHeader.h"
 
-#include <Common/Mutex.h>
+#include <Common/Logger.h>
 #include <Common/Serializable.h>
 
 #include <boost/algorithm/string.hpp>
 
 #include <iostream>
 #include <memory>
+#include <mutex>
 
 extern "C" {
 #include <time.h>
@@ -162,7 +163,7 @@ namespace Hypertable {
       void encode_entry(uint8_t **bufp);
 
       /// %Mutex for serializing access to members
-      mutable Mutex m_mutex;
+      mutable std::mutex m_mutex;
 
       /// %Entity header
       EntityHeader header;

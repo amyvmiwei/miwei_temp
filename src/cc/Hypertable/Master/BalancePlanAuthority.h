@@ -204,13 +204,13 @@ namespace Hypertable {
      * incremented each time a new plan is created for a failed range server.
      * @return Current generation number.
      */
-    int get_generation() { ScopedLock lock(m_mutex); return m_generation; }
+    int get_generation() { std::lock_guard<std::mutex> lock(m_mutex); return m_generation; }
 
     /** Sets the generation number (TESTING ONLY).
      * @param new_generation New generation number
      */
     void set_generation(int new_generation) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_generation = new_generation;
     }
 

@@ -19,16 +19,17 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOADMETRICSRANGE_H
-#define HYPERTABLE_LOADMETRICSRANGE_H
-
-#include "Common/DynamicBuffer.h"
-#include "Common/Mutex.h"
-#include "Common/String.h"
-
-#include "Hypertable/Lib/TableMutator.h"
+#ifndef Hypertable_RangeServer_LoadMetricsRange_h
+#define Hypertable_RangeServer_LoadMetricsRange_h
 
 #include "LoadFactors.h"
+
+#include <Hypertable/Lib/TableMutator.h>
+
+#include <Common/DynamicBuffer.h>
+#include <Common/String.h>
+
+#include <mutex>
 
 namespace Hypertable {
 
@@ -37,7 +38,7 @@ namespace Hypertable {
     LoadMetricsRange(const String &table_id, const String &start_row, const String &end_row);
 
     void change_rows(const String &start_row, const String &end_row) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_new_start_row = start_row;
       m_new_end_row = end_row;
       m_new_rows = true;
@@ -52,7 +53,7 @@ namespace Hypertable {
 
     void initialize(const String &table_id, const String &start_row, const String &end_row);
 
-    Mutex m_mutex;
+    std::mutex m_mutex;
     DynamicBuffer m_buffer;
     const char *m_table_id;
     const char *m_start_row;
@@ -66,4 +67,4 @@ namespace Hypertable {
 }
 
 
-#endif // HYPERTABLE_LOADMETRICSRANGE_H
+#endif // Hypertable_RangeServer_LoadMetricsRange_h

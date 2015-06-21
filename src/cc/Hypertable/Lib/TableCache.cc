@@ -44,7 +44,7 @@ TableCache::~TableCache() {
 }
 
 TablePtr TableCache::get(const string &table_name, int32_t flags) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return get_unlocked(table_name, flags);
 }
 
@@ -70,7 +70,7 @@ TablePtr TableCache::get_unlocked(const string &table_name, int32_t flags) {
 
 bool TableCache::get_schema_str(const string &table_name, string &schema, bool with_ids)
 {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   TableMap::const_iterator it = m_table_map.find(table_name);
 
   if (it == m_table_map.end())
@@ -80,7 +80,7 @@ bool TableCache::get_schema_str(const string &table_name, string &schema, bool w
 }
 
 bool TableCache::get_schema(const string &table_name, SchemaPtr &output_schema) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   TableMap::const_iterator it = m_table_map.find(table_name);
 
   if (it == m_table_map.end())
@@ -90,7 +90,7 @@ bool TableCache::get_schema(const string &table_name, SchemaPtr &output_schema) 
 }
 
 bool TableCache::remove(const string &table_name) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool found = false;
   TableMap::iterator it = m_table_map.find(table_name);
 
@@ -102,7 +102,7 @@ bool TableCache::remove(const string &table_name) {
 }
 
 void TableCache::reconnected() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for( TableMap::iterator it = m_table_map.begin(); it != m_table_map.end(); ++it)
     (*it).second->invalidate();
 }

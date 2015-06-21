@@ -28,10 +28,10 @@
 
 #include <Hyperspace/Session.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Hyperspace {
@@ -109,7 +109,7 @@ namespace Hypertable {
     bool do_mapping(const std::string &input, bool id_in, std::string &output, bool *is_namespacep);
     static void get_namespace_listing(const std::vector<Hyperspace::DirEntryAttr> &dir_listing, std::vector<NamespaceListing> &listing);
 
-    Mutex m_mutex;
+    std::mutex m_mutex;
     Hyperspace::SessionPtr m_hyperspace;
     std::string m_toplevel_dir;
     std::string m_names_dir;

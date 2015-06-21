@@ -27,18 +27,20 @@
 
 #include <Common/Time.h>
 
+#include <chrono>
+
 using namespace Hypertable;
 using namespace std;
 
 bool Future::get(ResultPtr &result) {
-  ScopedLock lock(m_outstanding_mutex);
+  unique_lock<mutex> lock(m_outstanding_mutex);
   size_t mem_result=0;
 
   while (true) {
+
     // wait till we have results to serve
-    while(_is_empty() && !_is_done() && !_is_cancelled()) {
-      m_outstanding_cond.wait(lock);
-    }
+    m_outstanding_cond.wait(lock, [this](){
+        return !_is_empty() || _is_done() || _is_cancelled(); });
 
     if (_is_cancelled())
       return false;
@@ -77,20 +79,18 @@ bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
     return get(result);
 
   {
-    ScopedLock lock(m_outstanding_mutex);
+    unique_lock<mutex> lock(m_outstanding_mutex);
 
     timed_out = false;
 
-
     size_t mem_result=0;
-    boost::xtime wait_time;
-    boost::xtime_get(&wait_time, boost::TIME_UTC_);
-    xtime_add_millis(wait_time, timeout_ms);
+
+    auto wait_time = chrono::system_clock::now() + chrono::milliseconds(timeout_ms);
 
     while (true) {
       // wait till we have results to serve
       while(_is_empty() && !_is_done() && !_is_cancelled()) {
-	timed_out = m_outstanding_cond.timed_wait(lock, wait_time) == 0;
+        timed_out = m_outstanding_cond.wait_until(lock, wait_time) == std::cv_status::timeout;
 	if (timed_out)
 	  return _is_done();
       }
@@ -134,11 +134,12 @@ void Future::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
 }
 
 void Future::enqueue(ResultPtr &result) {
-  ScopedLock lock(m_outstanding_mutex);
+  unique_lock<mutex> lock(m_outstanding_mutex);
   size_t mem_result = result->memory_used();
-  while (!has_remaining_capacity() && !_is_cancelled()) {
-    m_outstanding_cond.wait(lock);
-  }
+
+  m_outstanding_cond.wait(lock, [this](){
+      return has_remaining_capacity() || _is_cancelled(); });
+
   if (!_is_cancelled()) {
     m_queue.push_back(result);
     m_memory_used += mem_result;
@@ -163,7 +164,7 @@ void Future::update_error(TableMutatorAsync *mutator, int error, FailedMutations
 }
 
 void Future::cancel() {
-  ScopedLock lock(m_outstanding_mutex);
+  lock_guard<mutex> lock(m_outstanding_mutex);
   m_cancelled = true;
   ScannerMap::iterator s_it = m_scanner_map.begin();
   while (s_it != m_scanner_map.end()) {
@@ -182,7 +183,7 @@ void Future::cancel() {
 }
 
 void Future::register_mutator(TableMutatorAsync *mutator) {
-  ScopedLock lock(m_outstanding_mutex);
+  lock_guard<mutex> lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) mutator;
   MutatorMap::iterator it = m_mutator_map.find(addr);
   if (m_cancelled)
@@ -194,14 +195,14 @@ void Future::register_mutator(TableMutatorAsync *mutator) {
 }
 
 void Future::deregister_mutator(TableMutatorAsync *mutator) {
-  ScopedLock lock(m_outstanding_mutex);
+  lock_guard<mutex> lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) mutator;
   MutatorMap::iterator it = m_mutator_map.find(addr);
   HT_ASSERT(it != m_mutator_map.end());
   m_mutator_map.erase(it);
 }
 void Future::register_scanner(TableScannerAsync *scanner) {
-  ScopedLock lock(m_outstanding_mutex);
+  lock_guard<mutex> lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) scanner;
   ScannerMap::iterator it = m_scanner_map.find(addr);
   if (m_cancelled)
@@ -213,7 +214,7 @@ void Future::register_scanner(TableScannerAsync *scanner) {
 }
 
 void Future::deregister_scanner(TableScannerAsync *scanner) {
-  ScopedLock lock(m_outstanding_mutex);
+  lock_guard<mutex> lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) scanner;
   ScannerMap::iterator it = m_scanner_map.find(addr);
   HT_ASSERT(it != m_scanner_map.end());

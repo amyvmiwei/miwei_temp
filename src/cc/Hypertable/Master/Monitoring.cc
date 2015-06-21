@@ -77,7 +77,7 @@ void Monitoring::create_dir(const String &dir) {
 }
 
 void Monitoring::add_server(const String &location, const StatsSystem &system_info) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   RangeServerMap::iterator iter = m_server_map.find(location);
 
@@ -93,7 +93,7 @@ void Monitoring::add_server(const String &location, const StatsSystem &system_in
 
 
 void Monitoring::drop_server(const String &location) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   RangeServerMap::iterator iter = m_server_map.find(location);
   if (iter != m_server_map.end())
@@ -116,7 +116,7 @@ namespace {
 }
 
 void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   struct rangeserver_rrd_data rrd_data;
   RangeServerMap::iterator iter;
   double numerator, denominator;

@@ -62,12 +62,12 @@ NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const string &top
 }
 
 bool NameIdMapper::name_to_id(const string &name, string &id, bool *is_namespacep) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return do_mapping(name, false, id, is_namespacep);
 }
 
 bool NameIdMapper::id_to_name(const string &id, string &name, bool *is_namespacep) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return do_mapping(id, true, name, is_namespacep);
 }
 
@@ -144,7 +144,7 @@ void NameIdMapper::add_entry(const string &names_parent, const string &names_ent
 }
 
 void NameIdMapper::add_mapping(const string &name, string &id, int flags, bool ignore_exists) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
   boost::char_separator<char> sep("/");
   std::vector<String> name_components;
@@ -210,7 +210,7 @@ void NameIdMapper::add_mapping(const string &name, string &id, int flags, bool i
 }
 
 void NameIdMapper::rename(const string &curr_name, const string &next_name) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   string id;
   int oflags = OPEN_FLAG_WRITE|OPEN_FLAG_EXCL|OPEN_FLAG_READ;
   string old_name = curr_name;
@@ -252,7 +252,7 @@ void NameIdMapper::rename(const string &curr_name, const string &next_name) {
 }
 
 void NameIdMapper::drop_mapping(const string &name) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   string id;
   string table_name = name;
 

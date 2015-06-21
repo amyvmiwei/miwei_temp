@@ -34,12 +34,14 @@
 #include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
-#include <Common/Mutex.h>
 #include <Common/StringExt.h>
 
 #include <algorithm>
+#include <chrono>
+#include <condition_variable>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 
@@ -158,7 +160,7 @@ namespace Hypertable {
     /// Returns a pointer to the schema object.
     /// @return Smart pointer to the schema object
     SchemaPtr get_schema() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_schema;
     }
 
@@ -166,14 +168,14 @@ namespace Hypertable {
     /// @return <i>true</i> if maintenance has been disabled, <i>false</i>
     /// otherwise
     bool maintenance_disabled() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_maintenance_disabled;
     }
 
     /// Sets the maintenance disabled flag
     /// @param val Value for maintenance disabled flag
     void set_maintenance_disabled(bool val) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_maintenance_disabled = val;
     }
 
@@ -218,7 +220,7 @@ namespace Hypertable {
     /// range is not in the RangeState::STEADY state or
     /// Error::RANGESERVER_RANGE_ALREADY_LOADED if it is
     void stage_range(const RangeSpec &range_spec,
-                     boost::xtime deadline);
+                     std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     /// Unstages a previously staged range.
     /// This function removes the range specified by <code>range_spec</code>
@@ -284,10 +286,10 @@ namespace Hypertable {
   private:
 
     /// %Mutex for serializing member access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Condition variable signalled on #m_staged_set change
-    boost::condition m_cond;
+    std::condition_variable m_cond;
 
     /// %Table identifier
     TableIdentifierManaged m_identifier;

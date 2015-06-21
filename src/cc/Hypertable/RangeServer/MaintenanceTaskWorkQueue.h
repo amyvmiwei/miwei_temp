@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKWORKQUEUE_H
-#define HYPERTABLE_MAINTENANCETASKWORKQUEUE_H
+#ifndef Hypertable_RangeServer_MaintenanceTaskWorkQueue_h
+#define Hypertable_RangeServer_MaintenanceTaskWorkQueue_h
 
 #include "MaintenanceTask.h"
 #include "MetaLogEntityTask.h"
@@ -40,4 +40,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKWORKQUEUE_H
+#endif // Hypertable_RangeServer_MaintenanceTaskWorkQueue_h

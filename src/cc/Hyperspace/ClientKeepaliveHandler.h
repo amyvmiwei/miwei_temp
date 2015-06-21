@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
-#define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
+#ifndef Hyperspace_ClientKeepaliveHandler_h
+#define Hyperspace_ClientKeepaliveHandler_h
 
 #include <Hyperspace/ClientConnectionHandler.h>
 #include <Hyperspace/ClientHandleState.h>
@@ -32,10 +32,11 @@
 #include <Common/StringExt.h>
 #include <Common/Properties.h>
 
-#include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
 #include <cassert>
+#include <condition_variable>
+#include <mutex>
 #include <set>
 #include <unordered_map>
 #include <vector>
@@ -57,7 +58,7 @@ namespace Hyperspace {
     virtual void handle(Hypertable::EventPtr &event);
 
     void register_handle(ClientHandleStatePtr &handle_state) {
-      ScopedRecLock lock(m_mutex);
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
 #ifndef NDEBUG
       HandleMap::iterator iter = m_handle_map.find(handle_state->handle);
       assert(iter == m_handle_map.end());
@@ -66,12 +67,12 @@ namespace Hyperspace {
     }
 
     void unregister_handle(uint64_t handle) {
-      ScopedRecLock lock(m_mutex);
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       m_handle_map.erase(handle);
     }
 
     bool get_handle_state(uint64_t handle, ClientHandleStatePtr &handle_state) {
-      ScopedRecLock lock(m_mutex);
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       HandleMap::iterator iter = m_handle_map.find(handle);
       if (iter == m_handle_map.end())
         return false;
@@ -89,12 +90,12 @@ namespace Hyperspace {
 
     void destroy();
 
-    RecMutex           m_mutex;
+    std::recursive_mutex m_mutex;
     boost::xtime       m_last_keep_alive_send_time;
     boost::xtime       m_jeopardy_time;
     bool m_dead;
     bool m_destroying;
-    boost::condition m_cond_destroyed;
+    std::condition_variable_any m_cond_destroyed;
     Comm *m_comm;
     uint32_t m_lease_interval;
     uint32_t m_keep_alive_interval;
@@ -120,5 +121,5 @@ namespace Hyperspace {
 
 } // namespace Hypertable
 
-#endif // HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
+#endif // Hyperspace_ClientKeepaliveHandler_h
 

@@ -130,7 +130,7 @@ IndexUpdaterPtr IndexUpdaterFactory::create(const String &table_id,
 
   HT_ASSERT(has_index || has_qualifier_index);
 
-  ScopedLock lock(ms_mutex);
+  lock_guard<mutex> lock(ms_mutex);
 
   // check if we've cached Table pointers for the indices
   if (has_index)
@@ -185,7 +185,7 @@ IndexUpdaterPtr IndexUpdaterFactory::create(const String &table_id,
 
 void IndexUpdaterFactory::close()
 {
-  ScopedLock lock(ms_mutex);
+  lock_guard<mutex> lock(ms_mutex);
 
   ms_namemap = 0;
 
@@ -194,7 +194,7 @@ void IndexUpdaterFactory::close()
 }
 
 void IndexUpdaterFactory::clear_cache() {
-  ScopedLock lock(ms_mutex);
+  lock_guard<mutex> lock(ms_mutex);
   ms_index_cache.clear();
   ms_qualifier_index_cache.clear();
 }
@@ -207,7 +207,7 @@ TablePtr IndexUpdaterFactory::load_table(const String &table_name)
                             ms_namemap, table_name);
 }
 
-Mutex IndexUpdaterFactory::ms_mutex;
+mutex IndexUpdaterFactory::ms_mutex;
 NameIdMapperPtr IndexUpdaterFactory::ms_namemap;
 IndexUpdaterFactory::TableMap IndexUpdaterFactory::ms_index_cache;
 IndexUpdaterFactory::TableMap IndexUpdaterFactory::ms_qualifier_index_cache;

@@ -36,6 +36,7 @@
 #include <Common/Time.h>
 
 #include <cassert>
+#include <chrono>
 #include <iostream>
 
 extern "C" {
@@ -109,7 +110,8 @@ namespace {
 
 
 bool
-IOHandlerData::handle_event(struct pollfd *event, time_t arrival_time) {
+IOHandlerData::handle_event(struct pollfd *event,
+                            chrono::time_point<chrono::steady_clock> arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -220,7 +222,8 @@ IOHandlerData::handle_event(struct pollfd *event, time_t arrival_time) {
 #if defined(__linux__)
 
 bool
-IOHandlerData::handle_event(struct epoll_event *event, time_t arrival_time) {
+IOHandlerData::handle_event(struct epoll_event *event,
+                            chrono::time_point<chrono::steady_clock> arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -337,7 +340,8 @@ IOHandlerData::handle_event(struct epoll_event *event, time_t arrival_time) {
 
 #elif defined(__sun__)
 
-bool IOHandlerData::handle_event(port_event_t *event, time_t arrival_time) {
+bool IOHandlerData::handle_event(port_event_t *event,
+                                 chrono::time_point<chrono::steady_clock> arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -457,10 +461,8 @@ bool IOHandlerData::handle_event(port_event_t *event, time_t arrival_time) {
 
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 
-/**
- *
- */
-bool IOHandlerData::handle_event(struct kevent *event, time_t arrival_time) {
+bool IOHandlerData::handle_event(struct kevent *event,
+                                 chrono::time_point<chrono::steady_clock> arrival_time) {
 
   //DisplayEvent(event);
 
@@ -561,7 +563,7 @@ bool IOHandlerData::handle_event(struct kevent *event, time_t arrival_time) {
 #endif
 
 
-void IOHandlerData::handle_message_header(time_t arrival_time) {
+void IOHandlerData::handle_message_header(chrono::time_point<chrono::steady_clock> arrival_time) {
   size_t header_len = (size_t)m_message_header[1];
 
   // check to see if there is any variable length header
@@ -626,7 +628,7 @@ void IOHandlerData::handle_message_body() {
                            - m_event->header.header_len;
     m_event->payload_aligned = m_message_aligned;
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_event->set_proxy(m_proxy);
     }
     //HT_INFOF("Just received messaage of size %d", m_event->header.total_len);
@@ -646,7 +648,7 @@ bool IOHandlerData::handle_write_readiness() {
   int error = Error::OK;
 
   while (true) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     if (m_connected == false) {
       socklen_t name_len = sizeof(m_local_addr);
@@ -735,7 +737,7 @@ bool IOHandlerData::handle_write_readiness() {
 int
 IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
                             DispatchHandler *disp_handler) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool initially_empty = m_send_queue.empty() ? true : false;
   int error = Error::OK;
 

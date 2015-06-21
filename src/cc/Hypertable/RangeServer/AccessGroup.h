@@ -45,11 +45,13 @@
 
 #include <boost/thread/condition.hpp>
 
+#include <condition_variable>
 #include <cstdio>
 #include <ctime>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <set>
 #include <vector>
@@ -174,7 +176,7 @@ namespace Hypertable {
     void load_cellstore(CellStorePtr &cellstore);
 
     void pre_load_cellstores() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_latest_stored_revision = TIMESTAMP_MIN;
     }
 
@@ -262,10 +264,10 @@ namespace Hypertable {
 
     void sort_cellstores_by_timestamp();
 
-    Mutex m_mutex;
-    Mutex m_schema_mutex;
-    Mutex m_outstanding_scanner_mutex;
-    boost::condition m_outstanding_scanner_cond;
+    std::mutex m_mutex;
+    std::mutex m_schema_mutex;
+    std::mutex m_outstanding_scanner_mutex;
+    std::condition_variable m_outstanding_scanner_cond;
     int32_t m_outstanding_scanner_count {};
     TableIdentifierManaged m_identifier;
     SchemaPtr m_schema;

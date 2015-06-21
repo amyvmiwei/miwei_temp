@@ -30,13 +30,13 @@
 #include <Common/Error.h>
 #include <Common/Serialization.h>
 
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <chrono>
+#include <condition_variable>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <queue>
 #include <thread>
 
@@ -50,11 +50,10 @@ namespace {
 
   public:
 
-    ResponseHandler()
-      : m_queue(), m_mutex(), m_cond(), m_connected(true) { return; }
+    ResponseHandler() { }
 
     virtual void handle(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (event_ptr->type == Event::MESSAGE) {
         m_queue.push(event_ptr);
         m_cond.notify_one();
@@ -67,7 +66,7 @@ namespace {
     }
 
     bool get_response(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
       while (m_queue.empty()) {
         m_cond.wait(lock);
         if (m_connected == false)
@@ -79,10 +78,10 @@ namespace {
     }
 
   private:
-    std::queue<EventPtr>   m_queue;
-    Mutex             m_mutex;
-    boost::condition  m_cond;
-    bool              m_connected;
+    std::queue<EventPtr> m_queue;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    bool m_connected {true};
   };
 }
 

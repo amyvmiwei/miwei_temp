@@ -39,7 +39,9 @@
 #include <Common/StringExt.h>
 #include <Common/Timer.h>
 
+#include <condition_variable>
 #include <iostream>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -141,7 +143,7 @@ namespace Hypertable {
      *
      */
     virtual bool need_retry() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return (m_failed_mutations.size() > 0);
     }
 
@@ -169,7 +171,7 @@ namespace Hypertable {
      * @param failed_mutations reference to vector of Cell/error pairs
      */
     virtual void get_failed(FailedMutations &failed_mutations) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       failed_mutations = m_failed_mutations;
     }
 
@@ -180,7 +182,7 @@ namespace Hypertable {
     void update_error(int error, FailedMutations &failures);
 
     int32_t get_last_error() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_last_error;
     }
 
@@ -192,7 +194,7 @@ namespace Hypertable {
     void wait_for_flush_completion(TableMutatorAsync *mutator);
 
     void set_last_error(int32_t error) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_last_error = error;
     }
 
@@ -220,10 +222,10 @@ namespace Hypertable {
 
     void retry_flush();
 
-    Mutex                m_mutex;
-    Mutex                m_queue_mutex;
-    boost::condition     m_cond;
-    PropertiesPtr        m_props;
+    std::mutex m_mutex;
+    std::mutex m_queue_mutex;
+    std::condition_variable m_cond;
+    PropertiesPtr m_props;
     Comm                *m_comm;
     TablePtr             m_table;
     SchemaPtr            m_schema;

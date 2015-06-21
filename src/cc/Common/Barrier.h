@@ -26,13 +26,11 @@
  * barrier is up
  */
 
-#ifndef HYPERTABLE_BARRIER_H
-#define HYPERTABLE_BARRIER_H
+#ifndef Common_Barrier_h
+#define Common_Barrier_h
 
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-
-#include "Mutex.h"
+#include <condition_variable>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -45,17 +43,15 @@ namespace Hypertable {
  */
 class Barrier {
   public:
-    Barrier() : m_hold(false), m_counter(0) {
-    }
+    Barrier() { }
 
     /** Enters the critical section. If the barrier is "up" then this
      * thread will wait till the barrier is "down" again, then it can
      * continue execution.
      */
     void enter() {
-      ScopedLock lock(m_mutex);
-      while (m_hold)
-        m_unblocked_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_mutex);
+      m_unblocked_cond.wait(lock, [this](){ return !m_hold; });
       m_counter++;
     }
 
@@ -63,7 +59,7 @@ class Barrier {
      * necessary.
      */
     void exit() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(m_counter > 0);
       m_counter--;
       if (m_hold && m_counter == 0)
@@ -75,19 +71,17 @@ class Barrier {
      * only the current thread can execute the code.
      */
     void put_up() {
-      ScopedLock lock(m_mutex);
-      while (m_hold)
-        m_unblocked_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_mutex);
+      m_unblocked_cond.wait(lock, [this](){ return !m_hold; });
       m_hold = true;
-      while (m_counter > 0)
-        m_quiesced_cond.wait(lock);
+      m_quiesced_cond.wait(lock, [this](){ return m_counter == 0; });
     }
 
     /** "Takes" the barrier "down"; all threads waiting in enter() are allowed
      * to continue.
      */
     void take_down() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_hold = false;
       m_unblocked_cond.notify_all();
     }
@@ -118,23 +112,23 @@ class Barrier {
 
   private:
     /** Mutex to lock access to the members and conditions */
-    Mutex            m_mutex;
+    std::mutex m_mutex;
 
     /** Condition to wait for when barrier is up */
-    boost::condition m_unblocked_cond;
+    std::condition_variable m_unblocked_cond;
 
     /** Condition to wait for to take the barrier down */
-    boost::condition m_quiesced_cond;
+    std::condition_variable m_quiesced_cond;
 
     /** True if the barrier is up */
-    bool             m_hold;
+    bool m_hold {};
 
     /** Number of threads that have enter()ed (but not exit()ed) the code */ 
-    uint32_t         m_counter;
+    uint32_t m_counter {};
 };
 
 /** @}*/
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_BARRIER_H
+#endif // Common_Barrier_h

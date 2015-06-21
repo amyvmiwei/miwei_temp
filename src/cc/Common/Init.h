@@ -54,7 +54,7 @@ namespace Hypertable { namespace Config {
     try {
       System::initialize();
 
-      ScopedRecLock lock(rec_mutex);
+      std::lock_guard<std::recursive_mutex> lock(rec_mutex);
       properties = std::make_shared<Properties>();
 
       if (desc)

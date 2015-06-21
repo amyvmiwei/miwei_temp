@@ -29,12 +29,12 @@
 #include <Hypertable/Lib/StatsRangeServer.h>
 #include <Hypertable/Lib/StatsTable.h>
 
-#include <Common/Mutex.h>
 #include <Common/StatsSystem.h>
 #include <Common/String.h>
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <deque>
 #include <vector>
 
@@ -155,7 +155,7 @@ namespace Hypertable {
     typedef std::map<String, String> TableNameMap;
 
     Context *m_context;
-    Mutex m_mutex;
+    std::mutex m_mutex;
     RangeServerMap m_server_map;
     TableStatMap m_table_stat_map;
     TableStatMap m_prev_table_stat_map;

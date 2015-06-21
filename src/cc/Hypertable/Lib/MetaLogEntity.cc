@@ -25,13 +25,14 @@
  * for persisting an object's state in a %MetaLog
  */
 
-#include "Common/Compat.h"
-#include "Common/Checksum.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "MetaLogEntity.h"
+
+#include <Common/Checksum.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;

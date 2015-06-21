@@ -75,13 +75,12 @@ using namespace Serialization;
 using namespace std;
 
 Master::Client::Client(ConnectionManagerPtr &conn_mgr,
-                           Hyperspace::SessionPtr &hyperspace,
-                           const String &toplevel_dir, uint32_t timeout_ms,
-                           ApplicationQueueInterfacePtr &app_queue,
-                           DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
+                       Hyperspace::SessionPtr &hyperspace,
+                       const String &toplevel_dir, uint32_t timeout_ms,
+                       ApplicationQueueInterfacePtr &app_queue,
+                       DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
   : m_conn_manager(conn_mgr), m_hyperspace(hyperspace), m_app_queue(app_queue),
     m_dispatcher_handler(dhp), m_connection_initializer(init),
-    m_hyperspace_init(false), m_hyperspace_connected(true),
     m_timeout_ms(timeout_ms), m_toplevel_dir(toplevel_dir) {
 
   m_comm = m_conn_manager->get_comm();
@@ -99,7 +98,7 @@ Master::Client::Client(ConnectionManagerPtr &conn_mgr,
   m_hyperspace_session_callback.m_client = this;
   m_hyperspace->add_callback(&m_hyperspace_session_callback);
 
-  // no need to serialize access in ctor
+  m_hyperspace_connected = true;
   initialize_hyperspace();
   reload_master();
 }
@@ -134,7 +133,7 @@ Master::Client::~Client() {
 
 void Master::Client::hyperspace_disconnected()
 {
-  ScopedLock lock(m_hyperspace_mutex);
+  lock_guard<mutex> lock(m_hyperspace_mutex);
   HT_DEBUG_OUT << "Hyperspace disconnected" << HT_END;
   m_hyperspace_init = false;
   m_hyperspace_connected = false;
@@ -143,7 +142,7 @@ void Master::Client::hyperspace_disconnected()
 void Master::Client::hyperspace_reconnected()
 {
   {
-    ScopedLock lock(m_hyperspace_mutex);
+    lock_guard<mutex> lock(m_hyperspace_mutex);
     HT_DEBUG_OUT << "Hyperspace reconnected" << HT_END;
     HT_ASSERT(!m_hyperspace_init);
     m_hyperspace_connected = true;
@@ -220,7 +219,7 @@ Master::Client::create_namespace(const String &name, int32_t flags, Timer *timer
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -258,7 +257,7 @@ Master::Client::drop_namespace(const String &name, int32_t flags, Timer *timer) 
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -294,7 +293,7 @@ void Master::Client::compact(const String &tablename, const String &row,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -331,7 +330,7 @@ Master::Client::create_table(const String &name, const String &schema,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -367,7 +366,7 @@ Master::Client::alter_table(const String &name, const String &schema,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -395,7 +394,7 @@ void Master::Client::status(Status &status, Timer *timer) {
     return;
   }
 
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HT_THROWF(Error::REQUEST_TIMEOUT,
             "Client operation 'status' to master %s failed",
             m_master_addr.format().c_str());
@@ -431,7 +430,7 @@ Master::Client::move_range(const String &source, int64_t range_id,
       return;
     }
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       HT_THROWF(Error::REQUEST_TIMEOUT,
                 "Client operation %s to master %s failed", label.c_str(),
                 m_master_addr.format().c_str());
@@ -476,7 +475,7 @@ Master::Client::relinquish_acknowledge(const String &source, int64_t range_id,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -514,7 +513,7 @@ Master::Client::rename_table(const String &from, const String &to, Timer *timer)
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -549,7 +548,7 @@ Master::Client::drop_table(const String &name, bool if_exists, Timer *timer) {
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -586,7 +585,7 @@ void Master::Client::recreate_index_tables(const std::string &name,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -641,7 +640,7 @@ void Master::Client::balance(BalancePlan &plan, Timer *timer) {
     }
 
     if (timer->expired()) {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       HT_THROWF(Error::REQUEST_TIMEOUT,
                 "Client operation %s to master %s failed", label.c_str(),
                 m_master_addr.format().c_str());
@@ -684,7 +683,7 @@ void Master::Client::set_state(const std::vector<SystemVariable::Spec> &specs,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Client operation %s to master %s failed", label.c_str(),
               m_master_addr.format().c_str());
@@ -715,7 +714,7 @@ void Master::Client::stop(const String &rsname, Timer *timer) {
     }
 
     if (timer->expired()) {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       HT_THROWF(Error::REQUEST_TIMEOUT,
                 "Client operation %s to master %s failed", label.c_str(),
                 m_master_addr.format().c_str());
@@ -751,7 +750,7 @@ void Master::Client::system_status(Status &status, Timer *timer) {
     return;
   }
 
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HT_THROWF(Error::REQUEST_TIMEOUT,
             "Client operation 'system status' to master %s failed",
             m_master_addr.format().c_str());
@@ -761,7 +760,7 @@ void Master::Client::system_status(Status &status, Timer *timer) {
 void
 Master::Client::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,
                                  Timer *timer, const String &label) {
-  boost::mutex::scoped_lock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   DispatchHandlerSynchronizer *sync_handler
     = dynamic_cast<DispatchHandlerSynchronizer *>(handler);
   int error;
@@ -778,11 +777,12 @@ Master::Client::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,
       else
         return;
     }
-    boost::xtime expire_time;
-    boost::xtime_get(&expire_time, boost::TIME_UTC_);
-    xtime_add_millis(expire_time, std::min(timer->remaining(),
-                                           (System::rand32()%m_retry_interval)));
-    if (!m_cond.timed_wait(lock, expire_time)) {
+
+    auto expire_time = chrono::system_clock::now() +
+      chrono::milliseconds(std::min(timer->remaining(),
+                                    (System::rand32()%m_retry_interval)));
+
+    if (m_cond.wait_until(lock, expire_time) == cv_status::timeout) {
       if (timer->expired())
         HT_THROWF(Error::REQUEST_TIMEOUT,
                   "Client operation %s to master %s failed", label.c_str(),
@@ -825,7 +825,7 @@ void Master::Client::fetch_result(int64_t id, Timer *timer, EventPtr &event, con
   }
 
   {
-    boost::mutex::scoped_lock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
               "Failed to fetch ID %lld for Client operation %s to master %s",
               (Lld)id, label.c_str(), m_master_addr.format().c_str());
@@ -857,7 +857,7 @@ Master::Client::replay_status(int64_t op_id, const String &location,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
         "Client operation %s to master %s failed", label.c_str(),
         m_master_addr.format().c_str());
@@ -894,7 +894,7 @@ Master::Client::replay_complete(int64_t op_id, const String &location,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
         "Client operation %s to master %s failed", label.c_str(),
         m_master_addr.format().c_str());
@@ -927,7 +927,7 @@ Master::Client::phantom_prepare_complete(int64_t op_id, const String &location,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
         "Client operation %s to master %s failed", label.c_str(),
         m_master_addr.format().c_str());
@@ -958,7 +958,7 @@ Master::Client::phantom_commit_complete(int64_t op_id, const String &location,
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_THROWF(Error::REQUEST_TIMEOUT,
         "Client operation %s to master %s failed", label.c_str(),
         m_master_addr.format().c_str());
@@ -969,13 +969,13 @@ void Master::Client::reload_master() {
   InetAddr master_addr;
 
   {
-    ScopedLock lock(m_mutex);
+    unique_lock<mutex> lock(m_mutex);
     int error;
     DynamicBuffer value(0);
     String addr_str;
 
     {
-      ScopedLock lock(m_hyperspace_mutex);
+      lock_guard<mutex> lock(m_hyperspace_mutex);
       if (m_hyperspace_init) {
         try {
           m_hyperspace->attr_get(m_master_file_handle, "address", value);

@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKSPLIT_H
-#define HYPERTABLE_MAINTENANCETASKSPLIT_H
+#ifndef Hypertable_RangeServer_MaintenanceTaskSplit_h
+#define Hypertable_RangeServer_MaintenanceTaskSplit_h
 
 #include "MaintenanceTask.h"
 
@@ -28,10 +28,12 @@ namespace Hypertable {
 
   class MaintenanceTaskSplit : public MaintenanceTask {
   public:
-    MaintenanceTaskSplit(uint32_t level, int priority, boost::xtime &start_time, RangePtr &range);
+    MaintenanceTaskSplit(uint32_t level, int priority,
+                         std::chrono::time_point<std::chrono::steady_clock> &stime,
+                         RangePtr &range);
     virtual void execute();
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKSPLIT_H
+#endif // Hypertable_RangeServer_MaintenanceTaskSplit_h

@@ -19,17 +19,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_PARALLELLOAD_H
-#define HYPERTABLE_PARALLELLOAD_H
+#ifndef Tools_load_generator_ParallelLoad_h
+#define Tools_load_generator_ParallelLoad_h
 
+#include <Hypertable/Lib/Cell.h>
+#include <Hypertable/Lib/KeySpec.h>
+
+#include <condition_variable>
 #include <list>
-
-#include <boost/thread/condition.hpp>
-
-#include "Hypertable/Lib/Cell.h"
-#include "Hypertable/Lib/KeySpec.h"
-
-#include "Common/Mutex.h"
+#include <mutex>
 
 namespace Hypertable {
 
@@ -93,10 +91,7 @@ namespace Hypertable {
 
   class ParallelStateRec {
   public:
-    ParallelStateRec()
-    : total_cells(0), total_bytes(0), finished(false), cum_latency(0),
-      cum_sq_latency(0), min_latency(0), max_latency(0), elapsed_time(0) {
-    }
+    ParallelStateRec() { }
 
     ParallelStateRec(const ParallelStateRec& other) {
       total_cells = other.total_cells;
@@ -109,20 +104,20 @@ namespace Hypertable {
       elapsed_time = other.elapsed_time;
     }
 
-    Mutex mutex;
-    boost::condition cond;
+    std::mutex mutex;
+    std::condition_variable cond;
     std::list<LoadRec *> requests;
     std::list<LoadRec *> garbage;
-    int64_t total_cells;
-    int64_t total_bytes;
-    bool finished;
-    double cum_latency;
-    double cum_sq_latency;
-    double min_latency;
-    double max_latency;
-    double elapsed_time;
+    int64_t total_cells {};
+    int64_t total_bytes {};
+    bool finished {};
+    double cum_latency {};
+    double cum_sq_latency {};
+    double min_latency {};
+    double max_latency {};
+    double elapsed_time {};
   };
 
 }
 
-#endif // HYPERTABLE_PARALLELLOAD_H
+#endif // Tools_load_generator_ParallelLoad_h

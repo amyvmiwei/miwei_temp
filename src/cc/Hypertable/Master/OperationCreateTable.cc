@@ -224,7 +224,7 @@ void OperationCreateTable::execute() {
 
     range_name = format("%s[..%s]", m_table.id, Key::END_ROW_MARKER);
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.insert(Dependency::SERVERS);
       m_dependencies.insert(Dependency::METADATA);
       m_dependencies.insert(Dependency::SYSTEM);
@@ -244,7 +244,7 @@ void OperationCreateTable::execute() {
     range.end_row = Key::END_ROW_MARKER;
     m_context->get_balance_plan_authority()->get_balance_destination(m_table, range, m_location);
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.erase(Dependency::SERVERS);
       m_state = OperationState::LOAD_RANGE;
     }

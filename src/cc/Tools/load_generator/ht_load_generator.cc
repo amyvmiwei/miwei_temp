@@ -31,7 +31,6 @@
 #include <Hypertable/Lib/Config.h>
 #include <Hypertable/Lib/Cells.h>
 
-#include <Common/Mutex.h>
 #include <Common/Stopwatch.h>
 #include <Common/String.h>
 #include <Common/Init.h>
@@ -582,7 +581,7 @@ generate_update_load_parallel(PropertiesPtr &props, String &tablename,
       lrec->amount = iter.last_data_size();
 
       {
-        ScopedLock lock(load_vector[next].mutex);
+        std::lock_guard<std::mutex> lock(load_vector[next].mutex);
         load_vector[next].requests.push_back(lrec);
         // Delete garbage, update progress meter
         while (!load_vector[next].garbage.empty()) {
@@ -613,7 +612,7 @@ generate_update_load_parallel(PropertiesPtr &props, String &tablename,
     }
 
     for (::int32_t i=0; i<parallel; i++) {
-      ScopedLock lock(load_vector[i].mutex);
+      std::lock_guard<std::mutex> lock(load_vector[i].mutex);
       load_vector[i].finished = true;
       load_vector[i].cond.notify_all();
     }

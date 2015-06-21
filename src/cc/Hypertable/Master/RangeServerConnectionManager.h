@@ -26,7 +26,6 @@
 
 #include <AsyncComm/Comm.h>
 
-#include <Common/Mutex.h>
 #include <Common/StringExt.h>
 
 #include <boost/multi_index_container.hpp>

@@ -34,13 +34,13 @@
 
 #include <AsyncComm/ConnectionManager.h>
 
-#include <Common/Mutex.h>
 #include <Common/Error.h>
 #include <Common/Timer.h>
 #include <Common/Properties.h>
 
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -120,7 +120,7 @@ namespace Hypertable {
     }
 
     void invalidate_host(const std::string &hostname) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       CommAddress addr;
       addr.set_proxy(hostname);
       if (addr == m_root_range_info.addr)
@@ -144,7 +144,7 @@ namespace Hypertable {
      * Clears the error history
      */
     void clear_error_history() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_last_errors.clear();
     }
 
@@ -152,7 +152,7 @@ namespace Hypertable {
      * Displays the error history
      */
     void dump_error_history() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       for (auto &e : m_last_errors)
         HT_ERROR_OUT << e << HT_END;
       m_last_errors.clear();
@@ -169,7 +169,7 @@ namespace Hypertable {
     void initialize();
     int connect(CommAddress &addr, Timer &timer);
 
-    Mutex                  m_mutex;
+    std::mutex m_mutex;
     ConnectionManagerPtr   m_conn_manager;
     Hyperspace::SessionPtr m_hyperspace;
     LocationCachePtr       m_cache;
@@ -184,7 +184,7 @@ namespace Hypertable {
     std::deque<Exception>  m_last_errors;
     bool                   m_hyperspace_init;
     bool                   m_hyperspace_connected;
-    Mutex                  m_hyperspace_mutex;
+    std::mutex m_hyperspace_mutex;
     uint32_t               m_timeout_ms;
     RangeLocatorHyperspaceSessionCallback m_hyperspace_session_callback;
     std::string                 m_toplevel_dir;

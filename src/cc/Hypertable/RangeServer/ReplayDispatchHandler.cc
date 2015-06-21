@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -29,7 +29,7 @@ using namespace std;
 using namespace Hypertable;
 
 void ReplayDispatchHandler::handle(Hypertable::EventPtr &event) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int32_t error;
   QualifiedRangeSpec range;
   String error_msg;
@@ -73,7 +73,7 @@ void ReplayDispatchHandler::add(const CommAddress &addr,
         const QualifiedRangeSpec &range, uint32_t fragment,
         StaticBuffer &buffer) {
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_outstanding++;
   }
 
@@ -82,7 +82,7 @@ void ReplayDispatchHandler::add(const CommAddress &addr,
                               range, fragment, buffer, this);
   }
   catch (Exception &e) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     HT_ERROR_OUT << "Error sending phantom updates for range " << range
         << " to " << addr.to_str() << "-" << e << HT_END;
     m_outstanding--;
@@ -93,9 +93,8 @@ void ReplayDispatchHandler::add(const CommAddress &addr,
 }
 
 void ReplayDispatchHandler::wait_for_completion() {
-  ScopedLock lock(m_mutex);
-  while (m_outstanding)
-    m_cond.wait(lock);
+  unique_lock<mutex> lock(m_mutex);
+  m_cond.wait(lock, [this](){ return m_outstanding == 0; });
   if (m_error != Error::OK)
     HT_THROW(m_error, m_error_msg);
 }

@@ -25,9 +25,9 @@
 
 #include <Common/StringExt.h>
 #include <Common/Usage.h>
-#include <Common/Mutex.h>
 
 #include <fstream>
+#include <mutex>
 #include <vector>
 
 using namespace std;
@@ -124,7 +124,7 @@ namespace {
     }
 
     void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
-      ScopedLock lock(mutex);
+      lock_guard<std::mutex> lock(mutex);
       Cells cc;
       cells->get(cc);
       String table_name = scanner->get_table_name();
@@ -154,25 +154,25 @@ namespace {
     }
 
     void scan_error(TableScannerAsync *scanner, int error, const String &error_msg, bool eos) {
-      ScopedLock lock(mutex);
+      lock_guard<std::mutex> lock(mutex);
       Exception e(error, error_msg);
       outfile << e << endl;
       quick_exit(EXIT_FAILURE);
     }
 
     void update_ok(TableMutatorAsync *mutator) {
-      ScopedLock lock(mutex);
+      lock_guard<std::mutex> lock(mutex);
       outfile << "Mutation done" << endl;
     }
     void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures) {
-      ScopedLock lock(mutex);
+      lock_guard<std::mutex> lock(mutex);
       Exception e(error, "");
       outfile << e << endl;
       quick_exit(EXIT_FAILURE);
     }
 
     void completed() {
-      ScopedLock lock(mutex);
+      lock_guard<std::mutex> lock(mutex);
       if (m_fruit.results == 3 && m_show_complete) {
         HT_ASSERT(!m_complete_shown);
         outfile << "Async calls completed" << endl;
@@ -182,15 +182,14 @@ namespace {
     }
 
     String &get_fruit() {
-      ScopedLock lock(mutex);
-      while (!m_complete_shown)
-        m_cond.wait(lock);
+      unique_lock<std::mutex> lock(mutex);
+      m_cond.wait(lock, [this](){ return m_complete_shown; });
       return m_fruit.to_str();
     }
 
   private:
-    Mutex mutex;
-    boost::condition m_cond;
+    std::mutex mutex;
+    std::condition_variable m_cond;
     Fruit m_fruit;
     String m_error_msg;
     bool m_show_complete;

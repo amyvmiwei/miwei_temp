@@ -53,7 +53,7 @@ AccessGroupGarbageTracker::AccessGroupGarbageTracker(PropertiesPtr &props,
 
 
 void AccessGroupGarbageTracker::update_schema(AccessGroupSpec *ag_spec) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_have_max_versions = false;
   m_min_ttl = 0;
   m_in_memory = ag_spec->get_option_in_memory();
@@ -74,7 +74,7 @@ void
 AccessGroupGarbageTracker::update_cellstore_info(vector<CellStoreInfo> &stores,
                                                  time_t t,
                                                  bool collection_performed) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_stored_deletes = 0;
   m_stored_expirable = 0;
   m_current_disk_usage = 0;
@@ -93,7 +93,7 @@ AccessGroupGarbageTracker::update_cellstore_info(vector<CellStoreInfo> &stores,
 
 void AccessGroupGarbageTracker::output_state(std::ofstream &out,
                                              const std::string &label) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   out << label << "\telapsed_target\t" << m_elapsed_target << "\n";
   out << label << "\tlast_collection_time\t" << m_last_collection_time << "\n";
   out << label << "\tstored_deletes\t" << m_stored_deletes << "\n";
@@ -113,7 +113,7 @@ void AccessGroupGarbageTracker::output_state(std::ofstream &out,
 
 
 bool AccessGroupGarbageTracker::check_needed(time_t now) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_last_collection_time)
     return check_needed_deletes() || check_needed_ttl(now);
   return false;
@@ -134,7 +134,7 @@ AccessGroupGarbageTracker::adjust_targets(time_t now,
 void
 AccessGroupGarbageTracker::adjust_targets(time_t now, double total,
                                           double garbage) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   HT_ASSERT(m_last_collection_time);
 

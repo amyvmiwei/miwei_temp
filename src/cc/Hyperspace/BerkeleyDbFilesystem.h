@@ -38,7 +38,6 @@
 #include <Common/FileUtils.h>
 #include <Common/InetAddr.h>
 #include <Common/InetAddr.h>
-#include <Common/Mutex.h>
 #include <Common/Properties.h>
 #include <Common/String.h>
 #include <Common/StringExt.h>
@@ -46,10 +45,10 @@
 
 #include <db_cxx.h>
 
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <unordered_map>
 #include <vector>
@@ -88,19 +87,17 @@ namespace Hyperspace {
   class ReplicationInfo {
   public:
     /** Constructor. */
-    ReplicationInfo(): do_replication(true), is_master(false), master_eid(-1),
-                       num_replicas(0), m_election_done(false) {}
+    ReplicationInfo() : do_replication(true) { }
 
     /** Waits for master election to finish. */
     void wait_for_election() {
-      ScopedLock lock(m_election_mutex);
-      while (!m_election_done)
-        m_election_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_election_mutex);
+      m_election_cond.wait(lock, [this](){ return m_election_done; });
     }
 
     /** Finish master election. */
     void finish_election() {
-      ScopedLock lock(m_election_mutex);
+      std::lock_guard<std::mutex> lock(m_election_mutex);
       if (!m_election_done) {
         m_election_done = true;
         m_election_cond.notify_all();
@@ -111,27 +108,27 @@ namespace Hyperspace {
      * @return <i>true</i> if master election has finished, <i>false</i> otherwise
      */
     bool election_finished() {
-      ScopedLock lock(m_election_mutex);
+      std::lock_guard<std::mutex> lock(m_election_mutex);
       return m_election_done;
     }
 
-    bool do_replication;
-    bool is_master;
-    int master_eid;
-    uint32_t num_replicas;
+    bool do_replication {};
+    bool is_master {};
+    int master_eid {-1};
+    uint32_t num_replicas {};
     String localhost;
     std::unordered_map<int, String> replica_map;
 
   private:
 
     /// %Mutex for serializing access to #m_election_done
-    Mutex m_election_mutex;
+    std::mutex m_election_mutex;
 
     /// Condition variable for signaling change to #m_election_done
-    boost::condition m_election_cond;
+    std::condition_variable m_election_cond;
 
     /// Indicates if master election has finished
-    bool m_election_done;
+    bool m_election_done {};
   };
 
   /** Manages <i>namespace</i> and transient <i>state</i> database handles */

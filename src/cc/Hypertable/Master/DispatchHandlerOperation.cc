@@ -59,7 +59,7 @@ void DispatchHandlerOperation::start(StringSet &locations) {
       if (e.code() == Error::COMM_NOT_CONNECTED ||
           e.code() == Error::COMM_INVALID_PROXY ||
           e.code() == Error::COMM_BROKEN_CONNECTION) {
-        ScopedLock lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         Result result(*iter);
         m_outstanding--;
         result.error = e.code();
@@ -76,7 +76,7 @@ void DispatchHandlerOperation::start(StringSet &locations) {
  *
  */
 void DispatchHandlerOperation::handle(EventPtr &event) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (m_events.count(event) > 0) {
     HT_INFOF("Skipping second event - %s", event->to_str().c_str());
@@ -121,22 +121,15 @@ void DispatchHandlerOperation::process_events() {
 }
 
 
-/**
- *
- */
 bool DispatchHandlerOperation::wait_for_completion() {
-  ScopedLock lock(m_mutex);
-  while (m_outstanding > 0)
-    m_cond.wait(lock);
+  unique_lock<mutex> lock(m_mutex);
+  m_cond.wait(lock, [this](){ return m_outstanding == 0; });
   process_events();
   return m_error_count == 0;
 }
 
 
-/**
- *
- */
 void DispatchHandlerOperation::get_results(std::set<Result> &results) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   results = m_results;
 }

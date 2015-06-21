@@ -94,7 +94,7 @@ void OperationRecover::execute() {
     // Prevent any RegisterServer operations for this server from running while
     // recovery is in progress
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       String register_server_label = String("RegisterServer ") + m_location;
       m_dependencies.erase(register_server_label);
       m_exclusivities.insert(register_server_label);

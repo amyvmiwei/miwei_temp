@@ -19,10 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_REQUESTHANDLERDESTROYSESSION_H
-#define HYPERSPACE_REQUESTHANDLERDESTROYSESSION_H
-
-#include "Common/Mutex.h"
+#ifndef Hyperspace_request_RequestHandlerDestroySession_h
+#define Hyperspace_request_RequestHandlerDestroySession_h
 
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
@@ -45,4 +43,4 @@ namespace Hyperspace {
   };
 }
 
-#endif // HYPERSPACE_REQUESTHANDLERDESTROYSESSION_H
+#endif // Hyperspace_request_RequestHandlerDestroySession_h

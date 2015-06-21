@@ -58,13 +58,13 @@ LoadBalancer::LoadBalancer(ContextPtr context)
 }
 
 void LoadBalancer::signal_new_server() {
-  ScopedLock lock(m_add_mutex);
+  lock_guard<mutex> lock(m_add_mutex);
   m_new_server_added = true;
   m_next_balance_time_new_server = time(0) + m_new_server_balance_delay;
 }
 
 bool LoadBalancer::balance_needed() {
-  ScopedLock lock(m_add_mutex);
+  lock_guard<mutex> lock(m_add_mutex);
   time_t now = time(0);
   if (m_paused)
     return false;
@@ -77,7 +77,7 @@ bool LoadBalancer::balance_needed() {
 
 
 void LoadBalancer::unpause() {
-  ScopedLock lock(m_add_mutex);
+  lock_guard<mutex> lock(m_add_mutex);
   time_t now = time(0);
   m_new_server_added = false;
   if (m_context->rsc_manager->exist_unbalanced_servers()) {
@@ -90,7 +90,7 @@ void LoadBalancer::unpause() {
 
 
 void LoadBalancer::transfer_monitoring_data(vector<RangeServerStatistics> &stats) {
-  ScopedLock lock(m_add_mutex);
+  lock_guard<mutex> lock(m_add_mutex);
   m_statistics.swap(stats);
 }
 
@@ -102,7 +102,7 @@ void LoadBalancer::create_plan(BalancePlanPtr &plan,
   BalanceAlgorithmPtr algo;
 
   {
-    ScopedLock lock(m_add_mutex);
+    lock_guard<mutex> lock(m_add_mutex);
     String algorithm_spec = plan->algorithm;
 
     if (m_statistics.empty())
@@ -166,7 +166,7 @@ void LoadBalancer::create_plan(BalancePlanPtr &plan,
   algo->compute_plan(plan, balanced);
 
   {
-    ScopedLock lock(m_add_mutex);
+    lock_guard<mutex> lock(m_add_mutex);
     m_paused = true;
   }
 }

@@ -33,7 +33,6 @@
 #include <Hypertable/Master/Operation.h>
 #include <Hypertable/Master/ResponseManager.h>
 
-#include <Common/Mutex.h>
 #include <Common/Properties.h>
 #include <Common/StringExt.h>
 #include <Common/Thread.h>
@@ -42,8 +41,11 @@
 #include <boost/graph/properties.hpp>
 #include <boost/thread/condition.hpp>
 
+#include <chrono>
+#include <condition_variable>
 #include <list>
 #include <map>
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -65,7 +67,7 @@ namespace Hypertable {
     void join();
     void wait_for_empty();
     void wait_for_idle();
-    bool timed_wait_for_idle(boost::xtime expire_time);
+    bool wait_for_idle(std::chrono::milliseconds max_wait);
     void graphviz_output(String &output);
     size_t size();
     bool empty();
@@ -177,9 +179,9 @@ namespace Hypertable {
     public:
       ThreadContext(ContextPtr &mctx);
       ~ThreadContext();
-      Mutex mutex;
-      boost::condition cond;
-      boost::condition idle_cond;
+      std::mutex mutex;
+      std::condition_variable cond;
+      std::condition_variable idle_cond;
       OperationProcessor *op;
       ContextPtr &master_context;
       OperationGraph graph;

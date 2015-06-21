@@ -33,6 +33,7 @@
 
 #include <Hypertable/Lib/TableIdentifier.h>
 
+#include <chrono>
 #include <unordered_map>
 #include <vector>
 
@@ -56,7 +57,7 @@ namespace Hypertable {
     TableIdentifier id;
     /// Vector of corresponding client requests
     std::vector<UpdateRequest *> requests;
-    boost::xtime expire_time;
+    std::chrono::time_point<std::chrono::steady_clock> expire_time;
     /// TableInfo object for destination table.
     TableInfoPtr table_info;
     std::unordered_map<Range *, UpdateRecRangeList *> range_map;

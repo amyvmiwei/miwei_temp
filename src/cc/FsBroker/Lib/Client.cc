@@ -69,6 +69,7 @@ using namespace Hypertable;
 using namespace Serialization;
 using namespace Hypertable::FsBroker;
 using namespace Hypertable::FsBroker::Lib;
+using namespace std;
 
 Client::Client(ConnectionManagerPtr &conn_mgr, const sockaddr_in &addr,
                uint32_t timeout_ms)
@@ -176,7 +177,7 @@ Client::open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
                HT_IO_ALIGNED(end_offset)));
     int fd = open(name, flags|OPEN_FLAG_VERIFY_CHECKSUM);
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       HT_ASSERT(m_buffered_reader_map.find(fd) == m_buffered_reader_map.end());
       m_buffered_reader_map[fd] =
           new ClientBufferedReaderHandler(this, fd, buf_size, outstanding,
@@ -265,7 +266,7 @@ Client::close(int32_t fd, DispatchHandler *handler) {
   params.encode(cbuf->get_data_ptr_address());
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     auto iter = m_buffered_reader_map.find(fd);
     if (iter != m_buffered_reader_map.end()) {
       reader_handler = (*iter).second;
@@ -294,7 +295,7 @@ Client::close(int32_t fd) {
   CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
   params.encode(cbuf->get_data_ptr_address());
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     auto iter = m_buffered_reader_map.find(fd);
     if (iter != m_buffered_reader_map.end()) {
       reader_handler = (*iter).second;
@@ -338,7 +339,7 @@ size_t
 Client::read(int32_t fd, void *dst, size_t len) {
   ClientBufferedReaderHandler *reader_handler = 0;
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     auto iter = m_buffered_reader_map.find(fd);
     if (iter != m_buffered_reader_map.end())
       reader_handler = (*iter).second;

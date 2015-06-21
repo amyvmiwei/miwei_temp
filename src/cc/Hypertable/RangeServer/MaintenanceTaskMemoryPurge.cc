@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,23 +19,19 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "MaintenanceTaskMemoryPurge.h"
 
 using namespace Hypertable;
+using namespace std;
 
-/**
- *
- */
-MaintenanceTaskMemoryPurge::MaintenanceTaskMemoryPurge(uint32_t level, int priority, boost::xtime &stime,
+MaintenanceTaskMemoryPurge::MaintenanceTaskMemoryPurge(uint32_t level, int priority,
+                                                       chrono::time_point<chrono::steady_clock> &stime,
 						       RangePtr &range)
   : MaintenanceTask(level, priority, stime, range, String("MEMORY PURGE ") + range->get_name()) {
 }
 
-
-/**
- *
- */
 void MaintenanceTaskMemoryPurge::execute() {
   m_range->purge_memory(m_map);
 }

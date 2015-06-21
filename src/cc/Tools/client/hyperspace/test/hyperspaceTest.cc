@@ -35,9 +35,11 @@
 #include <Common/Usage.h>
 
 #include <chrono>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -76,21 +78,20 @@ namespace {
     void set_pending() { m_pending = true; }
 
     virtual void handle(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_pending = false;
       m_cond.notify_all();
     }
 
     void wait_for_notification() {
-      ScopedLock lock(m_mutex);
-      while (m_pending)
-        m_cond.wait(lock);
+      unique_lock<mutex> lock(m_mutex);
+      m_cond.wait(lock, [this](){ return !m_pending; });
     }
 
   private:
-    Mutex             m_mutex;
-    boost::condition  m_cond;
-    bool m_pending;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    bool m_pending {};
   };
   typedef std::shared_ptr<NotificationHandler> NotificationHandlerPtr;
 

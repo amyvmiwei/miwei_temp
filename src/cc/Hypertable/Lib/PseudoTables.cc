@@ -25,16 +25,17 @@
  * singleton class that holds Schema objects for the pseudo tables.
  */
 
-#include "Common/Compat.h"
-
-#include <cstring>
+#include <Common/Compat.h>
 
 #include "PseudoTables.h"
 
+#include <cstring>
+
 using namespace Hypertable;
+using namespace std;
 
 PseudoTables *PseudoTables::ms_instance = 0;
-Mutex PseudoTables::ms_mutex;
+mutex PseudoTables::ms_mutex;
 
 namespace {
 

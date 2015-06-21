@@ -25,11 +25,8 @@
 #include "MaintenanceTaskWorkQueue.h"
 
 using namespace Hypertable;
+using namespace std;
 
-
-/**
- *
- */
 MaintenanceTaskWorkQueue::MaintenanceTaskWorkQueue(uint32_t level, int priority,
 						   std::vector<MetaLog::EntityTaskPtr> &work)
   : MaintenanceTask(level, priority, String("WORK QUEUE")) {
@@ -43,14 +40,11 @@ MaintenanceTaskWorkQueue::~MaintenanceTaskWorkQueue() {
 }
 
 
-/**
- *
- */
 void MaintenanceTaskWorkQueue::execute() {
   for (auto &entity_task : m_work) {
     try {
       if (!entity_task->execute()) {
-	ScopedLock lock(Global::mutex);
+	lock_guard<mutex> lock(Global::mutex);
 	Global::work_queue.push_back(entity_task);
       }
       else
@@ -58,12 +52,12 @@ void MaintenanceTaskWorkQueue::execute() {
     }
     catch (Hypertable::Exception &e) {
       HT_ERROR_OUT << e << HT_END;
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       Global::work_queue.push_back(entity_task);
     }
     catch (std::exception &e) {
       HT_ERROR_OUT << "Problem executing " << entity_task->name() << " - " << e.what() << HT_END;
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       Global::work_queue.push_back(entity_task);
     }
   }

@@ -197,16 +197,16 @@ void TableMutator::wait_for_flush_completion(TableMutatorAsync *mutator) {
   ApplicationHandler *app_handler = 0;
   while (true) {
     {
-      ScopedLock lock(m_queue_mutex);
+      unique_lock<mutex> lock(m_queue_mutex);
       if (mutator->has_outstanding_unlocked()) {
         m_queue->wait_for_buffer(lock, &app_handler);
         {
-          ScopedLock lock(m_mutex);
+          lock_guard<mutex> lock(m_mutex);
           last_error = m_last_error;
         }
       }
       else {
-        ScopedLock lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         if (m_last_error != Error::OK)
           HT_THROW(m_last_error, "");
         return;
@@ -228,7 +228,7 @@ bool TableMutator::retry(uint32_t timeout_ms) {
     return true;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_last_error == Error::OK)
       return true;
     m_last_error = Error::OK;
@@ -258,7 +258,7 @@ void TableMutator::retry_flush() {
   CellsBuilderPtr failed_cells;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_failed_cells && m_failed_cells->size() > 0) {
       failed_mutations.swap(m_failed_mutations);
       failed_cells = m_failed_cells;
@@ -276,7 +276,7 @@ void TableMutator::retry_flush() {
 
 std::ostream &
 TableMutator::show_failed(const Exception &e, std::ostream &out) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (!m_failed_mutations.empty()) {
     for (const auto &v : m_failed_mutations) {
@@ -296,7 +296,7 @@ TableMutator::show_failed(const Exception &e, std::ostream &out) {
 }
 
 void TableMutator::update_ok() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_failed_cells && m_failed_cells->size() > 0) {
     m_failed_mutations.clear();
     m_failed_cells.reset();
@@ -304,7 +304,7 @@ void TableMutator::update_ok() {
 }
 
 void TableMutator::update_error(int error, FailedMutations &failures) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   // copy all failed updates
   m_last_error = error;
   if (!m_failed_cells)

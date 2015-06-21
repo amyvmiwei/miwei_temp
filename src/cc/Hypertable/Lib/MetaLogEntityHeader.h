@@ -25,12 +25,12 @@
  * encode and decode a %MetaLog entity header.
  */
 
-#ifndef HYPERTABLE_METALOGENTITYHEADER_H
-#define HYPERTABLE_METALOGENTITYHEADER_H
+#ifndef Hypertable_Lib_MetaLogEntityHeader_h
+#define Hypertable_Lib_MetaLogEntityHeader_h
 
 #include <iostream>
 
-#include "Common/Mutex.h"
+#include <mutex>
 
 namespace Hypertable {
 
@@ -128,22 +128,22 @@ namespace Hypertable {
       void display(std::ostream &os);
 
       /// %Entity type defined within the context of a Definition
-      int32_t type;
+      int32_t type {};
 
       /// %Checksum of serialized entity state
-      int32_t checksum;
+      int32_t checksum {};
 
       /// Unique ID of entity
-      int64_t id;
+      int64_t id {};
 
       /// Creation timestmp of entity header
-      int64_t timestamp;
+      int64_t timestamp {};
 
       /// Flags (either FLAG_REMOVE or 0)
-      int32_t flags;
+      int32_t flags {};
 
       /// Length of entity header plus serialized state
-      int32_t length;
+      int32_t length {};
 
       /// Controls whether or not #timestamp is printed by display()
       static bool display_timestamp;
@@ -154,10 +154,10 @@ namespace Hypertable {
       static int64_t ms_next_id;
 
       /// %Mutex for serializing access to #ms_next_id
-      static Mutex ms_mutex;
+      static std::mutex ms_mutex;
     };
     /** @}*/
   }
 }
 
-#endif // HYPERTABLE_METALOGENTITYHEADER_H
+#endif // Hypertable_Lib_MetaLogEntityHeader_h

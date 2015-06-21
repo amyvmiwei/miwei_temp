@@ -29,10 +29,10 @@
 
 #include <AsyncComm/ApplicationQueueInterface.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -73,7 +73,7 @@ namespace Hypertable {
     Lib::Master::ClientPtr m_master_client;
     TableCachePtr           m_table_cache;
     uint32_t                m_timeout_ms;
-    Mutex                   m_mutex;
+    std::mutex m_mutex;
     NamespaceMap            m_namespace_map;
     Client                 *m_client;
   };

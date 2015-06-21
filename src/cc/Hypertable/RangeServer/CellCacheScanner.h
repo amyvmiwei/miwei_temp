@@ -19,13 +19,12 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLCACHESCANNER_H
-#define HYPERTABLE_CELLCACHESCANNER_H
+#ifndef Hypertable_RangeServer_CellCacheScanner_h
+#define Hypertable_RangeServer_CellCacheScanner_h
 
 #include "CellCache.h"
 #include "CellListScanner.h"
 #include "ScanContext.h"
-
 
 namespace Hypertable {
 
@@ -61,7 +60,7 @@ namespace Hypertable {
     CellCache::CellMap::iterator   m_cur_iter;
     CellCacheMap::iterator         m_delete_iter;
     CellCachePtr                   m_cell_cache_ptr;
-    Mutex                         &m_cell_cache_mutex;
+    std::mutex                    &m_cell_cache_mutex;
     CellCacheEntry                 m_cur_entry;
     std::vector<CellCacheEntry>    m_entry_cache;
     size_t                         m_entry_cache_next {};
@@ -72,5 +71,5 @@ namespace Hypertable {
   };
 }
 
-#endif // HYPERTABLE_CELLCACHESCANNER_H
+#endif // Hypertable_RangeServer_CellCacheScanner_h
 

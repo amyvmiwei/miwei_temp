@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,23 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "MaintenanceTaskCompaction.h"
 
 using namespace Hypertable;
+using namespace std;
 
-/**
- *
- */
 MaintenanceTaskCompaction::MaintenanceTaskCompaction(uint32_t level, int priority,
-						     boost::xtime &stime, RangePtr &range)
+						     chrono::time_point<chrono::steady_clock> &stime,
+                                                     RangePtr &range)
   : MaintenanceTask(level, priority, stime, range, String("COMPACTION ") + range->get_name()) {
 }
 
 
-/**
- *
- */
 void MaintenanceTaskCompaction::execute() {
   m_range->compact(m_map);
 }

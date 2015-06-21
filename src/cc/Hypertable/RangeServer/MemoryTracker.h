@@ -24,15 +24,14 @@
 /// This file contains type declarations for MemoryTracker, a class used to
 /// track range server memory used.
 
-#ifndef HYPERTABLE_MEMORYTRACKER_H
-#define HYPERTABLE_MEMORYTRACKER_H
+#ifndef Hypertable_RangeServer_MemoryTracker_h
+#define Hypertable_RangeServer_MemoryTracker_h
 
 #include <Hypertable/RangeServer/FileBlockCache.h>
 #include <Hypertable/RangeServer/QueryCache.h>
 
-#include <boost/thread/mutex.hpp>
-
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -52,14 +51,14 @@ namespace Hypertable {
     /// Add to memory used.
     /// @param amount Amount of memory to add
     void add(int64_t amount) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_memory_used += amount;
     }
 
     /// Subtract to memory used.
     /// @param amount Amount of memory to subtract
     void subtract(int64_t amount) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_memory_used -= amount;
     }
 
@@ -69,7 +68,7 @@ namespace Hypertable {
     /// used.
     /// @return Total range server memory used
     int64_t balance() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_memory_used + (m_block_cache ? m_block_cache->memory_used() : 0) +
         (m_query_cache ? m_query_cache->memory_used() : 0);
     }
@@ -77,7 +76,7 @@ namespace Hypertable {
   private:
 
     /// %Mutex to serialize concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Current range server memory used
     int64_t m_memory_used {};
@@ -93,4 +92,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_MEMORYTRACKER_H
+#endif // Hypertable_RangeServer_MemoryTracker_h

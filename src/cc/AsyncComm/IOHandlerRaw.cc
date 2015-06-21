@@ -56,7 +56,8 @@ using namespace std;
 
 
 bool
-IOHandlerRaw::handle_event(struct pollfd *event, time_t arrival_time) {
+IOHandlerRaw::handle_event(struct pollfd *event,
+                           chrono::time_point<chrono::steady_clock> arrival_time) {
 
   //DisplayEvent(event);
 
@@ -102,7 +103,8 @@ IOHandlerRaw::handle_event(struct pollfd *event, time_t arrival_time) {
 #if defined(__linux__)
 
 bool
-IOHandlerRaw::handle_event(struct epoll_event *event, time_t arrival_time) {
+IOHandlerRaw::handle_event(struct epoll_event *event,
+                           chrono::time_point<chrono::steady_clock> arrival_time) {
 
   //display_event(event);
 
@@ -154,7 +156,8 @@ IOHandlerRaw::handle_event(struct epoll_event *event, time_t arrival_time) {
 
 #elif defined(__sun__)
 
-bool IOHandlerRaw::handle_event(port_event_t *event, time_t arrival_time) {
+bool IOHandlerRaw::handle_event(port_event_t *event,
+                                chrono::time_point<chrono::steady_clock> arrival_time) {
 
   //display_event(event);
 
@@ -207,7 +210,8 @@ bool IOHandlerRaw::handle_event(port_event_t *event, time_t arrival_time) {
 
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 
-bool IOHandlerRaw::handle_event(struct kevent *event, time_t arrival_time) {
+bool IOHandlerRaw::handle_event(struct kevent *event,
+                                chrono::time_point<chrono::steady_clock> arrival_time) {
 
   //DisplayEvent(event);
 

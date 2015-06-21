@@ -44,6 +44,7 @@
 #include <Common/md5.h>
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -366,8 +367,7 @@ void MaintenanceScheduler::schedule() {
   if (debug)
     write_debug_output(now, ranges, trace_str);
 
-  boost::xtime schedule_time;
-  boost::xtime_get(&schedule_time, boost::TIME_UTC_);
+  auto schedule_time = chrono::steady_clock::now();
 
   if (not_acknowledged) {
     HT_INFOF("Found load_acknowledged=false in %d ranges", (int)not_acknowledged);
@@ -481,7 +481,7 @@ void MaintenanceScheduler::schedule() {
 
   MaintenanceTaskWorkQueue *task = 0;
   {
-    ScopedLock lock(Global::mutex);
+    lock_guard<mutex>  lock(Global::mutex);
     if (!Global::work_queue.empty())
       task = new MaintenanceTaskWorkQueue(3, 0, Global::work_queue);
   }

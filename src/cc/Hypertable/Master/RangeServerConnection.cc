@@ -48,7 +48,7 @@ RangeServerConnection::RangeServerConnection(const MetaLog::EntityHeader &header
 
 bool RangeServerConnection::connect(const String &hostname, 
         InetAddr local_addr, InetAddr public_addr) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   /** update the mml if the hostname or IP changed
   if (hostname != m_hostname || public_addr != m_public_addr) {
@@ -67,7 +67,7 @@ bool RangeServerConnection::connect(const String &hostname,
 }
 
 bool RangeServerConnection::disconnect() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_connected) {
     m_connected = false;
     return true;
@@ -77,13 +77,13 @@ bool RangeServerConnection::disconnect() {
 
 
 bool RangeServerConnection::connected() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_connected;
 }
 
 
 void RangeServerConnection::set_removed() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_state & RangeServerConnectionFlags::REMOVED)
     return;
   m_connected = false;
@@ -91,12 +91,12 @@ void RangeServerConnection::set_removed() {
 }
 
 bool RangeServerConnection::get_removed() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_state & RangeServerConnectionFlags::REMOVED;
 }
 
 bool RangeServerConnection::set_balanced() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_state & RangeServerConnectionFlags::BALANCED)
     return false;
   m_state |= RangeServerConnectionFlags::BALANCED;
@@ -104,30 +104,30 @@ bool RangeServerConnection::set_balanced() {
 }
 
 bool RangeServerConnection::get_balanced() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_state & RangeServerConnectionFlags::BALANCED;
 }
 
 bool RangeServerConnection::is_recovering() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_recovering;
 }
 
 void RangeServerConnection::set_recovering(bool b) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_recovering = b;
 }
 
 void RangeServerConnection::set_hyperspace_handle(uint64_t handle,
                                                   RangeServerHyperspaceCallback *cb) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_handle = handle;
   m_hyperspace_callback = cb;
 }
 
 bool RangeServerConnection::get_hyperspace_handle(uint64_t *handle,
                                                   RangeServerHyperspaceCallback **cb) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   *handle = m_handle;
   *cb = m_hyperspace_callback;
   return m_hyperspace_callback;
@@ -137,7 +137,7 @@ bool RangeServerConnection::get_hyperspace_handle(uint64_t *handle,
 
 
 CommAddress RangeServerConnection::get_comm_address() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_comm_addr;
 }
 

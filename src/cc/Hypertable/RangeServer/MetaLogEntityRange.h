@@ -35,8 +35,6 @@
 #include <Hypertable/Lib/RangeState.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
-#include <boost/thread/condition.hpp>
-
 namespace Hypertable {
 
   /// @addtogroup RangeServer
@@ -246,9 +244,6 @@ namespace Hypertable {
 			 size_t *remainp) override;
 
     void decode_old(const uint8_t **bufp, size_t *remainp);
-
-    /// Condition variable for signalling state change
-    boost::condition m_cond;
 
     /// %Table identifier
     TableIdentifierManaged m_table;

@@ -218,10 +218,7 @@ void OperationRegisterServer::execute() {
 
   // Wait for server to acquire lock on Hyperspace file
   if (!m_params.lock_held()) {
-    boost::xtime deadline;
-    boost::xtime_get(&deadline, boost::TIME_UTC_);
-    deadline.sec += 120;
-    if (!hyperspace_callback->wait_for_lock_acquisition(deadline)) {
+    if (!hyperspace_callback->wait_for_lock_acquisition(chrono::seconds(120))) {
       String notification_body = format("Timed out waiting for %s to acquire "
                                         "lock on Hyperspace file",
                                         m_location.c_str());

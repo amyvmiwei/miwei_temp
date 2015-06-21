@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -24,6 +24,7 @@
 
 #include <Hypertable/Lib/KeySpec.h>
 
+#include <Common/Logger.h>
 #include <Common/Serialization.h>
 
 #include <string>

@@ -60,7 +60,9 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/thread/condition.hpp>
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <unordered_map>
 
@@ -101,10 +103,10 @@ namespace Hypertable {
 
         typedef std::map<int64_t, RecoveryStepFuturePtr> FutureMap;
 
-        Mutex m_mutex;
-        FutureMap m_replay_map;
-        FutureMap m_prepare_map;
-        FutureMap m_commit_map;
+      std::mutex m_mutex;
+      FutureMap m_replay_map;
+      FutureMap m_prepare_map;
+      FutureMap m_commit_map;
     };
 
   public:
@@ -136,8 +138,8 @@ namespace Hypertable {
     /// @return <i>true</i> if server is shutting down, <i>false</i> otherwise
     bool shutdown_in_progress();
 
-    Mutex mutex;
-    boost::condition cond;
+    std::mutex mutex;
+    std::condition_variable cond;
     Comm *comm {};
     SystemStatePtr system_state; //!< System state entity
     RangeServerConnectionManagerPtr rsc_manager;
@@ -247,7 +249,7 @@ namespace Hypertable {
     MetaLog::EntityPtr m_balance_plan_authority {};
 
     /// %Mutex for serializing access to #m_outstanding_move_ops
-    Mutex m_outstanding_move_ops_mutex;
+    std::mutex m_outstanding_move_ops_mutex;
 
     /// Map of outstanding <i>move range</i> operations
     std::unordered_map<int64_t, int64_t> m_outstanding_move_ops;

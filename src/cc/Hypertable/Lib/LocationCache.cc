@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,15 +19,16 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "LocationCache.h"
+
+#include <Common/InetAddr.h>
+
 #include <cassert>
 #include <cstring>
 #include <fstream>
 #include <iostream>
-
-#include "Common/InetAddr.h"
-
-#include "LocationCache.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -38,7 +39,7 @@ using namespace std;
 void
 LocationCache::insert(const char *table_name, RangeLocationInfo &range_loc_info,
                       bool pegged) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   Value *newval = new Value;
   LocationMap::iterator iter;
   LocationCacheKey key;
@@ -113,7 +114,7 @@ LocationCache::~LocationCache() {
 bool
 LocationCache::lookup(const char * table_name, const char *rowkey,
                       RangeLocationInfo *range_loc_infop, bool inclusive) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   Value* cacheval;
   if (!lookup(table_name, rowkey, cacheval, inclusive))
@@ -129,7 +130,7 @@ LocationCache::lookup(const char * table_name, const char *rowkey,
 bool
 LocationCache::lookup(const char * table_name, const char *rowkey,
                       RangeAddrInfo *range_addr_infop, bool inclusive) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   Value* cacheval;
   if (!lookup(table_name, rowkey, cacheval, inclusive))
@@ -141,7 +142,7 @@ LocationCache::lookup(const char * table_name, const char *rowkey,
 }
 
 bool LocationCache::invalidate(const char *table_name, const char *rowkey) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   LocationMap::iterator iter;
   LocationCacheKey key;
 
@@ -171,7 +172,7 @@ bool LocationCache::invalidate(const char *table_name, const char *rowkey) {
 }
 
 void LocationCache::invalidate_host(const string &hostname) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   CommAddress addr;
 
   addr.set_proxy(hostname);

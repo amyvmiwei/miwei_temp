@@ -130,7 +130,7 @@ void OperationAlterTable::execute() {
     }
     m_schema = alter_schema->render_xml(true);
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(Dependency::METADATA);
       m_state = OperationState::CREATE_INDICES;
@@ -151,7 +151,7 @@ void OperationAlterTable::execute() {
     servers.clear();
     Utility::get_table_server_set(m_context, m_id, "", servers);
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_servers.clear();
       m_dependencies.clear();
       for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
@@ -176,7 +176,7 @@ void OperationAlterTable::execute() {
       for (const auto &result : results) {
         if (result.error == Error::OK ||
             result.error == Error::TABLE_NOT_FOUND) {
-          ScopedLock lock(m_mutex);
+          lock_guard<mutex> lock(m_mutex);
           m_completed.insert(result.location);
         }
         else
@@ -184,7 +184,7 @@ void OperationAlterTable::execute() {
                    Error::get_text(result.error), result.msg.c_str());
       }
       {
-        ScopedLock lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         m_servers.clear();
         m_dependencies.clear();
         m_dependencies.insert(Dependency::METADATA);

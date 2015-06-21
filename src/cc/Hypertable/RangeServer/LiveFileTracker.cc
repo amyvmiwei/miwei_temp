@@ -50,7 +50,7 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
 }
 
 void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid, int64_t total_blocks) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for (size_t i=0; i<deletes.size(); i++)
     m_live.erase(strip_basename(deletes[i]));
   if (add != "")
@@ -62,7 +62,7 @@ void LiveFileTracker::update_live(const String &add, std::vector<String> &delete
 
 
 void LiveFileTracker::add_references(const std::vector<String> &filev) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   FileRefCountMap::iterator iter;
   for (size_t i=0; i<filev.size(); i++) {
     iter = m_referenced.find(strip_basename(filev[i]));
@@ -79,7 +79,7 @@ void LiveFileTracker::add_references(const std::vector<String> &filev) {
  * is set to true, indicating the the column needs updating.
  */
 void LiveFileTracker::remove_references(const std::vector<String> &filev) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   FileRefCountMap::iterator iter;
   for (size_t i=0; i<filev.size(); i++) {
     iter = m_referenced.find(strip_basename(filev[i]));
@@ -169,7 +169,7 @@ void LiveFileTracker::update_files_column() {
 
 
 void LiveFileTracker::get_file_data(String &file_list, int64_t *block_countp, bool include_blocked) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   file_list = "";
 
@@ -190,7 +190,7 @@ void LiveFileTracker::get_file_data(String &file_list, int64_t *block_countp, bo
 }
 
 void LiveFileTracker::get_file_list(String &file_list) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   file_list = "";
   for (const auto &file : m_live)
     file_list += file + ";";

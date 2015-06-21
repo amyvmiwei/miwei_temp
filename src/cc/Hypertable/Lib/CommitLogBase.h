@@ -25,7 +25,6 @@
 #include "KeySpec.h"
 #include "CommitLogBlockStream.h"
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 #include <Common/StringExt.h>
 
@@ -33,6 +32,7 @@
 
 #include <deque>
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -97,7 +97,7 @@ namespace Hypertable {
      * concurrently used which is why it doesn't lock it's mutex
      */
     void stitch_in(CommitLogBase *other) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex>lock(m_mutex);
       for (LogFragmentQueue::iterator iter = other->m_fragment_queue.begin();
            iter != other->m_fragment_queue.end(); iter++)
         m_fragment_queue.push_back(*iter);
@@ -108,7 +108,7 @@ namespace Hypertable {
 
     int64_t get_latest_revision() { return m_latest_revision; }
 
-    bool empty() { ScopedLock lock(m_mutex); return m_fragment_queue.empty(); }
+    bool empty() { std::lock_guard<std::mutex>lock(m_mutex); return m_fragment_queue.empty(); }
 
     bool range_reference_required() { return m_range_reference_required; }
 
@@ -121,11 +121,11 @@ namespace Hypertable {
     }
 
   protected:
-    Mutex             m_mutex;
-    std::string            m_log_dir;
-    std::string            m_log_name;
-    LogFragmentQueue  m_fragment_queue;
-    int64_t           m_latest_revision;
+    std::mutex m_mutex;
+    std::string m_log_dir;
+    std::string m_log_name;
+    LogFragmentQueue m_fragment_queue;
+    int64_t m_latest_revision;
     std::set<int64_t> m_linked_log_hashes;
     bool m_range_reference_required;
   };

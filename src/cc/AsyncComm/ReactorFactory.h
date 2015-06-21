@@ -26,21 +26,21 @@
  */
 
 
-#ifndef AsyncComm_REACTORFACTORY_H
-#define AsyncComm_REACTORFACTORY_H
+#ifndef AsyncComm_ReactorFactory_h
+#define AsyncComm_ReactorFactory_h
+
+#include "Reactor.h"
+
+#include "Common/atomic.h"
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <cassert>
+#include <mutex>
 #include <set>
 #include <vector>
-
-#include "Common/atomic.h"
-#include "Reactor.h"
-
 
 namespace Hypertable {
 
@@ -110,7 +110,7 @@ namespace Hypertable {
   private:
 
     /// Mutex to serialize calls to #initialize
-    static Mutex ms_mutex;
+    static std::mutex ms_mutex;
 
     /// Atomic integer used for round-robin assignment of reactors
     static atomic_t ms_next_reactor;
@@ -119,5 +119,5 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // AsyncComm_REACTORFACTORY_H
+#endif // AsyncComm_ReactorFactory_h
 

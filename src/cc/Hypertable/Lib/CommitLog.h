@@ -185,7 +185,7 @@ namespace Hypertable {
      * Returns total size of commit log
      */
     int64_t size() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex>lock(m_mutex);
       int64_t total = 0;
       for (LogFragmentQueue::iterator iter = m_fragment_queue.begin();
            iter != m_fragment_queue.end(); iter++)
@@ -194,7 +194,7 @@ namespace Hypertable {
     }
 
     const std::string& get_current_fragment_file() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex>lock(m_mutex);
       return m_cur_fragment_fname;
     }
 

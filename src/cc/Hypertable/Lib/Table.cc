@@ -130,7 +130,7 @@ void Table::refresh_if_required() {
 }
 
 void Table::refresh() {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   HT_ASSERT(m_name != "");
   m_stale = true;
   initialize();
@@ -138,7 +138,7 @@ void Table::refresh() {
 
 
 void Table::get(TableIdentifierManaged &ident_copy, SchemaPtr &schema_copy) {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   refresh_if_required();
   ident_copy = m_table;
   schema_copy = m_schema;
@@ -147,7 +147,7 @@ void Table::get(TableIdentifierManaged &ident_copy, SchemaPtr &schema_copy) {
 
 void
 Table::refresh(TableIdentifierManaged &ident_copy, SchemaPtr &schema_copy) {
-  ScopedLock lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   HT_ASSERT(m_name != "");
   m_stale = true;
   initialize();
@@ -169,7 +169,7 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
   {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     refresh_if_required();
   }
 
@@ -188,7 +188,7 @@ Table::create_mutator_async(ResultCallback *cb, uint32_t timeout_ms, uint32_t fl
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
   {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     refresh_if_required();
   }
 
@@ -201,7 +201,7 @@ Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
                       int32_t flags) {
 
   {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     refresh_if_required();
   }
 
@@ -216,7 +216,7 @@ Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint3
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
   {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     refresh_if_required();
   }
 

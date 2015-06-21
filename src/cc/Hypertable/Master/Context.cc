@@ -47,6 +47,7 @@
 #include <Common/SystemInfo.h>
 #include <Common/md5.h>
 
+#include <chrono>
 #include <memory>
 
 using namespace Hypertable;
@@ -114,7 +115,7 @@ Context::~Context() {
 
 bool Context::set_startup_status(bool status) {
   {
-    ScopedLock lock(mutex);
+    lock_guard<std::mutex> lock(mutex);
     m_startup = status;
     if (status == false && m_shutdown)
       return false;
@@ -128,7 +129,7 @@ bool Context::startup_in_progress() {
 
 void Context::start_shutdown() {
   {
-    ScopedLock lock(mutex);
+    lock_guard<std::mutex> lock(mutex);
     if (m_shutdown)
       return;
     m_shutdown = true;
@@ -139,10 +140,7 @@ void Context::start_shutdown() {
   master_file->shutdown();
   if (recovery_barrier_op)
     recovery_barrier_op->shutdown();
-  boost::xtime expire_time;
-  boost::xtime_get(&expire_time, boost::TIME_UTC_);
-  expire_time.sec += 15;
-  op->timed_wait_for_idle(expire_time);
+  op->wait_for_idle(chrono::seconds(15));
   op->shutdown();
   response_manager->shutdown();
   response_manager_thread->join();
@@ -177,20 +175,20 @@ void Context::notification_hook(const String &subject, const String &message) {
 }
 
 void Context::set_balance_plan_authority(MetaLog::EntityPtr bpa) {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   HT_ASSERT(dynamic_cast<BalancePlanAuthority *>(bpa.get()));
   m_balance_plan_authority = bpa;
 }
 
 BalancePlanAuthority *Context::get_balance_plan_authority() {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   if (!m_balance_plan_authority)
     m_balance_plan_authority = make_shared<BalancePlanAuthority>(shared_from_this(), mml_writer);
   return static_cast<BalancePlanAuthority *>(m_balance_plan_authority.get());
 }
 
 void Context::get_balance_plan_authority(MetaLog::EntityPtr &entity) {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   if (!m_balance_plan_authority)
     m_balance_plan_authority = make_shared<BalancePlanAuthority>(shared_from_this(), mml_writer);
   entity = m_balance_plan_authority;
@@ -364,7 +362,7 @@ void Context::commit_complete(EventPtr &event) {
 }
 
 bool Context::add_move_operation(OperationPtr operation) {
-  ScopedLock lock(m_outstanding_move_ops_mutex);
+  lock_guard<std::mutex> lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(operation->hash_code());
   if (iter != m_outstanding_move_ops.end())
     return false;
@@ -373,7 +371,7 @@ bool Context::add_move_operation(OperationPtr operation) {
 }
 
 void Context::remove_move_operation(OperationPtr operation) {
-  ScopedLock lock(m_outstanding_move_ops_mutex);
+  lock_guard<std::mutex> lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(operation->hash_code());
   if (iter == m_outstanding_move_ops.end())
     return;
@@ -381,7 +379,7 @@ void Context::remove_move_operation(OperationPtr operation) {
 }
 
 OperationPtr Context::get_move_operation(int64_t hash_code) {
-  ScopedLock lock(m_outstanding_move_ops_mutex);
+  lock_guard<std::mutex> lock(m_outstanding_move_ops_mutex);
   auto iter = m_outstanding_move_ops.find(hash_code);
   if (iter != m_outstanding_move_ops.end()) {
     OperationPtr operation = reference_manager->get(iter->second);
@@ -392,22 +390,22 @@ OperationPtr Context::get_move_operation(int64_t hash_code) {
 }
 
 void Context::add_available_server(const String &location) {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   available_servers.insert(location);
 }
 
 void Context::remove_available_server(const String &location) {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   available_servers.erase(location);
 }
 
 size_t Context::available_server_count() {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   return available_servers.size();
 }
 
 void Context::get_available_servers(StringSet &servers) {
-  ScopedLock lock(mutex);
+  lock_guard<std::mutex> lock(mutex);
   servers = available_servers;
 }
 
@@ -444,13 +442,13 @@ bool Context::can_accept_ranges(const RangeServerStatistics &stats)
 void
 Context::RecoveryState::install_replay_future(int64_t id,
                                               RecoveryStepFuturePtr &future) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   m_replay_map[id] = future;
 }
 
 RecoveryStepFuturePtr
 Context::RecoveryState::get_replay_future(int64_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   RecoveryStepFuturePtr future;
   if (m_replay_map.find(id) != m_replay_map.end())
     future = m_replay_map[id];
@@ -459,7 +457,7 @@ Context::RecoveryState::get_replay_future(int64_t id) {
 
 void
 Context::RecoveryState::erase_replay_future(int64_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   m_replay_map.erase(id);
 }
 
@@ -467,13 +465,13 @@ Context::RecoveryState::erase_replay_future(int64_t id) {
 void
 Context::RecoveryState::install_prepare_future(int64_t id,
                                                RecoveryStepFuturePtr &future) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   m_prepare_map[id] = future;
 }
 
 RecoveryStepFuturePtr
 Context::RecoveryState::get_prepare_future(int64_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   RecoveryStepFuturePtr future;
   if (m_prepare_map.find(id) != m_prepare_map.end())
     future = m_prepare_map[id];
@@ -482,7 +480,7 @@ Context::RecoveryState::get_prepare_future(int64_t id) {
 
 void
 Context::RecoveryState::erase_prepare_future(int64_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   m_prepare_map.erase(id);
 }
 
@@ -490,13 +488,13 @@ Context::RecoveryState::erase_prepare_future(int64_t id) {
 void
 Context::RecoveryState::install_commit_future(int64_t id,
                                                RecoveryStepFuturePtr &future) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   m_commit_map[id] = future;
 }
 
 RecoveryStepFuturePtr
 Context::RecoveryState::get_commit_future(int64_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   RecoveryStepFuturePtr future;
   if (m_commit_map.find(id) != m_commit_map.end())
     future = m_commit_map[id];
@@ -505,7 +503,7 @@ Context::RecoveryState::get_commit_future(int64_t id) {
 
 void
 Context::RecoveryState::erase_commit_future(int64_t id) {
-  ScopedLock lock(m_mutex);
+  lock_guard<std::mutex> lock(m_mutex);
   m_commit_map.erase(id);
 }
 

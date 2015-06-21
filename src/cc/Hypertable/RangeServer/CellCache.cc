@@ -195,7 +195,7 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 
 
 void CellCache::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   const char *row, *last_row = 0;
   int64_t last_count = 0;
   for (CellMap::iterator iter = m_cell_map.begin();

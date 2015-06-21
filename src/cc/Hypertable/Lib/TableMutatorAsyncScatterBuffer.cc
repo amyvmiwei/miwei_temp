@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -84,7 +84,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const ColumnFamilySpec *cf, 
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     bool is_counter = false;
     if (key.column_family_code) {
@@ -146,7 +146,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const ColumnFamilySpec *cf, 
 
 
 void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   RangeAddrInfo range_info;
   TableMutatorAsyncSendBufferMap::const_iterator iter;
@@ -191,7 +191,7 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
 
 void
 TableMutatorAsyncScatterBuffer::set(SerializedKey key, ByteString value, size_t incr_mem) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   RangeAddrInfo range_info;
   TableMutatorAsyncSendBufferMap::const_iterator iter;
@@ -239,7 +239,7 @@ namespace {
 
 
 void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool outstanding=false;
 
   m_timer.start();
@@ -350,10 +350,8 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
 
 
 void TableMutatorAsyncScatterBuffer::wait_for_completion() {
-  ScopedLock lock(m_mutex);
-
-  while(m_outstanding)
-    m_cond.wait(lock);
+  unique_lock<mutex> lock(m_mutex);
+  m_cond.wait(lock, [this](){ return m_outstanding == 0; });
 }
 
 
@@ -514,7 +512,7 @@ void TableMutatorAsyncScatterBuffer::finish() {
   m_mutator->buffer_finish(m_id, error, has_retries);
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_outstanding = false;
     m_cond.notify_all();
   }

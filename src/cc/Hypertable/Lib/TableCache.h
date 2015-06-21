@@ -28,10 +28,10 @@
 
 #include <AsyncComm/ApplicationQueueInterface.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -87,7 +87,7 @@ namespace Hypertable {
 
     typedef std::unordered_map<String, TablePtr> TableMap;
 
-    Mutex                   m_mutex;
+    std::mutex m_mutex;
     PropertiesPtr           m_props;
     RangeLocatorPtr         m_range_locator;
     Comm                   *m_comm;

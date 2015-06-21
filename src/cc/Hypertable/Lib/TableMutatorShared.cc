@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,7 +17,7 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include "TableMutatorShared.h"
 #include "TableMutatorIntervalHandler.h"
@@ -47,7 +47,7 @@ TableMutatorShared::~TableMutatorShared() {
 
 void TableMutatorShared::interval_flush() {
   try {
-    ScopedRecLock lock(m_mutex);
+    lock_guard<recursive_mutex> lock(m_mutex);
     HiResTime now;
 
     if (xtime_diff_millis(m_last_flush_ts, now) >= m_flush_interval) {

@@ -39,13 +39,13 @@ using namespace Hypertable;
 
 TableMutatorSyncDispatchHandler::TableMutatorSyncDispatchHandler(
     Comm *comm, TableIdentifierManaged &table_id, time_t timeout)
-  : m_outstanding(0), m_client(comm, timeout), m_table_identifier(table_id) {
+  : m_client(comm, timeout), m_table_identifier(table_id) {
 }
 
 TableMutatorSyncDispatchHandler::~TableMutatorSyncDispatchHandler() { }
 
 void TableMutatorSyncDispatchHandler::add(const CommAddress &addr) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   try {
     pair<CommAddressSet::iterator, bool> res = m_pending.insert(addr);
@@ -64,7 +64,7 @@ void TableMutatorSyncDispatchHandler::add(const CommAddress &addr) {
 
 
 void TableMutatorSyncDispatchHandler::handle(EventPtr &event_ptr) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   ErrorResult result;
 
   HT_ASSERT(event_ptr->proxy);
@@ -98,7 +98,7 @@ void TableMutatorSyncDispatchHandler::handle(EventPtr &event_ptr) {
 
 
 void TableMutatorSyncDispatchHandler::retry() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   m_errors.clear();
   for (auto addr : m_pending) {
@@ -119,9 +119,8 @@ void TableMutatorSyncDispatchHandler::retry() {
 
 
 bool TableMutatorSyncDispatchHandler::wait_for_completion() {
-  ScopedLock lock(m_mutex);
-  while (m_outstanding > 0)
-    m_cond.wait(lock);
+  unique_lock<mutex> lock(m_mutex);
+  m_cond.wait(lock, [this](){ return m_outstanding == 0; });
   return m_errors.empty();
 }
 

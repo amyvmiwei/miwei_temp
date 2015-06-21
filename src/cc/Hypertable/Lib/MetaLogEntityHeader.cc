@@ -43,16 +43,15 @@ using namespace Hypertable::MetaLog;
 using namespace std;
 
 int64_t EntityHeader::ms_next_id = 1;
-Mutex   EntityHeader::ms_mutex;
+std::mutex EntityHeader::ms_mutex;
 bool EntityHeader::display_timestamp = true;
 
 
-EntityHeader::EntityHeader()
-  : type(0), checksum(0), id(0), timestamp(0), flags(0), length(0) { }
+EntityHeader::EntityHeader() { }
 
-EntityHeader::EntityHeader(int32_t type_) : type(type_), checksum(0), flags(0), length(0) {
+EntityHeader::EntityHeader(int32_t type_) : type(type_) {
   {
-    ScopedLock lock(ms_mutex);
+    lock_guard<mutex> lock(ms_mutex);
     id = ms_next_id++;
   }
   timestamp = get_ts64();
@@ -66,7 +65,7 @@ EntityHeader::EntityHeader(const EntityHeader &other) {
   timestamp = other.timestamp;
   flags = other.flags;
   {
-    ScopedLock lock(ms_mutex);
+    lock_guard<mutex> lock(ms_mutex);
     if (ms_next_id <= other.id)
       ms_next_id = other.id + 1;
   }

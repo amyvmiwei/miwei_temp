@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKMEMORYPURGE_H
-#define HYPERTABLE_MAINTENANCETASKMEMORYPURGE_H
+#ifndef Hypertable_RangeServer_MaintenanceTaskMemoryPurge_h
+#define Hypertable_RangeServer_MaintenanceTaskMemoryPurge_h
 
 #include "MaintenanceTask.h"
 
@@ -28,10 +28,12 @@ namespace Hypertable {
 
   class MaintenanceTaskMemoryPurge : public MaintenanceTask {
   public:
-    MaintenanceTaskMemoryPurge(uint32_t level, int priority, boost::xtime &stime, RangePtr &range);
+    MaintenanceTaskMemoryPurge(uint32_t level, int priority,
+                               std::chrono::time_point<std::chrono::steady_clock> &stime,
+                               RangePtr &range);
     virtual void execute();
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKMEMORYPURGE_H
+#endif // Hypertable_RangeServer_MaintenanceTaskMemoryPurge_h

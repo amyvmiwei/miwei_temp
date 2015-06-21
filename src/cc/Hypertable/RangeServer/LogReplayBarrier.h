@@ -30,12 +30,10 @@
 #include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
-#include <Common/Mutex.h>
-
-#include <boost/thread/condition.hpp>
-#include <boost/thread/xtime.hpp>
-
+#include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -85,7 +83,7 @@ namespace Hypertable {
     /// @return <i>true</i> if ROOT commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before ROOT commit log replay completed.
-    bool wait_for_root(boost::xtime deadline);
+    bool wait_for_root(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     /// Waits for METADATA commit log replay to complete.
     /// Performs a timed wait on #m_metadata_complete_cond with
@@ -94,7 +92,7 @@ namespace Hypertable {
     /// @return <i>true</i> if METADATA commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before METADATA commit log replay completed.
-    bool wait_for_metadata(boost::xtime deadline);
+    bool wait_for_metadata(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     /// Waits for SYSTEM commit log replay to complete.
     /// Performs a timed wait on #m_system_complete_cond with
@@ -103,7 +101,7 @@ namespace Hypertable {
     /// @return <i>true</i> if SYSTEM commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before SYSTEM commit log replay completed.
-    bool wait_for_system(boost::xtime deadline);
+    bool wait_for_system(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     /// Waits for USER commit log replay to complete.
     /// Performs a timed wait on #m_user_complete_cond with
@@ -112,7 +110,7 @@ namespace Hypertable {
     /// @return <i>true</i> if USER commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait_for_user(boost::xtime deadline);
+    bool wait_for_user(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     /// Waits for commit log replay to complete for range class defined by a
     /// given range.
@@ -126,8 +124,8 @@ namespace Hypertable {
     /// @return <i>true</i> if commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait(boost::xtime deadline, const TableIdentifier &table,
-              const RangeSpec &range);
+    bool wait(std::chrono::time_point<std::chrono::steady_clock> deadline,
+              const TableIdentifier &table, const RangeSpec &range);
 
     /// Waits for commit log replay to complete for log class defined by a
     /// given table.
@@ -139,7 +137,8 @@ namespace Hypertable {
     /// @return <i>true</i> if commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait(boost::xtime deadline, const TableIdentifier &table);
+    bool wait(std::chrono::time_point<std::chrono::steady_clock> deadline,
+              const TableIdentifier &table);
 
     /// Checks if replay of USER commit log is complete
     /// @return <i>true</i> if USER commit log replay is complete, <i>false</i>
@@ -148,15 +147,15 @@ namespace Hypertable {
 
   private:
     /// %Mutex to serialize concurrent access.
-    Mutex m_mutex;
+    std::mutex m_mutex;
     /// Condition variable used to signal ROOT commit log replay complete.
-    boost::condition m_root_complete_cond;
+    std::condition_variable m_root_complete_cond;
     /// Condition variable used to signal METADATA commit log replay complete.
-    boost::condition m_metadata_complete_cond;
+    std::condition_variable m_metadata_complete_cond;
     /// Condition variable used to signal SYSTEM commit log replay complete.
-    boost::condition m_system_complete_cond;
+    std::condition_variable m_system_complete_cond;
     /// Condition variable used to signal USER commit log replay complete.
-    boost::condition m_user_complete_cond;
+    std::condition_variable m_user_complete_cond;
     /// Flag indicating if ROOT commit log replay is complete
     bool m_root_complete {};
     /// Flag indicating if METADATA commit log replay is complete

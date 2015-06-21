@@ -25,12 +25,8 @@
  * class registered with Hyperspace on range server lock files.
  */
 
-#ifndef HYPERTABLE_RANGESERVERHYPERSPACECALLBACK_H
-#define HYPERTABLE_RANGESERVERHYPERSPACECALLBACK_H
-
-#include "Common/Mutex.h"
-
-#include "Hyperspace/Session.h"
+#ifndef Hypertable_Master_RangeServerHyperspaceCallback_h
+#define Hypertable_Master_RangeServerHyperspaceCallback_h
 
 #include "Context.h"
 #include "OperationProcessor.h"
@@ -38,6 +34,12 @@
 #include "OperationTimedBarrier.h"
 #include "OperationRegisterServerBlocker.h"
 #include "RangeServerConnection.h"
+
+#include "Hyperspace/Session.h"
+
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -83,7 +85,7 @@ namespace Hypertable {
     virtual void lock_released() {
       HT_INFOF("%s hyperspace lock file released", m_rsc->location().c_str());
       {
-        ScopedLock lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_mutex);
         m_lock_held = false;
         m_context->remove_available_server(m_rsc->location());
         m_cond.notify_all();
@@ -109,7 +111,7 @@ namespace Hypertable {
      * @param mode the mode in which the lock was acquired
      */
     virtual void lock_acquired(uint32_t mode) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_INFOF("%s hyperspace lock file acquired", m_rsc->location().c_str());
       m_lock_held = true;
       m_cond.notify_all();
@@ -122,22 +124,18 @@ namespace Hypertable {
      * @return <i>false</i> if <code>deadline</code> reached before #m_lock_held
      * becomes <i>true</i>, otherwise returns <i>true</i>
      */
-    bool wait_for_lock_acquisition(boost::xtime deadline) {
-      ScopedLock lock(m_mutex);
-      while (!m_lock_held) {
-        if (!m_cond.timed_wait(lock, deadline))
-          return false;
-      }
-      return true;
+    bool wait_for_lock_acquisition(std::chrono::milliseconds max_wait) {
+      std::unique_lock<std::mutex> lock(m_mutex);
+      return m_cond.wait_for(lock, max_wait, [this](){ return m_lock_held; });
     }
 
   private:
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Condition variable used to wait for completion
-    boost::condition m_cond;
+    std::condition_variable m_cond;
 
     /// %Master context
     ContextPtr m_context;
@@ -152,4 +150,4 @@ namespace Hypertable {
   /** @} */
 }
 
-#endif // HYPERTABLE_RANGESERVERHYPERSPACECALLBACK_H
+#endif // Hypertable_Master_RangeServerHyperspaceCallback_h

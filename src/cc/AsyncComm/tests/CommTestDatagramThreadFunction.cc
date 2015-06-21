@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,37 +19,32 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <iostream>
-#include <fstream>
-#include <queue>
-
-extern "C" {
-#include <poll.h>
-}
-
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
-
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/CommHeader.h"
-#include "AsyncComm/DispatchHandler.h"
-#include "AsyncComm/Event.h"
-
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "CommTestDatagramThreadFunction.h"
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/CommHeader.h>
+#include <AsyncComm/DispatchHandler.h>
+#include <AsyncComm/Event.h>
+
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Serialization.h>
+
+#include <boost/thread/thread.hpp>
+
+#include <condition_variable>
+#include <iostream>
+#include <fstream>
+#include <mutex>
+#include <queue>
 
 using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 
 namespace {
-
 
   /**
    * This is the dispatch handler that gets installed as the default
@@ -60,10 +55,10 @@ namespace {
 
   public:
 
-    ResponseHandler() : m_queue(), m_mutex(), m_cond() { return; }
+    ResponseHandler() { }
 
     virtual void handle(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       if (event_ptr->type == Event::MESSAGE) {
         m_queue.push(event_ptr);
         m_cond.notify_one();
@@ -75,19 +70,17 @@ namespace {
     }
 
     virtual bool get_response(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
-      while (m_queue.empty()) {
-        m_cond.wait(lock);
-      }
+      unique_lock<mutex> lock(m_mutex);
+      m_cond.wait(lock, [this](){ return !m_queue.empty(); });
       event_ptr = m_queue.front();
       m_queue.pop();
       return true;
     }
 
   private:
-    std::queue<EventPtr>   m_queue;
-    Mutex             m_mutex;
-    boost::condition  m_cond;
+    std::queue<EventPtr> m_queue;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
   };
 
 }

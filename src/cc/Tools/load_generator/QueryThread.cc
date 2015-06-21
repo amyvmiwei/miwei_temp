@@ -34,11 +34,12 @@
 #include <thread>
 
 using namespace Hypertable;
+using namespace std;
 
 void QueryThread::operator()() {
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
 
-  ScopedLock lock(m_state.mutex);
+  std::lock_guard<std::mutex> lock(m_state.mutex);
 
   m_state.total_cells = 0;
   m_state.total_bytes = 0;

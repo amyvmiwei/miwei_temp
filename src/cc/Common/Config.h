@@ -28,10 +28,11 @@
 #ifndef Common_Config_h
 #define Common_Config_h
 
-#include <Common/Mutex.h>
 #include <Common/Logger.h>
 #include <Common/Meta.h>
 #include <Common/Properties.h>
+
+#include <mutex>
 
 namespace Hypertable { namespace Config {
 
@@ -43,7 +44,7 @@ namespace Hypertable { namespace Config {
   typedef PropertiesDesc Desc;
 
   /** A global (recursive) configuration mutex */
-  extern RecMutex rec_mutex;
+  extern std::recursive_mutex rec_mutex;
 
   /** This singleton map stores all options */
   extern PropertiesPtr properties;

@@ -44,12 +44,12 @@ RecoveredServers::RecoveredServers(const MetaLog::EntityHeader &header)
 }
 
 void RecoveredServers::add(const std::string &location) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_servers.insert(location);
 }
 
 bool RecoveredServers::contains(const std::string &location) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_servers.count(location) == 1;
 }
 
@@ -87,7 +87,7 @@ const std::string RecoveredServers::name() {
 }
 
 void RecoveredServers::display(std::ostream &os) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool output_comma {};
   for (auto &name : m_servers) {
     if (output_comma)

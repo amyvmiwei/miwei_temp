@@ -23,116 +23,36 @@
  * and to unlock them when going out of scope.
  */
 
-#ifndef HYPERTABLE_MUTEX_H
-#define HYPERTABLE_MUTEX_H
+#ifndef Common_Mutex_h
+#define Common_Mutex_h
 
 #include <Common/Logger.h>
-
-#include <boost/version.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/recursive_mutex.hpp>
 
 #include <atomic>
 #include <mutex>
 
 namespace Hypertable {
 
-/** @addtogroup Common
- *  @{
- */
+  /** @addtogroup Common
+   *  @{
+   */
 
-/** A generic Locker class for objects with lock/unlock methods.
- *
- * boost::mutex::scoped_lock use lock_ops<mutex>::lock/unlock in pre 1.35
- * which makes it less convenient than the following which can be used
- * to guard any object (besides a typical mutex) with lock/unlock methods
- */
-template <class MutexT>
-class Locker : boost::noncopyable {
-public:
-  /** Constructor; acquires the lock, unless @a init_lock is false */
-  explicit Locker(MutexT &mutex, bool init_lock = true)
-    : m_mutex(mutex), m_locked(false) {
-    if (init_lock)
-      m_mutex.lock();
-    m_locked = true;
-  }
+  /** Mutex that maintains wait threads count.
+   */
+  class MutexWithStatistics {
+  public:
+    void lock() { if (m_enabled) m_count++; m_mutex.lock();}
+    void unlock() { m_mutex.unlock(); if (m_enabled) m_count--; }
+    int32_t get_waiting_threads() {return (int32_t)((m_enabled && m_count>1) ? m_count-1 : 0);}
+    void set_statistics_enabled(bool val) { m_enabled = val; }
+  private:
+    std::atomic_int_fast32_t m_count {};
+    std::mutex m_mutex;
+    bool m_enabled {true};
+  };
 
-  /** Destructor; releases the lock */
-  ~Locker() {
-    if (m_locked) {
-      m_mutex.unlock();
-      m_locked = false;
-    }
-  }
+  /** @} */
 
-private:
-  /** Reference to the mutex object */
-  MutexT &m_mutex;
+}
 
-  /** true if the mutex was locked, otherwise false */
-  bool m_locked;
-};
-
-/** A ScopedLock is boost's version of the Locker class for a regular
- * (non-recursive) mutex.
- */
-typedef boost::mutex::scoped_lock ScopedLock;
-
-/** A ScopedRecLock is boost's version of the Locker class for a recursive
- * mutex.
- */
-typedef boost::recursive_mutex::scoped_lock ScopedRecLock;
-
-/** A (non-recursive) mutex
- *
- * This is identical to boost::mutex unless your boost version is < 1.35;
- * in this case additional lock(), unlock() methods are provided which are
- * more convenient to use than those of boost::mutex.
- */
-class Mutex : public boost::mutex {
-public:
-#if BOOST_VERSION < 103500
-  typedef boost::detail::thread::lock_ops<boost::mutex> Ops;
-
-  void lock() { Ops::lock(*this); }
-
-  void unlock() { Ops::unlock(*this); }
-#endif
-};
-
-/** A recursive mutex
- *
- * This is identical to boost::recursive_mutex unless your boost version
- * is < 1.35; in this case additional lock(), unlock() methods are provided
- * which are more convenient to use than those of boost::recursive_mutex.
- */
-class RecMutex : public boost::recursive_mutex {
-public:
-#if BOOST_VERSION < 103500
-  typedef boost::detail::thread::lock_ops<boost::recursive_mutex> Ops;
-
-  void lock() { Ops::lock(*this); }
-
-  void unlock() { Ops::unlock(*this); }
-#endif
-};
-
-class MutexWithStatistics {
- public:
-  void lock() { if (m_enabled) m_count++; m_mutex.lock();}
-  void unlock() { m_mutex.unlock(); if (m_enabled) m_count--; }
-  int32_t get_waiting_threads() {return (int32_t)((m_enabled && m_count>1) ? m_count-1 : 0);}
-  void set_statistics_enabled(bool val) { m_enabled = val; }
- private:
-  std::atomic_int_fast32_t m_count {};
-  std::mutex m_mutex;
-  bool m_enabled {true};
- };
-
-/** @} */
-
-} // namespace Hypertable
-
-#endif // HYPERTABLE_MUTEX_H
+#endif // Common_Mutex_h

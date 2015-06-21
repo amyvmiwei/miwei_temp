@@ -26,15 +26,16 @@
  * addresses.
  */
 
-#ifndef AsyncComm_PROXYMAP_H
-#define AsyncComm_PROXYMAP_H
+#ifndef AsyncComm_ProxyMap_h
+#define AsyncComm_ProxyMap_h
 
 #include <AsyncComm/CommBuf.h>
 
 #include <Common/InetAddr.h>
-#include <Common/Mutex.h>
 #include <Common/SockAddrMap.h>
 #include <Common/String.h>
+
+#include <mutex>
 
 namespace Hypertable {
 
@@ -210,7 +211,7 @@ namespace Hypertable {
     void invalidate(const String &proxy, ProxyMapT &invalidated_mappings);
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Forward map from proxy name to ProxyAddressInfo
     ProxyMapT m_forward_map;
@@ -222,4 +223,4 @@ namespace Hypertable {
   /** @}*/
 }
 
-#endif // AsyncComm_PROXYMAP_H
+#endif // AsyncComm_ProxyMap_h

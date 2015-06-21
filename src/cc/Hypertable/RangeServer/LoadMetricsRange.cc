@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,15 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/String.h"
 
-#include <ctime>
+#include <Common/Compat.h>
 
 #include "Global.h"
 #include "LoadMetricsRange.h"
 
+#include <Common/String.h>
+
+#include <ctime>
+
 using namespace Hypertable;
+using namespace std;
 
 LoadMetricsRange::LoadMetricsRange(const String &table_id, const String &start_row, const String &end_row)
   : m_new_rows(false), m_timestamp(time(0)) {
@@ -50,7 +53,7 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
   String old_start_row, old_end_row;
 
   if (m_new_rows) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     uint8_t *oldbuf = m_buffer.release();
     update_start_row = true;
     old_start_row = m_start_row;

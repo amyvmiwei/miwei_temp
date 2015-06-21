@@ -34,23 +34,23 @@
 #include <Common/Logger.h>
 
 using namespace Hypertable;
+using namespace std;
 
 DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() {
   return;
 }
 
 void DispatchHandlerSynchronizer::handle(EventPtr &event_ptr) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_receive_queue.push(event_ptr);
   m_cond.notify_one();
 }
 
 
 bool DispatchHandlerSynchronizer::wait_for_reply(EventPtr &event_ptr) {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
 
-  while (m_receive_queue.empty())
-    m_cond.wait(lock);
+  m_cond.wait(lock, [this](){ return !m_receive_queue.empty(); });
 
   event_ptr = m_receive_queue.front();
   m_receive_queue.pop();
@@ -64,10 +64,9 @@ bool DispatchHandlerSynchronizer::wait_for_reply(EventPtr &event_ptr) {
 
 
 bool DispatchHandlerSynchronizer::wait_for_connection() {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
 
-  while (m_receive_queue.empty())
-    m_cond.wait(lock);
+  m_cond.wait(lock, [this](){ return !m_receive_queue.empty(); });
 
   EventPtr event = m_receive_queue.front();
   m_receive_queue.pop();
@@ -81,5 +80,4 @@ bool DispatchHandlerSynchronizer::wait_for_connection() {
   HT_ASSERT(event->type == Event::CONNECTION_ESTABLISHED);
 
   return true;
-
 }

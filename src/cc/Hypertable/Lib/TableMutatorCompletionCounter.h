@@ -24,6 +24,9 @@
 
 #include <Common/Time.h>
 
+#include <condition_variable>
+#include <mutex>
+
 namespace Hypertable {
 
   /**
@@ -36,18 +39,17 @@ namespace Hypertable {
    */
   class TableMutatorCompletionCounter {
   public:
-    TableMutatorCompletionCounter()
-      : m_outstanding(0), m_retries(false), m_errors(false), m_done(false) { }
+    TableMutatorCompletionCounter() { }
 
     void set(size_t count) {
-      ScopedLock lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
       m_outstanding = count;
       m_done = (m_outstanding == 0) ? true : false;
       m_errors = m_retries = false;
     }
 
     void decrement() {
-      ScopedLock lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
       HT_ASSERT(m_outstanding);
       m_outstanding--;
 
@@ -58,25 +60,23 @@ namespace Hypertable {
     }
 
     bool wait_for_completion(Timer &timer) {
-      ScopedLock lock(m_mutex);
-      boost::xtime expire_time;
+      std::unique_lock<std::mutex> lock(m_mutex);
 
       timer.start();
 
-      while (m_outstanding) {
-        boost::xtime_get(&expire_time, boost::TIME_UTC_);
-        xtime_add_millis(expire_time, timer.remaining());
-        if (!m_cond.timed_wait(lock, expire_time))
-          HT_THROW(Error::REQUEST_TIMEOUT, "");
-      }
+      auto expire_time = std::chrono::system_clock::now() +
+        std::chrono::milliseconds(timer.remaining());
+
+      if (!m_cond.wait_until(lock, expire_time,
+                             [this](){ return m_outstanding == 0; }))
+        HT_THROW(Error::REQUEST_TIMEOUT, "");
 
       return !(m_retries || m_errors);
     }
 
     bool wait_for_completion() {
-      ScopedLock lock(m_mutex);
-      while (m_outstanding)
-        m_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_mutex);
+      m_cond.wait(lock, [this](){ return m_outstanding == 0; });
       return !(m_retries || m_errors);
     }
 
@@ -93,12 +93,12 @@ namespace Hypertable {
     bool is_complete() { return m_done; }
 
   private:
-    Mutex m_mutex;
-    boost::condition m_cond;
-    size_t m_outstanding;
-    bool m_retries;
-    bool m_errors;
-    bool m_done;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    size_t m_outstanding {};
+    bool m_retries {};
+    bool m_errors {};
+    bool m_done {};
   };
 
 }

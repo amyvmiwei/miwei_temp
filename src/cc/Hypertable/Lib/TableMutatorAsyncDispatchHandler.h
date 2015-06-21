@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATORASYNCDISPATCHHANDLER_H
-#define HYPERTABLE_TABLEMUTATORASYNCDISPATCHHANDLER_H
+#ifndef Hypertable_Lib_TableMutatorAsyncDispatchHandler_h
+#define Hypertable_Lib_TableMutatorAsyncDispatchHandler_h
 
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
@@ -56,11 +56,11 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
   private:
-    ApplicationQueueInterfacePtr     m_app_queue;
+    ApplicationQueueInterfacePtr m_app_queue;
     TableMutatorAsync *m_mutator;
     uint32_t m_scatter_buffer;
     TableMutatorAsyncSendBuffer *m_send_buffer;
     bool m_auto_refresh;
   };
 }
-#endif // HYPERTABLE_TABLEMUTATORDISPATCHHANDLERASYNC_H
+#endif // Hypertable_Lib_TableMutatorAsyncDispatchHandler_h

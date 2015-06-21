@@ -48,6 +48,7 @@
 using namespace Hypertable;
 using namespace Hypertable::Lib;
 using namespace Serialization;
+using namespace std;
 
 LocationInitializer::LocationInitializer(std::shared_ptr<Context> &context)
   : m_context(context) {
@@ -104,7 +105,7 @@ bool LocationInitializer::is_removed(const String &path, Hyperspace::SessionPtr 
 }
 
 CommBuf *LocationInitializer::create_initialization_request() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   StatsSystem stats;
   const char *base, *ptr;
   String datadirs = m_context->props->get_str("Hypertable.RangeServer.Monitoring.DataDirectories");
@@ -157,7 +158,7 @@ bool LocationInitializer::process_initialization_response(Event *event) {
   m_context->server_state->set(params.generation(), params.variables());
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_location == "")
       m_location = params.location();
     else
@@ -172,7 +173,7 @@ bool LocationInitializer::process_initialization_response(Event *event) {
       quick_exit(EXIT_FAILURE);
     }
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_location_persisted = true;
     }
   }
@@ -181,12 +182,11 @@ bool LocationInitializer::process_initialization_response(Event *event) {
 }
 
 String LocationInitializer::get() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_location;
 }
 
 void LocationInitializer::wait_for_handshake() {
-  ScopedLock lock(m_mutex);
-  while (!m_handshake_complete)
-    m_cond.wait(lock);
+  unique_lock<mutex> lock(m_mutex);
+  m_cond.wait(lock, [this](){ return m_handshake_complete; });
 }

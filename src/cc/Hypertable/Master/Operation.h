@@ -28,16 +28,15 @@
 #ifndef Hypertable_Master_Operation_h
 #define Hypertable_Master_Operation_h
 
-#include "AsyncComm/Event.h"
-
-#include "Common/Mutex.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Time.h"
-
-#include "Hypertable/Lib/MetaLogEntity.h"
-
 #include "Context.h"
 #include "MetaLogEntityTypes.h"
+
+#include <Hypertable/Lib/MetaLogEntity.h>
+
+#include <AsyncComm/Event.h>
+
+#include <Common/ScopeGuard.h>
+#include <Common/Time.h>
 
 #include <ctime>
 #include <set>
@@ -338,13 +337,13 @@ namespace Hypertable {
      * operation will be permanently removed.
      * @return Expiration time of the operation
      */
-    HiResTime expiration_time() { ScopedLock lock(m_mutex); return m_expiration_time; }
+    HiResTime expiration_time() { std::lock_guard<std::mutex> lock(m_mutex); return m_expiration_time; }
 
     /// Sets the remove approvals bit mask.
     /// @param mask Bitmask to use as remove approvals mask.
     /// @see remove_approval_add, get_remove_approval_mask
     void set_remove_approval_mask(uint16_t mask) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_remove_approval_mask = mask;
     }
 
@@ -352,7 +351,7 @@ namespace Hypertable {
     /// @return The remove approvals bit mask
     /// @see remove_approval_add, set_remove_approval_mask
     uint16_t get_remove_approval_mask() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_remove_approval_mask;
     }
 
@@ -366,7 +365,7 @@ namespace Hypertable {
      * @param approval Integer flag indicating bits to be set in #m_remove_approvals
      */
     bool remove_approval_add(uint16_t approval) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_remove_approvals |= approval;
       return m_remove_approvals == m_remove_approval_mask;
     }
@@ -470,33 +469,33 @@ namespace Hypertable {
 
     void pre_run();
     void post_run();
-    int32_t get_state() { ScopedLock lock(m_mutex); return m_state; }
-    void set_state(int32_t state) { ScopedLock lock(m_mutex); m_state = state; }
+    int32_t get_state() { std::lock_guard<std::mutex> lock(m_mutex); return m_state; }
+    void set_state(int32_t state) { std::lock_guard<std::mutex> lock(m_mutex); m_state = state; }
     virtual bool is_perpetual() { return false; }
     bool block();
     bool unblock();
-    bool is_blocked() { ScopedLock lock(m_mutex); return m_blocked; }
-    bool is_complete() { ScopedLock lock(m_mutex); return m_state == OperationState::COMPLETE; }
+    bool is_blocked() { std::lock_guard<std::mutex> lock(m_mutex); return m_blocked; }
+    bool is_complete() { std::lock_guard<std::mutex> lock(m_mutex); return m_state == OperationState::COMPLETE; }
 
     int32_t get_original_type() { return m_original_type; }
     void set_original_type(int32_t original_type) { m_original_type = original_type; }
 
     /// Sets the <i>ephemeral</i> flag to <i>true</i>.
     void set_ephemeral() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_ephemeral = true;
     }
 
     /// Gets the <i>ephemeral</i> flag
     bool ephemeral() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_ephemeral;
     }
 
     /// Get error code
     /// @return Error code
     int32_t get_error() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(m_state == OperationState::COMPLETE);
       return m_error;
     }
@@ -504,7 +503,7 @@ namespace Hypertable {
     /// Get error message
     /// @return Error message
     String get_error_msg() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(m_state == OperationState::COMPLETE);
       return m_error_msg;
     }

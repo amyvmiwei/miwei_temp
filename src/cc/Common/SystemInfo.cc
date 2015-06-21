@@ -28,7 +28,6 @@
 #include <Common/Logger.h>
 #include <Common/Serialization.h>
 #include <Common/SystemInfo.h>
-#include <Common/Mutex.h>
 
 #if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
 #include <gperftools/malloc_extension.h>
@@ -36,6 +35,7 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <mutex>
 #include <thread>
 #include <utility>
 
@@ -206,10 +206,10 @@ bool TermInfo::operator==(const TermInfo &other) const {
 
 namespace {
 
-RecMutex _mutex;
+recursive_mutex _mutex;
 
 // for computing cpu percentages
-RecMutex _cpu_mutex;
+recursive_mutex _cpu_mutex;
 sigar_cpu_t _prev_cpu, *_prev_cpup = NULL;
 
 // default pause (in ms) to calcuate rates
@@ -221,7 +221,7 @@ const double MiB = KiB * 1024;
 //const double GiB = MiB * 1024;
 
 // for computing rx/tx rate
-RecMutex _net_mutex;
+recursive_mutex _net_mutex;
 sigar_net_interface_stat_t _prev_net_stat, *_prev_net_statp = NULL;
 Stopwatch _net_stat_stopwatch;
 const int DEFAULT_NET_STAT_FLAGS =
@@ -320,7 +320,7 @@ bool compute_fs_usage(const char *prefix, sigar_file_system_usage_t &u) {
 namespace Hypertable {
 
 const CpuInfo &System::cpu_info() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
 
   if (!_cpu_infop)
     _cpu_infop = &_cpu_info.init();
@@ -345,7 +345,7 @@ const DiskStat &System::disk_stat() {
 }
 
 const OsInfo &System::os_info() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
 
   if (!_os_infop)
     _os_infop = &_os_info.init();
@@ -358,7 +358,7 @@ const SwapStat &System::swap_stat() {
 }
 
 const NetInfo &System::net_info() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
 
   if (!_net_infop)
     _net_infop = &_net_info.init();
@@ -371,7 +371,7 @@ const NetStat &System::net_stat() {
 }
 
 const ProcInfo &System::proc_info() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
 
   if (!_proc_infop)
     _proc_infop = &_proc_info.init();
@@ -388,7 +388,7 @@ const FsStat &System::fs_stat() {
 }
 
 const TermInfo &System::term_info() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
 
   if (!_term_infop)
     _term_infop = &_term_info.init();
@@ -397,7 +397,7 @@ const TermInfo &System::term_info() {
 }
 
 CpuInfo &CpuInfo::init() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_cpu_info_list_t l;
 
   HT_ASSERT(sigar_cpu_info_list_get(sigar(), &l) == SIGAR_OK);
@@ -417,10 +417,10 @@ CpuInfo &CpuInfo::init() {
 }
 
 CpuStat &CpuStat::refresh() {
-  ScopedRecLock cpu_lock(_cpu_mutex);
+  lock_guard<recursive_mutex> cpu_lock(_cpu_mutex);
   bool need_pause = false;
   {
-    ScopedRecLock lock(_mutex); // needed for sigar object
+    lock_guard<recursive_mutex> lock(_mutex); // needed for sigar object
 
     if (!_prev_cpup) {
       HT_ASSERT(sigar_cpu_get(sigar(), &_prev_cpu) == SIGAR_OK);
@@ -433,7 +433,7 @@ CpuStat &CpuStat::refresh() {
     this_thread::sleep_for(chrono::milliseconds(DEFAULT_PAUSE));
 
   {
-    ScopedRecLock lock(_mutex);
+    lock_guard<recursive_mutex> lock(_mutex);
     sigar_cpu_t curr;
     HT_ASSERT(sigar_cpu_get(sigar(), &curr) == SIGAR_OK);
 
@@ -456,7 +456,7 @@ CpuStat &CpuStat::refresh() {
 }
 
 LoadAvgStat &LoadAvgStat::refresh() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_loadavg_t m;
   HT_ASSERT(sigar_loadavg_get(sigar(), &m) == SIGAR_OK);
 
@@ -468,7 +468,7 @@ LoadAvgStat &LoadAvgStat::refresh() {
 }
 
 MemStat &MemStat::refresh() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_mem_t m;
 
   HT_ASSERT(sigar_mem_get(sigar(), &m) == SIGAR_OK);
@@ -509,7 +509,7 @@ void DiskStat::swap (DiskStat &other) {
 }
 
 DiskStat &DiskStat::refresh(const char *dir_prefix) {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_disk_usage_t s;
 
   memset(&s, 0, sizeof(s));
@@ -566,7 +566,7 @@ void SwapStat::swap (SwapStat &other) {
 }
 
 SwapStat &SwapStat::refresh() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_swap_t s;
 
   HT_ASSERT(sigar_swap_get(sigar(), &s) == SIGAR_OK);
@@ -591,7 +591,7 @@ SwapStat &SwapStat::refresh() {
 }
 
 OsInfo &OsInfo::init() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_sys_info_t s;
 
   HT_ASSERT(sigar_sys_info_get(sigar(), &s) == SIGAR_OK);
@@ -618,7 +618,7 @@ OsInfo &OsInfo::init() {
 }
 
 NetInfo &NetInfo::init() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_net_interface_config_t ifc;
   sigar_net_info_t ni;
   char addrbuf[SIGAR_INET6_ADDRSTRLEN];
@@ -654,9 +654,9 @@ NetInfo &NetInfo::init() {
 }
 
 NetStat &NetStat::refresh() {
-  ScopedRecLock net_lock(_net_mutex);
+  lock_guard<recursive_mutex> net_lock(_net_mutex);
   {
-    ScopedRecLock lock(_mutex);
+    lock_guard<recursive_mutex> lock(_mutex);
     sigar_net_stat_t s;
 
     if (sigar_net_stat_get(sigar(), &s, DEFAULT_NET_STAT_FLAGS) == SIGAR_OK) {
@@ -674,7 +674,7 @@ NetStat &NetStat::refresh() {
   bool need_pause = false;
   const char *ifname = System::net_info().primary_if.c_str();
   {
-    ScopedRecLock lock(_mutex);
+    lock_guard<recursive_mutex> lock(_mutex);
 
     if (!_prev_net_statp) {
       if (sigar_net_interface_stat_get(sigar(), ifname, &_prev_net_stat)
@@ -694,7 +694,7 @@ NetStat &NetStat::refresh() {
     this_thread::sleep_for(chrono::milliseconds(DEFAULT_PAUSE));
 
   {
-    ScopedRecLock lock(_mutex);
+    lock_guard<recursive_mutex> lock(_mutex);
 
     if (_prev_net_statp) {
       sigar_net_interface_stat_t curr;
@@ -718,7 +718,7 @@ NetStat &NetStat::refresh() {
 }
 
 ProcInfo &ProcInfo::init() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_proc_exe_t exeinfo;
   sigar_proc_args_t arginfo;
 
@@ -747,7 +747,7 @@ ProcInfo &ProcInfo::init() {
 }
 
 ProcStat &ProcStat::refresh() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_proc_cpu_t c;
   sigar_proc_mem_t m;
 
@@ -780,7 +780,7 @@ ProcStat &ProcStat::refresh() {
 }
 
 FsStat &FsStat::refresh(const char *dir_prefix) {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   sigar_file_system_usage_t u;
   prefix = dir_prefix;
 
@@ -797,7 +797,7 @@ FsStat &FsStat::refresh(const char *dir_prefix) {
 }
 
 TermInfo &TermInfo::init() {
-  ScopedRecLock lock(_mutex);
+  lock_guard<recursive_mutex> lock(_mutex);
   int err;
 
   if (setupterm(0,  1, &err) != ERR) {

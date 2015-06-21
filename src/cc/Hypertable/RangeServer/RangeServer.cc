@@ -410,12 +410,12 @@ void Apps::RangeServer::shutdown() {
 
     // stop application queue
     m_app_queue->stop();
-    boost::xtime deadline;
-    boost::xtime_get(&deadline, boost::TIME_UTC_);
-    deadline.sec += 30;  // wait no more than 30 seconds
+
+    // wait no more than 30 seconds
+    auto deadline = chrono::steady_clock::now() + chrono::seconds(30);
     m_app_queue->wait_for_idle(deadline, 1);
 
-    ScopedLock lock(m_stats_mutex);
+    lock_guard<mutex> lock(m_stats_mutex);
 
     if (m_group_commit_timer_handler)
       m_group_commit_timer_handler->shutdown();
@@ -634,8 +634,7 @@ void Apps::RangeServer::local_recover() {
 
   try {
     std::vector<MaintenanceTask*> maintenance_tasks;
-    boost::xtime now;
-    boost::xtime_get(&now, boost::TIME_UTC_);
+    auto now = chrono::steady_clock::now();
 
     rsml_reader->get_entities(entities);
 
@@ -913,7 +912,7 @@ void Apps::RangeServer::local_recover() {
 
     }
     else {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
 
       /**
        *  Create the logs
@@ -1030,7 +1029,7 @@ Apps::RangeServer::replay_load_range(TableInfoMap &replay_map,
      * Lazily create sys/METADATA table pointer
      */
     if (!Global::metadata_table) {
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
       if (!Global::range_locator)
         Global::range_locator = make_shared<Hypertable::RangeLocator>(m_props,
@@ -1114,7 +1113,7 @@ void Apps::RangeServer::replay_log(TableInfoMap &replay_map,
           pair_loaded = false;
           continue;
         }
-        Locker<Range> lock(*range);
+        lock_guard<Range> lock(*range);
         do {
           range->add(key, value);
           if (ptr == end) {
@@ -1329,7 +1328,7 @@ Apps::RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
     return;
 
   if (!Global::metadata_table) {
-    ScopedLock lock(Global::mutex);
+    lock_guard<mutex> lock(Global::mutex);
     // double-check locking (works fine on x86 and amd64 but may fail
     // on other archs without using a memory barrier
     if (!Global::metadata_table) {
@@ -1525,7 +1524,7 @@ Apps::RangeServer::create_scanner(Response::Callback::CreateScanner *cb,
                 != Error::OK)
           HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
         range->decrement_scan_counter();
-        Locker<LoadStatistics> lock(*Global::load_statistics);
+        lock_guard<LoadStatistics> lock(*Global::load_statistics);
         Global::load_statistics->add_cached_scan_data(1, cell_count, ext_len);
         return;
       }
@@ -1553,7 +1552,7 @@ Apps::RangeServer::create_scanner(Response::Callback::CreateScanner *cb,
     int64_t output_cells = scanner->get_output_cells();
 
     {
-      Locker<LoadStatistics> lock(*Global::load_statistics);
+      lock_guard<LoadStatistics> lock(*Global::load_statistics);
       Global::load_statistics->add_scan_data(1,
                                              profile_data.cells_scanned,
                                              profile_data.cells_returned,
@@ -1698,7 +1697,7 @@ Apps::RangeServer::fetch_scanblock(Response::Callback::CreateScanner *cb,
     //HT_INFOF("scanner=%d cell_count=%d %s", (int)scanner_id, (int)cell_count, profile_data.to_string().c_str());
 
     {
-      Locker<LoadStatistics> lock(*Global::load_statistics);
+      lock_guard<LoadStatistics> lock(*Global::load_statistics);
       Global::load_statistics->add_scan_data(0,
                                              profile_data.cells_scanned,
                                              profile_data.cells_returned,
@@ -1787,7 +1786,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
 
     // Lazily create sys/METADATA table pointer
     if (!Global::metadata_table) {
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       // double-check locking (works fine on x86 and amd64 but may fail
       // on other archs without using a memory barrier
       if (!Global::metadata_table) {
@@ -1806,7 +1805,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
      * Queue "range_start_row" update for sys/RS_METRICS table
      */
     {
-      ScopedLock lock(m_pending_metrics_mutex);
+      lock_guard<mutex> lock(m_pending_metrics_mutex);
       Cell cell;
 
       if (m_pending_metrics_updates == 0)
@@ -1850,7 +1849,7 @@ Apps::RangeServer::load_range(ResponseCallback *cb, const TableIdentifier &table
 
     // Create ROOT, METADATA, or SYSTEM log if necessary
     if (!table.is_user()) {
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       if (table.is_metadata()) {
         if (is_root) {
           Global::log_dfs->mkdirs(Global::log_dir + "/root");
@@ -2160,7 +2159,8 @@ Apps::RangeServer::update(Response::Callback::Update *cb, uint64_t cluster_id,
 }
 
 void
-Apps::RangeServer::batch_update(std::vector<UpdateRecTable *> &updates, boost::xtime expire_time) {
+Apps::RangeServer::batch_update(std::vector<UpdateRecTable *> &updates,
+                                chrono::time_point<chrono::steady_clock> expire_time) {
   UpdateContext *uc = new UpdateContext(updates, expire_time);
   m_update_pipeline_user->add(uc);
 }
@@ -2484,7 +2484,7 @@ void
 
   HT_ON_OBJ_SCOPE_EXIT(*this, &Apps::RangeServer::test_and_set_get_statistics_outstanding, false);
 
-  ScopedLock lock(m_stats_mutex);
+  lock_guard<mutex> lock(m_stats_mutex);
   RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
   time_t now = (time_t)(timestamp/1000000000LL);
@@ -2556,7 +2556,7 @@ void
   TableMutatorPtr mutator;
   if (now > m_next_metrics_update) {
     if (!Global::rs_metrics_table) {
-      ScopedLock lock(Global::mutex);
+      lock_guard<mutex> lock(Global::mutex);
       try {
         uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
         if (!Global::range_locator)
@@ -2577,7 +2577,7 @@ void
       mutator.reset(Global::rs_metrics_table->create_mutator());
 
       {
-        ScopedLock lock(m_pending_metrics_mutex);
+        lock_guard<mutex> lock(m_pending_metrics_mutex);
         pending_metrics_updates = m_pending_metrics_updates;
         m_pending_metrics_updates = 0;
       }
@@ -3068,7 +3068,7 @@ void Apps::RangeServer::phantom_load(ResponseCallback *cb, const String &locatio
   HT_MAYBE_FAIL_X("phantom-load-user", specs[0].table.is_user());
 
   {
-    ScopedLock lock(m_failover_mutex);
+    lock_guard<mutex> lock(m_failover_mutex);
     failover_map_it = m_failover_map.find(location);
     if (failover_map_it == m_failover_map.end()) {
       phantom_range_map = make_shared<PhantomRangeMap>(plan_generation);
@@ -3079,7 +3079,7 @@ void Apps::RangeServer::phantom_load(ResponseCallback *cb, const String &locatio
   }
 
   {
-    Locker<PhantomRangeMap> lock(*phantom_range_map);
+    lock_guard<PhantomRangeMap> lock(*phantom_range_map);
 
     // check for out-of-order phantom_load requests
     if (plan_generation < phantom_range_map->get_plan_generation())
@@ -3146,7 +3146,7 @@ void Apps::RangeServer::phantom_update(Response::Callback::PhantomUpdate *cb,
   HT_MAYBE_FAIL_X("phantom-update-metadata", range.table.is_metadata());
 
   {
-    ScopedLock lock(m_failover_mutex);
+    lock_guard<mutex> lock(m_failover_mutex);
     failover_map_it = m_failover_map.find(location);
     if (failover_map_it == m_failover_map.end()) {
       HT_THROW(Error::RANGESERVER_PHANTOM_RANGE_MAP_NOT_FOUND,
@@ -3156,7 +3156,7 @@ void Apps::RangeServer::phantom_update(Response::Callback::PhantomUpdate *cb,
   }
 
   {
-    Locker<PhantomRangeMap> lock(*phantom_range_map);
+    lock_guard<PhantomRangeMap> lock(*phantom_range_map);
 
     // verify plan generation
     if (plan_generation != phantom_range_map->get_plan_generation())
@@ -3206,7 +3206,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
   cb->response_ok();
 
   {
-    ScopedLock lock(m_failover_mutex);
+    lock_guard<mutex> lock(m_failover_mutex);
     failover_map_it = m_failover_map.find(location);
     if (failover_map_it == m_failover_map.end()) {
       try {
@@ -3224,7 +3224,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
   }
 
   try {
-    Locker<PhantomRangeMap> lock(*phantom_range_map);
+    lock_guard<PhantomRangeMap> lock(*phantom_range_map);
 
     if (phantom_range_map->prepared()) {
       try {
@@ -3265,7 +3265,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
         continue;
 
       if (!Global::metadata_table) {
-        ScopedLock lock(Global::mutex);
+        lock_guard<mutex> lock(Global::mutex);
         // TODO double-check locking (works fine on x86 and amd64 but may fail
         // on other archs without using a memory barrier
         if (!Global::metadata_table) {
@@ -3309,7 +3309,7 @@ void Apps::RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_
 
       RangePtr range = phantom_range->get_range();
       if (!rr.table.is_user()) {
-        ScopedLock lock(Global::mutex);
+        lock_guard<mutex> lock(Global::mutex);
         if (rr.table.is_metadata()) {
           if (rr.is_root()) {
             if (!Global::root_log) {
@@ -3434,7 +3434,7 @@ void Apps::RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_i
   if (live(specs)) {
     // Remove phantom map
     {
-      ScopedLock lock(m_failover_mutex);
+      lock_guard<mutex> lock(m_failover_mutex);
       m_failover_map.erase(location);
     }
     // Report success
@@ -3451,7 +3451,7 @@ void Apps::RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_i
   }
 
   {
-    ScopedLock lock(m_failover_mutex);
+    lock_guard<mutex> lock(m_failover_mutex);
     failover_map_it = m_failover_map.find(location);
     if (failover_map_it == m_failover_map.end()) {
       try {
@@ -3470,7 +3470,7 @@ void Apps::RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_i
   }
 
   try {
-    Locker<PhantomRangeMap> lock(*phantom_range_map);
+    lock_guard<PhantomRangeMap> lock(*phantom_range_map);
 
     // Double-check to see if concurrent method call flipped them live
     if (live(specs))
@@ -3574,7 +3574,7 @@ void Apps::RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_i
              location.c_str(), (Lld)op_id);
 
     {
-      ScopedLock lock(m_failover_mutex);
+      lock_guard<mutex> lock(m_failover_mutex);
       m_failover_map.erase(location);
     }
 
@@ -3705,7 +3705,7 @@ void Apps::RangeServer::do_maintenance() {
     if (xtime_diff_millis(m_last_control_file_check, now) >= (int64_t)m_control_file_check_interval) {
       if (FileUtils::exists(System::install_dir + "/run/query-profile")) {
         if (!m_profile_query) {
-          ScopedLock lock(m_profile_mutex);
+          lock_guard<mutex> lock(m_profile_mutex);
           String output_fname = System::install_dir + "/run/query-profile.output";
           m_profile_query_out.open(output_fname.c_str(), ios_base::out|ios_base::app);
           m_profile_query = true;
@@ -3713,7 +3713,7 @@ void Apps::RangeServer::do_maintenance() {
       }
       else {
 	if (m_profile_query) {
-          ScopedLock lock(m_profile_mutex);
+          lock_guard<mutex> lock(m_profile_mutex);
 	  m_profile_query_out.close();
 	  m_profile_query = false;
 	}
@@ -3737,7 +3737,7 @@ Apps::RangeServer::group_commit_add(EventPtr &event, uint64_t cluster_id,
                               SchemaPtr &schema, const TableIdentifier &table,
                               uint32_t count, StaticBuffer &buffer,
                               uint32_t flags) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (!m_group_commit) {
     m_group_commit = std::make_shared<GroupCommit>(this);
     HT_ASSERT(!m_group_commit_timer_handler);

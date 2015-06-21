@@ -19,17 +19,18 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLEMUTATORQUEUE_H
-#define HYPERTABLE_TABLEMUTATORQUEUE_H
-
-#include <list>
-#include <boost/thread/condition.hpp>
-
-#include "Common/Thread.h"
-#include "Common/Mutex.h"
-#include "AsyncComm/ApplicationQueueInterface.h"
+#ifndef Hypertable_Lib_TableMutatorQueue_h
+#define Hypertable_Lib_TableMutatorQueue_h
 
 #include "ScanCells.h"
+
+#include <AsyncComm/ApplicationQueueInterface.h>
+
+#include <Common/Thread.h>
+
+#include <condition_variable>
+#include <list>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -45,14 +46,14 @@ namespace Hypertable {
     /**
      *
      */
-    TableMutatorQueue(Mutex &mutex, boost::condition &cond) : m_mutex(mutex), m_cond(cond) { }
+    TableMutatorQueue(std::mutex &mutex, std::condition_variable &cond) : m_mutex(mutex), m_cond(cond) { }
 
     ~TableMutatorQueue () { }
 
     /**
      */
     virtual void add(ApplicationHandler *app_handler) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       add_unlocked(app_handler);
     }
 
@@ -61,27 +62,24 @@ namespace Hypertable {
       m_cond.notify_one();
     }
 
-    void wait_for_buffer(ScopedLock &lock, ApplicationHandler **app_handlerp) {
-      {
-        while (m_work_queue.empty()) {
-          m_cond.wait(lock);
-        }
-        *app_handlerp = m_work_queue.front();
-        HT_ASSERT(*app_handlerp);
-        m_work_queue.pop_front();
-      }
+    void wait_for_buffer(std::unique_lock<std::mutex> &lock, ApplicationHandler **app_handlerp) {
+      m_cond.wait(lock, [this](){ return !m_work_queue.empty();});
+      *app_handlerp = m_work_queue.front();
+      HT_ASSERT(*app_handlerp);
+      m_work_queue.pop_front();
     }
 
   private:
 
     typedef std::list<ApplicationHandler *> WorkQueue;
-    Mutex                  &m_mutex;
-    boost::condition       &m_cond;
-    WorkQueue              m_work_queue;
+    std::mutex &m_mutex;
+    std::condition_variable &m_cond;
+    WorkQueue m_work_queue;
   };
 
+  /// Shared smart pointer to TableMutatorQueue
   typedef std::shared_ptr<TableMutatorQueue> TableMutatorQueuePtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLESCANNERQUEUE_H
+#endif // Hypertable_Lib_TableMutatorQueue_h

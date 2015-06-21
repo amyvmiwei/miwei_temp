@@ -45,10 +45,9 @@
 #include <Common/Status.h>
 #include <Common/Timer.h>
 
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 namespace Lib {
@@ -176,26 +175,26 @@ namespace Master {
     void initialize_hyperspace();
     void initialize(Timer *&timer, Timer &tmp_timer);
 
-    Mutex                  m_mutex;
-    boost::condition       m_cond;
-    bool                   m_verbose;
-    Comm                  *m_comm;
-    ConnectionManagerPtr   m_conn_manager;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    bool m_verbose {};
+    Comm *m_comm {};
+    ConnectionManagerPtr m_conn_manager;
     Hyperspace::SessionPtr m_hyperspace;
-    ApplicationQueueInterfacePtr    m_app_queue;
+    ApplicationQueueInterfacePtr m_app_queue;
     uint64_t m_master_file_handle {};
     Hyperspace::HandleCallbackPtr m_master_file_callback;
-    InetAddr               m_master_addr;
-    String                 m_master_addr_string;
-    DispatchHandlerPtr     m_dispatcher_handler;
+    InetAddr m_master_addr;
+    String m_master_addr_string;
+    DispatchHandlerPtr m_dispatcher_handler;
     ConnectionInitializerPtr m_connection_initializer;
-    bool                   m_hyperspace_init;
-    bool                   m_hyperspace_connected;
-    Mutex                  m_hyperspace_mutex;
-    uint32_t               m_timeout_ms;
+    bool m_hyperspace_init {};
+    bool m_hyperspace_connected {};
+    std::mutex m_hyperspace_mutex;
+    uint32_t m_timeout_ms {};
     ClientHyperspaceSessionCallback m_hyperspace_session_callback;
-    String                 m_toplevel_dir;
-    uint32_t               m_retry_interval;
+    String m_toplevel_dir;
+    uint32_t m_retry_interval {};
   };
 
   /// Smart pointer to Client

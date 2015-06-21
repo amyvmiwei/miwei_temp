@@ -34,10 +34,10 @@
 
 #include <Hypertable/Lib/Schema.h>
 
-#include <Common/Mutex.h>
 #include <Common/Properties.h>
 
 #include <fstream>
+#include <mutex>
 #include <vector>
 
 extern "C" {
@@ -303,7 +303,7 @@ namespace Hypertable {
     bool check_needed_ttl(time_t now);
 
     /// %Mutex to serialize access to data members
-    Mutex m_mutex;
+    std::mutex m_mutex;
     
     /// %Cell cache manager
     CellCacheManagerPtr m_cell_cache_manager;

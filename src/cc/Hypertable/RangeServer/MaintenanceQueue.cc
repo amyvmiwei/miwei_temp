@@ -25,9 +25,12 @@
  * MaintenanceQueue
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "MaintenanceQueue.h"
 
+using namespace std;
+
 int Hypertable::MaintenanceQueue::ms_pause = 0;
-boost::condition Hypertable::MaintenanceQueue::ms_cond;
+condition_variable Hypertable::MaintenanceQueue::ms_cond;
 

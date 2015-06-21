@@ -115,7 +115,7 @@ void OperationToggleTableMaintenance::execute() {
     }
     HT_MAYBE_FAIL("toggle-table-maintenance-UPDATE_HYPERSPACE-1");
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.erase(Dependency::INIT);
       m_dependencies.insert(Dependency::METADATA);
       m_dependencies.insert(m_id + " move range");
@@ -137,7 +137,7 @@ void OperationToggleTableMaintenance::execute() {
 
       // Populate m_servers and m_dependencies
       {
-        ScopedLock lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         m_servers.clear();
         for (auto &server : servers) {
           if (m_completed.count(server))
@@ -167,7 +167,7 @@ void OperationToggleTableMaintenance::execute() {
         op_handler->get_results(results);
         for (auto &result : results) {
           if (result.error == Error::OK) {
-            ScopedLock lock(m_mutex);
+            lock_guard<mutex> lock(m_mutex);
             m_completed.insert(result.location);
           }
           else
@@ -176,7 +176,7 @@ void OperationToggleTableMaintenance::execute() {
         }
 
         {
-          ScopedLock lock(m_mutex);
+          lock_guard<mutex> lock(m_mutex);
           for (auto s : m_servers)
             m_dependencies.erase(s);
           m_dependencies.insert(Dependency::METADATA);

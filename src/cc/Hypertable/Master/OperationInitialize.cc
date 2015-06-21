@@ -91,7 +91,7 @@ void OperationInitialize::execute() {
     Utility::create_table_in_hyperspace(m_context, "/sys/METADATA", schema, &m_table);
     HT_MAYBE_FAIL("initialize-STARTED");
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(Dependency::SERVERS);
       m_state = OperationState::ASSIGN_METADATA_RANGES;
@@ -105,7 +105,7 @@ void OperationInitialize::execute() {
         !Utility::next_available_server(m_context, m_metadata_secondlevel_location))
       break;
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(m_metadata_root_location);
       m_dependencies.insert(m_metadata_secondlevel_location);
@@ -130,7 +130,7 @@ void OperationInitialize::execute() {
     }
     HT_MAYBE_FAIL("initialize-LOAD_ROOT_METADATA_RANGE");
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(m_metadata_secondlevel_location);
       m_dependencies.insert( m_metadata_range_name );
@@ -152,7 +152,7 @@ void OperationInitialize::execute() {
     }
     HT_MAYBE_FAIL("initialize-LOAD_SECOND_METADATA_RANGE");
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_state = OperationState::WRITE_METADATA;
     }

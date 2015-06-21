@@ -44,7 +44,6 @@
 #include <Common/Cronolog.h>
 #include <Common/Init.h>
 #include <Common/Logger.h>
-#include <Common/Mutex.h>
 #include <Common/Random.h>
 #include <Common/System.h>
 #include <Common/Time.h>
@@ -63,6 +62,7 @@
 #include <iomanip>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <unordered_map>
 
@@ -244,7 +244,7 @@ public:
     future_capacity = Config::get_i32("ThriftBroker.Future.Capacity");
   }
   Hypertable::Client *client;
-  Mutex shared_mutator_mutex;
+  std::mutex shared_mutator_mutex;
   SharedMutatorMap shared_mutator_map;
   bool log_api;
   ::uint32_t next_threshold;
@@ -956,7 +956,7 @@ public:
   }
 
   virtual ~ServerHandler() {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (!m_object_map.empty())
       HT_WARNF("Destroying ServerHandler for remote peer %s with %d objects in map",
                m_remote_peer.c_str(),
@@ -2715,13 +2715,13 @@ public:
   }
 
   ClientObject *get_object(int64_t id) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     ObjectMap::iterator it = m_object_map.find(id);
     return (it != m_object_map.end()) ? it->second.get() : 0;
   }
 
   ClientObject *get_cached_object(int64_t id) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     ObjectMap::iterator it = m_cached_object_map.find(id);
     return (it != m_cached_object_map.end()) ? it->second.get() : 0;
   }
@@ -2749,33 +2749,33 @@ public:
 
   int64_t get_cached_object_id(ClientObjectPtr co) {
     int64_t id;
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     while (!m_cached_object_map.insert(make_pair(id = Random::number32(), co)).second || id == 0); // no overwrite
     return id;
   }
 
   int64_t get_object_id(ClientObject *co) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     int64_t id = reinterpret_cast<int64_t>(co);
     m_object_map.insert(make_pair(id, ClientObjectPtr(co))); // no overwrite
     return id;
   }
 
   int64_t get_object_id(TableMutatorPtr &mutator) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     int64_t id = reinterpret_cast<int64_t>(mutator.get());
     m_object_map.insert(make_pair(id, static_pointer_cast<ClientObject>(mutator))); // no overwrite
     return id;
   }
 
   int64_t try_get_object_id(ClientObject* co) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     int64_t id = reinterpret_cast<int64_t>(co);
     return m_object_map.find(id) != m_object_map.end() ? id : 0;
   }
 
   int64_t get_scanner_id(TableScanner *scanner, ScannerInfoPtr &info) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     int64_t id = reinterpret_cast<int64_t>(scanner);
     m_object_map.insert(make_pair(id, ClientObjectPtr(scanner)));
     m_scanner_info_map.insert(make_pair(id, info));
@@ -2783,7 +2783,7 @@ public:
   }
 
   int64_t get_scanner_id(TableScannerPtr &scanner, ScannerInfoPtr &info) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     int64_t id = reinterpret_cast<int64_t>(scanner.get());
     m_object_map.insert(make_pair(id, static_pointer_cast<ClientObject>(scanner)));
     m_scanner_info_map.insert(make_pair(id, info));
@@ -2791,14 +2791,14 @@ public:
   }
 
   void add_reference(int64_t from, int64_t to) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     ObjectMap::iterator it = m_object_map.find(to);
     if (it != m_object_map.end())
       m_reference_map.insert(make_pair(from, it->second));
   }
 
   void remove_references(int64_t id) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_reference_map.erase(id);
   }
 
@@ -2814,7 +2814,7 @@ public:
   }
 
   TableScanner *get_scanner(int64_t id, ScannerInfoPtr &info) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_object_map.find(id);
     if (it == m_object_map.end()) {
       HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
@@ -2832,7 +2832,7 @@ public:
     bool removed = false;
     ClientObjectPtr item;
     {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       ObjectMap::iterator it = m_object_map.find(id);
       if (it != m_object_map.end()) {
         item = (*it).second;
@@ -2848,7 +2848,7 @@ public:
     bool removed = false;
     ClientObjectPtr item;
     {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       ObjectMap::iterator it = m_cached_object_map.find(id);
       if (it != m_cached_object_map.end()) {
         item = (*it).second;
@@ -2863,7 +2863,7 @@ public:
     // destroy client object unlocked
     ClientObjectPtr item;
     {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_scanner_info_map.erase(id);
       ObjectMap::iterator it = m_object_map.find(id);
       if (it != m_object_map.end()) {
@@ -2879,7 +2879,7 @@ public:
   }
 
   void remove_scanner(int64_t id, ClientObjectPtr &scanner, ScannerInfoPtr &info) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     ObjectMap::iterator it = m_object_map.find(id);
     if (it != m_object_map.end()) {
       scanner = (*it).second;
@@ -2896,7 +2896,7 @@ public:
 
   virtual void shared_mutator_refresh(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::MutateSpec &mutate_spec) {
-    ScopedLock lock(m_context.shared_mutator_mutex);
+    std::lock_guard<std::mutex> lock(m_context.shared_mutator_mutex);
     SharedMutatorMapKey skey(get_namespace(ns), table, mutate_spec);
 
     SharedMutatorMap::iterator it = m_context.shared_mutator_map.find(skey);
@@ -2927,7 +2927,7 @@ public:
 
   TableMutator *get_shared_mutator(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::MutateSpec &mutate_spec) {
-    ScopedLock lock(m_context.shared_mutator_mutex);
+    std::lock_guard<std::mutex> lock(m_context.shared_mutator_mutex);
     SharedMutatorMapKey skey(get_namespace(ns), table, mutate_spec);
 
     SharedMutatorMap::iterator it = m_context.shared_mutator_map.find(skey);
@@ -2996,7 +2996,7 @@ public:
 private:
   String m_remote_peer;
   Context &m_context;
-  Mutex m_mutex;
+  std::mutex m_mutex;
   multimap<::int64_t, ClientObjectPtr> m_reference_map;
   ObjectMap m_object_map;
   ObjectMap m_cached_object_map;
@@ -3070,7 +3070,7 @@ private:
   ServerHandlerFactory() { }
 
   ServerHandler* get_handler(const String& remotePeer) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     ServerHandlerMap::iterator it = m_server_handler_map.find(remotePeer);
     if (it != m_server_handler_map.end()) {
       ++it->second.first;
@@ -3087,7 +3087,7 @@ private:
 
   void release_handler(ServerHandler* serverHandler) {
     {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       ServerHandlerMap::iterator it =
         m_server_handler_map.find(serverHandler->remote_peer());
       if (it != m_server_handler_map.end()) {
@@ -3100,7 +3100,7 @@ private:
     delete serverHandler;
   }
 
-  Mutex m_mutex;
+  std::mutex m_mutex;
   typedef std::map<String, std::pair<int, ServerHandler*> > ServerHandlerMap;
   ServerHandlerMap m_server_handler_map;
   static ServerHandlerFactory instance;

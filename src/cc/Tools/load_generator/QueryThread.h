@@ -19,17 +19,18 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_QUERYTHREAD_H
-#define HYPERTABLE_QUERYTHREAD_H
-
-#include <vector>
-#include <boost/progress.hpp>
-
-#include "Hypertable/Lib/Table.h"
-#include "Hypertable/Lib/TableMutator.h"
+#ifndef Tools_load_generator_QueryThread_h
+#define Tools_load_generator_QueryThread_h
 
 #include "LoadClient.h"
 #include "ParallelLoad.h"
+
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/TableMutator.h>
+
+#include <boost/progress.hpp>
+
+#include <vector>
 
 namespace Hypertable {
 
@@ -52,4 +53,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_QUERYTHREAD_H
+#endif // Tools_load_generator_QueryThread_h

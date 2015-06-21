@@ -25,81 +25,70 @@
 #include <Hypertable/Lib/Key.h>
 
 using namespace Hypertable;
+using namespace std;
 
 void LogReplayBarrier::set_root_complete() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_root_complete = true;
   m_root_complete_cond.notify_all();
 }
 
 void LogReplayBarrier::set_metadata_complete() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_metadata_complete = true;
   m_metadata_complete_cond.notify_all();
 }
 
 void LogReplayBarrier::set_system_complete() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_system_complete = true;
   m_system_complete_cond.notify_all();
 }
 
 void LogReplayBarrier::set_user_complete() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_user_complete = true;
   m_user_complete_cond.notify_all();
 }
 
-bool LogReplayBarrier::wait_for_root(boost::xtime deadline) {
+bool LogReplayBarrier::wait_for_root(chrono::time_point<chrono::steady_clock> deadline) {
   if (m_root_complete)
     return true;
-  ScopedLock lock(m_mutex);
-  while (!m_root_complete) {
-    HT_INFO("Waiting for ROOT recovery to complete...");
-    if (!m_root_complete_cond.timed_wait(lock, deadline))
-      return false;
-  }
-  return true;
+  unique_lock<mutex> lock(m_mutex);
+  HT_INFO("Waiting for ROOT recovery to complete...");
+  return m_root_complete_cond.wait_until(lock, deadline,
+                                         [this](){ return m_root_complete; });
 }
 
-bool LogReplayBarrier::wait_for_metadata(boost::xtime deadline) {
+bool LogReplayBarrier::wait_for_metadata(chrono::time_point<chrono::steady_clock> deadline) {
   if (m_metadata_complete)
     return true;
-  ScopedLock lock(m_mutex);
-  while (!m_metadata_complete) {
-    HT_INFO("Waiting for METADATA recovery to complete...");
-    if (!m_metadata_complete_cond.timed_wait(lock, deadline))
-      return false;
-  }
-  return true;
+  unique_lock<mutex> lock(m_mutex);
+  HT_INFO("Waiting for METADATA recovery to complete...");
+  return m_metadata_complete_cond.wait_until(lock, deadline,
+                                             [this](){ return m_metadata_complete; });
 }
 
-bool LogReplayBarrier::wait_for_system(boost::xtime deadline) {
+bool LogReplayBarrier::wait_for_system(chrono::time_point<chrono::steady_clock> deadline) {
   if (m_system_complete)
     return true;
-  ScopedLock lock(m_mutex);
-  while (!m_system_complete) {
-    HT_INFO("Waiting for SYSTEM recovery to complete...");
-    if (!m_system_complete_cond.timed_wait(lock, deadline))
-      return false;
-  }
-  return true;
+  unique_lock<mutex> lock(m_mutex);
+  HT_INFO("Waiting for SYSTEM recovery to complete...");
+  return m_system_complete_cond.wait_until(lock, deadline,
+                                           [this](){ return m_system_complete; });
 }
 
-bool LogReplayBarrier::wait_for_user(boost::xtime deadline) {
+bool LogReplayBarrier::wait_for_user(chrono::time_point<chrono::steady_clock> deadline) {
   if (m_user_complete)
     return true;
-  ScopedLock lock(m_mutex);
-  while (!m_user_complete) {
-    HT_INFO("Waiting for USER recovery to complete...");
-    if (!m_user_complete_cond.timed_wait(lock, deadline))
-      return false;
-  }
-  return true;
+  unique_lock<mutex> lock(m_mutex);
+  HT_INFO("Waiting for USER recovery to complete...");
+  return m_user_complete_cond.wait_until(lock, deadline,
+                                         [this](){ return m_user_complete; });
 }
 
 bool
-LogReplayBarrier::wait(boost::xtime deadline,
+LogReplayBarrier::wait(chrono::time_point<chrono::steady_clock> deadline,
                       const TableIdentifier &table,
                       const RangeSpec &range_spec) {
   if (m_user_complete)
@@ -116,7 +105,7 @@ LogReplayBarrier::wait(boost::xtime deadline,
 }
 
 
-bool LogReplayBarrier::wait(boost::xtime deadline,
+bool LogReplayBarrier::wait(chrono::time_point<chrono::steady_clock> deadline,
                             const TableIdentifier &table) {
   if (m_user_complete)
     return true;
@@ -128,6 +117,6 @@ bool LogReplayBarrier::wait(boost::xtime deadline,
 }
 
 bool LogReplayBarrier::user_complete() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_user_complete;
 }

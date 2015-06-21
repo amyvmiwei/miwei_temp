@@ -26,10 +26,8 @@
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/DispatchHandler.h>
 
-#include <Common/Mutex.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/condition.hpp>
+#include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -46,13 +44,15 @@ namespace Hypertable {
     void shutdown();
 
   private:
-    Mutex m_mutex;
+    std::mutex m_mutex;
     Comm *m_comm {};
     Apps::RangeServer *m_range_server {};
     ApplicationQueuePtr m_app_queue;
     int32_t m_commit_interval {};
     bool m_shutdown {};
   };
+
+  /// Shared smart pointer to GroupCommitTimerHandler
   typedef std::shared_ptr<GroupCommitTimerHandler> GroupCommitTimerHandlerPtr;
 }
 

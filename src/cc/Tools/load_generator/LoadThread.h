@@ -19,15 +19,15 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOADTHREAD_H
-#define HYPERTABLE_LOADTHREAD_H
-
-#include <vector>
-
-#include "Hypertable/Lib/Table.h"
-#include "Hypertable/Lib/TableMutator.h"
+#ifndef Tools_load_generator_LoadThread_h
+#define Tools_load_generator_LoadThread_h
 
 #include "ParallelLoad.h"
+
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/TableMutator.h>
+
+#include <vector>
 
 namespace Hypertable {
 
@@ -52,4 +52,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_LOADTHREAD_H
+#endif // Tools_load_generator_LoadThread_h

@@ -25,11 +25,9 @@
 #include "HandleCallback.h"
 #include "LockSequencer.h"
 
-#include <Common/Mutex.h>
-
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace Hyperspace {
@@ -45,8 +43,8 @@ namespace Hyperspace {
     int lock_status;
     uint32_t lock_mode;
     uint64_t lock_generation;
-    Mutex              mutex;
-    boost::condition   cond;
+    std::mutex mutex;
+    std::condition_variable cond;
   };
   typedef std::shared_ptr<ClientHandleState> ClientHandleStatePtr;
 

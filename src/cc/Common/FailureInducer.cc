@@ -61,7 +61,7 @@ void FailureInducer::parse_option(String option) {
 }
 
 void FailureInducer::maybe_fail(const String &label) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   StateMap::iterator iter = m_state_map.find(label);
   if (iter != m_state_map.end()) {
     if ((*iter).second->iteration == (*iter).second->trigger_iteration) {
@@ -92,7 +92,7 @@ void FailureInducer::maybe_fail(const String &label) {
 }
 
 bool FailureInducer::failure_signalled(const String &label) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   StateMap::iterator iter = m_state_map.find(label);
   if (iter == m_state_map.end())
     return false;
@@ -104,7 +104,7 @@ bool FailureInducer::failure_signalled(const String &label) {
 }
 
 void FailureInducer::clear() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for (StateMap::iterator iter = m_state_map.begin(); 
           iter != m_state_map.end(); ++iter)
     delete iter->second;

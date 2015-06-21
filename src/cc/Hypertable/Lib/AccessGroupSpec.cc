@@ -32,6 +32,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <mutex>
 #include <stack>
 #include <utility>
 
@@ -41,7 +42,7 @@ using namespace std;
 
 namespace {
 
-  Mutex desc_mutex;
+  mutex desc_mutex;
   bool desc_inited = false;
 
   PropertiesDesc
@@ -56,7 +57,7 @@ namespace {
   PositionalDesc compressor_pos_desc, bloomfilter_pos_desc;
 
   void init_schema_options_desc() {
-    ScopedLock lock(desc_mutex);
+    lock_guard<mutex> lock(desc_mutex);
 
     if (desc_inited)
       return;

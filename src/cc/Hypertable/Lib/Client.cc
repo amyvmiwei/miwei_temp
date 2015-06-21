@@ -60,7 +60,7 @@ using namespace Config;
 Client::Client(const string &install_dir, const string &config_file,
                uint32_t default_timeout_ms)
   : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
-  ScopedRecLock lock(rec_mutex);
+  lock_guard<recursive_mutex> lock(rec_mutex);
 
   if (!properties)
     init_with_policy<DefaultCommPolicy>(0, 0);
@@ -71,7 +71,7 @@ Client::Client(const string &install_dir, const string &config_file,
 
 Client::Client(const string &install_dir, uint32_t default_timeout_ms)
   : m_timeout_ms(default_timeout_ms), m_install_dir(install_dir) {
-  ScopedRecLock lock(rec_mutex);
+  lock_guard<recursive_mutex> lock(rec_mutex);
 
   if (!properties)
     init_with_policy<DefaultCommPolicy>(0, 0);

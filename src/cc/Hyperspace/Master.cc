@@ -29,7 +29,6 @@
 #include "SessionData.h"
 
 #include <Common/Thread.h>
-#include <Common/Mutex.h>
 #include <Common/Error.h>
 #include <Common/Path.h>
 #include <Common/FileUtils.h>
@@ -262,7 +261,7 @@ Hyperspace::Master::~Master() {
  * > insert session id & expiry time into session expiry map
  */
 uint64_t Hyperspace::Master::create_session(struct sockaddr_in &addr) {
-  ScopedLock lock(m_session_map_mutex);
+  lock_guard<mutex> lock(m_session_map_mutex);
 
   SessionDataPtr session_data;
   uint64_t session_id = 0;
@@ -290,7 +289,7 @@ uint64_t Hyperspace::Master::create_session(struct sockaddr_in &addr) {
  *
  */
 bool Hyperspace::Master::get_session(uint64_t session_id, SessionDataPtr &session_data) {
-  ScopedLock lock(m_session_map_mutex);
+  lock_guard<mutex> lock(m_session_map_mutex);
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
     return false;
@@ -304,7 +303,7 @@ bool Hyperspace::Master::get_session(uint64_t session_id, SessionDataPtr &sessio
  * > Set the expiry time to now
  */
 void Hyperspace::Master::destroy_session(uint64_t session_id) {
-  ScopedLock lock(m_session_map_mutex);
+  lock_guard<mutex> lock(m_session_map_mutex);
   SessionDataPtr session_data;
   SessionMap::iterator iter = m_session_map.find(session_id);
   if (iter == m_session_map.end())
@@ -324,7 +323,7 @@ void Hyperspace::Master::destroy_session(uint64_t session_id) {
 void Hyperspace::Master::initialize_session(uint64_t session_id, const String &name) {
   SessionDataPtr session_data;
   {
-    ScopedLock lock(m_session_map_mutex);
+    lock_guard<mutex> lock(m_session_map_mutex);
     SessionMap::iterator iter = m_session_map.find(session_id);
     if (iter == m_session_map.end()) {
       HT_ERRORF("Unable to initialize session %llu (%s)", (Llu)session_id, name.c_str());
@@ -353,7 +352,7 @@ void Hyperspace::Master::initialize_session(uint64_t session_id, const String &n
  *   > (Don't delete session completely as handles etc need to be cleaned up)
  */
 int Hyperspace::Master::renew_session_lease(uint64_t session_id) {
-  ScopedLock lock(m_session_map_mutex);
+  lock_guard<mutex> lock(m_session_map_mutex);
   bool renewed = false;
   bool commited = false;
   SessionDataPtr session_data;
@@ -396,7 +395,7 @@ int Hyperspace::Master::renew_session_lease(uint64_t session_id) {
  */
 bool
 Hyperspace::Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
-  ScopedLock lock(m_session_map_mutex);
+  lock_guard<mutex> lock(m_session_map_mutex);
   struct LtSessionData ascending;
 
   if (!m_session_heap.empty()) {
@@ -1167,7 +1166,7 @@ void Hyperspace::Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
 
   // destroy dangling sessions...
   {
-    ScopedLock lock(m_session_map_mutex);
+    lock_guard<mutex> lock(m_session_map_mutex);
     m_shutdown = true;
     SessionDataPtr session_data;
     while (m_session_map.size()) {
@@ -1842,7 +1841,7 @@ void Hyperspace::Master::handle_wakeup() {
 
   // extend all leases
   {
-    ScopedLock lock(m_session_map_mutex);
+    lock_guard<mutex> lock(m_session_map_mutex);
     if (!m_shutdown) {
       HT_INFOF("Resume detected, extending all session leases "
                "by %lu milliseconds.", (Lu)lease_credit);
@@ -1859,7 +1858,7 @@ void Hyperspace::Master::handle_wakeup() {
 void Hyperspace::Master::do_maintenance() {
 
   {
-    ScopedLock lock(m_maintenance_mutex);
+    lock_guard<mutex> lock(m_maintenance_mutex);
     if (m_maintenance_outstanding)
       return;
     m_maintenance_outstanding = true;
@@ -1868,7 +1867,7 @@ void Hyperspace::Master::do_maintenance() {
   m_bdb_fs->do_checkpoint();
 
   {
-    ScopedLock lock(m_maintenance_mutex);
+    lock_guard<mutex> lock(m_maintenance_mutex);
     m_maintenance_outstanding = false;
   }
 

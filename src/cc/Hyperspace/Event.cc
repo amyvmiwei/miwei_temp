@@ -19,7 +19,8 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "Event.h"
 
 namespace Hyperspace {

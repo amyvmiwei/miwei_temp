@@ -40,7 +40,7 @@ TableInfo::TableInfo(const TableIdentifier *identifier, SchemaPtr &schema,
 
 
 bool TableInfo::remove(const String &start_row, const String &end_row) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(start_row, end_row);
   auto iter = m_active_set.find(range_info);
 
@@ -64,7 +64,7 @@ bool TableInfo::remove(const String &start_row, const String &end_row) {
 void
 TableInfo::change_end_row(const String &start_row, const String &old_end_row,
                           const String &new_end_row) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(start_row, old_end_row);
   auto iter = m_active_set.find(range_info);
 
@@ -89,7 +89,7 @@ TableInfo::change_end_row(const String &start_row, const String &old_end_row,
 void
 TableInfo::change_start_row(const String &old_start_row, const String &new_start_row,
                             const String &end_row) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(old_start_row, end_row);
   auto iter = m_active_set.find(range_info);
 
@@ -114,7 +114,7 @@ TableInfo::change_start_row(const String &old_start_row, const String &new_start
 
 
 bool TableInfo::get_range(const RangeSpec &range_spec, RangePtr &range) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(range_spec.start_row, range_spec.end_row);
 
   auto iter = m_active_set.find(range_info);
@@ -130,7 +130,7 @@ bool TableInfo::get_range(const RangeSpec &range_spec, RangePtr &range) {
 }
 
 bool TableInfo::has_range(const RangeSpec &range_spec) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(range_spec.start_row, range_spec.end_row);
   if (m_active_set.find(range_info) == m_active_set.end())
     return false;
@@ -139,7 +139,7 @@ bool TableInfo::has_range(const RangeSpec &range_spec) {
 
 
 bool TableInfo::remove_range(const RangeSpec &range_spec, RangePtr &range) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(range_spec.start_row, range_spec.end_row);
   auto iter = m_active_set.find(range_info);
 
@@ -161,13 +161,13 @@ bool TableInfo::remove_range(const RangeSpec &range_spec, RangePtr &range) {
 
 
 void TableInfo::stage_range(const RangeSpec &range_spec,
-                            boost::xtime deadline) {
-  ScopedLock lock(m_mutex);
+                            chrono::time_point<chrono::steady_clock> deadline) {
+  unique_lock<mutex> lock(m_mutex);
   RangeInfo range_info(range_spec.start_row, range_spec.end_row);
 
   /// If already staged, wait for staging to complete
   while (m_staged_set.find(range_info) != m_staged_set.end()) {
-    if (!m_cond.timed_wait(lock, deadline))
+    if (m_cond.wait_until(lock, deadline) == std::cv_status::timeout)
       HT_THROWF(Error::REQUEST_TIMEOUT, "Waiting for staging of %s[%s..%s]",
                 m_identifier.id, range_spec.start_row, range_spec.end_row);
   }
@@ -193,7 +193,7 @@ void TableInfo::stage_range(const RangeSpec &range_spec,
 }
 
 void TableInfo::unstage_range(const RangeSpec &range_spec) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info(range_spec.start_row, range_spec.end_row);
   auto iter = m_staged_set.find(range_info);
   HT_ASSERT(iter != m_staged_set.end());
@@ -202,7 +202,7 @@ void TableInfo::unstage_range(const RangeSpec &range_spec) {
 }
 
 void TableInfo::promote_staged_range(RangePtr &range) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   String start_row, end_row;
   range->get_boundary_rows(start_row, end_row);
   RangeInfo range_info(start_row, end_row);
@@ -215,7 +215,7 @@ void TableInfo::promote_staged_range(RangePtr &range) {
 }
 
 void TableInfo::add_range(RangePtr &range, bool remove_if_exists) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   String start_row, end_row;
   range->get_boundary_rows(start_row, end_row);
   RangeInfo range_info(start_row, end_row);
@@ -233,7 +233,7 @@ void TableInfo::add_range(RangePtr &range, bool remove_if_exists) {
 bool
 TableInfo::find_containing_range(const String &row, RangePtr &range,
                                  String &start_row, String &end_row) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   RangeInfo range_info("", row);
   auto iter = m_active_set.lower_bound(range_info);
 
@@ -257,26 +257,26 @@ bool TableInfo::includes_row(const String &row) const {
 }
 
 void TableInfo::get_ranges(Ranges &ranges) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for (auto &range_info : m_active_set)
     ranges.array.push_back(RangeData(range_info.range));
 }
 
 
 size_t TableInfo::get_range_count() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_active_set.size();
 }
 
 
 void TableInfo::clear() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HT_INFOF("Clearing set for table %s", m_identifier.id);
   m_active_set.clear();
 }
 
 void TableInfo::update_schema(SchemaPtr &schema) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (schema->get_generation() < m_schema->get_generation())
     HT_THROWF(Error::RANGESERVER_GENERATION_MISMATCH,

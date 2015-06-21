@@ -111,12 +111,12 @@ namespace Hypertable {
     virtual bool restricted_range() { return m_restricted_range; }
 
     virtual int32_t get_fd() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_fd;
     }
 
     virtual int32_t reopen_fd() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (m_fd != -1)
         m_filesys->close(m_fd);
       m_fd = m_filesys->open(m_filename, 0);

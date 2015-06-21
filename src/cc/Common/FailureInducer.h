@@ -47,13 +47,13 @@
  *      label:throw(0x<hexadecimal-code>):0
  */
 
-#ifndef HYPERTABLE_FAILUREINDUCER_H
-#define HYPERTABLE_FAILUREINDUCER_H
+#ifndef Common_FailureInducer_h
+#define Common_FailureInducer_h
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 #include <Common/StringExt.h>
 
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -120,7 +120,7 @@ namespace Hypertable {
     typedef std::unordered_map<String, failure_inducer_state *> StateMap;
 
     /** A mutex to serialize access */
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /** A list of all failure settings */
     StateMap m_state_map;
@@ -149,4 +149,4 @@ namespace Hypertable {
   Hypertable::FailureInducer::enabled() && \
     Hypertable::FailureInducer::instance->failure_signalled(_label_)
 
-#endif // HYPERTABLE_FAILUREINDUCER_H
+#endif // Common_FailureInducer_h

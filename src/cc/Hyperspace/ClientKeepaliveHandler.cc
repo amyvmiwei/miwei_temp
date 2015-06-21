@@ -96,7 +96,7 @@ void ClientKeepaliveHandler::start() {
 
 
 void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
-  ScopedRecLock lock(m_mutex);
+  lock_guard<recursive_mutex> lock(m_mutex);
   int error;
 
   if (m_dead)
@@ -452,7 +452,7 @@ void ClientKeepaliveHandler::destroy_session() {
   int error;
 
   {
-    ScopedRecLock lock(m_mutex);
+    lock_guard<recursive_mutex> lock(m_mutex);
     if (m_dead || m_destroying)
       return;
     m_destroying = true;
@@ -472,14 +472,13 @@ void ClientKeepaliveHandler::destroy_session() {
 }
 
 void ClientKeepaliveHandler::wait_for_destroy_session() {
-  ScopedRecLock lock(m_mutex);
+  unique_lock<recursive_mutex> lock(m_mutex);
   if (m_dead)
     return;
 
   m_destroying = true;
-  if (!m_cond_destroyed.timed_wait(lock, boost::posix_time::seconds(2))) {
+  if (m_cond_destroyed.wait_for(lock, chrono::seconds(2)) == cv_status::timeout)
     destroy();
-  }
 }
 
 void ClientKeepaliveHandler::destroy() {

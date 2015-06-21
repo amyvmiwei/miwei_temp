@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
 #include <ctime>
 #include <cmath>
@@ -26,9 +26,10 @@
 #include "LoadThread.h"
 
 using namespace Hypertable;
+using namespace std;
 
 void LoadThread::operator()() {
-  ScopedLock lock(m_state.mutex);
+  unique_lock<mutex> lock(m_state.mutex);
   clock_t start_clocks=0, stop_clocks=0;
   double latency = 0.0;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
@@ -42,8 +43,8 @@ void LoadThread::operator()() {
   }
 
   while (!m_state.finished || !m_state.requests.empty()) {
-    while (m_state.requests.empty() && !m_state.finished)
-      m_state.cond.wait(lock);
+    m_state.cond.wait(lock, [this](){
+        return !m_state.requests.empty() || m_state.finished; });
     if (!m_state.requests.empty()) {
       LoadRec *request = m_state.requests.front();
 

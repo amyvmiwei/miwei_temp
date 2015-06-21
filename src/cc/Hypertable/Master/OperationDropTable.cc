@@ -139,7 +139,7 @@ void OperationDropTable::execute() {
       break;
 
     {
-      ScopedLock lock(m_mutex);
+      lock_guard<mutex> lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(Dependency::METADATA);
       m_dependencies.insert(m_id + " move range");
@@ -173,7 +173,7 @@ void OperationDropTable::execute() {
       StringSet servers;
       Utility::get_table_server_set(m_context, m_id, "", servers);
       {
-        ScopedLock lock(m_mutex);
+        lock_guard<mutex> lock(m_mutex);
         for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
           if (m_completed.count(*iter) == 0) {
             m_dependencies.insert(*iter);
@@ -200,7 +200,7 @@ void OperationDropTable::execute() {
           for (const auto &result : results) {
             if (result.error == Error::OK ||
                 result.error == Error::TABLE_NOT_FOUND) {
-              ScopedLock lock(m_mutex);
+              lock_guard<mutex> lock(m_mutex);
               m_completed.insert(result.location);
             }
             else
@@ -208,7 +208,7 @@ void OperationDropTable::execute() {
                        Error::get_text(result.error), result.msg.c_str());
           }
           {
-            ScopedLock lock(m_mutex);
+            lock_guard<mutex> lock(m_mutex);
             m_servers.clear();
             m_dependencies.insert(Dependency::METADATA);
             m_dependencies.insert(m_id + " move range");

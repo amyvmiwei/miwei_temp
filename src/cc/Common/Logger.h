@@ -26,8 +26,8 @@
  * and printf-like macros and convenience functions.
  */
 
-#ifndef HYPERTABLE_LOGGER_H
-#define HYPERTABLE_LOGGER_H
+#ifndef Common_Logger_h
+#define Common_Logger_h
 
 #include "Error.h"
 #include "String.h"
@@ -395,4 +395,4 @@ namespace Logger {
 // unlike assert, it cannot be turned off
 #define HT_ASSERT(_e_) HT_EXPECT(_e_, Error::FAILED_EXPECTATION)
 
-#endif // HYPERTABLE_LOGGER_H
+#endif // Common_Logger_h

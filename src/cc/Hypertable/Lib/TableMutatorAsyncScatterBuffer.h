@@ -49,10 +49,10 @@
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -78,7 +78,7 @@ namespace Hypertable {
              uint32_t value_len, size_t incr_mem);
     void set_delete(const Key &key, size_t incr_mem);
     void set(SerializedKey key, ByteString value, size_t incr_mem);
-    bool full() { ScopedLock lock(m_mutex); return m_full; }
+    bool full() { std::lock_guard<std::mutex> lock(m_mutex); return m_full; }
     void send(uint32_t flags);
     void wait_for_completion();
     TableMutatorAsyncScatterBufferPtr create_redo_buffer(uint32_t id);
@@ -133,8 +133,8 @@ namespace Hypertable {
     uint32_t             m_id;
     CommAddressSet       m_unsynced_rangeservers;
     size_t               m_memory_used {};
-    Mutex                m_mutex;
-    boost::condition     m_cond;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
     bool                 m_outstanding {};
     uint32_t             m_send_flags {};
     uint32_t             m_wait_time;

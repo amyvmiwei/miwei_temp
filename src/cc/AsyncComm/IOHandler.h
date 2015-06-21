@@ -34,8 +34,10 @@
 #include "ExpireTimer.h"
 
 #include <Common/Logger.h>
-#include <Common/Mutex.h>
 #include <Common/Time.h>
+
+#include <chrono>
+#include <mutex>
 
 extern "C" {
 #include <errno.h>
@@ -114,7 +116,8 @@ namespace Hypertable {
      * @param arrival_time Arrival time of event
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
-    virtual bool handle_event(struct pollfd *event, time_t arrival_time=0) = 0;
+    virtual bool handle_event(struct pollfd *event,
+                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
     /** Event handler method for <i>kqueue</i> interface (OSX, FreeBSD).
@@ -122,21 +125,24 @@ namespace Hypertable {
      * @param arrival_time Arrival time of event
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
-    virtual bool handle_event(struct kevent *event, time_t arrival_time=0) = 0;
+    virtual bool handle_event(struct kevent *event,
+                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
 #elif defined(__linux__)
     /** Event handler method for Linux <i>epoll</i> interface.
      * @param event Pointer to <code>epoll_event</code> structure describing event
      * @param arrival_time Arrival time of event
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
-    virtual bool handle_event(struct epoll_event *event, time_t arrival_time=0) = 0;
+    virtual bool handle_event(struct epoll_event *event,
+                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
 #elif defined(__sun__)
     /** Event handler method for <i>port_associate</i> interface (Solaris).
      * @param event Pointer to <code>port_event_t</code> structure describing event
      * @param arrival_time Arrival time of event
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
-    virtual bool handle_event(port_event_t *event, time_t arrival_time=0) = 0;
+    virtual bool handle_event(port_event_t *event,
+                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
 #else
     // Implement me!!!
 #endif
@@ -232,7 +238,7 @@ namespace Hypertable {
      * @param proxy Proxy name to set for this connection.
      */
     void set_proxy(const String &proxy) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_proxy = proxy;
     }
 
@@ -240,7 +246,7 @@ namespace Hypertable {
      * @return Proxy name for this connection.
      */
     const String& get_proxy() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_proxy;
     }
 
@@ -296,7 +302,7 @@ namespace Hypertable {
      * <i>false</i> otherwise.
      */
     bool test_and_set_error(int32_t error) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (m_error == Error::OK) {
         m_error = error;
         return true;
@@ -312,7 +318,7 @@ namespace Hypertable {
      * no error has been encountered
      */
     int32_t get_error() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_error;
     }
 
@@ -432,7 +438,7 @@ namespace Hypertable {
     }
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /** Reference count.  Calls to methods that reference this member
      * must be mutex protected by caller.

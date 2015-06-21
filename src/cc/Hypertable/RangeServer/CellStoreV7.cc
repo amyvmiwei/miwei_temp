@@ -105,7 +105,7 @@ KeyDecompressor *CellStoreV7::create_key_decompressor() {
 }
 
 void CellStoreV7::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_index_stats.block_index_memory == 0)
     load_block_index();
   if (m_trailer.index_entries == 0) {
@@ -120,7 +120,7 @@ void CellStoreV7::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
 }
 
 void CellStoreV7::populate_index_pseudo_table_scanner(CellListScannerBuffer *scanner) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_index_stats.block_index_memory == 0) {
     load_block_index();
     scanner->add_disk_read(m_trailer.filter_offset-m_trailer.fix_index_offset);
@@ -144,7 +144,7 @@ CellListScannerPtr CellStoreV7::create_scanner(ScanContext *scan_ctx) {
     scan_ctx->single_row || scan_ctx->has_cell_interval;
 
   if (need_index) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_index_stats.block_index_access_counter = ++Global::access_counter;
     if (m_index_stats.block_index_memory == 0)
       load_block_index();
@@ -302,7 +302,7 @@ void CellStoreV7::create_bloom_filter(bool is_approx) {
 }
 
 const std::vector<String> &CellStoreV7::get_replaced_files() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (!m_replaced_files_loaded)
     load_replaced_files();
   return m_replaced_files;
@@ -416,7 +416,7 @@ uint64_t CellStoreV7::purge_indexes() {
   uint64_t memory_purged = 0;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
 
     if (m_index_stats.bloom_filter_memory > 0) {
       memory_purged = m_index_stats.bloom_filter_memory;
@@ -903,7 +903,7 @@ CellStoreV7::open(const String &fname, const String &start_row,
 
 void
 CellStoreV7::rescope(const String &start_row, const String &end_row) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HT_ASSERT(m_start_row.compare(start_row)<0 || m_end_row.compare(end_row)>0);
   m_start_row = start_row;
   m_end_row = end_row;
@@ -1040,7 +1040,7 @@ bool CellStoreV7::may_contain(ScanContext *scan_ctx) {
     return false;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_bloom_filter == 0)
       load_bloom_filter();
 
@@ -1088,7 +1088,7 @@ bool CellStoreV7::may_contain(ScanContext *scan_ctx) {
 
 
 void CellStoreV7::display_block_info() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_index_stats.block_index_memory == 0)
     load_block_index();
   if (m_64bit_index)

@@ -29,10 +29,10 @@
 #define Hypertable_RangeServer_LoadStatistics_h
 
 #include <Common/Logger.h>
-#include <Common/Mutex.h>
 #include <Common/Time.h>
 
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -150,22 +150,22 @@ namespace Hypertable {
     }
 
     void increment_compactions_major() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_running.compactions_major++;
     }
 
     void increment_compactions_minor() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_running.compactions_minor++;
     }
 
     void increment_compactions_merging() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_running.compactions_merging++;
     }
 
     void increment_compactions_gc() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_running.compactions_gc++;
     }
 
@@ -181,7 +181,7 @@ namespace Hypertable {
      * @param stats Output parameter to hold copy of last computed statistics
      */
     void recompute(Bundle *stats=0) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       int64_t period_millis;
       boost::xtime now;
       boost::xtime_get(&now, TIME_UTC_);
@@ -220,12 +220,12 @@ namespace Hypertable {
      * @param stats Pointer to structure to hold statistics
      */
     void get(Bundle *stats) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       *stats = m_computed;
     }
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
     
     // Time period over which statistics are to be computed
     int64_t m_compute_period;
@@ -240,7 +240,7 @@ namespace Hypertable {
     Bundle m_computed;
   };
 
-  /// Smart pointer to LoadStatistics
+  /// Shared smart pointer to LoadStatistics
   typedef std::shared_ptr<LoadStatistics> LoadStatisticsPtr;
 
   /** @} */

@@ -19,26 +19,30 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASK_H
-#define HYPERTABLE_MAINTENANCETASK_H
+#ifndef Hypertable_RangeServer_MaintenanceTask_h
+#define Hypertable_RangeServer_MaintenanceTask_h
 
 #include "Common/Time.h"
 
 #include "MaintenanceFlag.h"
 #include "Range.h"
 
+#include <chrono>
+
 namespace Hypertable {
 
   class MaintenanceTask {
   public:
 
-    MaintenanceTask(uint32_t _level, int _priority, boost::xtime &stime, RangePtr &range, const String &desc)
-      : start_time(stime), level(_level), priority(_priority), m_range(range), m_retry(false),
+    MaintenanceTask(uint32_t _level, int _priority,
+                    std::chrono::time_point<std::chrono::steady_clock> &stime,
+                    RangePtr &range, const String &desc)
+      : start_time(stime), level(_level), priority(_priority), m_range(range),
         m_description(desc) { }
 
     MaintenanceTask(uint32_t _level, int _priority, const String &desc) :
-      level(_level), priority(_priority), m_retry(false), m_description(desc) {
-      boost::xtime_get(&start_time, boost::TIME_UTC_);
+      level(_level), priority(_priority), m_description(desc) {
+      start_time = std::chrono::steady_clock::now();
     }
 
     virtual ~MaintenanceTask() { }
@@ -62,7 +66,7 @@ namespace Hypertable {
       m_map[obj] = flags;
     }
 
-    boost::xtime start_time;
+    std::chrono::time_point<std::chrono::steady_clock> start_time;
     uint32_t level;
     int priority;
 
@@ -71,11 +75,11 @@ namespace Hypertable {
     MaintenanceFlag::Map m_map;
 
   private:
-    bool m_retry;
+    bool m_retry {};
     uint32_t m_retry_delay_millis;
     String m_description;
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASK_H
+#endif // Hypertable_RangeServer_MaintenanceTask_h

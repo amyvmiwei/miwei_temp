@@ -40,7 +40,9 @@
 #include <boost/thread/thread.hpp>
 
 #include <chrono>
+#include <condition_variable>
 #include <cstdlib>
+#include <mutex>
 #include <thread>
 
 extern "C" {
@@ -86,10 +88,10 @@ namespace {
    */
   class ResponseHandler : public DispatchHandler {
   public:
-    ResponseHandler() : m_mutex(), m_cond(), m_connected(false) { return; }
+    ResponseHandler() { }
 
     virtual void handle(EventPtr &event_ptr) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
         m_connected = true;
         m_cond.notify_one();
@@ -105,15 +107,14 @@ namespace {
     }
 
     void wait_for_connection() {
-      ScopedLock lock(m_mutex);
-      while (!m_connected)
-        m_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_mutex);
+      m_cond.wait(lock, [this](){ return m_connected; });
     }
 
   private:
-    Mutex             m_mutex;
-    boost::condition  m_cond;
-    bool              m_connected;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    bool m_connected {};
   };
 
 }

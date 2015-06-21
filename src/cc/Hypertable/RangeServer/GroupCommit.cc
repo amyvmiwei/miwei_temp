@@ -29,6 +29,7 @@
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
+using namespace std;
 
 GroupCommit::GroupCommit(Apps::RangeServer *range_server) : m_range_server(range_server) {
 
@@ -41,9 +42,9 @@ void
 GroupCommit::add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
                  const TableIdentifier &table, uint32_t count,
                  StaticBuffer &buffer, uint32_t flags) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   UpdateRequest *request = new UpdateRequest();
-  boost::xtime expire_time = event->deadline();
+  auto expire_time = event->deadline();
   ClusterTableIdPair key = std::make_pair(cluster_id, table);
 
   key.second.id = m_flyweight_strings.get(table.id);
@@ -68,7 +69,7 @@ GroupCommit::add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
     return;
   }
 
-  if (expire_time.sec > (*iter).second->expire_time.sec)
+  if (expire_time > (*iter).second->expire_time)
     (*iter).second->expire_time = expire_time;
   (*iter).second->total_count += count;
   (*iter).second->total_buffer_size += buffer.size;
@@ -78,12 +79,9 @@ GroupCommit::add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
 
 
 void GroupCommit::trigger() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   std::vector<UpdateRecTable *> updates;
-  boost::xtime expire_time;
-
-  // Clear to Jan 1, 1970
-  memset(&expire_time, 0, sizeof(expire_time));
+  chrono::time_point<chrono::steady_clock> expire_time;
 
   m_counter++;
 
@@ -91,7 +89,7 @@ void GroupCommit::trigger() {
   while (iter != m_table_map.end()) {
     if ((m_counter % (*iter).second->commit_iteration) == 0) {
       auto remove_iter = iter;
-      if (iter->second->expire_time.sec > expire_time.sec)
+      if (iter->second->expire_time > expire_time)
 	expire_time = iter->second->expire_time;
       ++iter;
       updates.push_back((*remove_iter).second);

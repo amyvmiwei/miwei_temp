@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,17 +19,19 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/Serialization.h"
-#include "Common/StringExt.h"
+#include <Common/Compat.h>
 
-#include <iostream>
+#include "OperationTest.h"
 
 #include "Hypertable/Master/OperationProcessor.h"
 
-#include "OperationTest.h"
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+
+#include <iostream>
+#include <mutex>
 
 using namespace Hypertable;
 using namespace std;
@@ -70,7 +72,7 @@ void OperationTest::execute() {
     }
     else if (state == OperationState::STARTED) {
       HT_ASSERT(validate_subops());
-      ScopedLock lock(m_context->mutex);
+      lock_guard<mutex> lock(m_context->mutex);
       m_results.push_back(m_name);
       set_state(OperationState::COMPLETE);
     }

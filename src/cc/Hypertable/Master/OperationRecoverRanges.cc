@@ -246,7 +246,7 @@ const String OperationRecoverRanges::label() {
 }
 
 void OperationRecoverRanges::initialize_obstructions_dependencies() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_dependencies.clear();
   m_obstructions.clear();
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);

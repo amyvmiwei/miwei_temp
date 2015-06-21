@@ -19,16 +19,16 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_GROUPCOMMIT_H
-#define HYPERSPACE_GROUPCOMMIT_H
-
-#include "Common/Mutex.h"
-#include "Common/FlyweightString.h"
+#ifndef Hypertable_RangeServer_GroupCommit_h
+#define Hypertable_RangeServer_GroupCommit_h
 
 #include "GroupCommitInterface.h"
 #include "RangeServer.h"
 
+#include <Common/FlyweightString.h>
+
 #include <map>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -72,7 +72,7 @@ namespace Hypertable {
 
   private:
     /// %Mutex to serialize concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
     /// Pointer to RangeServer
     Apps::RangeServer  *m_range_server;
     /// Cached copy of <code>Hypertable.RangeServer.CommitInterval</code>
@@ -88,5 +88,5 @@ namespace Hypertable {
   /// @}
 }
 
-#endif // HYPERSPACE_GROUPCOMMIT_H
+#endif // Hypertable_RangeServer_GroupCommit_h
 

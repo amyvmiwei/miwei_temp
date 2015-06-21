@@ -27,13 +27,13 @@
 
 #include <Hypertable/Lib/QualifiedRangeSpec.h>
 
-#include <Common/Mutex.h>
 #include <Common/PageArenaAllocator.h>
 
 #include <boost/thread/condition.hpp>
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 
@@ -91,12 +91,12 @@ namespace Hypertable {
   private:
     typedef std::map<QualifiedRangeSpec, PhantomRangePtr> Map;
 
-    Mutex            m_mutex;
-    CharArena        m_arena;
+    std::mutex m_mutex;
+    CharArena m_arena;
     TableInfoMapPtr  m_tableinfo_map;
-    Map              m_map;
-    int              m_plan_generation;
-    int              m_state;
+    Map m_map;
+    int m_plan_generation;
+    int m_state;
   };
 
   typedef std::shared_ptr<PhantomRangeMap> PhantomRangeMapPtr;

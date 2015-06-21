@@ -28,7 +28,6 @@
 #define Hypertable_Lib_MetaLog_h
 
 #include <Common/Filesystem.h>
-#include <Common/Mutex.h>
 
 #include <deque>
 #include <iostream>

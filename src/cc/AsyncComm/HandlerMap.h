@@ -38,17 +38,16 @@
 #include "IOHandlerRaw.h"
 #include "ProxyMap.h"
 
-#include <Common/Mutex.h>
 #include <Common/Error.h>
 #include <Common/Logger.h>
 #include <Common/SockAddrMap.h>
 #include <Common/Time.h>
 #include <Common/Timer.h>
 
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
 #include <cassert>
 #include <memory>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -216,7 +215,7 @@ namespace Hypertable {
      * @param handler Pointer to IOHandler to decomission
      */
     void decomission_handler(IOHandler *handler) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       decomission_handler_unlocked(handler);
     }
 
@@ -404,13 +403,13 @@ namespace Hypertable {
     IOHandlerRaw *lookup_raw_handler(const InetAddr &addr);
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Condition variable for signalling empty map
-    boost::condition m_cond;
+    std::condition_variable m_cond;
 
     /// Condition variable for signalling proxy map load
-    boost::condition m_cond_proxy;
+    std::condition_variable m_cond_proxy;
 
     /// Accept map (InetAddr-to-IOHandlerAccept)
     SockAddrMap<IOHandlerAccept *> m_accept_handler_map;

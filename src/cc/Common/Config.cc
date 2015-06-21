@@ -25,24 +25,25 @@
  * from a command line parameter).
  */
 
-#include "Common/Compat.h"
-#include "Common/Version.h"
-#include "Common/Logger.h"
-#include "Common/String.h"
-#include "Common/Path.h"
-#include "Common/FileUtils.h"
-#include "Common/Config.h"
-#include "Common/SystemInfo.h"
+#include <Common/Compat.h>
+#include <Common/Version.h>
+#include <Common/Logger.h>
+#include <Common/String.h>
+#include <Common/Path.h>
+#include <Common/FileUtils.h>
+#include <Common/Config.h>
+#include <Common/SystemInfo.h>
 
-#include <iostream>
 #include <fstream>
-#include <errno.h>
+#include <iostream>
+#include <mutex>
 
+#include <errno.h>
 
 namespace Hypertable { namespace Config {
 
 // singletons
-RecMutex rec_mutex;
+std::recursive_mutex rec_mutex;
 PropertiesPtr properties;
 static String filename;
 static bool file_loaded = false;
@@ -69,7 +70,7 @@ static String usage_str(const char *usage) {
 }
 
 Desc &cmdline_desc(const char *usage) {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   if (!cmdline_descp)
     cmdline_descp = new Desc(usage_str(usage), terminal_line_length());
@@ -78,7 +79,7 @@ Desc &cmdline_desc(const char *usage) {
 }
 
 Desc &cmdline_hidden_desc() {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   if (!cmdline_hidden_descp)
     cmdline_hidden_descp = new Desc();
@@ -87,7 +88,7 @@ Desc &cmdline_hidden_desc() {
 }
 
 PositionalDesc &cmdline_positional_desc() {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   if (!cmdline_positional_descp)
     cmdline_positional_descp = new PositionalDesc();
@@ -96,7 +97,7 @@ PositionalDesc &cmdline_positional_desc() {
 }
 
 void cmdline_desc(const Desc &desc) {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   if (cmdline_descp)
     delete cmdline_descp;
@@ -105,7 +106,7 @@ void cmdline_desc(const Desc &desc) {
 }
 
 Desc &file_desc(const char *usage) {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   if (!file_descp)
     file_descp = new Desc(usage ? usage : "Config Properties",
@@ -115,7 +116,7 @@ Desc &file_desc(const char *usage) {
 }
 
 void file_desc(const Desc &desc) {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   if (file_descp)
     delete file_descp;
@@ -562,7 +563,7 @@ void DefaultPolicy::init_options() {
 }
 
 void parse_args(int argc, char *argv[]) {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
 
   HT_TRY("parsing init arguments",
     properties->parse_args(argc, argv, cmdline_desc(), cmdline_hidden_descp,
@@ -649,19 +650,19 @@ void DefaultPolicy::init() {
 }
 
 bool allow_unregistered_options(bool choice) {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
   bool old = allow_unregistered;
   allow_unregistered = choice;
   return old;
 }
 
 bool allow_unregistered_options() {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
   return allow_unregistered;
 }
 
 void cleanup() {
-  ScopedRecLock lock(rec_mutex);
+  std::lock_guard<std::recursive_mutex> lock(rec_mutex);
   properties = 0;
   if (cmdline_descp) {
     delete cmdline_descp;

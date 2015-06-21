@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKDEFERREDINITIALIZATION_H
-#define HYPERTABLE_MAINTENANCETASKDEFERREDINITIALIZATION_H
+#ifndef Hypertable_RangeServer_MaintenanceTaskDeferredInitialization_h
+#define Hypertable_RangeServer_MaintenanceTaskDeferredInitialization_h
 
 #include "MaintenanceTask.h"
 
@@ -28,10 +28,12 @@ namespace Hypertable {
 
   class MaintenanceTaskDeferredInitialization : public MaintenanceTask {
   public:
-    MaintenanceTaskDeferredInitialization(uint32_t level, int priority, boost::xtime &stime, RangePtr &range);
+    MaintenanceTaskDeferredInitialization(uint32_t level, int priority,
+                                          std::chrono::time_point<std::chrono::steady_clock> &stime,
+                                          RangePtr &range);
     virtual void execute();
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKDEFERREDINITIALIZATION_H
+#endif // Hypertable_RangeServer_MaintenanceTaskDeferredInitialization_h

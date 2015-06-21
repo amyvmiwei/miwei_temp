@@ -32,9 +32,11 @@
 
 #include <Common/Error.h>
 #include <Common/InetAddr.h>
+#include <Common/Logger.h>
 #include <Common/String.h>
 #include <Common/Time.h>
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 
@@ -72,8 +74,7 @@ namespace Hypertable {
      * @param error_ Error code associated with this event
      */
     Event(Type type_, const InetAddr &addr_, int error_=Error::OK)
-      : type(type_), addr(addr_), proxy_buf(0), error(error_), payload(0),
-        payload_len(0), payload_aligned(false), group_id(0), arrival_time(0) {
+      : type(type_), addr(addr_), error(error_) {
       proxy = 0;
     }
 
@@ -86,8 +87,7 @@ namespace Hypertable {
      */
     Event(Type type_, const sockaddr_in &addr_, const String &proxy_,
           int error_=Error::OK) 
-      : type(type_), addr(addr_), proxy_buf(0), error(error_), payload(0),
-        payload_len(0), payload_aligned(false), group_id(0), arrival_time(0) {
+      : type(type_), addr(addr_), error(error_) {
       set_proxy(proxy_);
     }
 
@@ -97,8 +97,7 @@ namespace Hypertable {
      * @param error_ Error code associated with this event
      */
     Event(Type type_, int error_=Error::OK) 
-      : type(type_), proxy_buf(0), error(error_), payload(0), payload_len(0),
-        payload_aligned(false), group_id(0), arrival_time(0) {
+      : type(type_), error(error_) {
       proxy = 0;
     }
 
@@ -109,8 +108,7 @@ namespace Hypertable {
      * @param error_ Error code associated with this event
      */
     Event(Type type_, const String &proxy_, int error_=0) 
-      : type(type_), proxy_buf(0), error(error_), payload(0), payload_len(0),
-        payload_aligned(false), group_id(0), arrival_time(0) {
+      : type(type_), error(error_) {
       set_proxy(proxy_);
     }
 
@@ -158,11 +156,9 @@ namespace Hypertable {
     /** Deadline for request.
      * @return Absolute deadline
      */
-    boost::xtime deadline() {
-      boost::xtime dl;
-      boost::xtime_get(&dl, boost::TIME_UTC_);
-      dl.sec += header.timeout_ms/1000;
-      return dl;
+    std::chrono::time_point<std::chrono::steady_clock> deadline() {
+      HT_ASSERT(arrival_time.time_since_epoch().count() > 0);
+      return arrival_time + std::chrono::milliseconds(header.timeout_ms);
     }
 
     /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,
@@ -174,10 +170,10 @@ namespace Hypertable {
     InetAddr addr;
 
     /// Address proxy name
-    const char *proxy;
+    const char *proxy {};
 
     /// Pointer to allocated proxy name buffer
-    char *proxy_buf;
+    char *proxy_buf {};
 
     /// Static proxy name buffer
     char proxy_buf_static[32];
@@ -188,19 +184,16 @@ namespace Hypertable {
     /** Error code associated with this event.  DISCONNECT and
      * ERROR events set this value
      */
-    int error;
+    int error {};
 
     /// Comm layer header for MESSAGE events
     CommHeader header;
 
     /// Points to a buffer containing the message payload
-    const uint8_t *payload;
+    const uint8_t *payload {};
 
     /// Length of the message
-    size_t payload_len;
-
-    /// Flag indicating if payload was allocated with posix_memalign
-    bool payload_aligned;
+    size_t payload_len {};
 
     /** Thread group to which this message belongs.  Used to serialize
      * messages destined for the same object.  This value is created in
@@ -211,10 +204,13 @@ namespace Hypertable {
      * </pre>
      * If the gid is zero, then the group_id member is also set to zero
      */
-    uint64_t group_id;
+    uint64_t group_id {};
 
     /// time (seconds since epoch) when message arrived
-    time_t arrival_time;
+    std::chrono::time_point<std::chrono::steady_clock> arrival_time {};
+
+    /// Flag indicating if payload was allocated with posix_memalign
+    bool payload_aligned {};
 
     /** Generates a one-line string representation of the event.  For example:
      * <pre>

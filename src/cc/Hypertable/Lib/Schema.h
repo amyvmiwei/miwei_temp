@@ -27,7 +27,6 @@
 #ifndef Hypertable_Lib_Schema_h
 #define Hypertable_Lib_Schema_h
 
-#include <Common/Mutex.h>
 #include <Common/Properties.h>
 #include "Common/PageArenaAllocator.h"
 #include <Common/StringExt.h>

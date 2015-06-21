@@ -19,13 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_OPERATIONTEST_H
-#define HYPERTABLE_OPERATIONTEST_H
-
-#include <vector>
+#ifndef Hypertable_Master_tests_OperationTest_h
+#define Hypertable_Master_tests_OperationTest_h
 
 #include "Hypertable/Master/Context.h"
 #include "Hypertable/Master/Operation.h"
+
+#include <vector>
 
 namespace Hypertable {
 
@@ -65,6 +65,6 @@ namespace Hypertable {
   };
   typedef std::shared_ptr<OperationTest> OperationTestPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_OPERATIONTEST_H
+#endif // Hypertable_Master_tests_OperationTest_h

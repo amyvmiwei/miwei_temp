@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,13 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
 
-#include <cstdlib>
-
-#include "Common/System.h"
+#include <Common/Compat.h>
 
 #include "FixedRandomStringGenerator.h"
+
+#include <Common/Logger.h>
+#include <Common/System.h>
+
+#include <cstdlib>
 
 using namespace Hypertable;
 
@@ -34,9 +36,6 @@ namespace {
 }
 
 
-/**
- *
- */
 FixedRandomStringGenerator::FixedRandomStringGenerator(int n) : m_nchars(n) {
   HT_ASSERT(n>0);
   m_nints = ((m_nchars * 6) + 7) / 8;

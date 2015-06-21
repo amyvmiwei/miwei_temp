@@ -19,13 +19,15 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
+#include <Common/Compat.h>
 
 #include "OperationProcessor.h"
 #include "OperationTimedBarrier.h"
 
+#include <Common/Error.h>
+
 using namespace Hypertable;
+using namespace std;
 
 OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
                                              const String &block_dependency,
@@ -34,21 +36,22 @@ OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
     m_block_dependency(block_dependency), m_wakeup_dependency(wakeup_dependency),
     m_shutdown(false) {
   m_obstructions.insert(block_dependency);
-  boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
+  m_expire_time = chrono::steady_clock::now();
 }
 
 void OperationTimedBarrier::execute() {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
 
   HT_INFOF("Entering TimedBarrier-%lld state=%s", (Lld)header.id,
            OperationState::get_text(m_state));
 
-  HiResTime now;
+  auto now = chrono::steady_clock::now();
   while (now < m_expire_time && !m_shutdown) {
+    auto diff = m_expire_time - now;
     HT_INFOF("Barrier for %s will be up for %lld milliseconds",
-             m_block_dependency.c_str(), (Lld)xtime_diff_millis(now, m_expire_time));
-    m_cond.timed_wait(lock, (boost::xtime)m_expire_time);
-    now.reset();
+             m_block_dependency.c_str(), (Lld)diff.count());
+    m_cond.wait_until(lock, m_expire_time);
+    now = chrono::steady_clock::now();
   }
 
   m_context->op->activate(m_wakeup_dependency);
@@ -68,17 +71,14 @@ const String OperationTimedBarrier::label() {
 }
 
 void OperationTimedBarrier::advance_into_future(uint32_t millis) {
-  ScopedLock lock(m_mutex);
-  HiResTime new_time;
-
-  new_time += millis;
-
+  lock_guard<mutex> lock(m_mutex);
+  auto new_time = chrono::steady_clock::now() + chrono::milliseconds(millis);
   if (m_expire_time < new_time)
     m_expire_time = new_time;
 }
 
 void OperationTimedBarrier::shutdown() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_shutdown = true;
   m_cond.notify_all();
 }

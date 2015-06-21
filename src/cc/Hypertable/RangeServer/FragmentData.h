@@ -37,7 +37,6 @@
 #include <AsyncComm/Event.h>
 
 #include <Common/ByteString.h>
-#include <Common/Mutex.h>
 #include <Common/atomic.h>
 
 #include <memory>

@@ -23,18 +23,17 @@
  * Retrieves system information (hardware, installation directory, etc)
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/Path.h>
+#include <Common/SystemInfo.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
 #include <iostream>
 #include <vector>
-
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/Path.h"
-#include "Common/SystemInfo.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -45,11 +44,11 @@ string System::exe_name;
 long System::tm_gmtoff;
 string System::tm_zone;
 bool   System::ms_initialized = false;
-Mutex  System::ms_mutex;
+mutex  System::ms_mutex;
 boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
-  ScopedLock lock(ms_mutex);
+  lock_guard<mutex> lock(ms_mutex);
   return _locate_install_dir(argv0);
 }
 

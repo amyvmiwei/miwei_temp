@@ -19,16 +19,16 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SERVERKEEPALIVEHANDLER_H
-#define HYPERSPACE_SERVERKEEPALIVEHANDLER_H
-
-#include <boost/shared_ptr.hpp>
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
+#ifndef Hyperspace_ServerKeepaliveHandler_h
+#define Hyperspace_ServerKeepaliveHandler_h
 
 #include "Event.h"
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
+
+#include <mutex>
 
 namespace Hyperspace {
 
@@ -50,11 +50,11 @@ namespace Hyperspace {
     Master            *m_master;
     struct sockaddr_in m_send_addr;
     ApplicationQueuePtr m_app_queue_ptr;
-    Mutex              m_mutex;
-    bool               m_shutdown;
+    std::mutex m_mutex;
+    bool m_shutdown {};
   };
   typedef std::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
 }
 
-#endif // HYPERSPACE_SERVERKEEPALIVEHANDLER_H
+#endif // Hyperspace_ServerKeepaliveHandler_h
 

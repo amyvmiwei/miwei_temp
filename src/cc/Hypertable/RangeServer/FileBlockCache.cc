@@ -28,12 +28,12 @@
 #include <utility>
 
 using namespace Hypertable;
-using std::pair;
+using namespace std;
 
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
 FileBlockCache::~FileBlockCache() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for (BlockCache::const_iterator iter = m_cache.begin();
        iter != m_cache.end(); ++iter)
     if (!iter->event)
@@ -44,7 +44,7 @@ FileBlockCache::~FileBlockCache() {
 bool
 FileBlockCache::checkout(int file_id, uint64_t file_offset, uint8_t **blockp,
                          uint32_t *lengthp) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
 
@@ -70,7 +70,7 @@ FileBlockCache::checkout(int file_id, uint64_t file_offset, uint8_t **blockp,
 
 
 void FileBlockCache::checkin(int file_id, uint64_t file_offset) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
 
@@ -86,7 +86,7 @@ bool
 FileBlockCache::insert(int file_id, uint64_t file_offset,
 		       uint8_t *block, uint32_t length,
                        const EventPtr &event, bool checkout) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
 
   if (hash_index.find(make_key(file_id, file_offset)) != hash_index.end())
@@ -120,7 +120,7 @@ FileBlockCache::insert(int file_id, uint64_t file_offset,
 
 
 bool FileBlockCache::contains(int file_id, uint64_t file_offset) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   m_accesses++;
 
@@ -134,7 +134,7 @@ bool FileBlockCache::contains(int file_id, uint64_t file_offset) {
 
 
 void FileBlockCache::increase_limit(int64_t amount) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int64_t adjusted_amount = amount;
   if ((m_max_memory-m_limit) < amount)
     adjusted_amount = m_max_memory - m_limit;
@@ -144,7 +144,7 @@ void FileBlockCache::increase_limit(int64_t amount) {
 
 
 int64_t FileBlockCache::decrease_limit(int64_t amount) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int64_t memory_freed = 0;
   if (m_available < amount) {
     if (amount > (m_limit - m_min_memory))
@@ -180,7 +180,7 @@ int64_t FileBlockCache::make_room(int64_t amount) {
 
 void FileBlockCache::get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
                                uint64_t *accessesp, uint64_t *hitsp) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   *max_memoryp = m_limit;
   *available_memoryp = m_available;
   *accessesp = m_accesses;

@@ -37,6 +37,9 @@
 #include <Common/InetAddr.h>
 #include <Common/StringExt.h>
 
+#include <condition_variable>
+#include <mutex>
+
 namespace Hypertable {
 
   using namespace Lib;
@@ -86,12 +89,12 @@ namespace Hypertable {
     void get_errors(vector<ErrorResult> &errors);
 
   private:
-    Mutex              m_mutex;
-    boost::condition   m_cond;
-    int                m_outstanding;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    int m_outstanding {};
     RangeServer::Client m_client;
     vector<ErrorResult> m_errors;
-    CommAddressSet      m_pending;
+    CommAddressSet m_pending;
     TableIdentifierManaged &m_table_identifier;
   };
 }

@@ -65,7 +65,7 @@ UpdatePipeline::UpdatePipeline(ContextPtr &context, QueryCachePtr &query_cache,
 }
 
 void UpdatePipeline::add(UpdateContext *uc) {
-  ScopedLock lock(m_qualify_queue_mutex);
+  lock_guard<mutex> lock(m_qualify_queue_mutex);
   m_qualify_queue.push_back(uc);
   m_qualify_queue_cond.notify_all();
 }
@@ -100,16 +100,15 @@ void UpdatePipeline::qualify_and_transform() {
   CommitLogPtr transfer_log;
   UpdateRecRange range_update;
   RangePtr range;
-  Mutex &mutex = m_qualify_queue_mutex;
-  boost::condition &cond = m_qualify_queue_cond;
+  std::mutex &mutex = m_qualify_queue_mutex;
+  condition_variable &cond = m_qualify_queue_cond;
   std::list<UpdateContext *> &queue = m_qualify_queue;
 
   while (true) {
 
     {
-      ScopedLock lock(mutex);
-      while (queue.empty() && !m_shutdown)
-        cond.wait(lock);
+      unique_lock<std::mutex> lock(mutex);
+      cond.wait(lock, [this, &queue](){ return !queue.empty() || m_shutdown; });
       if (m_shutdown)
         return;
       uc = queue.front();
@@ -506,7 +505,7 @@ void UpdatePipeline::qualify_and_transform() {
 
     // Enqueue update
     {
-      ScopedLock lock(m_commit_queue_mutex);
+      lock_guard<std::mutex> lock(m_commit_queue_mutex);
       m_commit_queue.push_back(uc);
       m_commit_queue_cond.notify_all();
       m_commit_queue_count++;
@@ -527,9 +526,9 @@ void UpdatePipeline::commit() {
 
     // Dequeue next update
     {
-      ScopedLock lock(m_commit_queue_mutex);
-      while (m_commit_queue.empty() && !m_shutdown)
-        m_commit_queue_cond.wait(lock);
+      unique_lock<std::mutex> lock(m_commit_queue_mutex);
+      m_commit_queue_cond.wait(lock, [this](){
+          return !m_commit_queue.empty() || m_shutdown; });
       if (m_shutdown)
         return;
       uc = m_commit_queue.front();
@@ -636,7 +635,7 @@ void UpdatePipeline::commit() {
 
     // Enqueue update
     {
-      ScopedLock lock(m_response_queue_mutex);
+      lock_guard<std::mutex> lock(m_response_queue_mutex);
       coalesce_queue.push_back(uc);
       while (!coalesce_queue.empty()) {
         uc = coalesce_queue.front();
@@ -658,9 +657,9 @@ void UpdatePipeline::add_and_respond() {
 
     // Dequeue next update
     {
-      ScopedLock lock(m_response_queue_mutex);
-      while (m_response_queue.empty() && !m_shutdown)
-        m_response_queue_cond.wait(lock);
+      unique_lock<std::mutex> lock(m_response_queue_mutex);
+      m_response_queue_cond.wait(lock, [this](){
+          return !m_response_queue.empty() || m_shutdown; });
       if (m_shutdown)
         return;
       uc = m_response_queue.front();
@@ -679,7 +678,7 @@ void UpdatePipeline::add_and_respond() {
 
         for (UpdateRecRange &update : (*iter).second->updates) {
           Range *rangep = (*iter).first;
-          Locker<Range> lock(*rangep);
+          lock_guard<Range> lock(*rangep);
           uint8_t *ptr = update.bufp->base + update.offset;
           uint8_t *end = ptr + update.len;
 
@@ -810,7 +809,7 @@ void UpdatePipeline::add_and_respond() {
     }
 
     {
-      Locker<LoadStatistics> lock(*Global::load_statistics);
+      lock_guard<LoadStatistics> lock(*Global::load_statistics);
       Global::load_statistics->add_update_data(uc->total_updates, uc->total_added, uc->total_bytes_added, uc->total_syncs);
     }
 

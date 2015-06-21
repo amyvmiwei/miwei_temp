@@ -32,11 +32,10 @@
 #include "RequestCache.h"
 #include "ExpireTimer.h"
 
-#include <Common/Mutex.h>
-
 #include <boost/thread/thread.hpp>
 
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <set>
 #include <vector>
@@ -95,7 +94,7 @@ namespace Hypertable {
      */
     void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
                      boost::xtime &expire) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_request_cache.insert(id, handler, dh, expire);
       if (m_next_wakeup.sec == 0 || xtime_cmp(expire, m_next_wakeup) < 0)
         poll_loop_interrupt();
@@ -107,7 +106,7 @@ namespace Hypertable {
      * @return <i>true</i> if request removed, <i>false</i> otherwise
      */
     bool remove_request(uint32_t id, DispatchHandler *&handler) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_request_cache.remove(id, handler);
     }
 
@@ -117,7 +116,7 @@ namespace Hypertable {
      * @param error Error code to deliver with ERROR events
      */
     void cancel_requests(IOHandler *handler, int32_t error=Error::COMM_BROKEN_CONNECTION) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_request_cache.purge_requests(handler, error);
     }
 
@@ -127,7 +126,7 @@ namespace Hypertable {
      * @param timer Reference to ExpireTimer object
      */
     void add_timer(ExpireTimer &timer) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_timer_heap.push(timer);
       poll_loop_interrupt();
     }
@@ -137,7 +136,7 @@ namespace Hypertable {
      * cancelled
      */
     void cancel_timer(const DispatchHandlerPtr &handler) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       typedef TimerHeap::container_type container_t;
       container_t container;
       container.reserve(m_timer_heap.size());
@@ -163,7 +162,7 @@ namespace Hypertable {
      * @param handler I/O handler to schedule for removal
      */
     void schedule_removal(IOHandler *handler) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_removed_handlers.insert(handler);
       ExpireTimer timer;
       boost::xtime_get(&timer.expire_time, boost::TIME_UTC_);
@@ -179,7 +178,7 @@ namespace Hypertable {
      * @param dst reference to set filled in with removed handlers
      */
     void get_removed_handlers(std::set<IOHandler *> &dst) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       dst = m_removed_handlers;
       m_removed_handlers.clear();
     }
@@ -266,8 +265,8 @@ namespace Hypertable {
     typedef std::priority_queue<ExpireTimer,
       std::vector<ExpireTimer>, LtTimerHeap> TimerHeap;
 
-    Mutex m_mutex;                //!< Mutex to protect members
-    Mutex m_polldata_mutex;       //!< Mutex to protect #m_polldata member
+    std::mutex m_mutex;           //!< Mutex to protect members
+    std::mutex m_polldata_mutex;  //!< Mutex to protect #m_polldata member
     RequestCache m_request_cache; //!< Request cache
     TimerHeap m_timer_heap;       //!< ExpireTimer heap
     int m_interrupt_sd;           //!< Interrupt socket

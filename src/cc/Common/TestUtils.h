@@ -22,18 +22,19 @@
  * parallel or serial. Calculates min/max/mean elapsed time.
  */
 
-#ifndef HYPERTABLE_TEST_UTILS_H
-#define HYPERTABLE_TEST_UTILS_H
-
-#include <cmath>
-#include <limits>
-
-#include <boost/bind.hpp>
+#ifndef Common_TestUtils_h
+#define Common_TestUtils_h
 
 #include "Config.h"
 #include "SystemInfo.h"
 #include "Stopwatch.h"
 #include "Thread.h"
+
+#include <boost/bind.hpp>
+
+#include <cmath>
+#include <limits>
+#include <mutex>
 
 #define HT_BENCH_OUT(_label_, _n_, _w_) do { \
   std::cout << ThisThread::get_id() <<": "<< (_label_) <<": " \
@@ -89,17 +90,17 @@ class TestStat {
 
   // Adds a new test result (synchronized version)
   void add(double x) {
-    ScopedLock lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     (*this)(x);
   }
 
-  double min() const { ScopedLock lock(m_mutex); return m_minv; }
-  double max() const { ScopedLock lock(m_mutex); return m_maxv; }
-  double mean() const { ScopedLock lock(m_mutex); return m_a1; }
-  double stdev() const { ScopedLock lock(m_mutex); return std::sqrt(m_q1/m_i); }
+  double min() const { std::lock_guard<std::mutex> lock(m_mutex); return m_minv; }
+  double max() const { std::lock_guard<std::mutex> lock(m_mutex); return m_maxv; }
+  double mean() const { std::lock_guard<std::mutex> lock(m_mutex); return m_a1; }
+  double stdev() const { std::lock_guard<std::mutex> lock(m_mutex); return std::sqrt(m_q1/m_i); }
 
  private:
-  mutable Mutex m_mutex;
+  mutable std::mutex m_mutex;
   double m_minv, m_maxv;
   size_t m_i;
   double m_a0, m_a1, m_q0, m_q1;
@@ -218,7 +219,7 @@ typedef Cons<TestPolicy, DefaultPolicy> DefaultTestPolicy;
 
 /** @} */
 
-} // namespace Hypertable::Config
-} // namespace Hypertable
+}
+}
 
-#endif /* HYPERTABLE_TEST_UTILS_H */
+#endif /* Common_TestUtils_h */

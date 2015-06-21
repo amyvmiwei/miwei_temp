@@ -35,7 +35,6 @@
 
 #include <AsyncComm/Comm.h>
 
-#include <Common/Mutex.h>
 #include <Common/Time.h>
 #include <Common/Thread.h>
 
@@ -51,6 +50,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <thread>
 
 namespace Hypertable {
@@ -154,13 +154,13 @@ namespace Hypertable {
     typedef DeliveryList::nth_index<2>::type DeliveryIdentifierIndex;
 
     /// %Mutex for serializing concurrent access
-    Mutex mutex;
+    std::mutex mutex;
 
     /// Condition variable used to wait for operations to expire
-    boost::condition cond;
+    std::condition_variable cond;
 
     /// Pointer to comm layer
-    Comm *comm;
+    Comm *comm {};
 
     /// MML writer
     MetaLog::WriterPtr mml_writer;
@@ -276,7 +276,7 @@ namespace Hypertable {
     /// Sets MML writer
     /// @param mml_writer MML writer object
     void set_mml_writer(MetaLog::WriterPtr &mml_writer) {
-      ScopedLock lock(m_context->mutex);
+      std::lock_guard<std::mutex> lock(m_context->mutex);
       m_context->mml_writer = mml_writer;
     }
 

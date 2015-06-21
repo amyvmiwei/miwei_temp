@@ -34,12 +34,12 @@
 #include <Common/Filesystem.h>
 #include <Common/FlyweightString.h>
 
-#include <boost/thread/condition.hpp>
-
 #include <algorithm>
+#include <condition_variable>
 #include <deque>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 // this macro enables the "ScanSpecBuilder queue" test code; it fills the queue
@@ -145,8 +145,8 @@ namespace Hypertable {
     }
 
     virtual ~IndexScannerCallback() {
-      ScopedLock lock1(m_scanner_mutex);
-      ScopedLock lock2(m_mutex);
+      std::lock_guard<std::mutex> lock1(m_scanner_mutex);
+      std::lock_guard<std::mutex> lock2(m_mutex);
       m_scanners.clear();
       sspecs_clear();
       if (m_tmp_table) {
@@ -158,12 +158,12 @@ namespace Hypertable {
 
     void shutdown() {
       {
-        ScopedLock lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_mutex);
         m_shutdown = true;
       }
 
       {
-        ScopedLock lock(m_scanner_mutex);
+        std::lock_guard<std::mutex> lock(m_scanner_mutex);
         for (auto s : m_scanners)
           delete s;
       }
@@ -189,7 +189,7 @@ namespace Hypertable {
       bool is_eos = scancells->get_eos();
       std::string table_name = scanner->get_table_name();
 
-      ScopedLock lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
 
       // ignore empty packets
       if (scancells->get_eos() == false && scancells->empty())
@@ -451,7 +451,7 @@ namespace Hypertable {
       // results to the primary table for verification
       ScanSpecBuilder ssb;
 
-      ScopedLock lock(m_scanner_mutex);
+      std::lock_guard<std::mutex> lock(m_scanner_mutex);
       if (m_shutdown)
         return;
 
@@ -549,7 +549,7 @@ namespace Hypertable {
       m_mutator.reset(m_tmp_table->create_mutator_async(this));
     }
 
-    void verify_results(ScopedLock &lock, TableScannerAsync *scanner, 
+    void verify_results(std::unique_lock<std::mutex> &lock, TableScannerAsync *scanner, 
                         ScanCellsPtr &scancells) {
       // no results from the primary table, or LIMIT/CELL_LIMIT exceeded? 
       // then return immediately
@@ -593,8 +593,8 @@ namespace Hypertable {
 
         m_last_rowkey_verify = last;
 
-        while (m_sspecs.size() > SSB_QUEUE_LIMIT && !m_limits_reached)
-          m_sspecs_cond.wait(lock);
+        m_sspecs_cond.wait(lock, [this](){
+            return m_sspecs.size() <= SSB_QUEUE_LIMIT || m_limits_reached; });
 
         if (m_limits_reached) { 
           delete ssb;
@@ -668,9 +668,8 @@ namespace Hypertable {
       // store the "last" pointer before it goes out of scope
       m_last_rowkey_verify = last;
 
-      // add the ScanSpec to the queue
-      while (m_sspecs.size() > SSB_QUEUE_LIMIT && !m_limits_reached)
-        m_sspecs_cond.wait(lock);
+      m_sspecs_cond.wait(lock, [this](){
+          return m_sspecs.size() <= SSB_QUEUE_LIMIT || m_limits_reached; });
 
       // if, in the meantime, we reached any CELL_LIMIT/ROW_LIMIT then return
       if (m_limits_reached || ssb->get().row_intervals.empty()) { 
@@ -711,7 +710,7 @@ namespace Hypertable {
       delete ssb;
       m_sspecs_cond.notify_one();
 
-      ScopedLock lock(m_scanner_mutex);
+      std::lock_guard<std::mutex> lock(m_scanner_mutex);
       m_scanners.push_back(s);
     }
 
@@ -882,13 +881,13 @@ namespace Hypertable {
     std::vector<TableScannerAsync *> m_scanners;
 
     // a mutex for m_scanners
-    Mutex m_scanner_mutex;
+    std::mutex m_scanner_mutex;
 
     // a deque of ScanSpecs, needed for readahead in the primary table
     std::deque<ScanSpecBuilder *> m_sspecs;
 
     // a condition to wait if the sspecs-queue is too full
-    boost::condition m_sspecs_cond;
+    std::condition_variable m_sspecs_cond;
 
     // a mapping from column id to column name
     std::map<uint32_t, String> m_column_map;
@@ -918,7 +917,7 @@ namespace Hypertable {
     bool m_limits_reached {};
 
     // a mutex 
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     // counting the read-ahead scans
     int m_readahead_count {};

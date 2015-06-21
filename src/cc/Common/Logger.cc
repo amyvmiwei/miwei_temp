@@ -26,21 +26,21 @@
  * and printf-like macros and convenience functions.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include "String.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <stdio.h>
 #include <stdarg.h>
-
-#include "String.h"
-#include "Logger.h"
-#include "Mutex.h"
+#include <mutex>
 
 namespace Hypertable { namespace Logger {
 
 static String logger_name;
 static LogWriter *logger_obj = 0;
-static Mutex mutex;
+static std::mutex mutex;
 
 void initialize(const String &name) {
   logger_name = name;
@@ -65,7 +65,7 @@ void LogWriter::log_string(int priority, const char *message) {
     "NOTSET"
   };
 
-  ScopedLock lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
   if (m_test_mode) {
     fprintf(m_file, "%s %s : %s\n", priority_name[priority], m_name.c_str(),
             message);

@@ -36,7 +36,9 @@
 #include <AsyncComm/ConnectionInitializer.h>
 
 #include <Common/String.h>
-#include <Common/Mutex.h>
+
+#include <condition_variable>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -77,10 +79,10 @@ namespace Hypertable {
     std::shared_ptr<Context> m_context;
 
     /// %Mutex for serializing concurrent access.
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Condition variable signalling completion of initialization handshake
-    boost::condition m_cond;
+    std::condition_variable m_cond;
 
     /// Assigned location (proxy name)
     String m_location;
@@ -98,7 +100,7 @@ namespace Hypertable {
     bool m_lock_held {};
   };
 
-  /// Smart pointer to LocationInitializer
+  /// Shared smart pointer to LocationInitializer
   typedef std::shared_ptr<LocationInitializer> LocationInitializerPtr;
 
   /// @}

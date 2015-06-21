@@ -24,11 +24,12 @@
 /// This file contains declarations for ReferenceManager, a class for tracking
 /// manually removed operation.
 
-#ifndef HYPERTABLE_REFERENCEMANAGER_H
-#define HYPERTABLE_REFERENCEMANAGER_H
+#ifndef Hypertable_Master_ReferenceManager_h
+#define Hypertable_Master_ReferenceManager_h
 
 #include <Hypertable/Master/Operation.h>
 
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -46,7 +47,7 @@ namespace Hypertable {
     /// @return <i>true</i> if successfully added, <i>false</i> if not added
     /// because operation already exists in #m_map.
     bool add(OperationPtr operation) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (m_map.find(operation->id()) != m_map.end())
         return false;
       m_map[operation->id()] = operation;
@@ -58,7 +59,7 @@ namespace Hypertable {
     /// maps.
     /// @return %Operation associated with <code>id</code>, nullptr if not found
     OperationPtr get(int64_t id) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       auto iter = m_map.find(id);
       if (iter == m_map.end())
         return 0;
@@ -68,7 +69,7 @@ namespace Hypertable {
     /// Remove an operation.
     /// @param operation Operation for which to remove.
     void remove(OperationPtr operation) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       auto iter = m_map.find(operation->id());
       if (iter != m_map.end())
         m_map.erase(iter);
@@ -77,14 +78,14 @@ namespace Hypertable {
     /// Clears all referenced operations.
     /// Clears #m_map.
     void clear() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_map.clear();
     }
 
   private:
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// Reference map
     std::unordered_map<int64_t, OperationPtr> m_map;
@@ -94,4 +95,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_REFERENCEMANAGER_H
+#endif // Hypertable_Master_ReferenceManager_h

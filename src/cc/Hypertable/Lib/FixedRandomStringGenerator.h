@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_FIXEDRANDOMSTRINGGENERATOR_H
-#define HYPERTABLE_FIXEDRANDOMSTRINGGENERATOR_H
+#ifndef Hypertable_Lib_FixedRandomStringGenerator_h
+#define Hypertable_Lib_FixedRandomStringGenerator_h
 
 #include <cstring>
 #include <vector>
@@ -43,4 +43,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_FIXEDRANDOMSTRINGGENERATOR_H
+#endif // Hypertable_Lib_FixedRandomStringGenerator_h

@@ -30,10 +30,8 @@
 
 using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib;
+using namespace std;
 
-/**
- *
- */
 ClientBufferedReaderHandler::ClientBufferedReaderHandler(
     Client *client, uint32_t fd, uint32_t buf_size,
     uint32_t outstanding, uint64_t start_offset, uint64_t end_offset) :
@@ -57,7 +55,7 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(
   }
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     uint32_t toread;
 
     for (m_outstanding=0; m_outstanding<m_max_outstanding; m_outstanding++) {
@@ -83,11 +81,10 @@ ClientBufferedReaderHandler::ClientBufferedReaderHandler(
 
 ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
   try {
-    ScopedLock lock(m_mutex);
+    unique_lock<mutex> lock(m_mutex);
     m_eof = true;
 
-    while (m_outstanding > 0)
-      m_cond.wait(lock);
+    m_cond.wait(lock, [this](){ return m_outstanding == 0; });
   }
   catch (...) {
     HT_ERROR("synchronization error");
@@ -100,7 +97,7 @@ ClientBufferedReaderHandler::~ClientBufferedReaderHandler() {
  *
  */
 void ClientBufferedReaderHandler::handle(EventPtr &event) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   m_outstanding--;
 
@@ -143,20 +140,16 @@ void ClientBufferedReaderHandler::handle(EventPtr &event) {
 
 
 
-/**
- *
- */
 size_t
 ClientBufferedReaderHandler::read(void *buf, size_t len) {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   uint8_t *ptr = (uint8_t *)buf;
   long nleft = len;
   long available, nread;
 
   while (true) {
 
-    while (m_queue.empty() && !m_eof)
-      m_cond.wait(lock);
+    m_cond.wait(lock, [this](){ return !m_queue.empty() || m_eof; });
 
     if (m_error != Error::OK)
       HT_THROW(m_error, m_error_msg);

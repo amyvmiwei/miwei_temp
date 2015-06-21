@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,27 +19,26 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <algorithm>
-#include <cassert>
-
-#include "Common/Logger.h"
-
-#include "Hypertable/Lib/Key.h"
+#include <Common/Compat.h>
 
 #include "CellCacheScanner.h"
 #include "Global.h"
 
-using namespace Hypertable;
+#include <Hypertable/Lib/Key.h>
 
-/**
- *
- */
+#include <Common/Logger.h>
+
+#include <algorithm>
+#include <cassert>
+
+using namespace Hypertable;
+using namespace std;
+
 CellCacheScanner::CellCacheScanner(CellCachePtr cellcache,
                                    ScanContext *scan_ctx)
   : CellListScanner(scan_ctx), m_cell_cache_ptr(cellcache),
     m_cell_cache_mutex(cellcache->m_mutex) {
-  ScopedLock lock(m_cell_cache_mutex);
+  lock_guard<mutex> lock(m_cell_cache_mutex);
   DynamicBuffer current_buf;
   Key current;
   String tmp_str;
@@ -203,7 +202,7 @@ void CellCacheScanner::internal_forward() {
  * size_t                         m_entry_cache_next;
  */
 void CellCacheScanner::load_entry_cache() {
-  ScopedLock lock(m_cell_cache_mutex);
+  lock_guard<mutex> lock(m_cell_cache_mutex);
 
   m_entry_cache_next = 0;
   m_entry_cache.clear();

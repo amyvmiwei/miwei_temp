@@ -43,6 +43,7 @@
 #include <boost/tokenizer.hpp>
 
 #include <cassert>
+#include <chrono>
 
 using namespace std;
 using namespace Hypertable;
@@ -90,21 +91,21 @@ Session::~Session() {
 
 void Session::update_master_addr(const String &host)
 {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   HT_EXPECT(InetAddr::initialize(&m_master_addr, host.c_str(),m_hyperspace_port),
             Error::BAD_DOMAIN_NAME);
   m_hyperspace_master = host;
 }
 
 void Session::handle_sleep() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
   xtime_add_millis(m_expire_time, m_grace_period);
 }
 
 void Session::handle_wakeup() {
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
     xtime_add_millis(m_expire_time, m_grace_period);
   }
@@ -139,7 +140,7 @@ void Session::shutdown(Timer *timer) {
 
 void Session::add_callback(SessionCallback *cb)
 {
-  ScopedLock lock(m_callback_mutex);
+  lock_guard<mutex> lock(m_callback_mutex);
   ++m_last_callback_id;
   m_callbacks[m_last_callback_id] = cb;
   cb->set_id(m_last_callback_id);
@@ -147,7 +148,7 @@ void Session::add_callback(SessionCallback *cb)
 
 bool Session::remove_callback(SessionCallback *cb)
 {
-  ScopedLock lock(m_callback_mutex);
+  lock_guard<mutex> lock(m_callback_mutex);
   return m_callbacks.erase(cb->get_id());
 }
 
@@ -275,7 +276,7 @@ void Session::close(uint64_t handle, Timer *timer) {
 
 void Session::close_nowait(uint64_t handle) {
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_state != STATE_SAFE)
       return;
   }
@@ -983,7 +984,7 @@ Session::lock(uint64_t handle, LockMode mode, LockSequencer *sequencerp,
     HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
 
   {
-    ScopedLock lock(handle_state->mutex);
+    lock_guard<mutex> lock(handle_state->mutex);
     sequencerp->mode = mode;
     sequencerp->name = handle_state->normal_name;
     handle_state->sequencer = sequencerp;
@@ -996,7 +997,7 @@ Session::lock(uint64_t handle, LockMode mode, LockSequencer *sequencerp,
                 "Hyperspace 'lock' error, name='%s'",
                 handle_state->normal_name.c_str());
     else {
-      ScopedLock lock(handle_state->mutex);
+      unique_lock<mutex> lock(handle_state->mutex);
       const uint8_t *decode_ptr = event_ptr->payload + 4;
       size_t decode_remain = event_ptr->payload_len - 4;
       handle_state->lock_mode = mode;
@@ -1011,8 +1012,7 @@ Session::lock(uint64_t handle, LockMode mode, LockSequencer *sequencerp,
         else {
           assert(status == LOCK_STATUS_PENDING);
           handle_state->lock_status = LOCK_STATUS_PENDING;
-          while (handle_state->lock_status == LOCK_STATUS_PENDING)
-            handle_state->cond.wait(lock);
+          handle_state->cond.wait(lock, [&handle_state](){ return handle_state->lock_status != LOCK_STATUS_PENDING; });
           if (handle_state->lock_status == LOCK_STATUS_CANCELLED)
             HT_THROW(Error::HYPERSPACE_REQUEST_CANCELLED, "");
           assert(handle_state->lock_status == LOCK_STATUS_GRANTED);
@@ -1056,7 +1056,7 @@ Session::try_lock(uint64_t handle, LockMode mode, LockStatus *statusp,
                 "Hyperspace 'try_lock' error, name='%s'",
                 handle_state->normal_name.c_str());
     else {
-      ScopedLock lock(handle_state->mutex);
+      lock_guard<mutex> lock(handle_state->mutex);
       const uint8_t *decode_ptr = event_ptr->payload + 4;
       size_t decode_remain = event_ptr->payload_len - 4;
       try {
@@ -1100,7 +1100,7 @@ void Session::release(uint64_t handle, Timer *timer) {
 
   int error = send_message(cbuf_ptr, &sync_handler, timer);
   if (error == Error::OK) {
-    ScopedLock lock(handle_state->mutex);
+    lock_guard<mutex> lock(handle_state->mutex);
     if (!sync_handler.wait_for_reply(event_ptr))
       HT_THROW((int)Protocol::response_code(event_ptr.get()),
                "Hyperspace 'release' error");
@@ -1179,7 +1179,7 @@ int Session::status(Status &status, Timer *timer) {
 
 
 int Session::state_transition(int state) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int old_state = m_state;
   m_state = state;
   if (m_state == STATE_SAFE) {
@@ -1221,13 +1221,13 @@ int Session::state_transition(int state) {
 
 
 int Session::get_state() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_state;
 }
 
 
 bool Session::expired() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC_);
   if (xtime_cmp(m_expire_time, now) < 0)
@@ -1237,35 +1237,18 @@ bool Session::expired() {
 
 
 bool Session::wait_for_connection(uint32_t max_wait_ms) {
-  ScopedLock lock(m_mutex);
-  boost::xtime drop_time, now;
-
-  boost::xtime_get(&drop_time, boost::TIME_UTC_);
-  xtime_add_millis(drop_time, max_wait_ms);
-
-  while (m_state != STATE_SAFE) {
-    m_cond.timed_wait(lock, drop_time);
-    boost::xtime_get(&now, boost::TIME_UTC_);
-    if (xtime_cmp(now, drop_time) >= 0)
-      return false;
-  }
-  return true;
+  unique_lock<mutex> lock(m_mutex);
+  auto drop_time = chrono::steady_clock::now() + chrono::milliseconds(max_wait_ms);
+  return m_cond.wait_until(lock, drop_time,
+                           [this](){ return m_state == STATE_SAFE; });
 }
 
 
-/*
- */
 bool Session::wait_for_connection(Timer &timer) {
-  boost::mutex::scoped_lock lock(m_mutex);
-  boost::xtime drop_time;
-
-  while (m_state != STATE_SAFE) {
-    boost::xtime_get(&drop_time, boost::TIME_UTC_);
-    xtime_add_millis(drop_time, timer.remaining());
-    if (!m_cond.timed_wait(lock, drop_time))
-      return false;
-  }
-  return true;
+  unique_lock<mutex> lock(m_mutex);
+  auto drop_time = chrono::steady_clock::now() + chrono::milliseconds(timer.remaining());
+  return m_cond.wait_until(lock, drop_time,
+                           [this](){ return m_state == STATE_SAFE; });
 }
 
 
@@ -1364,7 +1347,7 @@ void Session::decode_listing(Hypertable::EventPtr& event_ptr, std::vector<DirEnt
 }
 
 bool Session::wait_for_safe() {
-  ScopedLock lock(m_mutex);
+  unique_lock<mutex> lock(m_mutex);
   while (m_state != STATE_SAFE) {
     if (m_state == STATE_EXPIRED)
       return false;
@@ -1376,7 +1359,7 @@ bool Session::wait_for_safe() {
 int
 Session::send_message(CommBufPtr &cbuf_ptr, DispatchHandler *handler,
                       Timer *timer) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error;
   uint32_t timeout_ms = timer ? (time_t)timer->remaining() : m_timeout_ms;
 

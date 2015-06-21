@@ -27,15 +27,16 @@
 #ifndef Common_FileUtils_h
 #define Common_FileUtils_h
 
+#include <Common/String.h>
+
+#include <mutex>
+#include <vector>
+
 extern "C" {
 #include <dirent.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 }
-#include "Common/String.h"
-
-#include <mutex>
-#include <vector>
 
 namespace Hypertable {
 

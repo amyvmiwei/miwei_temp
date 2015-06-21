@@ -65,7 +65,7 @@ void TableMutatorIntervalHandler::handle(EventPtr &event) {
     HT_ASSERT(comm->set_timer(shared_mutator->flush_interval(), shared_from_this()) == Error::OK);
   }
   else {
-    ScopedLock lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     complete = true;
     cond.notify_all();
   }
@@ -73,7 +73,7 @@ void TableMutatorIntervalHandler::handle(EventPtr &event) {
 
 
 void TableMutatorIntervalHandler::flush() {
-  ScopedLock lock(mutex);
+  std::lock_guard<std::mutex> lock(mutex);
 
   if (active)
     shared_mutator->interval_flush();

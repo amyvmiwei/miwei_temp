@@ -26,10 +26,9 @@
 
 #include <Common/Time.h>
 
-#include <boost/thread/mutex.hpp>
-
 #include <list>
 #include <memory>
+#include <mutex>
 #include <set>
 
 namespace Hyperspace {
@@ -39,14 +38,14 @@ namespace Hyperspace {
   class SessionData {
   public:
     SessionData(const sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id)
-      : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
+      : addr(_addr), m_lease_interval(lease_interval), id(_id) {
       boost::xtime_get(&expire_time, boost::TIME_UTC_);
       xtime_add_millis(expire_time, lease_interval);
       return;
     }
 
     void add_notification(Notification *notification) {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
 
       if (expired) {
         notification->event_ptr->decrement_notification_count();
@@ -57,7 +56,7 @@ namespace Hyperspace {
     }
 
     void purge_notifications(std::set<uint64_t> &delivered_events) {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       std::list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
         if (delivered_events.count((*iter)->event_ptr->get_id()) > 0) {
@@ -77,7 +76,7 @@ namespace Hyperspace {
 
     CommBuf * serialize_notifications_for_keepalive(CommHeader &header, uint32_t &len)
     {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       std::list<Notification *>::iterator iter;
       CommBuf *cbuf =0;
       for (iter = notifications.begin(); iter != notifications.end(); ++iter) {
@@ -97,7 +96,7 @@ namespace Hyperspace {
     }
 
     bool renew_lease() {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       boost::xtime now;
       boost::xtime_get(&now, boost::TIME_UTC_);
       if (xtime_cmp(expire_time, now) < 0)
@@ -112,17 +111,17 @@ namespace Hyperspace {
     const struct sockaddr_in& get_addr() const { return addr; }
 
     void extend_lease(uint32_t millis) {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       xtime_add_millis(expire_time, millis);
     }
 
     bool is_expired(const boost::xtime &now) {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       return expired || xtime_cmp(expire_time, now) < 0;
     }
 
     void expire() {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       if (expired)
         return;
       expired = true;
@@ -135,12 +134,12 @@ namespace Hyperspace {
     }
 
     void set_expire_time_now() {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       boost::xtime_get(&expire_time, boost::TIME_UTC_);
     }
 
     void set_name(const String &name_) {
-      ScopedLock lock(mutex);
+      std::lock_guard<std::mutex> lock(mutex);
       name = name_;
     }
 
@@ -148,12 +147,12 @@ namespace Hyperspace {
 
   private:
 
-    Mutex mutex;
+    std::mutex mutex;
     struct sockaddr_in addr;
     boost::xtime expire_time;
     uint32_t m_lease_interval;
     uint64_t id;
-    bool expired;
+    bool expired {};
     std::list<Notification *> notifications;
     String name;
   };

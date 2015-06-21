@@ -359,7 +359,7 @@ void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
 }
 
 bool Operation::removal_approved() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   return m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask;
 }
 
@@ -399,7 +399,7 @@ void Operation::record_state(std::vector<MetaLog::EntityPtr> &additional) {
 void Operation::complete_error(int error, const String &msg,
                                std::vector<MetaLog::EntityPtr> &additional) {
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_state = OperationState::COMPLETE;
     m_error = error;
     m_error_msg = msg;
@@ -434,7 +434,7 @@ void Operation::complete_error(int error, const String &msg, MetaLog::EntityPtr 
 
 void Operation::complete_ok(std::vector<MetaLog::EntityPtr> &additional) {
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_state = OperationState::COMPLETE;
     m_error = Error::OK;
     m_dependencies.clear();
@@ -456,43 +456,43 @@ void Operation::complete_ok(MetaLog::EntityPtr additional) {
 }
 
 void Operation::exclusivities(DependencySet &exclusivities) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   exclusivities = m_exclusivities;
 }
 
 void Operation::dependencies(DependencySet &dependencies) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   dependencies = m_dependencies;
 }
 
 void Operation::obstructions(DependencySet &obstructions) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   obstructions = m_obstructions;
   obstructions.insert(m_obstructions_permanent.begin(), m_obstructions_permanent.end());
 }
 
 void Operation::fetch_sub_operations(std::vector<OperationPtr> &sub_ops) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   for (int64_t id : m_sub_ops)
     sub_ops.push_back(m_context->reference_manager->get(id));
 }
 
 
 void Operation::pre_run() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_unblock_on_exit=false;
 }
 
 
 void Operation::post_run() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (m_unblock_on_exit)
     m_blocked = false;
 }
 
 
 bool Operation::block() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   if (!m_blocked) {
     m_blocked = true;
     return true;
@@ -501,7 +501,7 @@ bool Operation::block() {
 }
 
 bool Operation::unblock() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   bool blocked_on_entry = m_blocked;
   m_unblock_on_exit = true;
   m_blocked = false;
@@ -521,7 +521,7 @@ bool Operation::validate_subops() {
     string dependency_string =
       format("%s subop %s %lld", name().c_str(), op->name().c_str(),
              (Lld)op->hash_code());
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     m_dependencies.erase(dependency_string);
     entities.push_back(op);
   }
@@ -540,7 +540,7 @@ void Operation::stage_subop(OperationPtr operation) {
   operation->set_remove_approval_mask(0x01);
   m_context->reference_manager->add(operation);
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     add_dependency(dependency_string);
     m_sub_ops.push_back(operation->id());
   }

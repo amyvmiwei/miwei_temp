@@ -43,12 +43,12 @@ namespace Hypertable {
         m_done(false), m_errors(false), m_timed_out(false) { }
 
     void add(size_t num) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_outstanding += num;
     }
 
     bool complete(int plan_generation, int32_t error, const ErrorMap &error_map) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       HT_ASSERT(m_outstanding >= error_map.size());
       m_outstanding -= error_map.size();
 
@@ -71,7 +71,7 @@ namespace Hypertable {
     }
 
     bool wait_for_completion(Timer &timer) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       boost::xtime expire_time;
 
       timer.start();
@@ -91,7 +91,7 @@ namespace Hypertable {
     }
 
     void set_errors(const std::vector<uint32_t> &fragments, int error) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_outstanding -= fragments.size();
       for (auto fragment : fragments) {
         m_error_map[fragment] = error;
@@ -103,17 +103,17 @@ namespace Hypertable {
     }
 
     bool has_errors() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_errors;
     }
 
     const ErrorMap &get_errors() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_error_map;
     }
 
     bool timed_out() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_timed_out;
     }
 

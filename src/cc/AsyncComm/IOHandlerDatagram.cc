@@ -53,7 +53,8 @@ using namespace Hypertable;
 using namespace std;
 
 bool 
-IOHandlerDatagram::handle_event(struct pollfd *event, time_t arrival_time) {
+IOHandlerDatagram::handle_event(struct pollfd *event,
+                                chrono::time_point<chrono::steady_clock> arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -117,7 +118,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t arrival_time) {
 #if defined(__linux__)
 
 bool IOHandlerDatagram::handle_event(struct epoll_event *event,
-                                     time_t arrival_time) {
+                                     chrono::time_point<chrono::steady_clock> arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -185,7 +186,8 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event,
 
 #elif defined(__sun__)
 bool
-IOHandlerDatagram::handle_event(port_event_t *event, time_t arrival_time) {
+IOHandlerDatagram::handle_event(port_event_t *event,
+                                chrono::time_point<chrono::steady_clock> arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -265,7 +267,8 @@ IOHandlerDatagram::handle_event(port_event_t *event, time_t arrival_time) {
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 
 bool
-IOHandlerDatagram::handle_event(struct kevent *event, time_t arrival_time) {
+IOHandlerDatagram::handle_event(struct kevent *event,
+                                chrono::time_point<chrono::steady_clock> arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -322,7 +325,7 @@ ImplementMe;
 
 
 int IOHandlerDatagram::handle_write_readiness() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error;
 
   if ((error = flush_send_queue()) != Error::OK) {
@@ -344,7 +347,7 @@ int IOHandlerDatagram::handle_write_readiness() {
 
 
 int IOHandlerDatagram::send_message(const InetAddr &addr, CommBufPtr &cbp) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error = Error::OK;
   bool initially_empty = m_send_queue.empty() ? true : false;
 

@@ -19,10 +19,10 @@
  * 02110-1301, USA.
  */
 
-#include <Common/Mutex.h>
 #include <Common/Logger.h>
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 extern "C" {
@@ -50,13 +50,13 @@ namespace Lib {
   public:
 
     void create(int fd, struct sockaddr_in &addr, OpenFileDataPtr &fdata) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       fdata->addr = addr;
       m_file_map[fd] = fdata;
     }
 
     bool get(int fd, OpenFileDataPtr &fdata) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       FileMap::iterator iter = m_file_map.find(fd);
       if (iter != m_file_map.end()) {
         fdata = (*iter).second;
@@ -66,7 +66,7 @@ namespace Lib {
     }
 
     bool remove(int fd, OpenFileDataPtr &fdata) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       FileMap::iterator iter = m_file_map.find(fd);
       if (iter != m_file_map.end()) {
         fdata = (*iter).second;
@@ -77,14 +77,14 @@ namespace Lib {
     }
 
     void remove(int fd) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       FileMap::iterator iter = m_file_map.find(fd);
       if (iter != m_file_map.end())
         m_file_map.erase(iter);
     }
 
     void remove_all(struct sockaddr_in &addr) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       FileMap::iterator iter = m_file_map.begin();
 
       while (iter != m_file_map.end()) {
@@ -103,7 +103,7 @@ namespace Lib {
     }
 
     void remove_all() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_file_map.clear();
     }
 
@@ -111,7 +111,7 @@ namespace Lib {
 
     typedef std::unordered_map<int, OpenFileDataPtr> FileMap;
 
-    Mutex m_mutex;
+    std::mutex m_mutex;
     FileMap m_file_map;
   };
 

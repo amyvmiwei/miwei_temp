@@ -19,17 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_CLIENTCONNECTIONHANDLER_H
-#define HYPERSPACE_CLIENTCONNECTIONHANDLER_H
+#ifndef Hyperspace_ClientConnectionHandler_h
+#define Hyperspace_ClientConnectionHandler_h
 
 #include <boost/thread/condition.hpp>
-#include <boost/thread/mutex.hpp>
 
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
 
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+
+#include <condition_variable>
+#include <mutex>
 
 namespace Hyperspace {
 
@@ -50,12 +52,12 @@ namespace Hyperspace {
     void set_session_id(uint64_t id) { m_session_id = id; }
 
     bool disconnected() {
-      ScopedRecLock lock(m_mutex);
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       return m_state == DISCONNECTED;
     }
 
     int initiate_connection(struct sockaddr_in &addr) {
-      ScopedRecLock lock(m_mutex);
+      std::lock_guard<std::recursive_mutex> lock(m_mutex);
       m_state = CONNECTING;
       int error = m_comm->connect(addr, shared_from_this());
 
@@ -84,20 +86,21 @@ namespace Hyperspace {
     void close();
 
   private:
-    RecMutex         m_mutex;
-    boost::condition m_cond;
-    Comm *m_comm;
-    Session *m_session;
-    uint64_t m_session_id;
-    int m_state;
+    std::recursive_mutex m_mutex;
+    std::condition_variable_any m_cond;
+    Comm *m_comm {};
+    Session *m_session {};
+    uint64_t m_session_id {};
+    int m_state {};
     struct sockaddr_in m_master_addr;
-    uint32_t m_timeout_ms;
-    bool m_verbose;
-    bool m_callbacks_enabled;
+    uint32_t m_timeout_ms {};
+    bool m_verbose {};
+    bool m_callbacks_enabled {};
   };
 
+  /// Shared smart pointer to ClientConnectionHandler
   typedef std::shared_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERSPACE_CLIENTCONNECTIONHANDLER_H
+#endif // Hyperspace_ClientConnectionHandler_h

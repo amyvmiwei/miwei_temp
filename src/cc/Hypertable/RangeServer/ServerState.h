@@ -29,7 +29,7 @@
 
 #include <Hypertable/Lib/SystemVariable.h>
 
-#include <Common/Mutex.h>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -61,10 +61,10 @@ namespace Hypertable {
   private:
 
     /// %Mutex for serializing concurrent access
-    Mutex m_mutex;
+    std::mutex m_mutex;
 
     /// System state generation
-    int64_t m_generation;
+    int64_t m_generation {};
 
     /// System state variable specifications
     std::vector<SystemVariable::Spec> m_specs;

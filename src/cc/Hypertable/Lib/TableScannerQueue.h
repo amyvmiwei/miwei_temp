@@ -19,17 +19,16 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLESCANNERQUEUE_H
-#define HYPERTABLE_TABLESCANNERQUEUE_H
-
-#include <list>
-#include <boost/thread/condition.hpp>
-
-#include "Common/Thread.h"
-#include "Common/Mutex.h"
-#include "AsyncComm/ApplicationQueueInterface.h"
+#ifndef Hypertable_Lib_TableScannerQueue_h
+#define Hypertable_Lib_TableScannerQueue_h
 
 #include "ScanCells.h"
+
+#include <AsyncComm/ApplicationQueueInterface.h>
+
+#include <condition_variable>
+#include <list>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -44,14 +43,14 @@ namespace Hypertable {
 
     /** Default constructor.
      */
-    TableScannerQueue() : m_error(Error::OK), m_error_shown(false) { }
+    TableScannerQueue() { }
 
     ~TableScannerQueue () { }
 
     /**
      */
     virtual void add(ApplicationHandler *app_handler) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_work_queue.push_back(app_handler);
       m_cond.notify_one();
     }
@@ -64,7 +63,7 @@ namespace Hypertable {
       *error = Error::OK;
       while(true) {
         {
-          ScopedLock lock(m_mutex);
+          std::unique_lock<std::mutex> lock(m_mutex);
           if (m_error != Error::OK && !m_error_shown) {
             *error = m_error;
             error_msg = m_error_msg;
@@ -76,9 +75,8 @@ namespace Hypertable {
             m_cells_queue.pop_front();
             break;
           }
-          while (m_work_queue.empty() && m_cells_queue.empty()) {
-            m_cond.wait(lock);
-          }
+          m_cond.wait(lock, [this](){
+              return !m_work_queue.empty() || !m_cells_queue.empty(); });
           if (!m_work_queue.size())
             continue;
           app_handler = m_work_queue.front();
@@ -97,13 +95,13 @@ namespace Hypertable {
     }
 
     void add_cells(ScanCellsPtr &cells) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_cells_queue.push_back(cells);
       m_cond.notify_one();
     }
 
     void set_error(int error, const std::string &error_msg) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_error = error;
       m_error_msg = error_msg;
       m_error_shown = false;
@@ -113,17 +111,18 @@ namespace Hypertable {
 
     typedef std::list<ApplicationHandler *> WorkQueue;
     typedef std::list<ScanCellsPtr> CellsQueue;
-    Mutex                  m_mutex;
-    boost::condition       m_cond;
-    WorkQueue              m_work_queue;
-    CellsQueue             m_cells_queue;
-    int                    m_error;
-    std::string                 m_error_msg;
-    bool                   m_error_shown;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    WorkQueue m_work_queue;
+    CellsQueue m_cells_queue;
+    std::string m_error_msg;
+    int m_error {};
+    bool m_error_shown {};
   };
 
+  /// Shared smart pointer to TableScannerQueue
   typedef std::shared_ptr<TableScannerQueue> TableScannerQueuePtr;
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_TABLESCANNERQUEUE_H
+#endif // Hypertable_Lib_TableScannerQueue_h

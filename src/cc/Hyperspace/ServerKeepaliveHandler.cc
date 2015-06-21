@@ -19,11 +19,7 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
+#include <Common/Compat.h>
 
 #include "request/RequestHandlerRenewSession.h"
 #include "request/RequestHandlerExpireSessions.h"
@@ -32,10 +28,15 @@
 #include "Protocol.h"
 #include "SessionData.h"
 
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+
 using namespace Hypertable;
 using namespace Hyperspace;
 using namespace Serialization;
-
+using namespace std;
 
 ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
                                                ApplicationQueuePtr &app_queue)
@@ -63,7 +64,7 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   int error;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_shutdown)
       return;
   }
@@ -132,7 +133,7 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
   SessionDataPtr session_ptr;
 
   {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if (m_shutdown)
       return;
   }
@@ -158,7 +159,7 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
 }
 
 void ServerKeepaliveHandler::shutdown() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_shutdown = true;
   m_app_queue_ptr->shutdown();
 }

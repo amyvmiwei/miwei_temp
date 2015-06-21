@@ -43,7 +43,6 @@
 #include <AsyncComm/Event.h>
 #include <AsyncComm/ResponseCallback.h>
 
-#include <Common/Mutex.h>
 #include <Common/Properties.h>
 #include <Common/SockAddrMap.h>
 #include <Common/Status.h>
@@ -52,6 +51,7 @@
 #include <Common/atomic.h>
 
 #include <memory>
+#include <mutex>
 #include <queue>
 #include <unordered_map>
 #include <vector>
@@ -163,7 +163,7 @@ namespace Hyperspace {
     }
 
     void tick() {
-      ScopedLock lock(m_last_tick_mutex);
+      std::lock_guard<std::mutex> lock(m_last_tick_mutex);
       boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
     }
 
@@ -339,16 +339,16 @@ namespace Hyperspace {
     SessionMap m_session_map;
     MetricsHandlerPtr m_metrics_handler;
 
-    Mutex         m_session_map_mutex;
-    Mutex         m_last_tick_mutex;
-    Mutex         m_maintenance_mutex;
-    bool          m_maintenance_outstanding;
+    std::mutex m_session_map_mutex;
+    std::mutex m_last_tick_mutex;
+    std::mutex m_maintenance_mutex;
+    bool m_maintenance_outstanding {};
     boost::xtime  m_last_tick;
 
     /// Suspension time recorded by handle_sleep()
     boost::xtime m_sleep_time;
 
-    bool          m_shutdown;
+    bool m_shutdown {};
 
     // BerkeleyDB state
     BerkeleyDbFilesystem *m_bdb_fs;

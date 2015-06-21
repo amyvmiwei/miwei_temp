@@ -19,22 +19,21 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGEMAINTENANCEGUARD_H
-#define HYPERTABLE_RANGEMAINTENANCEGUARD_H
+#ifndef Hypertable_RangeServer_RangeMaintenanceGuard_h
+#define Hypertable_RangeServer_RangeMaintenanceGuard_h
 
-#include <boost/thread/condition.hpp>
-
-#include "Common/Mutex.h"
+#include <condition_variable>
+#include <mutex>
 
 namespace Hypertable {
 
   class RangeMaintenanceGuard {
   public:
 
-    RangeMaintenanceGuard() : m_in_progress(false), m_disabled(false) {}
+    RangeMaintenanceGuard()  {}
 
     void activate() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       if (m_disabled)
         HT_THROW(Error::RANGESERVER_RANGE_NOT_ACTIVE, "");
       if (m_in_progress)
@@ -43,31 +42,30 @@ namespace Hypertable {
     }
 
     void deactivate() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_in_progress = false;
       m_cond.notify_all();
     }
 
     void wait_for_complete(bool disable=false) {
-      ScopedLock lock(m_mutex);
-      while (m_in_progress)
-        m_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_mutex);
+      m_cond.wait(lock, [this](){ return !m_in_progress; });
       if (disable)
         m_disabled = true;
     }
 
     bool in_progress() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_in_progress;
     }
 
     void disable() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_disabled = true;
     }
 
     void enable() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_disabled = false;
     }
 
@@ -84,13 +82,13 @@ namespace Hypertable {
     };
 
   private:
-    Mutex m_mutex;
-    boost::condition m_cond;
-    bool m_in_progress;
-    bool m_disabled;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
+    bool m_in_progress {};
+    bool m_disabled {};
   };
 
 }
 
 
-#endif // HYPERTABLE_RANGEMAINTENANCEGUARD_H
+#endif // Hypertable_RangeServer_RangeMaintenanceGuard_h

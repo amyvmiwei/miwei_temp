@@ -40,17 +40,17 @@ using namespace std;
 std::vector<ReactorPtr> ReactorFactory::ms_reactors;
 boost::thread_group ReactorFactory::ms_threads;
 boost::mt19937 ReactorFactory::rng(1);
-Mutex        ReactorFactory::ms_mutex;
+mutex ReactorFactory::ms_mutex;
 atomic_t     ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
-bool         ReactorFactory::ms_epollet = true;
-bool         ReactorFactory::use_poll = false;
-bool         ReactorFactory::proxy_master = false;
+bool ReactorFactory::ms_epollet = true;
+bool ReactorFactory::use_poll = false;
+bool ReactorFactory::proxy_master = false;
 bool ReactorFactory::verbose {};
 
 /**
  */
 void ReactorFactory::initialize(uint16_t reactor_count) {
-  ScopedLock lock(ms_mutex);
+  lock_guard<mutex> lock(ms_mutex);
   if (!ms_reactors.empty())
     return;
   ReactorPtr reactor;

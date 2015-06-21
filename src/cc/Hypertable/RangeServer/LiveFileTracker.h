@@ -26,9 +26,9 @@
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -49,7 +49,7 @@ namespace Hypertable {
      *
      */
     void change_range(const String &start_row, const String &end_row) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_start_row = start_row;
       m_end_row = end_row;
     }
@@ -71,7 +71,7 @@ namespace Hypertable {
      * @param total_blocks Total number of cell store blocks in access group
      */
     void add_live_noupdate(const String &fname, int64_t total_blocks) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_live.insert(strip_basename(fname));
       m_total_blocks = total_blocks;
     }
@@ -125,8 +125,8 @@ namespace Hypertable {
 
     String strip_basename(const String &fname);
 
-    Mutex            m_mutex;
-    Mutex            m_update_mutex;
+    std::mutex m_mutex;
+    std::mutex m_update_mutex;
     TableIdentifierManaged m_identifier;
     String           m_file_basename;
     SchemaPtr        m_schema_ptr;

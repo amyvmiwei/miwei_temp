@@ -83,7 +83,7 @@ void TimerHandler::start() {
 
 
 void TimerHandler::schedule_immediate_maintenance() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (!m_immediate_maintenance_scheduled && !m_schedule_outstanding) {
     boost::xtime now;
@@ -101,7 +101,7 @@ void TimerHandler::schedule_immediate_maintenance() {
 
 
 void TimerHandler::maintenance_scheduled_notify() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   m_schedule_outstanding = false;
   boost::xtime_get(&m_last_schedule, TIME_UTC_);
@@ -126,14 +126,14 @@ void TimerHandler::maintenance_scheduled_notify() {
 
 
 void TimerHandler::shutdown() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   m_shutdown = true;
   m_comm->cancel_timer(shared_from_this());
 }
 
 
 void TimerHandler::handle(Hypertable::EventPtr &event) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error;
   bool do_maintenance = !m_schedule_outstanding;
   boost::xtime now;

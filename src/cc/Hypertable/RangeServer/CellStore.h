@@ -37,12 +37,12 @@
 #include <Hypertable/Lib/BlockCompressionCodec.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
-#include <Common/Mutex.h>
 #include <Common/String.h>
 #include <Common/ByteString.h>
 #include <Common/Filesystem.h>
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -172,7 +172,7 @@ namespace Hypertable {
      * @return block count
      */
     virtual size_t block_count() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_block_count;
     }
 
@@ -291,7 +291,7 @@ namespace Hypertable {
      * Returns amount of purgeable index memory available
      */
     virtual void get_index_memory_stats(IndexMemoryStats *statsp) {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       memcpy(statsp, &m_index_stats, sizeof(IndexMemoryStats));
     }
 
@@ -309,14 +309,14 @@ namespace Hypertable {
      * @return number of uncompressed bytes read from filesystem
      */
     uint64_t bytes_read() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return m_bytes_read;
     }
 
     /** Decrement index reference count.
      */
     void decrement_index_refcount() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_index_refcount--;
     }
 
@@ -328,7 +328,7 @@ namespace Hypertable {
 
   protected:
 
-    Mutex m_mutex;
+    std::mutex m_mutex;
     IndexMemoryStats m_index_stats;
     std::vector <String> m_replaced_files;
     uint64_t m_bytes_read;

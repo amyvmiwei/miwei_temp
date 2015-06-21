@@ -29,15 +29,14 @@
 
 #include <AsyncComm/CommBuf.h>
 
-#include <Common/Mutex.h>
 #include <Common/Serialization.h>
 #include <Common/System.h>
 
-#include <boost/thread/condition.hpp>
-
+#include <condition_variable>
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -103,12 +102,12 @@ namespace Hyperspace {
     uint32_t get_mask() { return m_mask; }
 
     void increment_notification_count() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_notification_count++;
     }
 
     void decrement_notification_count() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       m_notification_count--;
       if (m_notification_count == 0) {
         // all notifications received, so delete event from BDB
@@ -122,9 +121,8 @@ namespace Hyperspace {
     }
 
     void wait_for_notifications() {
-      ScopedLock lock(m_mutex);
-      if (m_notification_count != 0)
-        m_cond.wait(lock);
+      std::unique_lock<std::mutex> lock(m_mutex);
+      m_cond.wait(lock, [this](){ return m_notification_count == 0;});
     }
 
     virtual uint32_t encoded_length() = 0;
@@ -136,8 +134,8 @@ namespace Hyperspace {
 
   protected:
     static BerkeleyDbFilesystem *ms_bdb_fs;
-    Mutex m_mutex;
-    boost::condition m_cond;
+    std::mutex m_mutex;
+    std::condition_variable m_cond;
     uint64_t m_id {};
     uint32_t m_mask {};
     uint32_t m_notification_count {};

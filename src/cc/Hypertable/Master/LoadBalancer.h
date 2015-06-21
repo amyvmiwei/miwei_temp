@@ -29,9 +29,10 @@
 #include <Hypertable/Lib/BalancePlan.h>
 
 #include <Common/Crontab.h>
-#include <Common/Mutex.h>
 
+#include <mutex>
 #include <vector>
+
 #include <time.h>
 
 namespace Hypertable {
@@ -52,9 +53,9 @@ namespace Hypertable {
     void transfer_monitoring_data(vector<RangeServerStatistics> &stats);
 
   private:
-    Mutex m_mutex;
+    std::mutex m_mutex;
     ContextPtr m_context;
-    Mutex m_add_mutex;
+    std::mutex m_add_mutex;
     Crontab m_crontab;
     time_t m_next_balance_time_load;
     time_t m_next_balance_time_new_server;

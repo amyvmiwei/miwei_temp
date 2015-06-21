@@ -26,18 +26,18 @@
  * queue.
  */
 
-#ifndef AsyncComm_APPLICATIONHANDLER_H
-#define AsyncComm_APPLICATIONHANDLER_H
+#ifndef AsyncComm_ApplicationHandler_h
+#define AsyncComm_ApplicationHandler_h
+
+#include "Event.h"
+#include "ReactorRunner.h"
+
+#include <chrono>
+#include <ctime>
 
 extern "C" {
 #include <time.h>
 }
-
-#include <ctime>
-#include <boost/shared_ptr.hpp>
-
-#include "Event.h"
-#include "ReactorRunner.h"
 
 namespace Hypertable {
 
@@ -120,21 +120,12 @@ namespace Hypertable {
       if (m_event && m_event->type == Event::MESSAGE &&
           ReactorRunner::record_arrival_time &&
           (m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST)) {
-        uint32_t wait_ms;
-	time_t now = time(0);
-	HT_ASSERT(now != (time_t)-1);
-	if (now < m_event->arrival_time) {
-	  HT_WARNF("time() returned %ld which is less than the arrival time of %ld",
-		   (long int)now, (long int)m_event->arrival_time);
-	  wait_ms = 0;
-	}
-	else
-	  wait_ms = (now - m_event->arrival_time) * 1000;
+        auto now = std::chrono::steady_clock::now();
+        uint32_t wait_ms = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(now - m_event->arrival_time).count();
         if (wait_ms >= m_event->header.timeout_ms) {
           if (m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST)
-            HT_WARNF("Request expired, wait time %u > timeout %u (now=%ld, arrival_time=%ld)",
-		     (unsigned)wait_ms, m_event->header.timeout_ms,
-		     (long int)now, (long int)m_event->arrival_time);
+            HT_WARNF("Request expired, wait time %u > timeout %u",
+		     (unsigned)wait_ms, m_event->header.timeout_ms);
           else
             HT_WARNF("Response expired, wait time %u > timeout %u", (unsigned)wait_ms,
                  m_event->header.timeout_ms);
@@ -158,4 +149,4 @@ namespace Hypertable {
   /** @}*/
 } // namespace Hypertable
 
-#endif // AsyncComm_APPLICATIONHANDLER_H
+#endif // AsyncComm_ApplicationHandler_h

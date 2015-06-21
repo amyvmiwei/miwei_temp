@@ -135,14 +135,14 @@ CommitLog::initialize(const string &log_dir, PropertiesPtr &props,
 
 
 int64_t CommitLog::get_timestamp() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC_);
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
 int CommitLog::flush() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error {};
 
   try {
@@ -160,7 +160,7 @@ int CommitLog::flush() {
 }
 
 int CommitLog::sync() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error {};
 
   try {
@@ -185,7 +185,7 @@ CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,
   BlockHeaderCommitLog header(MAGIC_DATA, revision, cluster_id);
 
   if (m_needs_roll) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if ((error = roll()) != Error::OK)
       return error;
   }
@@ -200,7 +200,7 @@ CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,
    * Roll the log
    */
   if (m_cur_fragment_length > m_max_fragment_size) {
-    ScopedLock lock(m_mutex);
+    lock_guard<mutex> lock(m_mutex);
     if ((error = roll()) != Error::OK)
       return error;
   }
@@ -210,7 +210,7 @@ CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,
 
 
 int CommitLog::link_log(uint64_t cluster_id, CommitLogBase *log_base) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error;
   int64_t link_revision = log_base->get_latest_revision();
   BlockHeaderCommitLog header(MAGIC_LINK, link_revision, cluster_id);
@@ -289,7 +289,7 @@ int CommitLog::link_log(uint64_t cluster_id, CommitLogBase *log_base) {
 
 
 int CommitLog::close() {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   try {
     if (m_fd >= 0) {
@@ -310,7 +310,7 @@ int CommitLog::close() {
 
 int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
                      StringSet &removed_logs, string *trace) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (m_fd == -1)
     return Error::CLOSED;
@@ -477,7 +477,7 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
 int
 CommitLog::compress_and_write(DynamicBuffer &input, BlockHeader *header,
                               int64_t revision, Filesystem::Flags flags) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int error = Error::OK;
   DynamicBuffer zblock;
 
@@ -509,7 +509,7 @@ CommitLog::compress_and_write(DynamicBuffer &input, BlockHeader *header,
 
 
 void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
   int64_t cumulative_total = 0;
   uint32_t distance = 0;
   CumulativeFragmentData frag_data;
@@ -543,7 +543,7 @@ void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map)
 
 
 void CommitLog::get_stats(const string &prefix, string &result) {
-  ScopedLock lock(m_mutex);
+  lock_guard<mutex> lock(m_mutex);
 
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "Commit log '%s' has been closed", m_log_dir.c_str());

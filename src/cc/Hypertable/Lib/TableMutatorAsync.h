@@ -37,7 +37,9 @@
 #include <Common/StringExt.h>
 #include <Common/Timer.h>
 
+#include <condition_variable>
 #include <iostream>
+#include <mutex>
 
 namespace Hypertable {
 
@@ -80,7 +82,7 @@ namespace Hypertable {
 		      RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
 		      uint32_t flags = 0, bool explicit_block_only = false);
 
-    TableMutatorAsync(Mutex &mutex, boost::condition &cond, PropertiesPtr &props, Comm *comm,
+    TableMutatorAsync(std::mutex &mutex, std::condition_variable &cond, PropertiesPtr &props, Comm *comm,
 		      ApplicationQueueInterfacePtr &app_queue, Table *table,
 		      RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
 		      uint32_t flags = 0, bool explicit_block_only = false,
@@ -183,11 +185,11 @@ namespace Hypertable {
     bool retry(uint32_t timeout_ms);
     void update_outstanding(TableMutatorAsyncScatterBufferPtr &buffer);
     void get_failed_mutations(FailedMutations &failed_mutations) {
-      ScopedLock lock(m_member_mutex);
+      std::lock_guard<std::mutex> lock(m_member_mutex);
       failed_mutations = m_failed_mutations;
     }
     bool has_outstanding() {
-      ScopedLock lock(m_mutex);
+      std::lock_guard<std::mutex> lock(m_mutex);
       return !m_outstanding_buffers.empty();
     }
     bool has_outstanding_unlocked() {
@@ -195,7 +197,7 @@ namespace Hypertable {
     }
     bool needs_flush();
 
-    SchemaPtr schema() { ScopedLock lock(m_mutex); return m_schema; }
+    SchemaPtr schema() { std::lock_guard<std::mutex> lock(m_mutex); return m_schema; }
 
   protected:
     void wait_for_completion();
@@ -250,7 +252,7 @@ namespace Hypertable {
     void handle_send_exceptions(const String& info);
 
     bool mutated() {
-      ScopedLock lock(m_member_mutex);
+      std::lock_guard<std::mutex> lock(m_member_mutex);
       return m_mutated;
     }
 
@@ -261,40 +263,40 @@ namespace Hypertable {
 
     typedef std::map<uint32_t, TableMutatorAsyncScatterBufferPtr> ScatterBufferAsyncMap;
 
-    PropertiesPtr        m_props;
-    Comm                *m_comm;
-    ApplicationQueueInterfacePtr  m_app_queue;
-    Table               *m_table;
-    SchemaPtr            m_schema;  // needs mutex
-    RangeLocatorPtr      m_range_locator;
-    TableIdentifierManaged m_table_identifier;    // needs mutex
-    uint64_t             m_memory_used;  // protected by buffer_mutex
-    uint64_t             m_max_memory;
-    ScatterBufferAsyncMap  m_outstanding_buffers;  // protected by buffer mutex
-    TableMutatorAsyncScatterBufferPtr m_current_buffer; // needs mutex
-    uint64_t             m_resends;  // needs mutex
-    uint32_t             m_timeout_ms;
-    ResultCallback       *m_cb;
-    uint32_t             m_flags;
-    CommAddressSet       m_unsynced_rangeservers;  // needs mutex
-
     const static uint32_t ms_max_sync_retries = 5;
 
-    Mutex      m_buffer_mutex;
-    Mutex     &m_mutex;
-    Mutex      m_member_mutex;
-    boost::condition m_buffer_cond;
-    boost::condition &m_cond;
-    bool       m_explicit_block_only;
-    uint32_t   m_next_buffer_id; // needs mutex
-    bool       m_cancelled;
-    bool       m_mutated;   // needs mutex
+    PropertiesPtr m_props;
+    Comm *m_comm {};
+    ApplicationQueueInterfacePtr  m_app_queue;
+    Table *m_table {};
+    SchemaPtr m_schema;     // needs mutex
+    RangeLocatorPtr m_range_locator;
+    TableIdentifierManaged m_table_identifier;    // needs mutex
+    uint64_t m_memory_used {};  // protected by buffer_mutex
+    uint64_t m_max_memory {};
+    ScatterBufferAsyncMap  m_outstanding_buffers;  // protected by buffer mutex
+    TableMutatorAsyncScatterBufferPtr m_current_buffer; // needs mutex
+    uint64_t m_resends {};  // needs mutex
+    uint32_t m_timeout_ms {};
+    ResultCallback *m_cb {};
+    uint32_t m_flags {};
+    CommAddressSet m_unsynced_rangeservers;  // needs mutex
+    std::mutex m_buffer_mutex;
+    std::mutex &m_mutex;
+    std::mutex m_member_mutex;
+    std::condition_variable m_buffer_cond;
+    std::condition_variable &m_cond;
+    uint32_t m_next_buffer_id {}; // needs mutex
     FailedMutations m_failed_mutations;
     TableMutatorAsyncPtr m_index_mutator;
     TableMutatorAsyncPtr m_qualifier_index_mutator;
     IndexMutatorCallbackPtr m_imc;
-    bool       m_use_index;
-    TableMutator *m_mutator;
+    TableMutator *m_mutator {};
+    bool m_explicit_block_only {};
+    bool m_cancelled {};
+    bool m_mutated {};      // needs mutex
+    bool m_use_index {};
+
   };
 
 }

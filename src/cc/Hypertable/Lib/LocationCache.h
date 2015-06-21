@@ -24,7 +24,6 @@
 
 #include "RangeLocationInfo.h"
 
-#include <Common/Mutex.h>
 #include <Common/FlyweightString.h>
 #include <Common/InetAddr.h>
 #include <Common/StringExt.h>
@@ -32,6 +31,7 @@
 #include <cstring>
 #include <ostream>
 #include <map>
+#include <mutex>
 #include <set>
 
 namespace Hypertable {
@@ -129,7 +129,7 @@ namespace Hypertable {
     typedef std::map<LocationCacheKey, Value *> LocationMap;
     typedef std::set<const CommAddress *, CommAddressPointerLt> AddressSet;
 
-    Mutex          m_mutex;
+    std::mutex m_mutex;
     LocationMap    m_location_map;
     AddressSet     m_addresses;
     Value         *m_head;

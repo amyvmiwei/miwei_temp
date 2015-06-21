@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCETASKRELINQUISH_H
-#define HYPERTABLE_MAINTENANCETASKRELINQUISH_H
+#ifndef Hypertable_RangeServer_MaintenanceTaskRelinquish_h
+#define Hypertable_RangeServer_MaintenanceTaskRelinquish_h
 
 #include "MaintenanceTask.h"
 
@@ -28,10 +28,12 @@ namespace Hypertable {
 
   class MaintenanceTaskRelinquish : public MaintenanceTask {
   public:
-    MaintenanceTaskRelinquish(uint32_t level, int priority, boost::xtime &start_time, RangePtr &range);
+    MaintenanceTaskRelinquish(uint32_t level, int priority,
+                              std::chrono::time_point<std::chrono::steady_clock> &stime,
+                              RangePtr &range);
     virtual void execute();
   };
 
 }
 
-#endif // HYPERTABLE_MAINTENANCETASKRELINQUISH_H
+#endif // Hypertable_RangeServer_MaintenanceTaskRelinquish_h

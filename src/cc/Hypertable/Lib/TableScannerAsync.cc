@@ -727,8 +727,7 @@ void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_cal
 
 void TableScannerAsync::wait_for_completion() {
   unique_lock<mutex> lock(m_mutex);
-  while (m_outstanding != 0)
-    m_cond.wait(lock);
+  m_cond.wait(lock, [this](){ return m_outstanding == 0; });
 }
 
 String TableScannerAsync::get_table_name() const {

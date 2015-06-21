@@ -69,7 +69,7 @@ void ReactorRunner::operator()() {
   std::set<IOHandler *> removed_handlers;
   PollTimeout timeout;
   bool did_delay = false;
-  time_t arrival_time = 0;
+  chrono::time_point<chrono::steady_clock> arrival_time;
   bool got_arrival_time = false;
   std::vector<struct pollfd> pollfds;
   std::vector<IOHandler *> handlers;
@@ -121,7 +121,7 @@ void ReactorRunner::operator()() {
           }
           if (record_arrival_time && !got_arrival_time
               && (pollfds[i].revents & POLLIN)) {
-            arrival_time = time(0);
+            arrival_time = chrono::steady_clock::now();
             got_arrival_time = true;
           }
           if (handlers[i]->handle_event(&pollfds[i], arrival_time))
@@ -169,7 +169,7 @@ void ReactorRunner::operator()() {
         }
         if (record_arrival_time && !got_arrival_time
             && (events[i].events & EPOLLIN)) {
-          arrival_time = time(0);
+          arrival_time = chrono::steady_clock::now();
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -224,7 +224,7 @@ void ReactorRunner::operator()() {
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].portev_events == POLLIN) {
-          arrival_time = time(0);
+          arrival_time = chrono::steady_clock::now();
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -271,7 +271,7 @@ void ReactorRunner::operator()() {
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].filter == EVFILT_READ) {
-          arrival_time = time(0);
+          arrival_time = chrono::steady_clock::now();
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))

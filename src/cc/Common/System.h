@@ -23,14 +23,15 @@
  * Retrieves system information (hardware, installation directory, etc)
  */
 
-#ifndef HYPERTABLE_SYSTEM_H
-#define HYPERTABLE_SYSTEM_H
+#ifndef Common_System_h
+#define Common_System_h
 
 #include <Common/Version.h>
-#include <Common/Mutex.h>
 #include <Common/String.h>
 
 #include <boost/random.hpp>
+
+#include <mutex>
 
 extern "C" {
 #include <time.h>
@@ -72,7 +73,7 @@ namespace Hypertable {
      *      in combination with some heuristics
      */
     static inline void initialize(const String &install_directory = String()) {
-      ScopedLock lock(ms_mutex);
+      std::lock_guard<std::mutex> lock(ms_mutex);
 
       if (ms_initialized)
         return;
@@ -192,7 +193,7 @@ namespace Hypertable {
     static bool ms_initialized;
 
     /** a %Mutex to protect the static members */
-    static Mutex ms_mutex;
+    static std::mutex ms_mutex;
 
     /** Random number generator */
     static boost::mt19937 ms_rng;
@@ -200,6 +201,6 @@ namespace Hypertable {
 
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_SYSTEM_H
+#endif // Common_System_h

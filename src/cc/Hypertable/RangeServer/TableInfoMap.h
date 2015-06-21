@@ -32,10 +32,9 @@
 
 #include <Common/StringExt.h>
 
-#include <boost/thread/mutex.hpp>
-
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace Hypertable {
@@ -210,8 +209,8 @@ namespace Hypertable {
     /// table_id-to-TableInfoPtr map type
     typedef std::map<String, TableInfoPtr> InfoMap;
 
-    /// %Mutex for serializing access
-    Mutex m_mutex;
+    /// %Mutex for serializing access to members
+    std::mutex m_mutex;
     
     /// %Hyperspace table cache
     HyperspaceTableCachePtr m_schema_cache;
@@ -220,7 +219,7 @@ namespace Hypertable {
     InfoMap m_map;
   };
 
-  /// Smart pointer to TableInfoMap
+  /// Shared smart pointer to TableInfoMap
   typedef std::shared_ptr<TableInfoMap> TableInfoMapPtr;
 
   /// @}
