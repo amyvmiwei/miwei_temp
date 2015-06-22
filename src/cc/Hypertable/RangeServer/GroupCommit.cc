@@ -81,7 +81,7 @@ GroupCommit::add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
 void GroupCommit::trigger() {
   lock_guard<mutex> lock(m_mutex);
   std::vector<UpdateRecTable *> updates;
-  chrono::time_point<chrono::steady_clock> expire_time;
+  ClockT::time_point expire_time;
 
   m_counter++;
 

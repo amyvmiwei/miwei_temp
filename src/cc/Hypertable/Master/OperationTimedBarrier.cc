@@ -33,8 +33,7 @@ OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
                                              const String &block_dependency,
                                              const String &wakeup_dependency)
   : OperationEphemeral(context, MetaLog::EntityType::OPERATION_TIMED_BARRIER),
-    m_block_dependency(block_dependency), m_wakeup_dependency(wakeup_dependency),
-    m_shutdown(false) {
+    m_block_dependency(block_dependency), m_wakeup_dependency(wakeup_dependency) {
   m_obstructions.insert(block_dependency);
   m_expire_time = chrono::steady_clock::now();
 }
@@ -47,7 +46,7 @@ void OperationTimedBarrier::execute() {
 
   auto now = chrono::steady_clock::now();
   while (now < m_expire_time && !m_shutdown) {
-    auto diff = m_expire_time - now;
+    auto diff = chrono::duration_cast<chrono::milliseconds>(m_expire_time-now);
     HT_INFOF("Barrier for %s will be up for %lld milliseconds",
              m_block_dependency.c_str(), (Lld)diff.count());
     m_cond.wait_until(lock, m_expire_time);

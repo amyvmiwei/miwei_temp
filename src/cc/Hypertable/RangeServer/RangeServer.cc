@@ -2160,7 +2160,7 @@ Apps::RangeServer::update(Response::Callback::Update *cb, uint64_t cluster_id,
 
 void
 Apps::RangeServer::batch_update(std::vector<UpdateRecTable *> &updates,
-                                chrono::time_point<chrono::steady_clock> expire_time) {
+                                ClockT::time_point expire_time) {
   UpdateContext *uc = new UpdateContext(updates, expire_time);
   m_update_pipeline_user->add(uc);
 }

@@ -158,7 +158,7 @@ namespace Hypertable {
      * handler was decomissioned
      */
     bool handle_event(struct pollfd *event,
-                      std::chrono::time_point<std::chrono::steady_clock> arrival_time) override;
+                      ClockT::time_point arrival_time) override;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
     /** Handle <code>kqueue()</code> interface events.
@@ -184,7 +184,7 @@ namespace Hypertable {
      * handler was decomissioned
      */
     bool handle_event(struct kevent *event,
-                      std::chrono::time_point<std::chrono::steady_clock> arrival_time) override;
+                      ClockT::time_point arrival_time) override;
 #elif defined(__linux__)
     /** Handle <code>epoll()</code> interface events.
      * This method is called by its reactor thread to handle I/O events.
@@ -211,7 +211,7 @@ namespace Hypertable {
      * handler was decomissioned
      */
     bool handle_event(struct epoll_event *event,
-                      std::chrono::time_point<std::chrono::steady_clock> arrival_time) override;
+                      ClockT::time_point arrival_time) override;
 #elif defined(__sun__)
     /** Handle <code>port_associate()</code> interface events.
      * This method is called by its reactor thread to handle I/O events.
@@ -237,7 +237,7 @@ namespace Hypertable {
      * handler was decomissioned
      */
     bool handle_event(port_event_t *event,
-                      std::chrono::time_point<std::chrono::steady_clock> arrival_time) override;
+                      ClockT::time_point arrival_time) override;
 #else
     ImplementMe;
 #endif
@@ -274,7 +274,7 @@ namespace Hypertable {
      * It then allocates the message payload buffer (#m_message), initialzes
      * the payload buffer pointers, and sets #m_got_header to <i>true</i>.
      */
-    void handle_message_header(std::chrono::time_point<std::chrono::steady_clock> arrival_time);
+    void handle_message_header(ClockT::time_point arrival_time);
 
     /** Processes a message body.  This method is called when a message
      * has been completely received (header + payload).  It first checks to

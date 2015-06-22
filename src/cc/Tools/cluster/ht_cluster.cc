@@ -94,6 +94,7 @@ namespace {
     cout << "Unable to locate 'cluster.def' in '.' or '" << System::install_dir 
          << "/conf'" << endl;
     quick_exit(EXIT_FAILURE);
+    return string();
   }
 
   bool is_environment_setting(const string &arg) {

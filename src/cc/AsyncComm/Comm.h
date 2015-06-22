@@ -28,6 +28,7 @@
 #ifndef AsyncComm_Comm_h
 #define AsyncComm_Comm_h
 
+#include "Clock.h"
 #include "CommAddress.h"
 #include "CommBuf.h"
 #include "ConnectionHandlerFactory.h"
@@ -406,7 +407,7 @@ namespace Hypertable {
      *        expiration
      * @return Error::OK
      */
-    int set_timer_absolute(boost::xtime expire_time, const DispatchHandlerPtr &handler);
+    int set_timer_absolute(ClockT::time_point expire_time, const DispatchHandlerPtr &handler);
 
     /** Cancels all scheduled timers registered with the dispatch handler
      * <code>handler</code>.

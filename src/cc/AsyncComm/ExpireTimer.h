@@ -25,11 +25,10 @@
  * holding timer state.
  */
 
-#ifndef AsyncComm_EXPIRE_TIMER_H
-#define AsyncComm_EXPIRE_TIMER_H
+#ifndef AsyncComm_ExpireTimer_h
+#define AsyncComm_ExpireTimer_h
 
-#include <boost/thread/xtime.hpp>
-
+#include "Clock.h"
 #include "DispatchHandler.h"
 
 namespace Hypertable {
@@ -41,7 +40,7 @@ namespace Hypertable {
   /** State record for timer.
    */
   struct ExpireTimer {
-    boost::xtime expire_time;   //!< Absolute expiration time
+    ClockT::time_point expire_time;   //!< Absolute expiration time
     DispatchHandlerPtr handler; //!< Dispatch handler to receive TIMER event
   };
 
@@ -55,10 +54,10 @@ namespace Hypertable {
      * @return true if <code>t1</code> is greater than <code>t2</code>
      */
     bool operator()(const ExpireTimer &t1, const ExpireTimer &t2) const {
-      return xtime_cmp(t1.expire_time, t2.expire_time) > 0;
+      return std::chrono::operator>(t1.expire_time, t2.expire_time);
     }
   };
   /** @}*/
 }
 
-#endif // AsyncComm_ExpireTimer_H
+#endif // AsyncComm_ExpireTimer_h

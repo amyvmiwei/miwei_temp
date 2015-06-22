@@ -111,7 +111,7 @@ namespace {
 
 bool
 IOHandlerData::handle_event(struct pollfd *event,
-                            chrono::time_point<chrono::steady_clock> arrival_time) {
+                            ClockT::time_point arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -223,7 +223,7 @@ IOHandlerData::handle_event(struct pollfd *event,
 
 bool
 IOHandlerData::handle_event(struct epoll_event *event,
-                            chrono::time_point<chrono::steady_clock> arrival_time) {
+                            ClockT::time_point arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -341,7 +341,7 @@ IOHandlerData::handle_event(struct epoll_event *event,
 #elif defined(__sun__)
 
 bool IOHandlerData::handle_event(port_event_t *event,
-                                 chrono::time_point<chrono::steady_clock> arrival_time) {
+                                 ClockT::time_point arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -462,7 +462,7 @@ bool IOHandlerData::handle_event(port_event_t *event,
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 
 bool IOHandlerData::handle_event(struct kevent *event,
-                                 chrono::time_point<chrono::steady_clock> arrival_time) {
+                                 ClockT::time_point arrival_time) {
 
   //DisplayEvent(event);
 
@@ -563,7 +563,7 @@ bool IOHandlerData::handle_event(struct kevent *event,
 #endif
 
 
-void IOHandlerData::handle_message_header(chrono::time_point<chrono::steady_clock> arrival_time) {
+void IOHandlerData::handle_message_header(ClockT::time_point arrival_time) {
   size_t header_len = (size_t)m_message_header[1];
 
   // check to see if there is any variable length header
@@ -747,9 +747,7 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   // If request, Add message ID to request cache
   if (cbp->header.id != 0 && disp_handler != 0
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
-    boost::xtime expire_time;
-    boost::xtime_get(&expire_time, boost::TIME_UTC_);
-    xtime_add_millis(expire_time, timeout_ms);
+    auto expire_time = ClockT::now() + chrono::milliseconds(timeout_ms);
     m_reactor->add_request(cbp->header.id, this, disp_handler, expire_time);
   }
 

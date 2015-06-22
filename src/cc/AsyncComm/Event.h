@@ -28,6 +28,7 @@
 #ifndef AsyncComm_Event_h
 #define AsyncComm_Event_h
 
+#include "Clock.h"
 #include "CommHeader.h"
 
 #include <Common/Error.h>
@@ -36,7 +37,6 @@
 #include <Common/String.h>
 #include <Common/Time.h>
 
-#include <chrono>
 #include <iostream>
 #include <memory>
 
@@ -154,7 +154,7 @@ namespace Hypertable {
     /** Deadline for request.
      * @return Absolute deadline
      */
-    std::chrono::time_point<std::chrono::steady_clock> deadline() {
+    ClockT::time_point deadline() {
       HT_ASSERT(arrival_time.time_since_epoch().count() > 0);
       return arrival_time + std::chrono::milliseconds(header.timeout_ms);
     }
@@ -205,7 +205,7 @@ namespace Hypertable {
     uint64_t group_id {};
 
     /// time (seconds since epoch) when message arrived
-    std::chrono::time_point<std::chrono::steady_clock> arrival_time {};
+    ClockT::time_point arrival_time {};
 
     /// Flag indicating if payload was allocated with posix_memalign
     bool payload_aligned {};

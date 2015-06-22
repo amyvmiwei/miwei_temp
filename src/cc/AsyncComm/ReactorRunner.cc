@@ -29,6 +29,7 @@
 
 #define HT_DISABLE_LOG_DEBUG 1
 
+#include "Clock.h"
 #include "HandlerMap.h"
 #include "IOHandler.h"
 #include "IOHandlerData.h"
@@ -69,7 +70,7 @@ void ReactorRunner::operator()() {
   std::set<IOHandler *> removed_handlers;
   PollTimeout timeout;
   bool did_delay = false;
-  chrono::time_point<chrono::steady_clock> arrival_time;
+  ClockT::time_point arrival_time;
   bool got_arrival_time = false;
   std::vector<struct pollfd> pollfds;
   std::vector<IOHandler *> handlers;
@@ -121,7 +122,7 @@ void ReactorRunner::operator()() {
           }
           if (record_arrival_time && !got_arrival_time
               && (pollfds[i].revents & POLLIN)) {
-            arrival_time = chrono::steady_clock::now();
+            arrival_time = ClockT::now();
             got_arrival_time = true;
           }
           if (handlers[i]->handle_event(&pollfds[i], arrival_time))
@@ -169,7 +170,7 @@ void ReactorRunner::operator()() {
         }
         if (record_arrival_time && !got_arrival_time
             && (events[i].events & EPOLLIN)) {
-          arrival_time = chrono::steady_clock::now();
+          arrival_time = ClockT::now();
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -224,7 +225,7 @@ void ReactorRunner::operator()() {
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].portev_events == POLLIN) {
-          arrival_time = chrono::steady_clock::now();
+          arrival_time = ClockT::now();
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -271,7 +272,7 @@ void ReactorRunner::operator()() {
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].filter == EVFILT_READ) {
-          arrival_time = chrono::steady_clock::now();
+          arrival_time = ClockT::now();
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))

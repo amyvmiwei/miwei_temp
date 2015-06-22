@@ -30,7 +30,8 @@
 #include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
-#include <chrono>
+#include <AsyncComm/Clock.h>
+
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -83,7 +84,7 @@ namespace Hypertable {
     /// @return <i>true</i> if ROOT commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before ROOT commit log replay completed.
-    bool wait_for_root(std::chrono::time_point<std::chrono::steady_clock> deadline);
+    bool wait_for_root(ClockT::time_point deadline);
 
     /// Waits for METADATA commit log replay to complete.
     /// Performs a timed wait on #m_metadata_complete_cond with
@@ -92,7 +93,7 @@ namespace Hypertable {
     /// @return <i>true</i> if METADATA commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before METADATA commit log replay completed.
-    bool wait_for_metadata(std::chrono::time_point<std::chrono::steady_clock> deadline);
+    bool wait_for_metadata(ClockT::time_point deadline);
 
     /// Waits for SYSTEM commit log replay to complete.
     /// Performs a timed wait on #m_system_complete_cond with
@@ -101,7 +102,7 @@ namespace Hypertable {
     /// @return <i>true</i> if SYSTEM commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before SYSTEM commit log replay completed.
-    bool wait_for_system(std::chrono::time_point<std::chrono::steady_clock> deadline);
+    bool wait_for_system(ClockT::time_point deadline);
 
     /// Waits for USER commit log replay to complete.
     /// Performs a timed wait on #m_user_complete_cond with
@@ -110,7 +111,7 @@ namespace Hypertable {
     /// @return <i>true</i> if USER commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait_for_user(std::chrono::time_point<std::chrono::steady_clock> deadline);
+    bool wait_for_user(ClockT::time_point deadline);
 
     /// Waits for commit log replay to complete for range class defined by a
     /// given range.
@@ -124,7 +125,7 @@ namespace Hypertable {
     /// @return <i>true</i> if commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait(std::chrono::time_point<std::chrono::steady_clock> deadline,
+    bool wait(ClockT::time_point deadline,
               const TableIdentifier &table, const RangeSpec &range);
 
     /// Waits for commit log replay to complete for log class defined by a
@@ -137,7 +138,7 @@ namespace Hypertable {
     /// @return <i>true</i> if commit log replay completed before
     /// <code>deadline</code>, <i>false</i> if <code>deadline</code> reached
     /// before USER commit log replay completed.
-    bool wait(std::chrono::time_point<std::chrono::steady_clock> deadline,
+    bool wait(ClockT::time_point deadline,
               const TableIdentifier &table);
 
     /// Checks if replay of USER commit log is complete

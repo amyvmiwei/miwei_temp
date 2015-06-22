@@ -58,7 +58,7 @@ using namespace std;
 
 bool
 IOHandlerAccept::handle_event(struct pollfd *event,
-                              chrono::time_point<chrono::steady_clock>) {
+                              ClockT::time_point) {
   if (event->revents & POLLIN)
     return handle_incoming_connection();
   ReactorRunner::handler_map->decomission_handler(this);
@@ -70,7 +70,7 @@ IOHandlerAccept::handle_event(struct pollfd *event,
  */
 #if defined(__APPLE__) || defined(__FreeBSD__)
 bool IOHandlerAccept::handle_event(struct kevent *event,
-                                   chrono::time_point<chrono::steady_clock>) {
+                                   ClockT::time_point) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)
     return handle_incoming_connection();
@@ -79,13 +79,13 @@ bool IOHandlerAccept::handle_event(struct kevent *event,
 }
 #elif defined(__linux__)
 bool IOHandlerAccept::handle_event(struct epoll_event *event,
-                                   chrono::time_point<chrono::steady_clock>) {
+                                   ClockT::time_point) {
   //DisplayEvent(event);
   return handle_incoming_connection();
 }
 #elif defined(__sun__)
 bool IOHandlerAccept::handle_event(port_event_t *event,
-                                   chrono::time_point<chrono::steady_clock>) {
+                                   ClockT::time_point) {
   if (event->portev_events == POLLIN)
     return handle_incoming_connection();
   ReactorRunner::handler_map->decomission_handler(this);

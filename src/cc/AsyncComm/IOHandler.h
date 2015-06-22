@@ -28,6 +28,7 @@
 #ifndef AsyncComm_IOHandler_h
 #define AsyncComm_IOHandler_h
 
+#include "Clock.h"
 #include "DispatchHandler.h"
 #include "PollEvent.h"
 #include "ReactorFactory.h"
@@ -36,7 +37,6 @@
 #include <Common/Logger.h>
 #include <Common/Time.h>
 
-#include <chrono>
 #include <mutex>
 
 extern "C" {
@@ -115,7 +115,7 @@ namespace Hypertable {
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
     virtual bool handle_event(struct pollfd *event,
-                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
+                              ClockT::time_point arrival_time) = 0;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
     /** Event handler method for <i>kqueue</i> interface (OSX, FreeBSD).
@@ -124,7 +124,7 @@ namespace Hypertable {
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
     virtual bool handle_event(struct kevent *event,
-                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
+                              ClockT::time_point arrival_time) = 0;
 #elif defined(__linux__)
     /** Event handler method for Linux <i>epoll</i> interface.
      * @param event Pointer to <code>epoll_event</code> structure describing event
@@ -132,7 +132,7 @@ namespace Hypertable {
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
     virtual bool handle_event(struct epoll_event *event,
-                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
+                              ClockT::time_point arrival_time) = 0;
 #elif defined(__sun__)
     /** Event handler method for <i>port_associate</i> interface (Solaris).
      * @param event Pointer to <code>port_event_t</code> structure describing event
@@ -140,7 +140,7 @@ namespace Hypertable {
      * @return <i>true</i> if socket should be closed, <i>false</i> otherwise
      */
     virtual bool handle_event(port_event_t *event,
-                              std::chrono::time_point<std::chrono::steady_clock> arrival_time) = 0;
+                              ClockT::time_point arrival_time) = 0;
 #else
     // Implement me!!!
 #endif

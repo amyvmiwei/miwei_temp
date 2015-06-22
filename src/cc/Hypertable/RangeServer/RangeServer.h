@@ -60,6 +60,7 @@
 #include <Hyperspace/Session.h>
 
 #include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Clock.h>
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/ConnectionInitializer.h>
 #include <AsyncComm/Event.h>
@@ -71,7 +72,6 @@
 #include <Common/MetricsProcess.h>
 #include <Common/Properties.h>
 
-#include <chrono>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -120,7 +120,7 @@ namespace Apps {
                 const TableIdentifier &table, uint32_t count,
                 StaticBuffer &buffer, uint32_t flags);
     void batch_update(std::vector<UpdateRecTable *> &updates,
-                      std::chrono::time_point<std::chrono::steady_clock> expire_time);
+                      ClockT::time_point expire_time);
 
     void commit_log_sync(ResponseCallback *cb, uint64_t cluster_id,
                          const TableIdentifier &table);

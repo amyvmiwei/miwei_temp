@@ -461,8 +461,7 @@ Comm::send_datagram(const CommAddress &addr, const CommAddress &send_addr,
 
 int Comm::set_timer(uint32_t duration_millis, const DispatchHandlerPtr &handler) {
   ExpireTimer timer;
-  boost::xtime_get(&timer.expire_time, boost::TIME_UTC_);
-  xtime_add_millis(timer.expire_time, duration_millis);
+  timer.expire_time = ClockT::now() + chrono::milliseconds(duration_millis);
   timer.handler = handler;
   m_timer_reactor->add_timer(timer);
   return Error::OK;
@@ -470,9 +469,9 @@ int Comm::set_timer(uint32_t duration_millis, const DispatchHandlerPtr &handler)
 
 
 int
-Comm::set_timer_absolute(boost::xtime expire_time, const DispatchHandlerPtr &handler) {
+Comm::set_timer_absolute(ClockT::time_point expire_time, const DispatchHandlerPtr &handler) {
   ExpireTimer timer;
-  memcpy(&timer.expire_time, &expire_time, sizeof(boost::xtime));
+  timer.expire_time = expire_time;
   timer.handler = handler;
   m_timer_reactor->add_timer(timer);
   return Error::OK;

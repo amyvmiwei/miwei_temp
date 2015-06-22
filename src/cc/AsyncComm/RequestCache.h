@@ -28,9 +28,8 @@
 #ifndef AsyncComm_RequestCache_h
 #define AsyncComm_RequestCache_h
 
+#include <AsyncComm/Clock.h>
 #include <AsyncComm/DispatchHandler.h>
-
-#include <boost/thread/xtime.hpp>
 
 #include <unordered_map>
 
@@ -57,7 +56,7 @@ namespace Hypertable {
       CacheNode(uint32_t id, IOHandler *handler, DispatchHandler *dh)
         : id(id), handler(handler), dh(dh) {}
       CacheNode  *prev, *next;    //!< Doubly-linked list pointers
-      boost::xtime       expire;  //!< Absolute expiration time
+      ClockT::time_point expire;  //!< Absolute expiration time
       uint32_t           id;      //!< Request ID
       IOHandler         *handler; //!< IOHandler associated with this request
       /// Callback handler to which MESSAGE, TIMEOUT, ERROR, and DISCONNECT
@@ -71,7 +70,7 @@ namespace Hypertable {
   public:
 
     /// Constructor.
-    RequestCache() : m_id_map(), m_head(0), m_tail(0) { return; }
+    RequestCache() { }
 
     /** Inserts pending request callback handler into cache.
      * @param id Request ID
@@ -81,7 +80,7 @@ namespace Hypertable {
      * @param expire Absolute expiration time of request
      */
     void insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
-                boost::xtime &expire);
+                ClockT::time_point &expire);
 
     /** Removes a request from the cache.
      * @param id Request ID
@@ -99,14 +98,14 @@ namespace Hypertable {
      * @param handlerp Return parameter to hold pointer to associated IOHandler
      *                 of timed out request
      * @param dh Removed dispatch handler
-     * @param next_timeout Pointer to xtime variable to hold expiration time
+     * @param next_timeout Pointer to variable to hold expiration time
      * of next request <b>after</b> timed out request, set to 0 if cache is empty
      * @return <i>true</i> if pointer to timed out dispatch handler was removed,
      * <i>false</i> otherwise
      */
-    bool get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
+    bool get_next_timeout(ClockT::time_point &now, IOHandler *&handlerp,
                           DispatchHandler *&dh,
-                          boost::xtime *next_timeout);
+                          ClockT::time_point *next_timeout);
 
     /** Purges all requests assocated with <code>handler</code>.  This
      * method walks the entire cache and purges all requests whose
@@ -119,9 +118,9 @@ namespace Hypertable {
     void purge_requests(IOHandler *handler, int32_t error);
 
   private:
-    IdHandlerMap  m_id_map; //!< RequestID-to-CacheNode map
-    CacheNode    *m_head;   //!< Head of doubly-linked list
-    CacheNode    *m_tail;   //!< Tail of doubly-linked list
+    IdHandlerMap m_id_map; //!< RequestID-to-CacheNode map
+    CacheNode *m_head {};  //!< Head of doubly-linked list
+    CacheNode *m_tail {};  //!< Tail of doubly-linked list
   };
 }
 

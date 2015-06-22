@@ -41,7 +41,7 @@ using namespace std;
 
 void
 RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
-                     boost::xtime &expire) {
+                     ClockT::time_point &expire) {
 
   HT_DEBUGF("Adding id %d", id);
 
@@ -50,7 +50,7 @@ RequestCache::insert(uint32_t id, IOHandler *handler, DispatchHandler *dh,
   HT_ASSERT(iter == m_id_map.end());
 
   CacheNode *node = new CacheNode(id, handler, dh);
-  memcpy(&node->expire, &expire, sizeof(expire));
+  node->expire = expire;
 
   if (m_head == 0) {
     node->next = node->prev = 0;
@@ -100,12 +100,12 @@ bool RequestCache::remove(uint32_t id, DispatchHandler *&handler) {
 
 
 
-bool RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
+bool RequestCache::get_next_timeout(ClockT::time_point &now, IOHandler *&handlerp,
                                     DispatchHandler *&dh,
-                                    boost::xtime *next_timeout) {
+                                    ClockT::time_point *next_timeout) {
 
   bool handler_removed = false;
-  while (m_head && !handler_removed && xtime_cmp(m_head->expire, now) <= 0) {
+  while (m_head && !handler_removed && m_head->expire <= now) {
 
     IdHandlerMap::iterator iter = m_id_map.find(m_head->id);
     assert (iter != m_id_map.end());
@@ -128,9 +128,9 @@ bool RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
   }
 
   if (m_head)
-    memcpy(next_timeout, &m_head->expire, sizeof(boost::xtime));
+    *next_timeout = m_head->expire;
   else
-    memset(next_timeout, 0, sizeof(boost::xtime));
+    *next_timeout = ClockT::time_point();
 
   return handler_removed;
 }

@@ -54,7 +54,7 @@ using namespace std;
 
 bool 
 IOHandlerDatagram::handle_event(struct pollfd *event,
-                                chrono::time_point<chrono::steady_clock> arrival_time) {
+                                ClockT::time_point arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -118,7 +118,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event,
 #if defined(__linux__)
 
 bool IOHandlerDatagram::handle_event(struct epoll_event *event,
-                                     chrono::time_point<chrono::steady_clock> arrival_time) {
+                                     ClockT::time_point arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -187,7 +187,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event,
 #elif defined(__sun__)
 bool
 IOHandlerDatagram::handle_event(port_event_t *event,
-                                chrono::time_point<chrono::steady_clock> arrival_time) {
+                                ClockT::time_point arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -268,7 +268,7 @@ IOHandlerDatagram::handle_event(port_event_t *event,
 
 bool
 IOHandlerDatagram::handle_event(struct kevent *event,
-                                chrono::time_point<chrono::steady_clock> arrival_time) {
+                                ClockT::time_point arrival_time) {
   int error;
 
   //DisplayEvent(event);

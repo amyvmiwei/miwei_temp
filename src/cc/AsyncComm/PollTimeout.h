@@ -19,25 +19,22 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for PollTimeout.
- * This file contains type declarations for PollTimeout, a class used to track
- * the next polling loop timeout.
- */
+/// @file
+/// Declarations for PollTimeout.
+/// This file contains type declarations for PollTimeout, a class used to track
+/// the next polling loop timeout.
 
-#ifndef AsyncComm_POLLTIMEOUT_H
-#define AsyncComm_POLLTIMEOUT_H
+#ifndef AsyncComm_PollTimeout_h
+#define AsyncComm_PollTimeout_h
 
-
-#include <boost/thread/xtime.hpp>
+#include "Clock.h"
 
 #include <cassert>
 
 namespace Hypertable {
 
-  /** @addtogroup AsyncComm
-   *  @{
-   */
+  /// @addtogroup AsyncComm
+  /// @{
 
   /** Maintains next timeout for event polling loop.  This class is used to
    * maintain and provide access to the next timeout for the event polling
@@ -49,41 +46,32 @@ namespace Hypertable {
   public:
 
     /** Constructor. */
-    PollTimeout() : ts_ptr(0), duration_millis(-1) { return; }
+    PollTimeout() { }
 
     /** Sets the next timeout.
      * @param now Current time
      * @param expire Absolute time of next timeout
      */
-    void set(boost::xtime &now, boost::xtime &expire) {
-      assert((xtime_cmp(now , expire) <= 0));
-      if (now.sec == expire.sec) {
-        duration_ts.tv_sec = 0;
-        duration_ts.tv_nsec = expire.nsec - now.nsec;
-      }
-      else {
-        uint64_t nanos = expire.nsec + (1000000000LL - now.nsec);
-        duration_ts.tv_sec = ((expire.sec - now.sec) - 1)
-                              + (nanos / 1000000000LL);
-        duration_ts.tv_nsec = nanos % 1000000000LL;
-      }
+    void set(ClockT::time_point now, ClockT::time_point expire) {
+      assert(std::chrono::operator<=(now, expire));
+      auto diff_usec = expire - now;
+      duration_ts.tv_sec = diff_usec.count() / 1000000;
+      duration_ts.tv_nsec = (diff_usec.count() % 1000000) * 1000;
       ts_ptr = &duration_ts;
-      duration_millis = (int)((duration_ts.tv_sec * 1000)
-                              + (duration_ts.tv_nsec / 1000000));
-      assert(duration_millis >= 0);
+      duration_millis = std::chrono::duration_cast<std::chrono::milliseconds>(diff_usec);
     }
 
     /** Sets the next timeout to be an indefinite time in the future.
      */
     void set_indefinite() {
-      ts_ptr = 0;
-      duration_millis = -1;
+      ts_ptr = nullptr;
+      duration_millis = std::chrono::milliseconds(-1);
     }
 
     /** Gets duration until next timeout in the form of milliseconds.
      * @return Milliseconds until next timeout
      */
-    int get_millis() { return duration_millis; }
+    int get_millis() { return duration_millis.count(); }
 
     /** Gets duration until next timeout in the form of a pointer to timespec.
      * @return Pointer to timespec representing duration until next timeout.
@@ -93,15 +81,16 @@ namespace Hypertable {
   private:
 
     /// Pointer to to #duration_ts or 0 if indefinite
-    struct timespec *ts_ptr;
+    struct timespec *ts_ptr {};
 
     /// timespec structure holding duration until next timeout
     struct timespec duration_ts;
 
     /// Duration until next timeout in milliseconds
-    int duration_millis;
+    std::chrono::milliseconds duration_millis {-1};
   };
-  /** @}*/
+
+  /// @}
 }
 
-#endif // AsyncComm_POLLTIMEOUT_H
+#endif // AsyncComm_PollTimeout_h

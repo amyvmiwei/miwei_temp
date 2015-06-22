@@ -38,6 +38,7 @@ DiscreteRandomGeneratorZipf.cc
 Error.cc
 Escaper.cc
 FailureInducer.cc
+fast_clock.cc
 FileUtils.cc
 Filesystem.cc
 HostSpecification.cc

@@ -29,10 +29,9 @@
 #ifndef AsyncComm_ApplicationHandler_h
 #define AsyncComm_ApplicationHandler_h
 
+#include "Clock.h"
 #include "Event.h"
 #include "ReactorRunner.h"
-
-#include <chrono>
 
 namespace Hypertable {
 
@@ -115,7 +114,7 @@ namespace Hypertable {
       if (m_event && m_event->type == Event::MESSAGE &&
           ReactorRunner::record_arrival_time &&
           (m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST)) {
-        auto now = std::chrono::steady_clock::now();
+        auto now = ClockT::now();
         uint32_t wait_ms = (uint32_t)std::chrono::duration_cast<std::chrono::milliseconds>(now - m_event->arrival_time).count();
         if (wait_ms >= m_event->header.timeout_ms) {
           if (m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST)

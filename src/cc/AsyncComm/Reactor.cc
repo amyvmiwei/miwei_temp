@@ -60,7 +60,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-Reactor::Reactor() : m_interrupt_in_progress(false) {
+Reactor::Reactor() {
   struct sockaddr_in addr;
 
   if (!ReactorFactory::use_poll) {
@@ -163,14 +163,14 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
 #endif
   }
 
-  memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
+  m_next_wakeup = ClockT::time_point();
 }
 
 
 void Reactor::handle_timeouts(PollTimeout &next_timeout) {
   vector<ExpireTimer> expired_timers;
   EventPtr event;
-  boost::xtime now, next_req_timeout;
+  ClockT::time_point now, next_req_timeout;
   ExpireTimer timer;
 
   while(true) {
@@ -179,7 +179,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
       IOHandler *handler;
       DispatchHandler *dh;
 
-      boost::xtime_get(&now, boost::TIME_UTC_);
+      now = ClockT::now();
 
       while (m_request_cache.get_next_timeout(now, handler, dh,
                                               &next_req_timeout)) {
@@ -188,13 +188,13 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
         handler->deliver_event(event, dh);
       }
 
-      if (next_req_timeout.sec != 0) {
+      if (next_req_timeout != ClockT::time_point()) {
         next_timeout.set(now, next_req_timeout);
-        memcpy(&m_next_wakeup, &next_req_timeout, sizeof(m_next_wakeup));
+        m_next_wakeup = next_req_timeout;
       }
       else {
         next_timeout.set_indefinite();
-        memset(&m_next_wakeup, 0, sizeof(m_next_wakeup));
+        m_next_wakeup = ClockT::time_point();
       }
 
       if (!m_timer_heap.empty()) {
@@ -202,11 +202,11 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
 
         while (!m_timer_heap.empty()) {
           timer = m_timer_heap.top();
-          if (xtime_cmp(timer.expire_time, now) > 0) {
-            if (next_req_timeout.sec == 0
-                || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
+          if (timer.expire_time > now) {
+            if (next_req_timeout == ClockT::time_point() ||
+                timer.expire_time < next_req_timeout) {
               next_timeout.set(now, timer.expire_time);
-              memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
+              m_next_wakeup = timer.expire_time;
             }
             break;
           }
@@ -232,13 +232,13 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
       if (!m_timer_heap.empty()) {
         timer = m_timer_heap.top();
 
-        if (xtime_cmp(now, timer.expire_time) > 0)
+        if (now > timer.expire_time)
           continue;
 
-        if (next_req_timeout.sec == 0
-            || xtime_cmp(timer.expire_time, next_req_timeout) < 0) {
+        if (next_req_timeout == ClockT::time_point()
+            || timer.expire_time < next_req_timeout) {
           next_timeout.set(now, timer.expire_time);
-          memcpy(&m_next_wakeup, &timer.expire_time, sizeof(m_next_wakeup));
+          m_next_wakeup = timer.expire_time;
         }
       }
 
@@ -252,9 +252,6 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
 
 
 
-/**
- *
- */
 int Reactor::poll_loop_interrupt() {
 
   m_interrupt_in_progress = true;

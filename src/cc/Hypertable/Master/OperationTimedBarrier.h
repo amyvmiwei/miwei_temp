@@ -45,10 +45,10 @@ namespace Hypertable {
 
   private:
     std::condition_variable m_cond;
-    std::chrono::time_point<std::chrono::steady_clock> m_expire_time;
+    std::chrono::steady_clock::time_point m_expire_time;
     String m_block_dependency;
     String m_wakeup_dependency;
-    bool m_shutdown;
+    bool m_shutdown {};
   };
 
 }

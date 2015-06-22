@@ -51,7 +51,7 @@ void LogReplayBarrier::set_user_complete() {
   m_user_complete_cond.notify_all();
 }
 
-bool LogReplayBarrier::wait_for_root(chrono::time_point<chrono::steady_clock> deadline) {
+bool LogReplayBarrier::wait_for_root(ClockT::time_point deadline) {
   if (m_root_complete)
     return true;
   unique_lock<mutex> lock(m_mutex);
@@ -60,7 +60,7 @@ bool LogReplayBarrier::wait_for_root(chrono::time_point<chrono::steady_clock> de
                                          [this](){ return m_root_complete; });
 }
 
-bool LogReplayBarrier::wait_for_metadata(chrono::time_point<chrono::steady_clock> deadline) {
+bool LogReplayBarrier::wait_for_metadata(ClockT::time_point deadline) {
   if (m_metadata_complete)
     return true;
   unique_lock<mutex> lock(m_mutex);
@@ -69,7 +69,7 @@ bool LogReplayBarrier::wait_for_metadata(chrono::time_point<chrono::steady_clock
                                              [this](){ return m_metadata_complete; });
 }
 
-bool LogReplayBarrier::wait_for_system(chrono::time_point<chrono::steady_clock> deadline) {
+bool LogReplayBarrier::wait_for_system(ClockT::time_point deadline) {
   if (m_system_complete)
     return true;
   unique_lock<mutex> lock(m_mutex);
@@ -78,7 +78,7 @@ bool LogReplayBarrier::wait_for_system(chrono::time_point<chrono::steady_clock> 
                                            [this](){ return m_system_complete; });
 }
 
-bool LogReplayBarrier::wait_for_user(chrono::time_point<chrono::steady_clock> deadline) {
+bool LogReplayBarrier::wait_for_user(ClockT::time_point deadline) {
   if (m_user_complete)
     return true;
   unique_lock<mutex> lock(m_mutex);
@@ -88,7 +88,7 @@ bool LogReplayBarrier::wait_for_user(chrono::time_point<chrono::steady_clock> de
 }
 
 bool
-LogReplayBarrier::wait(chrono::time_point<chrono::steady_clock> deadline,
+LogReplayBarrier::wait(ClockT::time_point deadline,
                       const TableIdentifier &table,
                       const RangeSpec &range_spec) {
   if (m_user_complete)
@@ -105,7 +105,7 @@ LogReplayBarrier::wait(chrono::time_point<chrono::steady_clock> deadline,
 }
 
 
-bool LogReplayBarrier::wait(chrono::time_point<chrono::steady_clock> deadline,
+bool LogReplayBarrier::wait(ClockT::time_point deadline,
                             const TableIdentifier &table) {
   if (m_user_complete)
     return true;

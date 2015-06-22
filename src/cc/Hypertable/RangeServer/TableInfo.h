@@ -34,10 +34,11 @@
 #include <Hypertable/Lib/RangeSpec.h>
 #include <Hypertable/Lib/TableIdentifier.h>
 
+#include <AsyncComm/Clock.h>
+
 #include <Common/StringExt.h>
 
 #include <algorithm>
-#include <chrono>
 #include <condition_variable>
 #include <iterator>
 #include <memory>
@@ -220,7 +221,7 @@ namespace Hypertable {
     /// range is not in the RangeState::STEADY state or
     /// Error::RANGESERVER_RANGE_ALREADY_LOADED if it is
     void stage_range(const RangeSpec &range_spec,
-                     std::chrono::time_point<std::chrono::steady_clock> deadline);
+                     std::chrono::fast_clock::time_point deadline);
 
     /// Unstages a previously staged range.
     /// This function removes the range specified by <code>range_spec</code>

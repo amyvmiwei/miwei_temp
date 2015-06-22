@@ -28,6 +28,7 @@
 #ifndef AsyncComm_Reactor_h
 #define AsyncComm_Reactor_h
 
+#include "Clock.h"
 #include "PollTimeout.h"
 #include "RequestCache.h"
 #include "ExpireTimer.h"
@@ -93,10 +94,10 @@ namespace Hypertable {
      * @param expire Absolute expiration time
      */
     void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
-                     boost::xtime &expire) {
+                     ClockT::time_point expire) {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_request_cache.insert(id, handler, dh, expire);
-      if (m_next_wakeup.sec == 0 || xtime_cmp(expire, m_next_wakeup) < 0)
+      if (m_next_wakeup == ClockT::time_point() || expire < m_next_wakeup)
         poll_loop_interrupt();
     }
 
@@ -165,8 +166,7 @@ namespace Hypertable {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_removed_handlers.insert(handler);
       ExpireTimer timer;
-      boost::xtime_get(&timer.expire_time, boost::TIME_UTC_);
-      timer.expire_time.nsec += 200000000LL;
+      timer.expire_time = ClockT::now() + std::chrono::milliseconds(200);
       timer.handler = 0;
       m_timer_heap.push(timer);
       poll_loop_interrupt();
@@ -272,22 +272,22 @@ namespace Hypertable {
     int m_interrupt_sd;           //!< Interrupt socket
 
     /// Set to <i>true</i> if poll loop interrupt in progress
-    bool m_interrupt_in_progress;
+    bool m_interrupt_in_progress {};
 
     /// Vector of poll descriptor state structures for use with POSIX
     /// <code>poll()</code>.
     std::vector<PollDescriptorT> m_polldata;
 
     /// Next polling interface wait timeout (absolute)
-    boost::xtime m_next_wakeup;
+    ClockT::time_point m_next_wakeup;
 
     /// Set of IOHandler objects scheduled for removal
     std::set<IOHandler *> m_removed_handlers;
   };
 
-  /// Smart pointer to Reactor
+  /// Shared smart pointer to Reactor
   typedef std::shared_ptr<Reactor> ReactorPtr;
-  /** @}*/
+  /// @}
 }
 
 #endif // AsyncComm_Reactor_h

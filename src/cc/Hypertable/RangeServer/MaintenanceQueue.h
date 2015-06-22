@@ -29,12 +29,13 @@
 #include "MaintenanceTask.h"
 #include "MaintenanceTaskMemoryPurge.h"
 
+#include <AsyncComm/Clock.h>
+
 #include <Common/Error.h>
 #include <Common/Logger.h>
 #include <Common/Thread.h>
 
 #include <cassert>
-#include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -374,7 +375,7 @@ namespace Hypertable {
      * @param deadline Return if queue not empty by this absolute time
      * @return <i>true</i> if queue empty, <i>false</i> if deadline reached
      */
-    bool wait_for_empty(std::chrono::time_point<std::chrono::steady_clock> deadline) {
+    bool wait_for_empty(ClockT::time_point deadline) {
       std::unique_lock<std::mutex> lock(m_state.mutex);
       return m_state.empty_cond.wait_until(lock, deadline, [this](){
           return m_state.queue.empty() && m_state.inflight == 0; });

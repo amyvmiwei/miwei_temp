@@ -161,7 +161,7 @@ bool TableInfo::remove_range(const RangeSpec &range_spec, RangePtr &range) {
 
 
 void TableInfo::stage_range(const RangeSpec &range_spec,
-                            chrono::time_point<chrono::steady_clock> deadline) {
+                            ClockT::time_point deadline) {
   unique_lock<mutex> lock(m_mutex);
   RangeInfo range_info(range_spec.start_row, range_spec.end_row);
 
