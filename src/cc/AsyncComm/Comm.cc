@@ -66,7 +66,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-atomic_t Comm::ms_next_request_id = ATOMIC_INIT(1);
+atomic<uint32_t> Comm::ms_next_request_id(1);
 
 Comm *Comm::ms_instance = NULL;
 mutex Comm::ms_mutex;
@@ -324,9 +324,9 @@ int Comm::send_request(IOHandlerData *data_handler, uint32_t timeout_ms,
     cbuf->header.id = 0;
   }
   else {
-    cbuf->header.id = atomic_inc_return(&ms_next_request_id);
+    cbuf->header.id = ms_next_request_id++;
     if (cbuf->header.id == 0)
-      cbuf->header.id = atomic_inc_return(&ms_next_request_id);
+      cbuf->header.id = ms_next_request_id++;
   }
 
   cbuf->header.timeout_ms = timeout_ms;

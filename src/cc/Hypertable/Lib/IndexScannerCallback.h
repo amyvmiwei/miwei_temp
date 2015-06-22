@@ -35,6 +35,7 @@
 #include <Common/FlyweightString.h>
 
 #include <algorithm>
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <map>
@@ -110,7 +111,6 @@ namespace Hypertable {
         m_original_cb(original_cb), m_timeout_ms(timeout_ms),
         m_qualifier_scan(qualifier_scan),
         m_row_intervals_applied(row_intervals_applied) {
-      atomic_set(&m_outstanding_scanners, 0);
       m_original_cb->increment_outstanding();
 
       m_cell_predicates.swap(cell_predicates);
@@ -197,14 +197,14 @@ namespace Hypertable {
 
       // reached end of this scanner?
       if (is_eos) {
-        HT_ASSERT(atomic_read(&m_outstanding_scanners) > 0);
-        atomic_dec(&m_outstanding_scanners);
+        HT_ASSERT(m_outstanding_scanners.load() > 0);
+        m_outstanding_scanners--;
       }
 
       // we've reached eos (i.e. because CELL_LIMITs/ROW_LIMITs were reached)
       // just collect the outstanding scanners and ignore the cells
       if (m_eos == true) {
-        if (atomic_read(&m_outstanding_scanners) == 0)
+        if (m_outstanding_scanners.load() == 0)
           final_decrement(is_eos);
         return;
       }
@@ -236,8 +236,8 @@ namespace Hypertable {
       final_decrement(is_eos);
     }
 
-    virtual void register_scanner(TableScannerAsync *scanner) { 
-      atomic_inc(&m_outstanding_scanners);
+    virtual void register_scanner(TableScannerAsync *scanner) {
+      m_outstanding_scanners++;
     }
 
     /**
@@ -269,7 +269,7 @@ namespace Hypertable {
       // packet to the original callback and decrement the outstanding scanners
       // once more (this is the equivalent operation to the increment in
       // the constructor)
-      if ((is_eos || m_eos) && atomic_read(&m_outstanding_scanners) == 0) {
+      if ((is_eos || m_eos) && m_outstanding_scanners.load() == 0) {
         m_eos = true;
         HT_ASSERT(m_final_decrement == false);
         if (!m_final_decrement) {
@@ -602,7 +602,7 @@ namespace Hypertable {
         }
 
         m_sspecs.push_back(ssb);
-        if (atomic_read(&m_outstanding_scanners) <= 1)
+        if (m_outstanding_scanners.load() <= 1)
           readahead();
       }
 #else
@@ -684,7 +684,7 @@ namespace Hypertable {
       // from the intermediate table and one scanner from the primary table.
       // If not then make sure to start another readahead scanner on the
       // primary table.
-      if (atomic_read(&m_outstanding_scanners) <= 0)
+      if (m_outstanding_scanners.load() <= 0)
         readahead();
 #endif
     }
@@ -954,7 +954,7 @@ namespace Hypertable {
     bool m_final_decrement {};
 
     // number of outstanding scanners (this is more precise than m_outstanding)
-    atomic_t m_outstanding_scanners;
+    std::atomic<int> m_outstanding_scanners {0};
 
     // shutting down this scanner?
     bool m_shutdown {};

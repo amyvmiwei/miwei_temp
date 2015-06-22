@@ -40,7 +40,6 @@
 #include <AsyncComm/ApplicationQueueInterface.h>
 #include <AsyncComm/Event.h>
 
-#include <Common/atomic.h>
 #include <Common/ByteString.h>
 #include <Common/FlyweightString.h>
 #include <Common/StringExt.h>

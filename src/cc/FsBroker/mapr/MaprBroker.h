@@ -28,10 +28,10 @@
 #include <Common/Properties.h>
 #include <Common/Status.h>
 #include <Common/String.h>
-#include <Common/atomic.h>
 
 #include <hdfs.h>
 
+#include <atomic>
 #include <string>
 
 extern "C" {
@@ -102,7 +102,7 @@ namespace FsBroker {
 
   private:
 
-    static atomic_t ms_next_fd;
+    static atomic<int> ms_next_fd;
 
     virtual void report_error(ResponseCallback *cb);
 

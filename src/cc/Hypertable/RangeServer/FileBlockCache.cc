@@ -30,7 +30,7 @@
 using namespace Hypertable;
 using namespace std;
 
-atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
+atomic<int> FileBlockCache::ms_next_file_id {0};
 
 FileBlockCache::~FileBlockCache() {
   lock_guard<mutex> lock(m_mutex);

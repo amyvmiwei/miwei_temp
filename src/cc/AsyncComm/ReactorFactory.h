@@ -31,12 +31,11 @@
 
 #include "Reactor.h"
 
-#include "Common/atomic.h"
-
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <boost/thread/thread.hpp>
 
+#include <atomic>
 #include <cassert>
 #include <mutex>
 #include <set>
@@ -79,8 +78,7 @@ namespace Hypertable {
      */
     static void get_reactor(ReactorPtr &reactor) {
       assert(ms_reactors.size() > 0);
-      reactor = ms_reactors[atomic_inc_return(&ms_next_reactor)
-                            % (ms_reactors.size() - 1)];
+      reactor = ms_reactors[ms_next_reactor++ % (ms_reactors.size() - 1)];
     }
 
     /** This method returns the timer reactor.
@@ -113,7 +111,7 @@ namespace Hypertable {
     static std::mutex ms_mutex;
 
     /// Atomic integer used for round-robin assignment of reactors
-    static atomic_t ms_next_reactor;
+    static std::atomic<int> ms_next_reactor;
 
   };
   /** @}*/

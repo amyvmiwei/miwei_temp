@@ -44,7 +44,7 @@ using namespace Hypertable;
 using namespace Hypertable::FsBroker;
 using namespace KFS;
 
-std::atomic<int> QfsBroker::ms_next_fd {};
+std::atomic<int> QfsBroker::ms_next_fd {0};
 
 OpenFileDataQfs::~OpenFileDataQfs() {
   HT_INFOF("close(%d) file: %s", fd, fname.c_str());

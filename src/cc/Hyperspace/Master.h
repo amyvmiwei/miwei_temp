@@ -48,7 +48,6 @@
 #include <Common/Status.h>
 #include <Common/StringExt.h>
 #include <Common/Time.h>
-#include <Common/atomic.h>
 
 #include <memory>
 #include <mutex>

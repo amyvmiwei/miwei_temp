@@ -24,7 +24,6 @@
 
 #include <AsyncComm/Event.h>
 
-#include <Common/atomic.h>
 #include <Common/Logger.h>
 
 #include <boost/multi_index_container.hpp>
@@ -32,6 +31,7 @@
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
+#include <atomic>
 #include <mutex>
 
 namespace Hypertable {
@@ -39,7 +39,7 @@ namespace Hypertable {
 
   class FileBlockCache {
 
-    static atomic_t ms_next_file_id;
+    static std::atomic<int> ms_next_file_id;
 
   public:
     FileBlockCache(int64_t min_memory, int64_t max_memory, bool compressed)
@@ -103,7 +103,7 @@ namespace Hypertable {
     }
 
     static int get_next_file_id() {
-      return atomic_inc_return(&ms_next_file_id);
+      return ++ms_next_file_id;
     }
     void get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
                    uint64_t *accessesp, uint64_t *hitsp);

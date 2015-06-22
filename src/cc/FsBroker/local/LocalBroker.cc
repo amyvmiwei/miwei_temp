@@ -57,7 +57,7 @@ using namespace Hypertable;
 using namespace Hypertable::FsBroker;
 using namespace std;
 
-atomic_t LocalBroker::ms_next_fd = ATOMIC_INIT(0);
+atomic<int> LocalBroker::ms_next_fd {0};
 
 LocalBroker::LocalBroker(PropertiesPtr &cfg) {
   m_verbose = cfg->get_bool("verbose");
@@ -120,7 +120,7 @@ LocalBroker::open(Response::Callback::Open *cb, const char *fname,
   else
     abspath = m_rootdir + "/" + fname;
 
-  fd = atomic_inc_return(&ms_next_fd);
+  fd = ++ms_next_fd;
 
   int oflags = O_RDONLY;
 
@@ -178,7 +178,7 @@ LocalBroker::create(Response::Callback::Open *cb, const char *fname, uint32_t fl
   else
     abspath = m_rootdir + "/" + fname;
 
-  fd = atomic_inc_return(&ms_next_fd);
+  fd = ++ms_next_fd;
 
   if (flags & Filesystem::OPEN_FLAG_OVERWRITE)
     oflags |= O_TRUNC;

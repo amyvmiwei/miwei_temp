@@ -41,7 +41,7 @@ using namespace Hypertable;
 using namespace Hypertable::FsBroker;
 using namespace std;
 
-atomic_t CephBroker::ms_next_fd = ATOMIC_INIT(0);
+atomic<int> CephBroker::ms_next_fd {0};
 
 CephBroker::CephBroker(PropertiesPtr& cfg) {
   m_verbose = cfg->get_bool("Hypertable.Verbose");
@@ -80,7 +80,7 @@ void CephBroker::open(Response::Callback::Open *cb, const char *fname,
 
   make_abs_path(fname, abspath);
 
-  fd = atomic_inc_return(&ms_next_fd);
+  fd = ++ms_next_fd;
 
   if ((ceph_fd = ceph_open(abspath.c_str(), O_RDONLY)) < 0) {
     report_error(cb, -ceph_fd);
@@ -110,7 +110,7 @@ void CephBroker::create(Response::Callback::Open *cb, const char *fname, uint32_
   HT_DEBUGF("create file='%s' flags=%u bufsz=%d replication=%d blksz=%lld",
             fname, flags, bufsz, (int)replication, (Lld)blksz);
 
-  fd = atomic_inc_return(&ms_next_fd);
+  fd = ++ms_next_fd;
 
   if (flags & Filesystem::OPEN_FLAG_OVERWRITE)
     oflags = O_WRONLY | O_CREAT | O_TRUNC;

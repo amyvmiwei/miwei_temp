@@ -31,7 +31,7 @@
 using namespace Hypertable;
 using namespace std;
 
-atomic<int> ScannerMap::ms_next_id {};
+atomic<int> ScannerMap::ms_next_id {0};
 
 /**
  */

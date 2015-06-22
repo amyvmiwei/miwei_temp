@@ -135,10 +135,10 @@ namespace Hypertable {
     interval_metric<int64_t> m_errors {};
 
     /// Active %ThriftBroker connections
-    atomic<int32_t> m_active_connections {};
+    atomic<int32_t> m_active_connections {0};
   };
 
-  /// Smart pointer to MetricsHandler
+  /// Shared smart pointer to MetricsHandler
   typedef std::shared_ptr<MetricsHandler> MetricsHandlerPtr;
 
   /// @}

@@ -20,10 +20,10 @@
  */
 
 #include <Common/Compat.h>
-#include <Common/atomic.h>
 #include <Common/TestUtils.h>
 #include <Common/Init.h>
 
+#include <atomic>
 #include <mutex>
 
 using namespace Hypertable;
@@ -36,7 +36,7 @@ volatile int g_vcount = 0;
 int g_count = 0;
 mutex g_mutex;
 recursive_mutex g_recmutex;
-atomic_t g_av;
+atomic<int> g_av(0);
 
 void test_loop(int n) {
   HT_BENCH(Hypertable::format("%d: loop", g_vcount), ++g_vcount, n);
@@ -44,7 +44,7 @@ void test_loop(int n) {
 
 void test_atomic(int n) {
   HT_BENCH1(Hypertable::format("%d: atomic", g_count), for (int i = n; i--;)
-    atomic_inc(&g_av); g_count = atomic_read(&g_av), n);
+           ++g_av; g_count = g_av.load(), n);
 }
 
 void test_mutex(int n) {

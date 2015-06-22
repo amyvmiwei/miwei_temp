@@ -47,10 +47,10 @@ namespace Hypertable {
   template<typename _Tp> struct interval_metric {
 
     /// Current value
-    atomic<_Tp> current {};
+    atomic<_Tp> current {0};
 
     /// Previous value
-    atomic<_Tp> previous {};
+    atomic<_Tp> previous {0};
 
     /// Resets the metric.
     /// This method sets #previous equal to #current.

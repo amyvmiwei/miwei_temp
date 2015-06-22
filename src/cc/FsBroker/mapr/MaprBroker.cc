@@ -59,7 +59,7 @@ using namespace Hypertable;
 using namespace Hypertable::FsBroker;
 using namespace std;
 
-atomic_t MaprBroker::ms_next_fd = ATOMIC_INIT(0);
+atomic<int> MaprBroker::ms_next_fd {0};
 
 MaprBroker::MaprBroker(PropertiesPtr &cfg) {
   m_verbose = cfg->get_bool("verbose");
@@ -94,7 +94,7 @@ MaprBroker::open(Response::Callback::Open *cb, const char *fname,
 
   HT_DEBUGF("open file='%s' flags=%u bufsz=%d", fname, flags, bufsz);
 
-  fd = atomic_inc_return(&ms_next_fd);
+  fd = ++ms_next_fd;
 
   int oflags = O_RDONLY;
 
@@ -136,7 +136,7 @@ MaprBroker::create(Response::Callback::Open *cb, const char *fname, uint32_t fla
   HT_DEBUGF("create file='%s' flags=%u bufsz=%d replication=%d blksz=%lld",
             fname, flags, bufsz, (int)replication, (Lld)blksz);
 
-  fd = atomic_inc_return(&ms_next_fd);
+  fd = ++ms_next_fd;
 
   if ((flags & Filesystem::OPEN_FLAG_OVERWRITE) == 0)
     oflags |= O_APPEND;

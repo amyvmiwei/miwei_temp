@@ -41,14 +41,12 @@ std::vector<ReactorPtr> ReactorFactory::ms_reactors;
 boost::thread_group ReactorFactory::ms_threads;
 boost::mt19937 ReactorFactory::rng(1);
 mutex ReactorFactory::ms_mutex;
-atomic_t     ReactorFactory::ms_next_reactor = ATOMIC_INIT(0);
+atomic<int> ReactorFactory::ms_next_reactor(0);
 bool ReactorFactory::ms_epollet = true;
 bool ReactorFactory::use_poll = false;
 bool ReactorFactory::proxy_master = false;
 bool ReactorFactory::verbose {};
 
-/**
- */
 void ReactorFactory::initialize(uint16_t reactor_count) {
   lock_guard<mutex> lock(ms_mutex);
   if (!ms_reactors.empty())

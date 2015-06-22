@@ -35,6 +35,7 @@
 #include "HandlerMap.h"
 #include "RawSocketHandler.h"
 
+#include <atomic>
 #include <mutex>
 
 /** %Hypertable definitions
@@ -499,7 +500,7 @@ namespace Hypertable {
     static Comm *ms_instance;
 
     /// Atomic integer used for assinging request IDs
-    static atomic_t ms_next_request_id;
+    static std::atomic<uint32_t> ms_next_request_id;
 
     /// %Mutex for serializing access to #ms_instance
     static std::mutex ms_mutex;

@@ -20,18 +20,19 @@
 #ifndef FsBroker_ceph_CephBroker_h
 #define FsBroker_ceph_CephBroker_h
 
-extern "C" {
-#include <unistd.h>
-}
-
 #include <FsBroker/Lib/Broker.h>
 
 #include <Common/Properties.h>
 #include <Common/Status.h>
 #include <Common/String.h>
-#include <Common/atomic.h>
 
 #include <ceph/libceph.h>
+
+#include <atomic>
+
+extern "C" {
+#include <unistd.h>
+}
 
 namespace Hypertable {
 namespace FsBroker {
@@ -87,7 +88,7 @@ namespace FsBroker {
                        StaticBuffer &serialized_parameters);
 
   private:
-    static atomic_t ms_next_fd;
+    static atomic<int> ms_next_fd;
 
     virtual void report_error(ResponseCallback *cb, int error);
 

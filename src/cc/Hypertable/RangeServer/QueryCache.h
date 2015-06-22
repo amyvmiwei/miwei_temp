@@ -24,7 +24,6 @@
 
 #include <Common/Checksum.h>
 #include <Common/Mutex.h>
-#include <Common/atomic.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
