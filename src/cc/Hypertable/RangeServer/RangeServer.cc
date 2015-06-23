@@ -148,7 +148,7 @@ Apps::RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_
   port = cfg.get_i16("Port");
 
   m_control_file_check_interval = cfg.get_i32("ControlFile.CheckInterval");
-  boost::xtime_get(&m_last_control_file_check, boost::TIME_UTC_);
+  m_last_control_file_check = chrono::steady_clock::now();
 
   // Initialize "low activity" window
   {
@@ -3687,7 +3687,6 @@ void Apps::RangeServer::do_maintenance() {
   HT_ASSERT(m_timer_handler);
 
   try {
-    boost::xtime now;
 
     // Purge expired scanners
     m_scanner_map.purge_expired(m_scanner_ttl);
@@ -3701,8 +3700,8 @@ void Apps::RangeServer::do_maintenance() {
     m_maintenance_scheduler->schedule();
 
     // Check for control files
-    boost::xtime_get(&now, TIME_UTC_);
-    if (xtime_diff_millis(m_last_control_file_check, now) >= (int64_t)m_control_file_check_interval) {
+    auto now = chrono::steady_clock::now();
+    if (now - m_last_control_file_check >= chrono::milliseconds(m_control_file_check_interval)) {
       if (FileUtils::exists(System::install_dir + "/run/query-profile")) {
         if (!m_profile_query) {
           lock_guard<mutex> lock(m_profile_mutex);

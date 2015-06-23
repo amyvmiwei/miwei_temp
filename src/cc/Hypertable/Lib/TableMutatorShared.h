@@ -22,8 +22,7 @@
 
 #include "TableMutator.h"
 
-#include <Common/Time.h>
-
+#include <chrono>
 #include <memory>
 #include <mutex>
 
@@ -87,7 +86,7 @@ public:
   virtual void flush() {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     Parent::flush();
-    m_last_flush_ts.reset();
+    m_last_flush_ts = std::chrono::steady_clock::now();
   }
 
   /**
@@ -140,7 +139,7 @@ public:
 private:
   std::recursive_mutex m_mutex;
   uint32_t m_flush_interval;
-  HiResTime m_last_flush_ts;
+  std::chrono::steady_clock::time_point m_last_flush_ts;
   std::shared_ptr<TableMutatorIntervalHandler> m_tick_handler;
 };
 

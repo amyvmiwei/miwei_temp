@@ -28,8 +28,6 @@
 #include <AsyncComm/DispatchHandler.h>
 #include <AsyncComm/Comm.h>
 
-#include <boost/thread/xtime.hpp>
-
 #include <condition_variable>
 #include <map>
 #include <mutex>

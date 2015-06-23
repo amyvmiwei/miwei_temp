@@ -28,9 +28,9 @@
 #define FsBroker_Lib_StatusManager_h
 
 #include <Common/Status.h>
-#include <Common/Time.h>
 
 #include <cerrno>
+#include <chrono>
 #include <mutex>
 
 namespace Hypertable {
@@ -83,9 +83,6 @@ namespace Lib {
     /// @param error Error code (errno)
     void set_error(int error);
 
-    /// Minimum elapsed time before transitioning back to OK status
-    const int64_t CLEAR_CHANGE_INTERVAL = 60000LL;
-
     /// %Mutex for serializaing access to members
     std::mutex m_mutex;
 
@@ -93,10 +90,10 @@ namespace Lib {
     Status m_status;
 
     /// Time of last reported read error
-    HiResTime m_last_read_error;
+    std::chrono::steady_clock::time_point m_last_read_error;
 
     /// Time of last reported write error
-    HiResTime m_last_write_error;
+    std::chrono::steady_clock::time_point m_last_write_error;
 
     /// Current status
     Status::Code m_current_status {};

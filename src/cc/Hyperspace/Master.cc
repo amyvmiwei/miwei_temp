@@ -239,7 +239,7 @@ Hyperspace::Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   m_metrics_handler = std::make_shared<MetricsHandler>(props);
   m_metrics_handler->start_collecting();
 
-  boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
+  m_last_tick = std::chrono::steady_clock::now();
 
   m_keepalive_handler_ptr = make_shared<ServerKeepaliveHandler>(conn_mgr->get_comm(), this, app_queue_ptr);
   m_keepalive_handler_ptr->start();
@@ -394,7 +394,8 @@ int Hyperspace::Master::renew_session_lease(uint64_t session_id) {
  * > else return false
  */
 bool
-Hyperspace::Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
+Hyperspace::Master::next_expired_session(SessionDataPtr &session_data,
+                                         std::chrono::steady_clock::time_point now) {
   lock_guard<mutex> lock(m_session_map_mutex);
   struct LtSessionData ascending;
 
@@ -425,9 +426,8 @@ void Hyperspace::Master::remove_expired_sessions() {
   String errmsg;
   std::vector<uint64_t> handles;
   std::vector<uint64_t> expired_sessions;
-  boost::xtime now;
 
-  boost::xtime_get(&now, boost::TIME_UTC_);
+  auto now = std::chrono::steady_clock::now();
 
   // mark expired sessions
   while (next_expired_session(session_data, now)) {
@@ -1827,34 +1827,32 @@ Hyperspace::Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
 }
 
 void Hyperspace::Master::handle_sleep() {
-  boost::xtime_get(&m_sleep_time, boost::TIME_UTC_);
+  m_sleep_time = std::chrono::steady_clock::now();
   HT_INFO("Suspend detected.");
 }
 
 
 void Hyperspace::Master::handle_wakeup() {
-  boost::xtime now;
-  uint64_t lease_credit;
 
-  boost::xtime_get(&now, boost::TIME_UTC_);
-  lease_credit = xtime_diff_millis(m_sleep_time, now) + m_lease_interval;
+  auto now = std::chrono::steady_clock::now();
+
+  std::chrono::milliseconds lease_credit = 
+    std::chrono::duration_cast<std::chrono::milliseconds>(now - m_sleep_time) +
+    std::chrono::milliseconds(m_lease_interval);
 
   // extend all leases
   {
     lock_guard<mutex> lock(m_session_map_mutex);
     if (!m_shutdown) {
       HT_INFOF("Resume detected, extending all session leases "
-               "by %lu milliseconds.", (Lu)lease_credit);
+               "by %lu milliseconds.", (Lu)lease_credit.count());
       for (SessionMap::iterator iter = m_session_map.begin();
            iter != m_session_map.end(); iter++)
-        (*iter).second->extend_lease((uint32_t)lease_credit);
+        (*iter).second->extend_lease(lease_credit);
     }
   }
 }
 
-/*
- *
- */
 void Hyperspace::Master::do_maintenance() {
 
   {

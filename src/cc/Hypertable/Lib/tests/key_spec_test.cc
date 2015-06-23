@@ -25,6 +25,7 @@
 #include <Hypertable/Lib/Future.h>
 
 #include <Common/md5.h>
+#include <Common/Time.h>
 #include <Common/Usage.h>
 
 #include <cstdlib>
@@ -83,8 +84,6 @@ int main(int argc, char **argv) {
      * Load data
      */
     {
-      boost::xtime now;
-
       ns->drop_table("KeyTest", true);
       ns->create_table("KeyTest", schema);
 
@@ -97,8 +96,7 @@ int main(int argc, char **argv) {
       key.column_family = "Field";
       key.column_qualifier = 0;
       key.column_qualifier_len = 0;
-      boost::xtime_get(&now, boost::TIME_UTC_);
-      timestamp = ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
+      timestamp = get_ts64();
       key.timestamp = timestamp;
 
       mutator->set(key, "value 1", strlen("value 1"));

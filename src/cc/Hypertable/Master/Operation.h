@@ -33,10 +33,10 @@
 
 #include <Hypertable/Lib/MetaLogEntity.h>
 
+#include <AsyncComm/Clock.h>
 #include <AsyncComm/Event.h>
 
 #include <Common/ScopeGuard.h>
-#include <Common/Time.h>
 
 #include <ctime>
 #include <set>
@@ -337,7 +337,7 @@ namespace Hypertable {
      * operation will be permanently removed.
      * @return Expiration time of the operation
      */
-    HiResTime expiration_time() { std::lock_guard<std::mutex> lock(m_mutex); return m_expiration_time; }
+    ClockT::time_point expiration_time() { std::lock_guard<std::mutex> lock(m_mutex); return m_expiration_time; }
 
     /// Sets the remove approvals bit mask.
     /// @param mask Bitmask to use as remove approvals mask.
@@ -583,7 +583,7 @@ namespace Hypertable {
     bool m_ephemeral {};
 
     /// Expiration time (used by ResponseManager)
-    HiResTime m_expiration_time;
+    ClockT::time_point m_expiration_time;
 
     /// Hash code uniqely identifying operation
     int64_t m_hash_code;

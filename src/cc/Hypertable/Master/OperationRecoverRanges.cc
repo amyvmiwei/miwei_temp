@@ -83,7 +83,7 @@ void OperationRecoverRanges::execute() {
     if (m_plan.receiver_plan.empty()) {
       HT_INFOF("Plan for location %s, type %s is empty, nothing to do",
                m_location.c_str(), m_type_str.c_str());
-      m_expiration_time.reset();  // force it to get removed immediately
+      m_expiration_time = ClockT::now();  // force it to get removed immediately
       complete_ok();
       break;
     }
@@ -215,7 +215,7 @@ void OperationRecoverRanges::execute() {
 
     HT_ASSERT(m_context->get_balance_plan_authority()->recovery_complete(m_location, m_type));
 
-    m_expiration_time.reset();  // force it to get removed immediately
+    m_expiration_time = ClockT::now();  // force it to get removed immediately
     complete_ok();
     break;
 

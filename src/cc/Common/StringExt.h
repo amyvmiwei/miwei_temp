@@ -23,8 +23,8 @@
  * String extensions and helpers: sets, maps, append operators etc.
  */
 
-#ifndef HYPERTABLE_STRINGEXT_H
-#define HYPERTABLE_STRINGEXT_H
+#ifndef Common_StringExt_h
+#define Common_StringExt_h
 
 #include <Common/String.h>
 
@@ -89,4 +89,4 @@ inline String operator+(const String &s1, uint64_t llval) {
 
 /** @} */
 
-#endif // HYPERTABLE_STRINGEXT_H
+#endif // Common_StringExt_h

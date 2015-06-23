@@ -46,8 +46,10 @@
 #include <Common/md5.h>
 
 #include <cassert>
+#include <chrono>
 
 using namespace Hypertable;
+using namespace std;
 
 const char CommitLog::MAGIC_DATA[10] =
     { 'C','O','M','M','I','T','D','A','T','A' };
@@ -135,10 +137,7 @@ CommitLog::initialize(const string &log_dir, PropertiesPtr &props,
 
 
 int64_t CommitLog::get_timestamp() {
-  lock_guard<mutex> lock(m_mutex);
-  boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC_);
-  return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
+  return get_ts64();
 }
 
 int CommitLog::flush() {

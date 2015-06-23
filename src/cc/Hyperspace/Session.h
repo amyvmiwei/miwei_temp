@@ -41,6 +41,7 @@
 #include <Common/String.h>
 #include <Common/Timer.h>
 
+#include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -668,10 +669,9 @@ namespace Hyperspace {
      */
      HsCommandInterpreterPtr create_hs_interpreter();
 
-    void advance_expire_time(boost::xtime now) {
+    void advance_expire_time(std::chrono::steady_clock::time_point now) {
       std::lock_guard<std::mutex> lock(m_mutex);
-      m_expire_time = now;
-      xtime_add_millis(m_expire_time, m_lease_interval);
+      m_expire_time = now + std::chrono::milliseconds(m_lease_interval);
     }
 
     void update_master_addr(const String &host);
@@ -718,7 +718,7 @@ namespace Hyperspace {
     uint32_t                  m_grace_period;
     uint32_t                  m_lease_interval;
     uint32_t                  m_timeout_ms;
-    boost::xtime              m_expire_time;
+    std::chrono::steady_clock::time_point m_expire_time;
     InetAddr                  m_master_addr;
     ClientKeepaliveHandlerPtr m_keepalive_handler_ptr;
     CallbackMap               m_callbacks;

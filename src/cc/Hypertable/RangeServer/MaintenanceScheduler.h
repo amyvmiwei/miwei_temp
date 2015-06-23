@@ -33,6 +33,7 @@
 #include <Hypertable/RangeServer/LoadStatistics.h>
 #include <Hypertable/RangeServer/TableInfoMap.h>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -68,7 +69,7 @@ namespace Hypertable {
       else {
         if (m_low_memory_mode) {
           m_prioritizer = &m_prioritizer_log_cleanup;
-          boost::xtime_get(&m_last_low_memory, TIME_UTC_);
+          m_last_low_memory = chrono::steady_clock::now();
         }
       }
       m_low_memory_mode = on;
@@ -85,14 +86,14 @@ namespace Hypertable {
     /// Checks to see if scheduler debug signal file exists.
     /// @return <i>true</i> if scheduler debug signal file exists, <i>false</i>
     /// otherwise.
-    bool debug_signal_file_exists(boost::xtime now);
+    bool debug_signal_file_exists(std::chrono::steady_clock::time_point now);
 
     /// Writes debugging output and removes signal file.
     /// @param now Current time
     /// @param ranges Set of ranges for which to output scheduler debugging
     /// informantion
     /// @param header_str Beginning content written to debugging output
-    void write_debug_output(boost::xtime now, Ranges &ranges,
+    void write_debug_output(std::chrono::steady_clock::time_point now, Ranges &ranges,
                             const String &header_str);
 
     /// %Mutex to serialize concurrent access
@@ -107,8 +108,8 @@ namespace Hypertable {
     MaintenancePrioritizer *m_prioritizer;
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
-    boost::xtime m_last_low_memory;
-    boost::xtime m_last_check;
+    std::chrono::steady_clock::time_point m_last_low_memory;
+    std::chrono::steady_clock::time_point m_last_check;
     int64_t m_query_cache_memory;
     int32_t m_maintenance_interval;
     int32_t m_low_memory_limit_percentage;

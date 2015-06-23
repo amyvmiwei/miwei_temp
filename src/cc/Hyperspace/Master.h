@@ -49,6 +49,7 @@
 #include <Common/StringExt.h>
 #include <Common/Time.h>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -153,7 +154,8 @@ namespace Hyperspace {
      */
     int renew_session_lease(uint64_t session_id);
 
-    bool next_expired_session(SessionDataPtr &, boost::xtime &now);
+    bool next_expired_session(SessionDataPtr &,
+                              std::chrono::steady_clock::time_point now);
     void remove_expired_sessions();
 
 
@@ -163,7 +165,7 @@ namespace Hyperspace {
 
     void tick() {
       std::lock_guard<std::mutex> lock(m_last_tick_mutex);
-      boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
+      m_last_tick = std::chrono::steady_clock::now();
     }
 
     /// Handle sleep event (e.g. laptop close).
@@ -342,10 +344,10 @@ namespace Hyperspace {
     std::mutex m_last_tick_mutex;
     std::mutex m_maintenance_mutex;
     bool m_maintenance_outstanding {};
-    boost::xtime  m_last_tick;
+    std::chrono::steady_clock::time_point m_last_tick;
 
     /// Suspension time recorded by handle_sleep()
-    boost::xtime m_sleep_time;
+    std::chrono::steady_clock::time_point m_sleep_time;
 
     bool m_shutdown {};
 

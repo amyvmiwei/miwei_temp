@@ -37,6 +37,7 @@
 #include "Common/System.h"
 #include "Common/StringCompressorPrefix.h"
 #include "Common/StringDecompressorPrefix.h"
+#include "Common/Time.h"
 
 #include "AsyncComm/Protocol.h"
 
@@ -750,11 +751,7 @@ void CellStoreV7::finalize(TableIdentifier *table_identifier) {
   // Add table information
   m_trailer.table_id = table_identifier->index();
   m_trailer.table_generation = table_identifier->generation;
-  {
-    boost::xtime now;
-    boost::xtime_get(&now, boost::TIME_UTC_);
-    m_trailer.create_time = ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
-  }
+  m_trailer.create_time = get_ts64();
 
   m_trailer.block_header_version = BLOCK_HEADER_VERSION;
 

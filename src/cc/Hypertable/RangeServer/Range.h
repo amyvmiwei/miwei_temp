@@ -52,6 +52,7 @@
 #include <Hypertable/Lib/TableIdentifier.h>
 
 #include <Common/Barrier.h>
+#include <Common/fast_clock.h>
 #include <Common/String.h>
 
 #include <map>
@@ -155,7 +156,7 @@ namespace Hypertable {
 
     void deferred_initialization(uint32_t timeout_millis);
 
-    void deferred_initialization(boost::xtime expire_time);
+    void deferred_initialization(std::chrono::fast_clock::time_point expire_time);
 
     void get_boundary_rows(String &start, String &end) {
       m_metalog_entity->get_boundary_rows(start, end);

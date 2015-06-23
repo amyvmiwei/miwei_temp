@@ -195,14 +195,13 @@ void Range::deferred_initialization(uint32_t timeout_millis) {
   if (m_initialized)
     return;
 
-  boost::xtime expiration_time;
-  boost::xtime_get(&expiration_time, TIME_UTC_);
-  expiration_time.sec += timeout_millis/1000;
+  auto expiration_time = chrono::fast_clock::now() +
+    chrono::milliseconds(timeout_millis);
 
   deferred_initialization(expiration_time);
 }
 
-void Range::deferred_initialization(boost::xtime expire_time) {
+void Range::deferred_initialization(chrono::fast_clock::time_point expire_time) {
 
   if (m_initialized)
     return;
@@ -212,9 +211,8 @@ void Range::deferred_initialization(boost::xtime expire_time) {
       deferred_initialization();
     }
     catch (Exception &e) {
-      boost::xtime now;
-      boost::xtime_get(&now, TIME_UTC_);
-      if (boost::xtime_cmp(now, expire_time) < 0) {
+      auto now = chrono::fast_clock::now();
+      if (now < expire_time) {
         this_thread::sleep_for(chrono::milliseconds(10000));
         continue;
       }

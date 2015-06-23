@@ -24,8 +24,7 @@
 
 #include "Notification.h"
 
-#include <Common/Time.h>
-
+#include <chrono>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -39,9 +38,8 @@ namespace Hyperspace {
   public:
     SessionData(const sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id)
       : addr(_addr), m_lease_interval(lease_interval), id(_id) {
-      boost::xtime_get(&expire_time, boost::TIME_UTC_);
-      xtime_add_millis(expire_time, lease_interval);
-      return;
+      expire_time = std::chrono::steady_clock::now() +
+        std::chrono::milliseconds(lease_interval);
     }
 
     void add_notification(Notification *notification) {
@@ -97,12 +95,10 @@ namespace Hyperspace {
 
     bool renew_lease() {
       std::lock_guard<std::mutex> lock(mutex);
-      boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC_);
-      if (xtime_cmp(expire_time, now) < 0)
+      auto now = std::chrono::steady_clock::now();
+      if (expire_time < now)
         return false;
-      memcpy(&expire_time, &now, sizeof(boost::xtime));
-      xtime_add_millis(expire_time, m_lease_interval);
+      expire_time = now + std::chrono::milliseconds(m_lease_interval);
       return true;
     }
 
@@ -110,14 +106,14 @@ namespace Hyperspace {
 
     const struct sockaddr_in& get_addr() const { return addr; }
 
-    void extend_lease(uint32_t millis) {
+    void extend_lease(std::chrono::milliseconds millis) {
       std::lock_guard<std::mutex> lock(mutex);
-      xtime_add_millis(expire_time, millis);
+      expire_time += millis;
     }
 
-    bool is_expired(const boost::xtime &now) {
+    bool is_expired(std::chrono::steady_clock::time_point now) {
       std::lock_guard<std::mutex> lock(mutex);
-      return expired || xtime_cmp(expire_time, now) < 0;
+      return expired || expire_time < now;
     }
 
     void expire() {
@@ -135,7 +131,7 @@ namespace Hyperspace {
 
     void set_expire_time_now() {
       std::lock_guard<std::mutex> lock(mutex);
-      boost::xtime_get(&expire_time, boost::TIME_UTC_);
+      expire_time = std::chrono::steady_clock::now();
     }
 
     void set_name(const String &name_) {
@@ -149,8 +145,8 @@ namespace Hyperspace {
 
     std::mutex mutex;
     struct sockaddr_in addr;
-    boost::xtime expire_time;
-    uint32_t m_lease_interval;
+    std::chrono::steady_clock::time_point expire_time;
+    uint32_t m_lease_interval {};
     uint64_t id;
     bool expired {};
     std::list<Notification *> notifications;
@@ -161,7 +157,7 @@ namespace Hyperspace {
 
   struct LtSessionData {
     bool operator()(const SessionDataPtr &x, const SessionDataPtr &y) const {
-      return xtime_cmp(x->expire_time, y->expire_time) > 0;
+      return std::chrono::operator>(x->expire_time, y->expire_time);
     }
   };
 

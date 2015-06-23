@@ -32,6 +32,7 @@
 #include <Hypertable/Lib/Key.h>
 
 #include <Common/Logger.h>
+#include <Common/Time.h>
 
 #include <algorithm>
 #include <cassert>
@@ -48,16 +49,13 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
                         std::set<uint8_t> *columns) {
   ColumnFamilySpec *cf_spec;
   int32_t max_versions = 0;
-  boost::xtime xtnow;
-  int64_t now;
   String family;
   const char *qualifier;
   size_t qualifier_len;
   size_t id = 0;
   bool is_regexp, is_prefix;
 
-  boost::xtime_get(&xtnow, boost::TIME_UTC_);
-  now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
+  int64_t now = get_ts64();
 
   revision = (rev == TIMESTAMP_NULL) ? TIMESTAMP_MAX : rev;
 

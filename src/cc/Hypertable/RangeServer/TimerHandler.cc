@@ -66,7 +66,7 @@ TimerHandler::TimerHandler(Comm *comm, Apps::RangeServer *range_server)
 
   m_current_interval = m_timer_interval;
 
-  boost::xtime_get(&m_last_schedule, TIME_UTC_);
+  m_last_schedule = std::chrono::steady_clock::now();
 
   m_app_queue = m_range_server->get_application_queue();
 
@@ -86,9 +86,8 @@ void TimerHandler::schedule_immediate_maintenance() {
   lock_guard<mutex> lock(m_mutex);
 
   if (!m_immediate_maintenance_scheduled && !m_schedule_outstanding) {
-    boost::xtime now;
-    boost::xtime_get(&now, TIME_UTC_);
-    uint64_t elapsed = xtime_diff_millis(m_last_schedule, now);
+    auto now = std::chrono::steady_clock::now();
+    uint64_t elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_last_schedule).count();
     int error;
     uint32_t millis = (elapsed < 1000) ? 1000 - elapsed : 0;
     HT_INFOF("Scheduling immediate maintenance for %u millis in the future", millis);
@@ -104,7 +103,7 @@ void TimerHandler::maintenance_scheduled_notify() {
   lock_guard<mutex> lock(m_mutex);
 
   m_schedule_outstanding = false;
-  boost::xtime_get(&m_last_schedule, TIME_UTC_);
+  m_last_schedule = std::chrono::steady_clock::now();
 
   if (m_range_server->replay_finished()) {
     if (Global::user_log && Global::user_log->size()>m_userlog_size_threshold) {
@@ -136,20 +135,20 @@ void TimerHandler::handle(Hypertable::EventPtr &event) {
   lock_guard<mutex> lock(m_mutex);
   int error;
   bool do_maintenance = !m_schedule_outstanding;
-  boost::xtime now;
 
   if (m_shutdown)
     return;
 
-  boost::xtime_get(&now, TIME_UTC_);
+  auto now = std::chrono::steady_clock::now();
 
   if (m_app_queue_paused) {
+    unsigned int elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_pause_time).count();
     HT_DEBUGF("App queue paused (pause_time=%u, lmm=%s, restart_gen=%lld, "
-              "queue_gen=%lld)", (unsigned)xtime_diff_millis(m_pause_time, now),
+              "queue_gen=%lld)", (unsigned)elapsed,
               m_low_memory_mode ? "true" : "false", (Lld)m_restart_generation,
               (Lld)Global::maintenance_queue->generation());
     if ((m_low_memory_mode && !low_memory()) ||
-        xtime_diff_millis(m_pause_time, now) >= m_max_app_queue_pause ||
+        (now - m_pause_time) >= std::chrono::milliseconds(m_max_app_queue_pause) ||
         m_restart_generation <= Global::maintenance_queue->generation())
       restart_app_queue();
     do_maintenance = !m_schedule_outstanding && m_immediate_maintenance_scheduled;
@@ -209,15 +208,14 @@ void TimerHandler::pause_app_queue() {
     Global::maintenance_queue->size();
   HT_INFOF("Application queue PAUSED due to %s",
            m_low_memory_mode ? "low memory" : "log size threshold exceeded");
-  boost::xtime_get(&m_pause_time, TIME_UTC_);
+  m_pause_time = std::chrono::steady_clock::now();
 }
 
 
 void TimerHandler::restart_app_queue() {
-  boost::xtime now;
   HT_ASSERT(m_app_queue_paused);
-  boost::xtime_get(&now, TIME_UTC_);
-  int64_t pause_millis = xtime_diff_millis(m_pause_time, now);
+  auto now = std::chrono::steady_clock::now();
+  int64_t pause_millis = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_pause_time).count();
   HT_INFOF("Restarting application queue (pause time = %lld millis)",
            (Lld)pause_millis);
   m_app_queue->start();
@@ -226,7 +224,8 @@ void TimerHandler::restart_app_queue() {
   m_low_memory_mode = false;
 
   std::stringstream ss;
-  ss << now.sec << "\tapp-queue-pause\t" << pause_millis;
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+  ss << seconds << "\tapp-queue-pause\t" << pause_millis;
   m_range_server->write_profile_data(ss.str());
 }
 

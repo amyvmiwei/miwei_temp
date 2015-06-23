@@ -104,7 +104,7 @@ void OperationRecover::execute() {
     if (!acquire_server_lock()) {
       if (m_rsc)
         m_rsc->set_recovering(false);
-      m_expiration_time.reset();  // force it to get removed immediately
+      m_expiration_time = ClockT::now();  // force it to get removed immediately
       complete_ok();
       return;
     }
@@ -222,7 +222,7 @@ void OperationRecover::execute() {
 
     HT_MAYBE_FAIL("recover-server-4");
 
-    m_expiration_time.reset();  // force it to get removed immediately
+    m_expiration_time = ClockT::now();  // force it to get removed immediately
 
     if (m_rsc) {
       std::vector<MetaLog::EntityPtr> additional;

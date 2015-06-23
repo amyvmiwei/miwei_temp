@@ -36,6 +36,11 @@ using namespace Hypertable;
 using namespace Hypertable::FsBroker::Lib;
 using namespace std;
 
+namespace {
+  // Minimum elapsed time before transitioning back to OK status
+  const chrono::steady_clock::duration CLEAR_CHANGE_INTERVAL = chrono::milliseconds(60000);
+}
+
 StatusManager::StatusManager() {
   m_current_status = m_status.get();
 }
@@ -45,7 +50,7 @@ void StatusManager::set_read_status(Status::Code code, const std::string &text) 
     clear_status();
   else {
     set_status(code, text);
-    m_last_read_error.reset();
+    m_last_read_error = chrono::steady_clock::now();
   }
 }
 
@@ -54,7 +59,7 @@ void StatusManager::set_write_status(Status::Code code, const std::string &text)
     clear_status();
   else {
     set_status(code, text);
-    m_last_write_error.reset();
+    m_last_write_error = chrono::steady_clock::now();
   }
 }
 
@@ -63,7 +68,7 @@ void StatusManager::set_read_error(int error) {
     clear_status();
   else {
     set_error(error);
-    m_last_read_error.reset();
+    m_last_read_error = chrono::steady_clock::now();
   }
 }
 
@@ -72,17 +77,17 @@ void StatusManager::set_write_error(int error) {
     clear_status();
   else {
     set_error(error);
-    m_last_write_error.reset();
+    m_last_write_error = chrono::steady_clock::now();
   }
 }
 
 void StatusManager::clear_status() {
   if (m_current_status == Status::Code::OK)
     return;
-  HiResTime now;
+  auto now = chrono::steady_clock::now();
   lock_guard<mutex> lock(m_mutex);
-  if (xtime_diff_millis(m_last_read_error, now) > CLEAR_CHANGE_INTERVAL &&
-      xtime_diff_millis(m_last_write_error, now) > CLEAR_CHANGE_INTERVAL) {
+  if (now - m_last_read_error > CLEAR_CHANGE_INTERVAL &&
+      now - m_last_write_error > CLEAR_CHANGE_INTERVAL) {
     m_status.set(Status::Code::OK, "");
     m_current_status = Status::Code::OK;
   }

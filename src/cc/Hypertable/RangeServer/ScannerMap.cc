@@ -28,6 +28,8 @@
 
 #include "ScannerMap.h"
 
+#include <Common/Time.h>
+
 using namespace Hypertable;
 using namespace std;
 
@@ -123,7 +125,5 @@ void ScannerMap::update_profile_data(int32_t id, ProfileDataScanner &profile_dat
 
 
 int64_t ScannerMap::get_timestamp_millis() {
-  boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC_);
-  return ((int64_t)now.sec * 1000LL) + ((int64_t)now.nsec / 1000000LL);
+  return get_ts64() / 1000000LL;
 }

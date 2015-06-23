@@ -61,15 +61,13 @@ namespace Hypertable {
 Operation::Operation(ContextPtr &context, int32_t type)
   : MetaLog::Entity(type), m_context(context) {
   int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
-  m_expiration_time.sec = time(0) + timeout/1000;
-  m_expiration_time.nsec = (timeout%1000) * 1000000LL;
+  m_expiration_time = ClockT::now() + chrono::milliseconds(timeout);
   m_hash_code = (int64_t)header.id;
 }
 
 Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_event(event) {
-  m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
-  m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
+  m_expiration_time = ClockT::now() + chrono::milliseconds(m_event->header.timeout_ms);
   m_hash_code = (int64_t)header.id;
 }
 
@@ -173,8 +171,9 @@ size_t Operation::encoded_length_internal() const {
 
 void Operation::encode_internal(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_state);
-  Serialization::encode_i64(bufp, m_expiration_time.sec);
-  Serialization::encode_i32(bufp, m_expiration_time.nsec);
+  auto nanos = chrono::duration_cast<chrono::nanoseconds>(m_expiration_time.time_since_epoch()).count();
+  Serialization::encode_i64(bufp, (int64_t)(nanos / 1000000000LL));
+  Serialization::encode_i32(bufp, (int32_t)(nanos % 1000000000LL));
   Serialization::encode_i16(bufp, m_remove_approvals);
   Serialization::encode_i16(bufp, m_remove_approval_mask);
   if (m_state == OperationState::COMPLETE) {
@@ -207,8 +206,9 @@ void Operation::decode_internal(uint8_t version, const uint8_t **bufp,
                                 size_t *remainp) {
 
   m_state = Serialization::decode_i32(bufp, remainp);
-  m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
-  m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
+  int64_t nanos = Serialization::decode_i64(bufp, remainp) * 1000000000LL;
+  nanos += Serialization::decode_i32(bufp, remainp);
+  m_expiration_time = ClockT::time_point(chrono::duration_cast<ClockT::duration>(chrono::nanoseconds(nanos)));
   m_remove_approvals = Serialization::decode_i16(bufp, remainp);
   m_remove_approval_mask = Serialization::decode_i16(bufp, remainp);
   if (m_state == OperationState::COMPLETE) {
@@ -289,8 +289,9 @@ void Operation::decode_old(const uint8_t **bufp, size_t *remainp,
   if (definition_version >= 2)
     version = (uint8_t)Serialization::decode_i16(bufp, remainp);
   m_state = Serialization::decode_i32(bufp, remainp);
-  m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
-  m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
+  int64_t nanos = Serialization::decode_i64(bufp, remainp) * 1000000000LL;
+  nanos += Serialization::decode_i32(bufp, remainp);
+  m_expiration_time = ClockT::time_point(chrono::duration_cast<ClockT::duration>(chrono::nanoseconds(nanos)));
   if (m_original_type == 0 || (m_original_type & 0xF0000L) > 0x20000L) {
     m_remove_approvals = Serialization::decode_i16(bufp, remainp);
     m_remove_approval_mask = Serialization::decode_i16(bufp, remainp);

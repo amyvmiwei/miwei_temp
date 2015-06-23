@@ -39,7 +39,7 @@ void ResponseManager::operator()() {
   ResponseManagerContext::OperationExpirationTimeIndex::iterator op_iter;
   ResponseManagerContext::DeliveryExpirationTimeIndex &delivery_expiration_time_index = m_context->delivery_list.get<1>();
   ResponseManagerContext::DeliveryExpirationTimeIndex::iterator delivery_iter;
-  HiResTime now, expire_time;
+  ClockT::time_point now, expire_time;
   bool timed_wait;
   bool shutdown = false;
   std::vector<OperationPtr> operations;
@@ -64,17 +64,14 @@ void ResponseManager::operator()() {
           timed_wait = true;
         }
 
-        if (timed_wait) {
-          auto millis = chrono::milliseconds((expire_time.sec * 1000) + (expire_time.nsec / 1000000LL));
-          std::chrono::time_point<std::chrono::system_clock> xt(millis);
-          m_context->cond.wait_until(lock, xt);
-        }
+        if (timed_wait)
+          m_context->cond.wait_until(lock, expire_time);
         else
           m_context->cond.wait(lock);
 
         shutdown = m_context->shutdown;
 
-        now.reset();
+        now = ClockT::now();
 
         op_iter = op_expiration_time_index.begin();
         while (op_iter != op_expiration_time_index.end()) {
@@ -129,8 +126,8 @@ void ResponseManager::add_delivery_info(int64_t operation_id, EventPtr &event) {
   delivery_rec.id = operation_id;
   if ((iter = operation_identifier_index.find(delivery_rec.id)) == operation_identifier_index.end()) {
     delivery_rec.event = event;
-    delivery_rec.expiration_time.reset();
-    delivery_rec.expiration_time += event->header.timeout_ms;
+    delivery_rec.expiration_time = ClockT::now() +
+      chrono::milliseconds(event->header.timeout_ms);
     m_context->delivery_list.push_back(delivery_rec);
   }
   else {

@@ -32,6 +32,8 @@ TableMutatorShared::TableMutatorShared(PropertiesPtr &props, Comm *comm,
   : Parent(props, comm, table, range_locator, timeout_ms, flags),
     m_flush_interval(flush_interval_ms) {
 
+  m_last_flush_ts = chrono::steady_clock::now();
+
   if (m_flush_interval) {
     m_tick_handler = make_shared<TableMutatorIntervalHandler>(comm, app_queue.get(), this);
     m_tick_handler->start();
@@ -48,12 +50,11 @@ TableMutatorShared::~TableMutatorShared() {
 void TableMutatorShared::interval_flush() {
   try {
     lock_guard<recursive_mutex> lock(m_mutex);
-    HiResTime now;
 
-    if (xtime_diff_millis(m_last_flush_ts, now) >= m_flush_interval) {
+    if (chrono::steady_clock::now() - m_last_flush_ts >= chrono::milliseconds(m_flush_interval)) {
       HT_DEBUG_OUT <<"need to flush"<< HT_END;
       Parent::flush();
-      m_last_flush_ts.reset();
+      m_last_flush_ts = chrono::steady_clock::now();
     }
     else
       HT_DEBUG_OUT <<"no need to flush"<< HT_END;

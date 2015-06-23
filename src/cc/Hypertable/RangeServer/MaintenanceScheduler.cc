@@ -74,8 +74,9 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
   m_low_memory_prioritization = get_bool("Hypertable.RangeServer.Maintenance.LowMemoryPrioritization");
 
   // Setup to immediately schedule maintenance
-  boost::xtime_get(&m_last_low_memory, TIME_UTC_);
-  memcpy(&m_last_check, &m_last_low_memory, sizeof(boost::xtime));
+  m_last_low_memory = chrono::steady_clock::now();
+  m_last_check = m_last_low_memory;
+
   m_low_memory_limit_percentage = get_i32("Hypertable.RangeServer.LowMemoryLimit.Percentage");
   m_merging_delay = get_i32("Hypertable.RangeServer.Maintenance.MergingCompaction.Delay");
   m_merges_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MergesPerInterval",
@@ -120,11 +121,10 @@ void MaintenanceScheduler::schedule() {
   bool low_memory = low_memory_mode();
   bool do_scheduling = true;
   bool debug = false;
-  boost::xtime now;
   function<bool(RangeData &)> in_blacklist =
     [this](RangeData &rd) -> bool {return this->m_table_blacklist.count(rd.data->table_id);};
 
-  boost::xtime_get(&now, TIME_UTC_);
+  auto now = chrono::steady_clock::now();
 
   Global::load_statistics->recompute();
 
@@ -502,8 +502,8 @@ int MaintenanceScheduler::get_level(RangeData &rd) {
 }
 
 
-bool MaintenanceScheduler::debug_signal_file_exists(boost::xtime now) {
-  if (xtime_diff_millis(m_last_check, now) >= (int64_t)60000) {
+bool MaintenanceScheduler::debug_signal_file_exists(chrono::steady_clock::time_point now) {
+  if (now - m_last_check >= chrono::milliseconds(60000)) {
     m_last_check = now;
     return FileUtils::exists(System::install_dir + "/run/debug-scheduler");
   }
@@ -511,7 +511,8 @@ bool MaintenanceScheduler::debug_signal_file_exists(boost::xtime now) {
 }
 
 
-void MaintenanceScheduler::write_debug_output(boost::xtime now, Ranges &ranges,
+void MaintenanceScheduler::write_debug_output(chrono::steady_clock::time_point now,
+                                              Ranges &ranges,
                                               const String &header_str) {
   AccessGroup::MaintenanceData *ag_data;
   String output_fname = System::install_dir + "/run/scheduler.output";

@@ -33,9 +33,9 @@
 
 #include <Hypertable/Lib/MetaLogWriter.h>
 
+#include <AsyncComm/Clock.h>
 #include <AsyncComm/Comm.h>
 
-#include <Common/Time.h>
 #include <Common/Thread.h>
 
 #include <boost/graph/adjacency_list.hpp>
@@ -46,6 +46,7 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/thread/condition.hpp>
 
+#include <chrono>
 #include <condition_variable>
 #include <list>
 #include <map>
@@ -92,7 +93,7 @@ namespace Hypertable {
       /** Returns expiration time of completed operation
        * @return %Operation expiration time
        */
-      HiResTime expiration_time() const { return op->expiration_time(); }
+      ClockT::time_point expiration_time() const { return op->expiration_time(); }
 
       /** Returns unique ID for completed operation.
        * @return Unique operation identifier
@@ -111,7 +112,7 @@ namespace Hypertable {
       OperationRec,
       indexed_by<
       sequenced<>,
-      ordered_non_unique<const_mem_fun<OperationRec, HiResTime,
+      ordered_non_unique<const_mem_fun<OperationRec, ClockT::time_point,
                                        &OperationRec::expiration_time> >,
       hashed_unique<const_mem_fun<OperationRec, int64_t,
                                   &OperationRec::id> >
@@ -127,7 +128,7 @@ namespace Hypertable {
     class DeliveryRec {
     public:
       /** Delivery expiration time specified by client. */
-      HiResTime expiration_time;
+      ClockT::time_point expiration_time;
       /** Corresponding operation identifier */
       int64_t id;
       /** Event object containing return address for operation result */
@@ -142,7 +143,7 @@ namespace Hypertable {
       DeliveryRec,
       indexed_by<
       sequenced<>,
-      ordered_non_unique<member<DeliveryRec, HiResTime,
+      ordered_non_unique<member<DeliveryRec, ClockT::time_point,
                                 &DeliveryRec::expiration_time> >,
       hashed_unique<member<DeliveryRec, int64_t,
                            &DeliveryRec::id> > 

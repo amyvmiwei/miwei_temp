@@ -36,8 +36,6 @@
 #include <Common/Properties.h>
 #include <Common/Filesystem.h>
 
-#include <boost/thread/xtime.hpp>
-
 #include <deque>
 #include <map>
 #include <memory>

@@ -338,7 +338,7 @@ namespace Apps {
     size_t m_cores {};
     std::mutex m_pending_metrics_mutex;
     CellsBuilder *m_pending_metrics_updates {};
-    boost::xtime m_last_control_file_check;
+    std::chrono::steady_clock::time_point m_last_control_file_check;
     int32_t m_control_file_check_interval {};
     std::ofstream m_profile_query_out;
     bool m_profile_query {};

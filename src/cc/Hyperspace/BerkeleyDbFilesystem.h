@@ -45,6 +45,7 @@
 
 #include <db_cxx.h>
 
+#include <chrono>
 #include <condition_variable>
 #include <map>
 #include <memory>
@@ -801,7 +802,7 @@ namespace Hyperspace {
     ReplicationInfo m_replication_info;
     String m_base_dir;
     DbEnv  m_env;
-    uint32_t m_db_flags;
+    uint32_t m_db_flags {};
     static const char *ms_name_namespace_db;
     static const char *ms_name_state_db;
     typedef std::map<Thread::id, BDbHandlesPtr> ThreadHandleMap;
@@ -809,9 +810,9 @@ namespace Hyperspace {
 
     /// Checkpoint size threshold in kilobytes
     uint32_t m_checkpoint_size_kb;
-    uint32_t  m_log_gc_interval;
     uint32_t m_max_unused_logs;
-    boost::xtime m_last_log_gc_time;
+    std::chrono::steady_clock::duration m_log_gc_interval;
+    std::chrono::steady_clock::time_point m_last_log_gc_time;
   };
 
   /** @} */

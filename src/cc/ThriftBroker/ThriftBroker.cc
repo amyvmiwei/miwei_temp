@@ -42,6 +42,7 @@
 #include <Hypertable/Lib/ProfileDataScanner.h>
 
 #include <Common/Cronolog.h>
+#include <Common/fast_clock.h>
 #include <Common/Init.h>
 #include <Common/Logger.h>
 #include <Common/Random.h>
@@ -107,32 +108,32 @@ namespace {
 }
 
 #define LOG_API_START(_expr_) \
-  boost::xtime start_time, end_time; \
+  std::chrono::fast_clock::time_point start_time, end_time;     \
   std::ostringstream logging_stream;\
   ScannerInfoPtr scanner_info;\
   g_metrics_handler->request_increment(); \
   if (m_context.log_api || g_log_slow_queries) {\
-    boost::xtime_get(&start_time, TIME_UTC_);\
+    start_time = std::chrono::fast_clock::now(); \
     if (m_context.log_api)\
       logging_stream << "API " << __func__ << ": " << _expr_;\
   }
 
 #define LOG_API_FINISH \
   if (m_context.log_api || (g_log_slow_queries && scanner_info)) { \
-    boost::xtime_get(&end_time, TIME_UTC_); \
-    if (m_context.log_api)\
-      std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    end_time = std::chrono::fast_clock::now(); \
+    if (m_context.log_api) \
+std::cout << std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count() <<'.'<< std::setw(9) << std::setfill('0') << (std::chrono::duration_cast<std::chrono::nanoseconds>(start_time.time_since_epoch()).count() % 1000000000LL) <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << std::endl; \
     if (scanner_info) \
-      scanner_info->latency += xtime_diff_millis(start_time, end_time);\
+      scanner_info->latency += std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();\
   }
 
 #define LOG_API_FINISH_E(_expr_) \
   if (m_context.log_api || (g_log_slow_queries && scanner_info)) { \
-    boost::xtime_get(&end_time, TIME_UTC_); \
-    if (m_context.log_api)\
-      std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    end_time = std::chrono::fast_clock::now(); \
+    if (m_context.log_api) \
+      std::cout << std::chrono::duration_cast<std::chrono::seconds>(start_time.time_since_epoch()).count() <<'.'<< std::setw(9) << std::setfill('0') << (std::chrono::duration_cast<std::chrono::nanoseconds>(start_time.time_since_epoch()).count() % 1000000000LL) <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << std::endl; \
     if (scanner_info)\
-      scanner_info->latency += xtime_diff_millis(start_time, end_time);\
+      scanner_info->latency += std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();\
   }
 
 
@@ -161,8 +162,8 @@ namespace {
 
 #define LOG_SLOW_QUERY(_pd_, _ns_, _hql_) do {   \
   if (g_log_slow_queries) { \
-    boost::xtime_get(&end_time, TIME_UTC_); \
-    int64_t latency_ms = xtime_diff_millis(start_time, end_time); \
+    end_time = std::chrono::fast_clock::now(); \
+    int64_t latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count(); \
     if (latency_ms >= g_slow_query_latency_threshold) \
       log_slow_query(__func__, start_time, end_time, latency_ms, _pd_, _ns_, _hql_); \
   } \
@@ -172,8 +173,8 @@ namespace {
   if (g_log_slow_queries) { \
     ProfileDataScanner pd; \
     _scanner_->get_profile_data(pd); \
-    boost::xtime_get(&end_time, TIME_UTC_); \
-    int64_t latency_ms = xtime_diff_millis(start_time, end_time); \
+    end_time = std::chrono::fast_clock::now(); \
+    int64_t latency_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count(); \
     if (latency_ms >= g_slow_query_latency_threshold) \
       log_slow_query_scanspec(__func__, start_time, end_time, latency_ms, pd, _ns_, _table_, _ss_); \
   } \
@@ -1012,9 +1013,10 @@ public:
     return m_remote_peer;
   }
 
-  void log_slow_query(const char *func_name, boost::xtime start_time,
-                      boost::xtime end_time, int64_t latency_ms,
-                      ProfileDataScanner &profile_data,
+  void log_slow_query(const char *func_name,
+                      std::chrono::fast_clock::time_point start_time,
+                      std::chrono::fast_clock::time_point end_time,
+                      int64_t latency_ms, ProfileDataScanner &profile_data,
                       Hypertable::Namespace *ns, const string &hql) {
 
     // Build servers string
@@ -1055,20 +1057,21 @@ public:
     }
 
     string line = format("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
-                         (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
+                         (Lld)std::chrono::fast_clock::to_time_t(start_time),
+                         func_name, m_remote_peer.c_str(),
                          (Lld)latency_ms, profile_data.subscanners,
                          profile_data.scanblocks,
                          (Lld)profile_data.bytes_returned,
                          (Lld)profile_data.bytes_scanned,
                          (Lld)profile_data.disk_read, servers.c_str(),
                          ns_str.c_str(), hql_ptr);
-    g_slow_query_log->write((time_t)end_time.sec, line);
-
+    g_slow_query_log->write(std::chrono::fast_clock::to_time_t(end_time), line);
   }
 
-  void log_slow_query_scanspec(const char *func_name, boost::xtime start_time,
-                               boost::xtime end_time, int64_t latency_ms,
-                               ProfileDataScanner &profile_data,
+  void log_slow_query_scanspec(const char *func_name,
+                               std::chrono::fast_clock::time_point start_time,
+                               std::chrono::fast_clock::time_point end_time,
+                               int64_t latency_ms, ProfileDataScanner &profile_data,
                                Hypertable::Namespace *ns, const string &table,
                                Hypertable::ScanSpec &ss) {
 
@@ -1091,14 +1094,15 @@ public:
       ns_str = string("/") + ns_str;
 
     string line = format("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
-                         (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
+                         (Lld)std::chrono::fast_clock::to_time_t(start_time),
+                         func_name, m_remote_peer.c_str(),
                          (Lld)latency_ms, profile_data.subscanners,
                          profile_data.scanblocks,
                          (Lld)profile_data.bytes_returned,
                          (Lld)profile_data.bytes_scanned,
                          (Lld)profile_data.disk_read, servers.c_str(),
                          ns_str.c_str(), ss.render_hql(table).c_str());
-    g_slow_query_log->write((time_t)end_time.sec, line);
+    g_slow_query_log->write(std::chrono::fast_clock::to_time_t(end_time), line);
   }
   
 
@@ -1298,7 +1302,7 @@ public:
       if (g_log_slow_queries) {
         ProfileDataScanner pd;
         scanner->get_profile_data(pd);
-        boost::xtime_get(&end_time, TIME_UTC_);
+        end_time = std::chrono::fast_clock::now();
         if (scanner_info->latency >= g_slow_query_latency_threshold) {
           if (scanner_info->hql.empty())
             log_slow_query_scanspec(__func__, start_time, end_time,

@@ -72,8 +72,8 @@ Session::Session(Comm *comm, PropertiesPtr &cfg)
 
   m_timeout_ms = m_lease_interval * 2;
 
-  boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
-  xtime_add_millis(m_expire_time, m_grace_period);
+  m_expire_time = chrono::steady_clock::now() +
+    chrono::milliseconds(m_grace_period);
 
   m_keepalive_handler_ptr = std::make_shared<ClientKeepaliveHandler>(m_comm, m_cfg, this);
   m_keepalive_handler_ptr->start();
@@ -99,15 +99,15 @@ void Session::update_master_addr(const String &host)
 
 void Session::handle_sleep() {
   lock_guard<mutex> lock(m_mutex);
-  boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
-  xtime_add_millis(m_expire_time, m_grace_period);
+  m_expire_time = chrono::steady_clock::now() +
+    chrono::milliseconds(m_grace_period);
 }
 
 void Session::handle_wakeup() {
   {
     lock_guard<mutex> lock(m_mutex);
-    boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
-    xtime_add_millis(m_expire_time, m_grace_period);
+    m_expire_time = chrono::steady_clock::now() +
+      chrono::milliseconds(m_grace_period);
   }
   if (m_state == Session::STATE_JEOPARDY)
     state_transition(Session::STATE_SAFE);
@@ -1196,8 +1196,8 @@ int Session::state_transition(int state) {
     if (old_state == STATE_SAFE) {
       for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
         (it->second)->jeopardy();
-      boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
-      xtime_add_millis(m_expire_time, m_grace_period);
+      m_expire_time = chrono::steady_clock::now() +
+        chrono::milliseconds(m_grace_period);
     }
   }
   else if (m_state == STATE_DISCONNECTED) {
@@ -1205,8 +1205,8 @@ int Session::state_transition(int state) {
       if (old_state != STATE_DISCONNECTED)
         for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
           (it->second)->disconnected();
-      boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
-      xtime_add_millis(m_expire_time, m_grace_period);
+      m_expire_time = chrono::steady_clock::now() +
+        chrono::milliseconds(m_grace_period);
     }
   }
   else if (m_state == STATE_EXPIRED) {
@@ -1228,11 +1228,7 @@ int Session::get_state() {
 
 bool Session::expired() {
   lock_guard<mutex> lock(m_mutex);
-  boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC_);
-  if (xtime_cmp(m_expire_time, now) < 0)
-    return true;
-  return false;
+  return m_expire_time < chrono::steady_clock::now();
 }
 
 
@@ -1240,7 +1236,7 @@ bool Session::wait_for_connection(uint32_t max_wait_ms) {
   unique_lock<mutex> lock(m_mutex);
   auto drop_time = chrono::steady_clock::now() + chrono::milliseconds(max_wait_ms);
   return m_cond.wait_until(lock, drop_time,
-                           [this](){ return m_state == STATE_SAFE; });
+                           [this]{ return m_state == STATE_SAFE; });
 }
 
 
@@ -1248,7 +1244,7 @@ bool Session::wait_for_connection(Timer &timer) {
   unique_lock<mutex> lock(m_mutex);
   auto drop_time = chrono::steady_clock::now() + chrono::milliseconds(timer.remaining());
   return m_cond.wait_until(lock, drop_time,
-                           [this](){ return m_state == STATE_SAFE; });
+                           [this]{ return m_state == STATE_SAFE; });
 }
 
 
