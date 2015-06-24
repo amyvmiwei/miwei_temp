@@ -427,55 +427,40 @@ void Apps::RangeServer::shutdown() {
     if (m_update_pipeline_metadata)
       m_update_pipeline_metadata->shutdown();
 
-    Global::range_locator = 0;
+    Global::range_locator.reset();
 
     if (Global::rsml_writer) {
       Global::rsml_writer->close();
-      Global::rsml_writer = 0;
+      //Global::rsml_writer.reset();
     }
     if (Global::root_log) {
       Global::root_log->close();
-      /*
-      delete Global::root_log;
-      Global::root_log = 0;
-      */
+      //Global::root_log.reset();
     }
     if (Global::metadata_log) {
       Global::metadata_log->close();
-      /*
-      delete Global::metadata_log;
-      Global::metadata_log = 0;
-      */
+      //Global::metadata_log.reset();
     }
     if (Global::system_log) {
       Global::system_log->close();
-      /*
-      delete Global::system_log;
-      Global::system_log = 0;
-      */
+      //Global::system_log.reset();
     }
     if (Global::user_log) {
       Global::user_log->close();
-      /*
-      delete Global::user_log;
-      Global::user_log = 0;
-      */
+      //Global::user_log.reset();
     }
 
+    /*
     if (Global::block_cache) {
       delete Global::block_cache;
       Global::block_cache = 0;
     }
-
-    /*
     Global::maintenance_queue = 0;
     Global::metadata_table = 0;
     Global::rs_metrics_table = 0;
     Global::hyperspace = 0;
-
     Global::log_dfs = 0;
     Global::dfs = 0;
-
     delete Global::memory_tracker;
     Global::memory_tracker = 0;
     */
