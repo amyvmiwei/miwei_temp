@@ -78,9 +78,7 @@
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
-#if defined(__APPLE__)
 #include <unistd.h>
-#endif
 
 /** @}*/
 
