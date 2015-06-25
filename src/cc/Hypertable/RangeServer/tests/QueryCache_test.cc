@@ -55,7 +55,7 @@ typedef struct {
 
 int main(int argc, char **argv) {
   QueryCache *cache;
-  unsigned long seed = (unsigned long)getpid();
+  unsigned long seed = 1234;
   boost::shared_array<uint8_t> result( new uint8_t [ 1000 ] );
   uint32_t result_length;
   QueryCache::Key key;
@@ -72,8 +72,6 @@ int main(int argc, char **argv) {
     if (!strncmp(argv[i], "--seed=", 7))
       seed = atoi(&argv[i][7]);
   }
-
-  System::seed(seed);
 
   cache = new QueryCache(MAX_MEMORY);
 
@@ -136,7 +134,7 @@ int main(int argc, char **argv) {
 
   HT_ASSERT(cache->available_memory() == MAX_MEMORY);
 
-  srandom(1234);
+  srandom(seed);
 
   uint32_t rand_val, charno;
 

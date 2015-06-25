@@ -27,10 +27,9 @@
 #ifndef Common_DiscreteRandomGenerator_h
 #define Common_DiscreteRandomGenerator_h
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
-
+#include <cassert>
 #include <memory>
+#include <random>
 
 namespace Hypertable {
 
@@ -48,7 +47,7 @@ namespace Hypertable {
   public:
     /** Default constructor; sets up a random number generator with a
      * constant seed value of 1. */
-    DiscreteRandomGenerator();
+    DiscreteRandomGenerator() { };
 
     /** Destructor - cleans up allocated resources */
     virtual ~DiscreteRandomGenerator() { delete [] m_cmf; };
@@ -58,8 +57,7 @@ namespace Hypertable {
      * @param s The seed value for the random number generator
      */
     void set_seed(uint32_t s) {
-      m_rng.seed(s);
-      m_u01 = boost::uniform_01<boost::mt19937>(m_rng);
+      m_random_engine.seed(s);
     }
 
     /** Sets the size of the generated range
@@ -115,25 +113,22 @@ namespace Hypertable {
     virtual double pmf(uint64_t val) { return 1.0 / (double)m_value_count; }
 
     /** The random number generator */
-    boost::mt19937 m_rng;
-
-    /** The uniform distribution */
-    boost::uniform_01<boost::mt19937> m_u01;
+    std::mt19937 m_random_engine {1};
 
     /** Number of values in the range */
-    uint64_t m_value_count;
+    uint64_t m_value_count {};
 
     /** Lower bound of the range */
-    uint64_t m_pool_min;
+    uint64_t m_pool_min {};
 
     /** Upper bound of the range */
-    uint64_t m_pool_max;
+    uint64_t m_pool_max {};
 
     /** Array with the random samples */
-    uint64_t *m_numbers;
+    uint64_t *m_numbers {};
 
     /** The cumulative mass of the distribution */
-    double *m_cmf;
+    double *m_cmf {};
   };
 
   typedef std::shared_ptr<DiscreteRandomGenerator> DiscreteRandomGeneratorPtr;

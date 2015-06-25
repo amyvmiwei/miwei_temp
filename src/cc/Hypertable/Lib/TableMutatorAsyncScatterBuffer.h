@@ -46,12 +46,10 @@
 #include <Common/Timer.h>
 #include <Common/InetAddr.h>
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
-
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <random>
 #include <vector>
 
 namespace Hypertable {
@@ -123,7 +121,6 @@ namespace Hypertable {
     uint64_t             m_resends {};
     FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
-    boost::mt19937       m_rng;
     bool                 m_auto_refresh;
     uint32_t             m_timeout_ms;
     uint32_t             m_server_flush_limit;

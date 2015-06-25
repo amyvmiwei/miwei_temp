@@ -33,7 +33,7 @@
 #include <Common/Path.h>
 #include <Common/FileUtils.h>
 #include <Common/StringExt.h>
-#include <Common/System.h>
+#include <Common/Random.h>
 #include <Common/SystemInfo.h>
 
 #include <boost/algorithm/string.hpp>
@@ -77,7 +77,7 @@ using namespace std;
         txn_str << txn; \
         HT_INFOF("Berkeley DB deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
-        this_thread::sleep_for(chrono::milliseconds((System::rand32() % 3000) + 1)); \
+        this_thread::sleep_for(Random::duration_millis(3000)); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
@@ -104,7 +104,7 @@ using namespace std;
         txn_str << txn; \
         HT_INFOF("Berkeley DB deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
-        this_thread::sleep_for(chrono::milliseconds((System::rand32() % 3000) + 1)); \
+        this_thread::sleep_for(Random::duration_millis(3000)); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \

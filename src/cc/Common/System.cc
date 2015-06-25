@@ -45,7 +45,6 @@ long System::tm_gmtoff;
 string System::tm_zone;
 bool   System::ms_initialized = false;
 mutex  System::ms_mutex;
-boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
   lock_guard<mutex> lock(ms_mutex);
@@ -71,8 +70,6 @@ String System::_locate_install_dir(const char *argv0) {
 }
 
 void System::_init(const String &install_directory) {
-  // seed the random number generator
-  ms_rng.seed((uint32_t)getpid());
 
   if (install_directory.empty()) {
     install_dir = _locate_install_dir(proc_info().exe.c_str());

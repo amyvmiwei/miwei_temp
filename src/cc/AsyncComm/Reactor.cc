@@ -99,7 +99,7 @@ Reactor::Reactor() {
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     // Arbitray ephemeral port that won't conflict with our reserved ports    
-    uint16_t port = (uint16_t)(49152 + (ReactorFactory::rng() % 16383));
+    uint16_t port = (uint16_t)(49152 + std::uniform_int_distribution<>(0, 16382)(ReactorFactory::rng));
     addr.sin_port = htons(port);
 
     // bind socket

@@ -26,16 +26,15 @@
 #include <Common/TestUtils.h>
 
 #include <boost/bind.hpp>
-#include <deque>
 
-// seems to be the fastest 0..1 rng
-#include <boost/random/lagged_fibonacci.hpp>
-typedef boost::lagged_fibonacci607 Rng;
+#include <deque>
+#include <random>
 
 #define BENCH_ALLOC(_label_, _code_, _n_) do { \
-  Rng rng01; \
+  std::default_random_engine engine; \
+  std::uniform_real_distribution<> dr; \
   long size; \
-  HT_BENCH(_label_, size = (long)rng01() * 120 + 4;  _code_, _n_);      \
+  HT_BENCH(_label_, size = (long)(dr(engine) * 120.0) + 4;  _code_, _n_); \
 } while (0)
 
 using namespace Hypertable;

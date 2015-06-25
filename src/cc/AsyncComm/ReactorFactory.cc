@@ -39,7 +39,7 @@ using namespace std;
 
 std::vector<ReactorPtr> ReactorFactory::ms_reactors;
 boost::thread_group ReactorFactory::ms_threads;
-boost::mt19937 ReactorFactory::rng(1);
+default_random_engine ReactorFactory::rng {1};
 mutex ReactorFactory::ms_mutex;
 atomic<int> ReactorFactory::ms_next_reactor(0);
 bool ReactorFactory::ms_epollet = true;

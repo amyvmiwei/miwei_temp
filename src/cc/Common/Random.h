@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2015 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -23,64 +23,51 @@
  * Random number generator for int32, int64, double and ascii arrays.
  */
 
-#ifndef HYPERTABLE_RANDOM_H
-#define HYPERTABLE_RANDOM_H
+#ifndef Common_Random_h
+#define Common_Random_h
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
+#include <chrono>
+#include <random>
 
 namespace Hypertable {
 
-/** @addtogroup Common
- *  @{
- */
+  /// @addtogroup Common
+  /// @{
 
-/** A random number generator using boost::mt19937 to generate int32,
- * int64, double and random ascii arrays
- */
-class Random {
+  /// Convenience interface for random number and data generation.
+  class Random {
   public:
-    /* Sets the seed of the random number generator */
+
+    /// Sets the seed of the random number generator.
+    /// @param s Seed value
     static void seed(unsigned int s) {
-      ms_rng.seed((uint32_t)s);
+      ms_random_engine.seed(s);
     }
 
-    /** Fills a buffer with random ascii values
-     *
-     * @param buf Pointer to the buffer
-     * @param len Number of bytes to fill
-     */
-    static void fill_buffer_with_random_ascii(char *buf, size_t len);
+    /// Returns a random 32-bit unsigned integer.
+    /// @return Random 32-bit integer in the range [0,<code>maximum</code>)
+    static uint32_t number32(uint32_t maximum = 0);
 
-    /** Fills a buffer with random values from a set of characters
-     *
-     * @param buf Pointer to the buffer
-     * @param len Number of bytes to fill
-     * @param charset A string containing the allowed characters
-     */
-    static void fill_buffer_with_random_chars(char *buf, size_t len,
-            const char *charset);
+    /// Returns a random 64-bit unsigned integer.
+    /// @return Random 64-bit integer in the range [0,<code>maximum</code>)
+    static int64_t number64(int64_t maximum = 0);
 
-    /** Returns a uint32 random number */
-    static uint32_t number32() {
-      return ms_rng();
-    }
-
-    /** Returns a uint64 random number by concatenating 2 32bit numbers */
-    static int64_t number64() {
-      return ((((int64_t)ms_rng()) << 32) | ((int64_t)ms_rng()));
-    }
-
-    /** Returns a random double in the interval of [0, 1]. */
+    /// Returns a random double.
+    /// @return Random double in the range [0.0, 1.0)
     static double uniform01();
 
+    /// Returns a random millisecond duration.
+    /// @return Random millisecond duration in the range [0,<code>maximum</code>)
+    static std::chrono::milliseconds duration_millis(uint32_t maximum);
+
   private:
-    /** The boost rng which is used under the hood */
-    static boost::mt19937 ms_rng;
-};
 
-/** @} */
+    /// Random number engine
+    static thread_local std::mt19937 ms_random_engine;
+  };
 
-} // namespace Hypertable
+  /// @}
 
-#endif // HYPERTABLE_RANDOM_H
+}
+
+#endif // Common_Random_h

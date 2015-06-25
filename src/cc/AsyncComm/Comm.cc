@@ -150,7 +150,7 @@ Comm::connect(const CommAddress &addr, const DispatchHandlerPtr &default_handler
     }
 
     // Get arbitray ephemeral port that won't conflict with our reserved ports
-    port = (uint16_t)(49152 + (ReactorFactory::rng() % 16383));
+    port = (uint16_t)(49152 + std::uniform_int_distribution<>(0, 16382)(ReactorFactory::rng));
     m_local_addr.sin_port = htons(port);
 
     // bind socket to local address

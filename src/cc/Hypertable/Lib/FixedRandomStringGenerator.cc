@@ -24,7 +24,7 @@
 #include "FixedRandomStringGenerator.h"
 
 #include <Common/Logger.h>
-#include <Common/System.h>
+#include <Common/Random.h>
 
 #include <cstdlib>
 
@@ -49,7 +49,7 @@ void FixedRandomStringGenerator::write(char *buf) {
   uint8_t *in = (uint8_t *)&m_ivec[0];
 
   for (size_t i=0; i<m_nints; i++)
-    m_ivec[i] = System::rand32();
+    m_ivec[i] = Random::number32();
 
   indexi = 0;
   indexo = 0;

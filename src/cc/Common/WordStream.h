@@ -29,10 +29,8 @@
 
 #include <Common/String.h>
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
-
 #include <memory>
+#include <random>
 #include <vector>
 
 namespace Hypertable {
@@ -75,7 +73,7 @@ namespace Hypertable {
     };
 
     /** Random number generator */
-    boost::mt19937 ms_rng;
+    std::mt19937 ms_rng;
 
     /** Base pointer for the memory mapped file */
     char *m_base;

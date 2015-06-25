@@ -33,6 +33,7 @@
 
 #include <Common/Error.h>
 #include <Common/Logger.h>
+#include <Common/Random.h>
 #include <Common/Serialization.h>
 #include <Common/System.h>
 #include <Common/Time.h>
@@ -247,11 +248,11 @@ ConnectionManager::send_connect_request(ConnectionStatePtr &conn_state) {
     // Reschedule (throw in a little randomness)
     conn_state->next_retry = std::chrono::steady_clock::now() +
       std::chrono::milliseconds(conn_state->timeout_ms);
-    int32_t milli_adjust = System::rand32() % 2000;
-    if (System::rand32() & 1)
-      conn_state->next_retry -= std::chrono::milliseconds(milli_adjust);
+
+    if (Random::number32() & 1)
+      conn_state->next_retry -= Random::duration_millis(2000);
     else
-      conn_state->next_retry += std::chrono::milliseconds(milli_adjust);
+      conn_state->next_retry += Random::duration_millis(2000);
 
     // add to retry heap
     m_impl->retry_queue.push(conn_state);

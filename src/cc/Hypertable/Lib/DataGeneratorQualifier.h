@@ -19,18 +19,18 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_DATAGENERATORQUALIFIER_H
-#define HYPERTABLE_DATAGENERATORQUALIFIER_H
-
-#include <boost/shared_array.hpp>
-
-#include "Common/Config.h"
-#include "Common/Logger.h"
-#include "Common/Random.h"
-#include "Common/String.h"
+#ifndef Hypertable_Lib_DataGeneratorQualifier_h
+#define Hypertable_Lib_DataGeneratorQualifier_h
 
 #include "Cell.h"
+#include "DataGeneratorRandom.h"
 #include "DataGeneratorRowComponent.h"
+
+#include <Common/Config.h>
+#include <Common/Logger.h>
+#include <Common/String.h>
+
+#include <boost/shared_array.hpp>
 
 using namespace Hypertable;
 
@@ -65,9 +65,9 @@ namespace Hypertable {
     virtual ~QualifierString() { }
     virtual bool next() {
       if (charset.length() > 0)
-        Random::fill_buffer_with_random_chars((char *)m_render_buf.get(), size, charset.c_str());
+        random_fill_with_chars((char *)m_render_buf.get(), size, charset.c_str());
       else
-        Random::fill_buffer_with_random_ascii((char *)m_render_buf.get(), size);
+        random_fill_with_chars((char *)m_render_buf.get(), size);
       m_qualifier = m_render_buf.get();
       return false;
     }
@@ -89,4 +89,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_DATAGENERATORQUALIFIER_H
+#endif // Hypertable_Lib_DataGeneratorQualifier_h

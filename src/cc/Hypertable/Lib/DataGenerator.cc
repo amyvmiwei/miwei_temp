@@ -18,23 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
 
-extern "C" {
-#include <limits.h>
-#include <strings.h>
-#include <stdlib.h>
-}
+#include <Common/Compat.h>
+
+#include "DataGenerator.h"
+#include "DataGeneratorRandom.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include "DataGenerator.h"
+#include <cstdlib>
+
+extern "C" {
+#include <limits.h>
+#include <strings.h>
+}
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
 using namespace boost;
-
 
 DataGeneratorIterator::DataGeneratorIterator(DataGenerator *generator)
   : m_generator(generator), m_keys_only(generator->m_keys_only),
@@ -74,10 +76,10 @@ void DataGeneratorIterator::next() {
 
   HT_ASSERT(compi > 0);
 
-  if (m_columns.empty())
+  if (m_columns.size() <= 1)
     m_next_column = 0;
   else
-    m_next_column = (Random::number32()) % m_columns.size();
+    m_next_column = random_int32(m_columns.size());
 
   do {
     compi--;

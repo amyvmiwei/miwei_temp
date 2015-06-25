@@ -31,14 +31,6 @@
 
 using namespace Hypertable;
 
-DiscreteRandomGenerator::DiscreteRandomGenerator()
-  : m_u01(boost::mt19937()), m_value_count(0),
-    m_pool_min(0), m_pool_max(0), m_numbers(0), m_cmf(0)
-{
-  m_rng.seed(1u);
-  m_u01 = boost::uniform_01<boost::mt19937>(m_rng);
-}
-
 uint64_t DiscreteRandomGenerator::get_sample()
 {
   if (m_cmf == 0) {
@@ -56,7 +48,7 @@ uint64_t DiscreteRandomGenerator::get_sample()
   uint64_t lower = 0;
   uint64_t ii;
 
-  double rand = m_u01();
+  double rand = std::uniform_real_distribution<>()(m_random_engine);
 
   assert(rand >= 0.0 && rand <= 1.0);
 
@@ -95,7 +87,7 @@ void DiscreteRandomGenerator::generate_cmf()
       m_numbers[i] = i;
     // randomize the array of numbers
     for (uint64_t i = 0; i < m_value_count; i++) {
-      index = (uint64_t)m_rng() % m_value_count;
+      index = std::uniform_int_distribution<uint64_t>(0, m_value_count-1)(m_random_engine);
       temp_num = m_numbers[0];
       m_numbers[0] = m_numbers[index];
       m_numbers[index] = temp_num;
@@ -104,7 +96,7 @@ void DiscreteRandomGenerator::generate_cmf()
   else {
     uint64_t pool_diff = m_pool_max - m_pool_min;
     for (uint64_t i = 0; i < m_value_count; i++)
-      m_numbers[i] = m_pool_min + ((uint64_t)m_rng() % pool_diff);
+      m_numbers[i] = m_pool_min + std::uniform_int_distribution<uint64_t>(0, pool_diff-1)(m_random_engine);
   }
 
   m_cmf[0] = pmf(0);

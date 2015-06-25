@@ -22,6 +22,8 @@
 #ifndef Hypertable_Lib_DataGeneratorRowComponent_h
 #define Hypertable_Lib_DataGeneratorRowComponent_h
 
+#include "DataGeneratorRandom.h"
+
 #include <Hypertable/Lib/Cell.h>
 
 #include <Common/Config.h>
@@ -102,7 +104,7 @@ namespace Hypertable {
     }
     virtual ~RowComponentString() { }
     virtual bool next() {
-      Random::fill_buffer_with_random_ascii(m_render_buf.get(), length_max);
+      random_fill_with_chars(m_render_buf.get(), length_max);
       return false;
     }
     virtual void render(String &dst) {

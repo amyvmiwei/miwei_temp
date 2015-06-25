@@ -62,6 +62,7 @@
 #include <Common/Config.h>
 #include <Common/Error.h>
 #include <Common/InetAddr.h>
+#include <Common/Random.h>
 #include <Common/Serialization.h>
 #include <Common/Time.h>
 #include <Common/Timer.h>
@@ -780,7 +781,7 @@ Master::Client::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,
 
     auto expire_time = chrono::system_clock::now() +
       chrono::milliseconds(std::min(timer->remaining(),
-                                    (System::rand32()%m_retry_interval)));
+                                    Random::number32(m_retry_interval)));
 
     if (m_cond.wait_until(lock, expire_time) == cv_status::timeout) {
       if (timer->expired())
@@ -803,7 +804,7 @@ Master::Client::send_message(CommBufPtr &cbp, Timer *timer, EventPtr &event, con
         error == Error::COMM_BROKEN_CONNECTION ||
         error == Error::COMM_CONNECT_ERROR ||
         error == Error::SERVER_NOT_READY) {
-      this_thread::sleep_for(chrono::milliseconds(std::min(timer->remaining(), (System::rand32() % 3000))));
+      this_thread::sleep_for(chrono::milliseconds(std::min(timer->remaining(), Random::number32(3000))));
       return false;
     }
     HT_THROWF(error, "Client operation %s failed", label.c_str());
@@ -849,7 +850,7 @@ Master::Client::replay_status(int64_t op_id, const String &location,
       CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
       params.encode(cbuf->get_data_ptr_address());
       if (!send_message(cbuf, &timer, event, label)) {
-        this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
+        this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), Random::number32(3000))));
         continue;
       }
     }
@@ -886,7 +887,7 @@ Master::Client::replay_complete(int64_t op_id, const String &location,
       CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
       params.encode(cbuf->get_data_ptr_address());
       if (!send_message(cbuf, &timer, event, label)) {
-        this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
+        this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), Random::number32(3000))));
         continue;
       }
     }
@@ -920,7 +921,7 @@ Master::Client::phantom_prepare_complete(int64_t op_id, const String &location,
     CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
     params.encode(cbuf->get_data_ptr_address());
     if (!send_message(cbuf, &timer, event, label)) {
-      this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
+      this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), Random::number32(3000))));
       continue;
     }
     return;
@@ -951,7 +952,7 @@ Master::Client::phantom_commit_complete(int64_t op_id, const String &location,
     CommBufPtr cbuf( new CommBuf(header, params.encoded_length()) );
     params.encode(cbuf->get_data_ptr_address());
     if (!send_message(cbuf, &timer, event, label)) {
-      this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), (System::rand32() % 3000))));
+      this_thread::sleep_for(chrono::milliseconds(std::min(timer.remaining(), Random::number32(3000))));
       continue;
     }
     return;

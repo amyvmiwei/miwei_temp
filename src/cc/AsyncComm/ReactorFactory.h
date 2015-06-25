@@ -31,13 +31,12 @@
 
 #include "Reactor.h"
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <atomic>
 #include <cassert>
 #include <mutex>
+#include <random>
 #include <set>
 #include <vector>
 
@@ -95,9 +94,14 @@ namespace Hypertable {
     /// Boost thread_group for managing reactor threads
     static boost::thread_group ms_threads;
 
-    static boost::mt19937 rng; //!< Pseudo random number generator
-    static bool ms_epollet;    //!< Use "edge triggered" epoll
-    static bool use_poll;      //!< Use POSIX poll() as polling mechanism
+    /// Pseudo random number generator
+    static std::default_random_engine rng;
+
+    /// Use "edge triggered" epoll
+    static bool ms_epollet;
+
+    // Use POSIX poll() as polling mechanism
+    static bool use_poll;
 
     /// Set to <i>true</i> if this process is acting as "Proxy Master"
     static bool proxy_master;

@@ -44,6 +44,7 @@ CommitLogReader.cc
 CompressorFactory.cc
 Config.cc
 DataGenerator.cc
+DataGeneratorRandom.cc
 FixedRandomStringGenerator.cc
 Future.cc
 HqlCommandInterpreter.cc

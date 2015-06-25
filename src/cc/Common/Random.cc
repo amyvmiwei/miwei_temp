@@ -23,10 +23,11 @@
  * Random number generator for int32, int64, double and ascii arrays.
  */
 
-#include "Common/Compat.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "Random.h"
+
+#include <cassert>
 
 namespace {
   const char cb64[] =
@@ -34,74 +35,31 @@ namespace {
 }
 
 using namespace Hypertable;
+using namespace std;
 
-boost::mt19937 Random::ms_rng(1);
+thread_local mt19937 Random::ms_random_engine {1};
 
-void Random::fill_buffer_with_random_ascii(char *buf, size_t len) {
-  size_t in_i = 0, out_i = 0;
-  uint32_t u32;
-  uint8_t *in;
-
-  while (out_i < len) {
-    u32 = number32();
-    in = (uint8_t *)&u32;
-    in_i = 0;
-
-    buf[out_i++] = cb64[in[in_i] >> 2];
-    if (out_i == len)
-      break;
-
-    buf[out_i++] = cb64[((in[in_i] & 0x03) << 4) | ((in[in_i+1] & 0xf0) >> 4)];
-    if (out_i == len)
-      break;
-
-    buf[out_i++] = cb64[((in[in_i+1] & 0x0f) << 2)|((in[in_i+2] & 0xc0) >> 6)];
-    if (out_i == len)
-      break;
-
-    buf[out_i++] = cb64[ in[in_i+2] & 0x3f];
-
-    in_i += 3;
+uint32_t Random::number32(uint32_t maximum) {
+  if (maximum) {
+    return uniform_int_distribution<uint32_t>(0, maximum-1)(ms_random_engine);
   }
-
+  return uniform_int_distribution<uint32_t>()(ms_random_engine);
 }
 
-
-void Random::fill_buffer_with_random_chars(char *buf, size_t len,
-        const char *charset) {
-  size_t in_i = 0, out_i = 0;
-  uint32_t u32;
-  uint8_t *in;
-  size_t set_len = strlen(charset);
-
-  HT_ASSERT(set_len > 0 && set_len <= 256);
-
-  while (out_i < len) {
-    u32 = number32();
-    in = (uint8_t *)&u32;
-
-    in_i = 0;
-    buf[out_i++] = charset[in[in_i] % set_len];
-    if (out_i == len)
-      break;
-
-    in_i++;
-    buf[out_i++] = charset[in[in_i] % set_len];
-    if (out_i == len)
-      break;
-
-    in_i++;
-    buf[out_i++] = charset[in[in_i] % set_len];
-    if (out_i == len)
-      break;
-
-    in_i++;
-    buf[out_i++] = charset[in[in_i] % set_len];
+int64_t Random::number64(int64_t maximum) {
+  if (maximum) {
+    assert(maximum > 0);
+    return uniform_int_distribution<int64_t>(0, maximum-1)(ms_random_engine);
   }
+  return uniform_int_distribution<int64_t>()(ms_random_engine);
 }
 
 double Random::uniform01() {
-  static boost::uniform_01<boost::mt19937> u01(ms_rng);
-  return u01();
+  return uniform_real_distribution<>()(ms_random_engine);
 }
 
+chrono::milliseconds Random::duration_millis(uint32_t maximum) {
+  assert(maximum > 0);
+  uniform_int_distribution<uint32_t> di(0, maximum-1);
+  return chrono::milliseconds(di(ms_random_engine));
+}

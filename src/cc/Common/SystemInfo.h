@@ -23,14 +23,15 @@
  * System information and statistics based on libsigar.
  */
 
-#ifndef HYPERTABLE_SYSTEMINFO_H
-#define HYPERTABLE_SYSTEMINFO_H
+#ifndef Common_SystemInfo_h
+#define Common_SystemInfo_h
+
+#include <Common/InetAddr.h>
+#include <Common/Stopwatch.h>
+#include <Common/System.h>
 
 #include <iosfwd>
-
-#include "Common/InetAddr.h"
-#include "Common/System.h"
-#include "Common/Stopwatch.h"
+#include <vector>
 
 namespace Hypertable {
 
@@ -374,6 +375,6 @@ namespace Hypertable {
 
   /** @} */
 
-} // namespace Hypertable
+}
 
-#endif // HYPERTABLE_SYSTEMINFO_H
+#endif // Common_SystemInfo_h

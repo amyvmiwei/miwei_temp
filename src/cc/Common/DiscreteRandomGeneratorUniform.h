@@ -23,10 +23,8 @@
  * Discreet Random Generator creating uniform distributed numbers
  */
 
-#ifndef HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
-#define HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
-
-#include "Common/Compat.h"
+#ifndef Common_DiscreteRandomGeneratorUniform_h
+#define Common_DiscreteRandomGeneratorUniform_h
 
 #include "DiscreteRandomGenerator.h"
 
@@ -44,7 +42,7 @@ namespace Hypertable {
     DiscreteRandomGeneratorUniform() : DiscreteRandomGenerator() { }
 
     virtual uint64_t get_sample() { 
-      uint64_t rval = ((uint64_t)m_rng() << 32) | m_rng();
+      auto rval = std::uniform_int_distribution<uint64_t>()(m_random_engine);
       if (m_pool_max != 0)
         rval = m_pool_min + (rval % (m_pool_max - m_pool_min));
       return rval;
@@ -55,4 +53,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
+#endif // Common_DiscreteRandomGeneratorUniform_h

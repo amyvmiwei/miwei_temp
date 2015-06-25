@@ -29,6 +29,7 @@
 #include "TableMutatorAsyncScatterBuffer.h"
 
 #include <Common/Config.h>
+#include <Common/Random.h>
 #include <Common/Timer.h>
 
 #include <Hypertable/Lib/ClusterId.h>
@@ -53,7 +54,7 @@ TableMutatorAsyncScatterBuffer::TableMutatorAsyncScatterBuffer(Comm *comm,
     m_range_locator(range_locator),
     m_location_cache(range_locator->location_cache()),
     m_range_server(comm, timeout_ms), m_table_identifier(*table_identifier),
-    m_rng(1), m_auto_refresh(auto_refresh), m_timeout_ms(timeout_ms),
+    m_auto_refresh(auto_refresh), m_timeout_ms(timeout_ms),
     m_counter_value(9), m_timer(timeout_ms), m_id(id),
     m_wait_time(ms_init_redo_wait_time) {
 
@@ -331,7 +332,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
         else
           outstanding = true;
         // Random wait between 0 and 5 seconds
-        this_thread::sleep_for(chrono::milliseconds(m_rng()%5000));
+        this_thread::sleep_for(Random::duration_millis(5000));
       }
       else {
         HT_FATALF("Problem sending updates to %s - %s (%s)",

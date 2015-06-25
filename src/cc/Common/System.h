@@ -29,8 +29,6 @@
 #include <Common/Version.h>
 #include <Common/String.h>
 
-#include <boost/random.hpp>
-
 #include <ctime>
 #include <mutex>
 
@@ -131,15 +129,6 @@ namespace Hypertable {
     /** The pid of the current process */
     static int32_t get_pid();
 
-    /** Sets the random seed of the random number generator */
-    static void seed(uint32_t seed) { ms_rng.seed(seed); }
-
-    /** Returns a random 32bit number */
-    static uint32_t rand32() { return ms_rng(); }
-
-    /** Returns a random 64bit number */
-    static uint64_t rand64() { return (uint64_t)rand32() << 32 | rand32(); }
-
     /** Returns the number of drives */
     static int32_t get_drive_count();
 
@@ -192,8 +181,6 @@ namespace Hypertable {
     /** a %Mutex to protect the static members */
     static std::mutex ms_mutex;
 
-    /** Random number generator */
-    static boost::mt19937 ms_rng;
   };
 
   /** @} */

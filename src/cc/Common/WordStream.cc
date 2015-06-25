@@ -85,12 +85,13 @@ WordStream::~WordStream() {
 }
 
 const char *WordStream::next() {
+  std::uniform_int_distribution<> dist {0, (int)(m_words.size()-1)};
   size_t offset;
   m_record.clear();
 
   for (size_t i = 0; i < m_words_per_record; ++i) {
     if (m_random) {
-      offset = ms_rng() % m_words.size();
+      offset = dist(ms_rng);
     }
     else {
       if (m_offset[i] == m_words.size()) {

@@ -23,6 +23,7 @@
 #define Hypertable_Lib_DataGenerator_h
 
 #include "Cell.h"
+#include "DataGeneratorRandom.h"
 #include "DataGeneratorRowComponent.h"
 #include "DataGeneratorQualifier.h"
 #include "DataGeneratorColumn.h"
@@ -146,7 +147,7 @@ namespace Hypertable {
 
   public:
     DataGenerator(PropertiesPtr &props, bool keys_only=false);
-    iterator begin() { Random::seed(m_seed); return DataGeneratorIterator(this); }
+    iterator begin() { random_generator_set_seed(m_seed); return DataGeneratorIterator(this); }
     iterator end() { return DataGeneratorIterator(m_max_bytes, m_max_keys); }
     int64_t get_max_bytes() { return m_max_bytes; }
     int64_t get_max_keys() { return m_max_keys; }

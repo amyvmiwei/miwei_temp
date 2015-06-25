@@ -29,6 +29,7 @@
 
 #include <AsyncComm/CommBuf.h>
 
+#include <Common/Random.h>
 #include <Common/Serialization.h>
 #include <Common/System.h>
 
@@ -59,7 +60,7 @@
       } \
       HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
       txn.abort(); \
-      std::this_thread::sleep_for(std::chrono::milliseconds((System::rand32() % 3000) + 1)); \
+      std::this_thread::sleep_for(Random::duration_millis(3000)); \
       continue; \
     } \
     break; \
@@ -77,7 +78,7 @@
       } \
       HT_WARN_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
       txn.abort(); \
-      std::this_thread::sleep_for(std::chrono::milliseconds((System::rand32() % 3000) + 1)); \
+      std::this_thread::sleep_for(Random::duration_millis(3000)); \
       continue; \
     } \
     break; \
