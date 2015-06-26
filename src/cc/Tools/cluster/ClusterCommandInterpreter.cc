@@ -38,6 +38,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 extern "C" {
 #include <sys/types.h>

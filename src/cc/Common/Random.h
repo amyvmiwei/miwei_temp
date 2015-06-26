@@ -27,7 +27,6 @@
 #define Common_Random_h
 
 #include <chrono>
-#include <random>
 
 namespace Hypertable {
 
@@ -40,9 +39,7 @@ namespace Hypertable {
 
     /// Sets the seed of the random number generator.
     /// @param s Seed value
-    static void seed(unsigned int s) {
-      ms_random_engine.seed(s);
-    }
+    static void seed(unsigned int s);
 
     /// Returns a random 32-bit unsigned integer.
     /// @return Random 32-bit integer in the range [0,<code>maximum</code>)
@@ -60,10 +57,6 @@ namespace Hypertable {
     /// @return Random millisecond duration in the range [0,<code>maximum</code>)
     static std::chrono::milliseconds duration_millis(uint32_t maximum);
 
-  private:
-
-    /// Random number engine
-    static thread_local std::mt19937 ms_random_engine;
   };
 
   /// @}

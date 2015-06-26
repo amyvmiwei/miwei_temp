@@ -23,8 +23,8 @@
  * It is used i.e. for Bloom Filters.
  */
 
-#ifndef HYPERTABLE_CHARSTR_HASHMAP_H
-#define HYPERTABLE_CHARSTR_HASHMAP_H
+#ifndef Common_BlobHashSet_h
+#define Common_BlobHashSet_h
 
 #include <Common/BlobHashTraits.h>
 
@@ -142,6 +142,6 @@ private:
 
 /** @}*/
 
-} // namespace Hypertable
+}
 
-#endif //! HYPERTABLE_CHARSTR_HASHMAP_H
+#endif //! Common_BlobHashSet_h

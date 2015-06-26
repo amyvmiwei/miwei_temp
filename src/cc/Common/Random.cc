@@ -28,38 +28,55 @@
 #include "Random.h"
 
 #include <cassert>
+#include <mutex>
+#include <random>
 
-namespace {
-  const char cb64[] =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-}
+#if defined(__APPLE__)
+#define THREAD_LOCAL
+#define LOCK_GLOBAL_MUTEX(m) std::lock_guard<std::mutex> lock(m)
+#else
+#define THREAD_LOCAL thread_local
+#define LOCK_GLOBAL_MUTEX(m) (void)m
+#endif
 
 using namespace Hypertable;
 using namespace std;
 
-thread_local mt19937 Random::ms_random_engine {1};
+namespace {
+  THREAD_LOCAL mt19937 g_random_engine {1};
+  std::mutex g_mutex;
+}
+
+void Random::seed(unsigned int s) {
+  LOCK_GLOBAL_MUTEX(g_mutex);
+  g_random_engine.seed(s);
+}
 
 uint32_t Random::number32(uint32_t maximum) {
+  LOCK_GLOBAL_MUTEX(g_mutex);
   if (maximum) {
-    return uniform_int_distribution<uint32_t>(0, maximum-1)(ms_random_engine);
+    return uniform_int_distribution<uint32_t>(0, maximum-1)(g_random_engine);
   }
-  return uniform_int_distribution<uint32_t>()(ms_random_engine);
+  return uniform_int_distribution<uint32_t>()(g_random_engine);
 }
 
 int64_t Random::number64(int64_t maximum) {
+  LOCK_GLOBAL_MUTEX(g_mutex);
   if (maximum) {
     assert(maximum > 0);
-    return uniform_int_distribution<int64_t>(0, maximum-1)(ms_random_engine);
+    return uniform_int_distribution<int64_t>(0, maximum-1)(g_random_engine);
   }
-  return uniform_int_distribution<int64_t>()(ms_random_engine);
+  return uniform_int_distribution<int64_t>()(g_random_engine);
 }
 
 double Random::uniform01() {
-  return uniform_real_distribution<>()(ms_random_engine);
+  LOCK_GLOBAL_MUTEX(g_mutex);
+  return uniform_real_distribution<>()(g_random_engine);
 }
 
 chrono::milliseconds Random::duration_millis(uint32_t maximum) {
+  LOCK_GLOBAL_MUTEX(g_mutex);
   assert(maximum > 0);
   uniform_int_distribution<uint32_t> di(0, maximum-1);
-  return chrono::milliseconds(di(ms_random_engine));
+  return chrono::milliseconds(di(g_random_engine));
 }

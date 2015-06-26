@@ -57,7 +57,8 @@ namespace thriftbroker {
     /// @param client ThriftBroker client
     /// @param nowait No wait flag
     CommandInterpreter(Thrift::ClientPtr &client, bool nowait=false)
-      : m_client(client), m_nowait(nowait) {
+      : m_client(client) {
+      (void)nowait;
       load_help_text();
     };
 
@@ -102,8 +103,6 @@ namespace thriftbroker {
     /// Map of help text
     std::unordered_map<std::string, const char **> m_help_text;
 
-    /// Don't wait for certain commands to complete (e.g. shutdown)
-    bool m_nowait {};
   };
 
   /// Smart pointer to CommandInterpreter
