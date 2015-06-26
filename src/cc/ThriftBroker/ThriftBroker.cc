@@ -2819,8 +2819,10 @@ public:
 
   TableScanner *get_scanner(int64_t id, ScannerInfoPtr &info) {
     std::lock_guard<std::mutex> lock(m_mutex);
+    TableScanner *scanner {};
     auto it = m_object_map.find(id);
-    if (it == m_object_map.end()) {
+    if (it == m_object_map.end() ||
+        (scanner = dynamic_cast<TableScanner *>(it->second.get())) == nullptr) {
       HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
                format("Invalid scanner id: %lld", (Lld)id));
@@ -2828,7 +2830,7 @@ public:
     auto sit = m_scanner_info_map.find(id);
     HT_ASSERT(sit != m_scanner_info_map.end());
     info = sit->second;
-    return dynamic_cast<TableScanner *>(it->second.get());
+    return scanner;
   }
 
   bool remove_object(int64_t id) {
