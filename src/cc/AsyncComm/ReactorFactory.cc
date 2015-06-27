@@ -89,3 +89,7 @@ void ReactorFactory::destroy() {
   ms_reactors.clear();
   ReactorRunner::handler_map = 0;
 }
+
+void ReactorFactory::join() {
+  ms_threads.join_all();
+}

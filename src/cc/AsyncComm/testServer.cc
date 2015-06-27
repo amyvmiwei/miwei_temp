@@ -28,6 +28,7 @@
 #include <AsyncComm/ApplicationHandler.h>
 #include <AsyncComm/ApplicationQueue.h>
 #include <AsyncComm/ConnectionHandlerFactory.h>
+#include <AsyncComm/ReactorFactory.h>
 
 #include <Common/Init.h>
 #include <Common/Error.h>
@@ -298,7 +299,8 @@ int main(int argc, char **argv) {
       comm->create_datagram_receive_socket(local_addr, 0, dhp);
     }
 
-    this_thread::sleep_for(chrono::system_clock::duration::max());
+    ReactorFactory::join();
+
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;

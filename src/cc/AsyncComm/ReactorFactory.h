@@ -68,6 +68,9 @@ namespace Hypertable {
      */
     static void destroy();
 
+    /// Joins with reactor threads
+    static void join();
+
     /** This method returns the 'next' reactor.  It returns pointers to
      * reactors in round-robin fashion and is used by the Comm subsystem to
      * evenly distribute descriptors across all of the reactors.  The
