@@ -1,3 +1,27 @@
+Version 0.9.8.9:
+(2015-06-29)
+
+   Fixed NO_LOG flag propagation and excessive sync'ing in TableMutatorAsync
+   Fixed bad assert in ThriftBroker during scanner lookup
+   gh67: Fixed RangeServer crash on shutdown
+   Fixed RangeServer status reporting on empty database
+   Fixed indefinite sleep problem in AsyncComm testServer
+   Fixed compile issues on OSX (lack of thread_local)
+   Replaced Boost random with C++11 random
+   Simulate quick_exit for versions of glibcxx that don't have it
+   update hypertable hyperic-sigar link broken
+   Support libboost_python library location x64 arch
+   Support library location x64 arch
+   Replaced all occurrences of boost::xtime with std::chrono
+   Added chrono::fast_clock (ClockT) for AsyncComm timing needs
+   Migrated to C++11 atomic variables
+   Replaced #include <time.h> with #include <ctime>
+   Migrated from Boost mutex and condition variable to C++11
+   Replaced boost::intrusive_ptr with std::shared_ptr
+   Replaced foreach_ht with C++11 range for
+   Replaced poll() with this_thread::sleep_for()
+   Replaced _exit with quick_exit; Replaced numeric exit codes with EXIT_SUCCESS & EXIT_FAILURE
+
 Version 0.9.8.8:
 (2015-05-15)
 
