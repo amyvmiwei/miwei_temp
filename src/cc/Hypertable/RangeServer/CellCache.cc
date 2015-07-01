@@ -38,29 +38,6 @@
 using namespace Hypertable;
 using namespace std;
 
-namespace {
-
-  struct CounterKeyCompare {
-    bool operator()(const CellCache::Value lhs, const CellCache::Value rhs) {
-      const uint8_t *ptr1, *ptr2;
-      int len1 = lhs.first.decode_length(&ptr1);
-      int len2 = rhs.first.decode_length(&ptr2);
-
-      // Strip timestamp & revision from key length (see Key.h)
-      if (*ptr1 >= 0x80)
-        len1 -= (*ptr1 & Key::REV_IS_TS) ? 8 : 16;
-      if (*ptr2 >= 0x80)
-        len2 -= (*ptr2 & Key::REV_IS_TS) ? 8 : 16;
-
-      int len = (len1 < len2) ? len1 : len2;
-      int cmp = memcmp(ptr1+1, ptr2+1, len-1);
-      return (cmp==0) ? len1 - len2 : cmp;
-    }
-  };
-
-}
-
-
 CellCache::CellCache()
   : m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)) {
   assert(Config::properties); // requires Config::init* first
@@ -104,7 +81,6 @@ void CellCache::add(const Key &key, const ByteString value) {
 /**
  */
 void CellCache::add_counter(const Key &key, const ByteString value) {
-  const uint8_t *ptr;
 
   // Check for counter reset
   if (*value.ptr == 9) {
@@ -120,17 +96,14 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 
   HT_ASSERT(*value.ptr == 8);
 
-  CounterKeyCompare comp;
-  Value lookup_value(key.serial, 0);
-  auto range = equal_range(m_cell_map.begin(), m_cell_map.end(), lookup_value, comp);
+  auto iter = m_cell_map.lower_bound(key.serial);
 
-  // If no matching key, do a normal add
-  if (range.first == range.second) {
+  if (iter == m_cell_map.end()) {
     add(key, value);
     return;
   }
 
-  auto iter = range.first;
+  const uint8_t *ptr;
 
   size_t len = (*iter).first.decode_length(&ptr);
 
@@ -158,11 +131,11 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
     return;
   }
 
-  // If new timestamp is less than or equal to existing timestamp, assume the
-  // increment was already accumulated, so skip it
+  /*
+   * copy timestamp/revision info from insert key to the one in the map
+   */
   size_t offset = (key.flag_ptr-((const uint8_t *)key.serial.ptr)) + 1;
   len = (*iter).second - offset;
-  ptr = ((uint8_t *)(*iter).first.ptr) + offset;
 
 #if 0
   // If key timestamp is not auto-assigned, assume that the timestamp uniquely
