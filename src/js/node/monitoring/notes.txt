@@ -1,0 +1,95 @@
+
+In Common:
+
+MetricDefinition:
+  - name
+  - COUNT, COUNT_WITH_LATENCY, MBPS, GB, PERCENTAGE
+
+MetricsProbe
+  - get_definitions(vector<MetricDefinition> &definitions);
+  - probe(MetricsCollector *collector);
+
+MetricsPublisher:
+  - void publish(string-hash, int-hash, float-hash)
+
+MetricsCollector:
+  - MetricsCollector(vector<MetricDefinition> &definitions,
+                     vector<MetricsProbePtr> &probes,
+                     vector<MetricsPublisher> &publishers,
+                     int32_t publish_interval_millis);
+  - void update(const std::string &name, const std::string &value);
+  - void update(const std::string &name, int16_t value);
+  - void update(const std::string &name, int32_t value);
+  - void update(const std::string &name, float value);
+  - void update(const std::string &name, double value);
+  - void publish();
+
+MetricsHandler:
+  - Internal dispatch handler created inside MetricsCollectorServer
+
+In Hypertable/Lib:
+
+MetricsPublisherBuiltin
+MetricsPublisherMaster
+MetricsPublisherGanglia
+MetricsPublisherSnmpd
+
+
+--------------
+
+TODO:
+- Services should be able to read monitoring servers from cluster.def
+- Create better support for multiple monitoring services (see snmpd)
+- Each UDP packet should contain hostname and IP address
+
+NOTES:
+
+Two types of metrics collectors:
+- MetricsCollectorServer
+- MetricsCollectorTable
+
+MetricsCollectorServer will contain possibly multiple MetricsPublisherServer objects:
+- MetricsPublisherServerBuiltin
+- MetricsPublisherServerGanglia
+- MetricsPublisherServerSnmpd
+
+MetricsCollectorTable can potentially contain multiple MetricsPublisherTable objects, but will start with just Builtin for now:
+- MetricsPublisherTableBuiltin
+
+The creation of these publishers will depend on the following properties:
+
+Hypertable.Metrics.Builtin.Disable
+Hypertable.Metrics.Ganglia.Disable
+Hypertable.Metrics.Snmpd.Disable
+
+--------------
+
+LoadBalancer.cc:void LoadBalancer::transfer_monitoring_data(vector<RangeServerStatistics> &stats) {
+OperationDropTable.cc:        m_context->monitoring->invalidate_id_mapping(m_id);
+OperationGatherStatistics.cc:    m_context->balancer->transfer_monitoring_data(results);
+OperationRecover.cc:    m_context->monitoring->drop_server(m_rsc->location());
+OperationRegisterServer.cc:    m_context->monitoring->add_server(m_location, m_params.system_stats());
+OperationRenameTable.cc:    m_context->monitoring->change_id_mapping(m_id, m_params.to());
+
+
+Master should send the following updates to monitoring servers:
+- Drop table
+- RangeServer recovered
+- Rename table
+- Server registered (maybe)
+
+When the monitoring server starts up, it should dump the RangeServer info and table info from Hyperspace
+
+BalanceAlgorithmEvenRanges should scan the METADATA table to determine table distribution accross RangeServers
+
+How should Master obtain "range count" and "disk usage" information from RangeServers?
+- Master should only be sent information that it needs
+- Maybe have a MetricsPublisherServerMaster ?
+- Maybe the raw metrics (unordered maps) should get passed into the publish method and the publisher decides which metrics to publish?
+
+The monitoring server should contain a simple flat file with entries for certain infrequently changed metrics
+- version number
+- location
+- The format can be lines of the following format:
+<timestamp> <metric-name> <metric-value>
+
