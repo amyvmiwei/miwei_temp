@@ -27,6 +27,7 @@ endif ()
 set(Common_SRCS
 Base64.cc
 Checksum.cc
+ClusterDefinition.cc
 ClusterDefinition/Compiler.cc
 ClusterDefinition/ToJson.cc
 ClusterDefinition/Token.cc
@@ -111,6 +112,11 @@ add_executable(HostSpecification_test tests/HostSpecification_test.cc)
 target_link_libraries(HostSpecification_test HyperCommon)
 configure_file(${SRC_DIR}/tests/HostSpecification_test.golden
                ${DST_DIR}/HostSpecification_test.golden)
+
+add_executable(ClusterDefinition_test tests/ClusterDefinition_test.cc)
+target_link_libraries(ClusterDefinition_test HyperCommon)
+configure_file(${SRC_DIR}/tests/ClusterDefinition_test.golden
+               ${DST_DIR}/ClusterDefinition_test.golden)
 
 add_executable(logging_test tests/logging_test.cc)
 target_link_libraries(logging_test HyperCommon)
@@ -210,6 +216,7 @@ configure_file(${SRC_DIR}/tests/failure_inducer_test.golden
 add_test(Common-Exception exception_test)
 add_test(Common-Exception escaper_test)
 add_test(Common-HostSpecification HostSpecification_test)
+add_test(Common-ClusterDefinition ClusterDefinition_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serializable Serializable_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/Serializable_test.golden)
 add_test(Common-Serialization sertest)

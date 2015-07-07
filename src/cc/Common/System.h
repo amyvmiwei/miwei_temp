@@ -26,10 +26,12 @@
 #ifndef Common_System_h
 #define Common_System_h
 
-#include <Common/Version.h>
+#include <Common/ClusterDefinition.h>
 #include <Common/String.h>
+#include <Common/Version.h>
 
 #include <ctime>
+#include <memory>
 #include <mutex>
 
 namespace Hypertable {
@@ -110,6 +112,9 @@ namespace Hypertable {
 
     /** The installation directory */
     static String install_dir;
+
+    /// Cluster definition
+    static std::unique_ptr<ClusterDefinition::ClusterDefinition> cluster_def;
 
     /** The exe file name */
     static String exe_name;
